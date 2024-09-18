@@ -9,8 +9,8 @@ extension RGBA on Color {
 abstract class PrimaryColor {
   static final main = RGBA.rgba(255, 198, 25, 1);
   static final surface = RGBA.rgba(255, 252, 235, 1);
-  static final hover = RGBA.rgba(249, 167, 7, 1);
-  static final pressed = RGBA.rgba(221, 126, 2, 1);
+  static final hover = RGBA.rgba(12, 69, 151, 1);
+  static final pressed = RGBA.rgba(6, 44, 101, 1);
   static final border = RGBA.rgba(255, 235, 136, 1);
   static final focus = RGBA.rgba(255, 198, 25, 0.3);
   static final content = RGBA.rgba(10, 10, 10, 1);
