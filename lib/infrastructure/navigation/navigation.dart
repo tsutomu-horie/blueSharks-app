@@ -41,5 +41,30 @@ class Nav {
       page: () => const WallpaperScreen(),
       binding: WallpaperControllerBinding(),
     ),
+    GetPage(
+      name: Routes.MAIN,
+      page: () => MainScreen(),
+      binding: MainControllerBinding(),
+    ),
+    GetPage(
+      name: Routes.INFO,
+      page: () => const InfoScreen(),
+      binding: InfoControllerBinding(),
+    ),
+    GetPage(
+      name: Routes.MYPAGE,
+      page: () => const MypageScreen(),
+      binding: MypageControllerBinding(),
+    ),
+    GetPage(
+      name: Routes.STADIUM,
+      page: () => const StadiumScreen(),
+      binding: StadiumControllerBinding(),
+    ),
+    GetPage(
+      name: Routes.CALENDAR,
+      page: () => const CalendarScreen(),
+      binding: CalendarControllerBinding(),
+    ),
   ];
 }

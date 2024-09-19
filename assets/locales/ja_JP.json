@@ -13,6 +13,10 @@
   "goods": "Goods",
   "next_match": "次の試合",
   "next_match_en": "Next Match",
-  "home": "home",
-  "visitor": "visitor"
+  "home": "Home",
+  "visitor": "visitor",
+  "info": "Info",
+  "my_page": "My Page",
+  "stadium": "Stadium",
+  "calendar": "Calendar"
 }
