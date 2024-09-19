@@ -1,23 +1,26 @@
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 class InfoController extends GetxController {
-  //TODO: Implement InfoController
+  var selectedIndex = 0.obs; // Observable to track the selected tab index
+  PageController pageController = PageController();
 
-  final count = 0.obs;
-  @override
-  void onInit() {
-    super.onInit();
+  // Method to change tab
+  void changeTab(int index) async {
+    // selectedIndex.value = index;
+    pageController.animateToPage(
+      index,
+      duration: Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
+    );
+
+    await Future.delayed(const Duration(milliseconds: 300)); // Add delay of 200ms
+    selectedIndex.value = index; // Update selected tab index after the delay
   }
 
-  @override
-  void onReady() {
-    super.onReady();
+  // Method to handle swipe between pages
+  void onPageChanged(int index) {
+    selectedIndex.value = index;
   }
 
-  @override
-  void onClose() {
-    super.onClose();
-  }
-
-  void increment() => count.value++;
 }
