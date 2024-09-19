@@ -26,6 +26,10 @@ class LocaleKeys {
   static const next_match_en = 'next_match_en';
   static const home = 'home';
   static const visitor = 'visitor';
+  static const info = 'info';
+  static const my_page = 'my_page';
+  static const stadium = 'stadium';
+  static const calendar = 'calendar';
 }
 
 class Locales {
@@ -44,7 +48,11 @@ class Locales {
     'goods': 'Goods',
     'next_match': '次の試合',
     'next_match_en': 'Next Match',
-    'home': 'home',
+    'home': 'Home',
     'visitor': 'visitor',
+    'info': 'Info',
+    'my_page': 'My Page',
+    'stadium': 'Stadium',
+    'calendar': 'Calendar',
   };
 }

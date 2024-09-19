@@ -16,101 +16,12 @@ import 'controllers/home.controller.dart';
 class HomeScreen extends GetView<HomeController> {
   const HomeScreen({super.key});
 
+
   @override
   Widget build(BuildContext context) {
+    final HomeController controller = Get.put(HomeController());
+
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: BrandColor.hover,
-        toolbarHeight: 64.h,
-        title: Stack(
-          children: [
-            Positioned(
-              left: 0,
-              right: 30.w,
-              child: SvgPicture.asset(
-                width: 93.w,
-                height: 64.h,
-                'assets/vectors/background_toolbar.svg', // Replace with your SVG file path
-              ),
-            ),
-            Row(
-              children: [
-                Flexible(
-                  child: Row(
-                    mainAxisSize: MainAxisSize.max,
-                    children: [
-                      IconButton(
-                          onPressed: () {},
-                          icon: SvgPicture.asset(
-                            'assets/vectors/ic_notification.svg',
-                            width: 24.w,
-                            height: 24.h,
-                          )),
-                    ],
-                  ),
-                ),
-                Row(
-                  children: [
-                    SizedBox(
-                      width: 9.5.w,
-                    ),
-                    Column(
-                      children: [
-                        SizedBox(
-                          height: 10.h,
-                        ),
-                        SvgPicture.asset(
-                          width: 44.w,
-                          height: 44.h,
-                          fit: BoxFit.fitHeight,
-                          'assets/vectors/app_logo.svg', // Replace with your SVG file path
-                        ),
-                        SizedBox(
-                          height: 10.h,
-                        ),
-                      ],
-                    ),
-                    SizedBox(
-                      width: 9.5.w,
-                    ),
-                  ],
-                ),
-                Row(
-                  children: [
-                    toolbarButton(
-                        SvgPicture.asset(
-                          'assets/vectors/ic_fanclub.svg',
-                          width: 24.w,
-                          height: 24.h,
-                        ),
-                        LocaleKeys.fan_club.tr),
-                    SizedBox(
-                      width: 8.w,
-                    ),
-                    toolbarButton(
-                        SvgPicture.asset(
-                          'assets/vectors/ic_ticket.svg',
-                          width: 24.w,
-                          height: 24.h,
-                        ),
-                        LocaleKeys.ticket.tr),
-                    SizedBox(
-                      width: 8.w,
-                    ),
-                    toolbarButton(
-                        SvgPicture.asset(
-                          'assets/vectors/ic_goods.svg',
-                          width: 24.w,
-                          height: 24.h,
-                        ),
-                        LocaleKeys.goods.tr),
-                  ],
-                )
-              ],
-            ),
-          ],
-        ),
-      ),
       body: SingleChildScrollView(
           child: Column(
         children: [
@@ -120,6 +31,8 @@ class HomeScreen extends GetView<HomeController> {
               color: Colors.red,
             ),
           ),
+          DefaultHeaderTitleView(
+              LocaleKeys.next_match.tr, LocaleKeys.next_match_en.tr),
           Obx(() {
             // Access the observable list value directly
             final nextMatchData = controller.threeLatestMatch.value;
@@ -198,34 +111,11 @@ class HomeScreen extends GetView<HomeController> {
               ),
             );
           }),
-          DefaultHeaderTitleView(
-              LocaleKeys.next_match.tr, LocaleKeys.next_match_en.tr)
         ],
       )),
     );
   }
 
-  Widget toolbarButton(SvgPicture icon, String text) {
-    return ElevatedButton(
-      style: ElevatedButton.styleFrom(
-        shadowColor: Colors.transparent,
-        backgroundColor: Colors.transparent,
-        minimumSize: Size(40.w, 48.h),
-        padding: EdgeInsets.zero,
-      ),
-      onPressed: () {},
-      child: Column(
-        children: [
-          icon,
-          //todo:: custom font
-          CustomTextView(
-            text,
-            style: TextStyle(fontSize: 10.sp, color: Colors.white),
-          )
-        ],
-      ),
-    );
-  }
 
   Widget shimmer() {
     return Shimmer.fromColors(
