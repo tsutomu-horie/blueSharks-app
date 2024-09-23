@@ -1,3 +1,4 @@
+export 'package:koto_blue_sharks/presentation/ListTopics/list_topics.screen.dart';
 export 'package:koto_blue_sharks/presentation/calendar/calendar.screen.dart';
 export 'package:koto_blue_sharks/presentation/home/home.screen.dart';
 export 'package:koto_blue_sharks/presentation/info/info.screen.dart';

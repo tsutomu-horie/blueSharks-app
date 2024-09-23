@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 import 'package:get/get.dart';
+import 'package:koto_blue_sharks/app/views/views/custom_image_view.dart';
 import 'package:koto_blue_sharks/app/views/views/custom_text_view.dart';
 import 'package:koto_blue_sharks/app/views/views/default_header_title_view.dart';
 import 'package:koto_blue_sharks/app/views/views/match/views/match_item_view.dart';
@@ -15,7 +16,6 @@ import 'controllers/home.controller.dart';
 
 class HomeScreen extends GetView<HomeController> {
   const HomeScreen({super.key});
-
 
   @override
   Widget build(BuildContext context) {
@@ -73,11 +73,12 @@ class HomeScreen extends GetView<HomeController> {
                             return Padding(
                               padding: EdgeInsets.only(right: 12.w),
                               child: Container(
-                                  decoration: BoxDecoration(borderRadius: BorderRadius.circular(2.r), color: BorderColor.primary),
+                                  decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(2.r),
+                                      color: BorderColor.primary),
                                   width: 320.w,
                                   height: 200.h,
-                                  child: const Icon(Icons.warning)
-                              ),
+                                  child: const Icon(Icons.warning)),
                             );
                           } else {
                             // Use the actual image URL returned from the Future
@@ -111,11 +112,83 @@ class HomeScreen extends GetView<HomeController> {
               ),
             );
           }),
+          SizedBox(
+            height: 40.h,
+          ),
+          Row(
+            children: [
+              SizedBox(
+                width: 16.w,
+              ),
+              Flexible(
+                child: Stack(
+                  children: [
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(12.r),
+                      child: Image.asset(
+                        "assets/images/img_banner_ticket.png",
+                      ),
+                    ),
+                    Container(
+                      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 24.h),
+                      child: SizedBox(
+                        height: 120.h, // Set a fixed height for the Container
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                SvgPicture.asset(
+                                  "assets/vectors/app_logo_label.svg",
+                                  width: 80.w,
+                                  height: 13.h,
+                                  colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
+                                ),
+                                SizedBox(height: 8.h),
+                                Text(
+                                  "#TICKET INFORMATION",
+                                  style: TextStyle(
+                                    color: TextColor.inverse,
+                                    fontSize: 24.sp,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
+
+                            Spacer(), // Spacer will push the button down
+                            ElevatedButton.icon(
+                              onPressed: () {},
+                              label: CustomTextView(
+                                "#チケットを購入",
+                                color: TextColor.primary,
+                                type: TDSFontType.labelMedium,
+                              ),
+                              icon: SvgPicture.asset(
+                                width: 14.w,
+                                "assets/vectors/ic_goods.svg",
+                                colorFilter: ColorFilter.mode(BrandColor.main, BlendMode.srcIn),
+                              ),
+                              style: ButtonStyle(),
+                            ),
+                          ],
+                        ),
+                      ),
+                    )
+
+                  ],
+                ),
+              ),
+              SizedBox(
+                width: 16.w,
+              ),
+            ],
+          ),
         ],
       )),
     );
   }
-
 
   Widget shimmer() {
     return Shimmer.fromColors(
@@ -126,8 +199,7 @@ class HomeScreen extends GetView<HomeController> {
         height: 200.h,
         decoration: BoxDecoration(
           color: BorderColor.disabled,
-          borderRadius:
-          BorderRadius.all(Radius.circular(4.r)),
+          borderRadius: BorderRadius.all(Radius.circular(4.r)),
         ),
       ),
     );

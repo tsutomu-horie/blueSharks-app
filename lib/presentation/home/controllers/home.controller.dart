@@ -8,12 +8,12 @@ import 'package:koto_blue_sharks/utils/Constant.dart';
 class HomeController extends GetxController {
   final MatchProvider apiProvider = MatchProvider();
   final MediaProvider mediaProvider = MediaProvider();
-  final Rx<List<MatchResultBySeason>> threeLatestMatch = Rx<List<MatchResultBySeason>>([]);
+  final Rx<List<MatchResultBySeason>> threeLatestMatch =
+      Rx<List<MatchResultBySeason>>([]);
   final text = "".obs;
 
   @override
   void onInit() {
-    print("init triggered");
     super.onInit();
     apiProvider.onInit();
     mediaProvider.onInit();
@@ -21,14 +21,12 @@ class HomeController extends GetxController {
   }
 
   void fetchMatchResult() async {
-    print("Fetching match results...");
-
     final Map<String, dynamic>? data = await getSeasonCategoryId();
     if (data != null) {
       final List<MatchResultBySeason> latestMatches =
           await getLatestPosts(data['id'], data['count']);
 
-      threeLatestMatch?.value = latestMatches;
+      threeLatestMatch.value = latestMatches;
       text.value = "${latestMatches.length}";
       for (var match in latestMatches) {
         print("Match Title: ${match.title.rendered}");
@@ -39,8 +37,6 @@ class HomeController extends GetxController {
   }
 
   Future<Map<String, dynamic>?> getSeasonCategoryId() async {
-    //todo::dummy
-    // int currentYear = 2023;
     int currentYear = DateTime.now().year; // Get the current year
     int nextYear = currentYear + 1; // Calculate the next year
     String seasonSlug =
@@ -74,7 +70,7 @@ class HomeController extends GetxController {
 
   Future<List<MatchResultBySeason>> getLatestPosts(
       int categoryId, int count) async {
-    const int returnNumber = 3; // Return exactly 4 posts
+    // const int returnNumber = 3; // Return exactly 4 posts
     int postsPerPage = 10; // Each page returns 10 posts
     int totalPages =
         (count / postsPerPage).ceil(); // Calculate total number of pages
@@ -89,34 +85,13 @@ class HomeController extends GetxController {
       lastPage--;
     }
 
-    // Filter posts based on current date and time
-    //todo::dummy
-    DateTime now = DateTime.now();
-    // DateTime now = DateTime(2023, 12, 30);
     List<MatchResultBySeason> filteredPosts = posts.where((post) {
-      if (post.custom_field.gameDate.isEmpty ||
-          post.custom_field.gameTime.isEmpty) {
-        return false;
-      }
-
-      // Parse game_date and game_time into DateTime
-      String gameDate = post.custom_field.gameDate.first;
-      String gameTime = post.custom_field.gameTime.first;
-      DateTime? gameDateTime = parseGameDateTime(gameDate, gameTime);
-      return gameDateTime != null && gameDateTime.isAfter(now);
+      return post.custom_field.game_result == null ||
+          post.custom_field.game_result!.isEmpty || post.custom_field.game_result?.first == "試合前";
     }).toList();
 
-    // Sort the filtered posts by date
-    filteredPosts.sort((a, b) {
-      DateTime aDateTime = parseGameDateTime(
-          a.custom_field.gameDate.first, a.custom_field.gameTime.first)!;
-      DateTime bDateTime = parseGameDateTime(
-          b.custom_field.gameDate.first, b.custom_field.gameTime.first)!;
-      return aDateTime.compareTo(bDateTime);
-    });
-
     // Return only the first 4 matches after the current date and time
-    return filteredPosts.take(returnNumber).toList();
+    return filteredPosts.toList();
   }
 
   DateTime? parseGameDateTime(String gameDate, String gameTime) {

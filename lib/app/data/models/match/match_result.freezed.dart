@@ -971,6 +971,7 @@ mixin _$CustomField {
   List<String>? get team_logo_1 => throw _privateConstructorUsedError;
   List<String> get team_2 => throw _privateConstructorUsedError;
   List<String> get team_logo_2 => throw _privateConstructorUsedError;
+  List<String>? get game_result => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
   @JsonKey(ignore: true)
@@ -991,7 +992,8 @@ abstract class $CustomFieldCopyWith<$Res> {
       List<String> team_1,
       List<String>? team_logo_1,
       List<String> team_2,
-      List<String> team_logo_2});
+      List<String> team_logo_2,
+      List<String>? game_result});
 }
 
 /// @nodoc
@@ -1014,6 +1016,7 @@ class _$CustomFieldCopyWithImpl<$Res, $Val extends CustomField>
     Object? team_logo_1 = freezed,
     Object? team_2 = null,
     Object? team_logo_2 = null,
+    Object? game_result = freezed,
   }) {
     return _then(_value.copyWith(
       gameDate: null == gameDate
@@ -1044,6 +1047,10 @@ class _$CustomFieldCopyWithImpl<$Res, $Val extends CustomField>
           ? _value.team_logo_2
           : team_logo_2 // ignore: cast_nullable_to_non_nullable
               as List<String>,
+      game_result: freezed == game_result
+          ? _value.game_result
+          : game_result // ignore: cast_nullable_to_non_nullable
+              as List<String>?,
     ) as $Val);
   }
 }
@@ -1063,7 +1070,8 @@ abstract class _$$CustomFieldImplCopyWith<$Res>
       List<String> team_1,
       List<String>? team_logo_1,
       List<String> team_2,
-      List<String> team_logo_2});
+      List<String> team_logo_2,
+      List<String>? game_result});
 }
 
 /// @nodoc
@@ -1084,6 +1092,7 @@ class __$$CustomFieldImplCopyWithImpl<$Res>
     Object? team_logo_1 = freezed,
     Object? team_2 = null,
     Object? team_logo_2 = null,
+    Object? game_result = freezed,
   }) {
     return _then(_$CustomFieldImpl(
       gameDate: null == gameDate
@@ -1114,6 +1123,10 @@ class __$$CustomFieldImplCopyWithImpl<$Res>
           ? _value._team_logo_2
           : team_logo_2 // ignore: cast_nullable_to_non_nullable
               as List<String>,
+      game_result: freezed == game_result
+          ? _value._game_result
+          : game_result // ignore: cast_nullable_to_non_nullable
+              as List<String>?,
     ));
   }
 }
@@ -1128,14 +1141,16 @@ class _$CustomFieldImpl implements _CustomField {
       required final List<String> team_1,
       final List<String>? team_logo_1,
       required final List<String> team_2,
-      required final List<String> team_logo_2})
+      required final List<String> team_logo_2,
+      required final List<String>? game_result})
       : _gameDate = gameDate,
         _gameTime = gameTime,
         _location = location,
         _team_1 = team_1,
         _team_logo_1 = team_logo_1,
         _team_2 = team_2,
-        _team_logo_2 = team_logo_2;
+        _team_logo_2 = team_logo_2,
+        _game_result = game_result;
 
   factory _$CustomFieldImpl.fromJson(Map<String, dynamic> json) =>
       _$$CustomFieldImplFromJson(json);
@@ -1200,9 +1215,19 @@ class _$CustomFieldImpl implements _CustomField {
     return EqualUnmodifiableListView(_team_logo_2);
   }
 
+  final List<String>? _game_result;
+  @override
+  List<String>? get game_result {
+    final value = _game_result;
+    if (value == null) return null;
+    if (_game_result is EqualUnmodifiableListView) return _game_result;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(value);
+  }
+
   @override
   String toString() {
-    return 'CustomField(gameDate: $gameDate, gameTime: $gameTime, location: $location, team_1: $team_1, team_logo_1: $team_logo_1, team_2: $team_2, team_logo_2: $team_logo_2)';
+    return 'CustomField(gameDate: $gameDate, gameTime: $gameTime, location: $location, team_1: $team_1, team_logo_1: $team_logo_1, team_2: $team_2, team_logo_2: $team_logo_2, game_result: $game_result)';
   }
 
   @override
@@ -1218,7 +1243,9 @@ class _$CustomFieldImpl implements _CustomField {
                 .equals(other._team_logo_1, _team_logo_1) &&
             const DeepCollectionEquality().equals(other._team_2, _team_2) &&
             const DeepCollectionEquality()
-                .equals(other._team_logo_2, _team_logo_2));
+                .equals(other._team_logo_2, _team_logo_2) &&
+            const DeepCollectionEquality()
+                .equals(other._game_result, _game_result));
   }
 
   @JsonKey(ignore: true)
@@ -1231,7 +1258,8 @@ class _$CustomFieldImpl implements _CustomField {
       const DeepCollectionEquality().hash(_team_1),
       const DeepCollectionEquality().hash(_team_logo_1),
       const DeepCollectionEquality().hash(_team_2),
-      const DeepCollectionEquality().hash(_team_logo_2));
+      const DeepCollectionEquality().hash(_team_logo_2),
+      const DeepCollectionEquality().hash(_game_result));
 
   @JsonKey(ignore: true)
   @override
@@ -1255,7 +1283,8 @@ abstract class _CustomField implements CustomField {
       required final List<String> team_1,
       final List<String>? team_logo_1,
       required final List<String> team_2,
-      required final List<String> team_logo_2}) = _$CustomFieldImpl;
+      required final List<String> team_logo_2,
+      required final List<String>? game_result}) = _$CustomFieldImpl;
 
   factory _CustomField.fromJson(Map<String, dynamic> json) =
       _$CustomFieldImpl.fromJson;
@@ -1276,6 +1305,8 @@ abstract class _CustomField implements CustomField {
   List<String> get team_2;
   @override
   List<String> get team_logo_2;
+  @override
+  List<String>? get game_result;
   @override
   @JsonKey(ignore: true)
   _$$CustomFieldImplCopyWith<_$CustomFieldImpl> get copyWith =>
