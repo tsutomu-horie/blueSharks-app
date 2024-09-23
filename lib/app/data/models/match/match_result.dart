@@ -63,6 +63,7 @@ class CustomField with _$CustomField {
     List<String>? team_logo_1,
     required List<String> team_2,
     required List<String> team_logo_2,
+    required List<String>? game_result,
     // Add other fields as needed
   }) = _CustomField;
 

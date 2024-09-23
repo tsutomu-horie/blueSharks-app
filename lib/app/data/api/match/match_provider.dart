@@ -5,7 +5,6 @@ import 'package:koto_blue_sharks/utils/Constant.dart';
 class MatchProvider extends GetConnect {
   @override
   void onInit() {
-    print("initttt");
     httpClient.baseUrl = Constants.baseUrl;
   }
 

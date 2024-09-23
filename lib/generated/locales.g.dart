@@ -30,6 +30,8 @@ class LocaleKeys {
   static const my_page = 'my_page';
   static const stadium = 'stadium';
   static const calendar = 'calendar';
+  static const topics = 'topics';
+  static const topics_en = 'topics_en';
 }
 
 class Locales {
@@ -54,5 +56,7 @@ class Locales {
     'my_page': 'My Page',
     'stadium': 'Stadium',
     'calendar': 'Calendar',
+    'topics': 'Topics',
+    'topics_en': 'トピックス',
   };
 }

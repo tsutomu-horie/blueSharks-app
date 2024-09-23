@@ -66,5 +66,10 @@ class Nav {
       page: () => const CalendarScreen(),
       binding: CalendarControllerBinding(),
     ),
+    GetPage(
+      name: Routes.LIST_TOPICS,
+      page: () => const ListTopicsScreen(),
+      binding: ListTopicsControllerBinding(),
+    ),
   ];
 }

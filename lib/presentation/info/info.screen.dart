@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import 'package:get/get.dart';
+import 'package:koto_blue_sharks/presentation/ListTopics/list_topics.screen.dart';
 import 'package:koto_blue_sharks/utils/app_color.dart';
 
 import 'controllers/info.controller.dart';
@@ -13,7 +14,7 @@ class InfoScreen extends GetView<InfoController> {
   Widget build(BuildContext context) {
     final InfoController controller = Get.put(InfoController());
 
-    final List<String> _tabs = [
+    final List<String> tabs = [
       'Topics',
       'Game Info',
       'Player',
@@ -30,7 +31,7 @@ class InfoScreen extends GetView<InfoController> {
         title: SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           child: Row(
-            children: List.generate(_tabs.length, (index) {
+            children: List.generate(tabs.length, (index) {
               return InkWell(
                 onTap: () => controller.changeTab(index),
                 child: Obx(() {
@@ -49,7 +50,7 @@ class InfoScreen extends GetView<InfoController> {
                       ),
                     ),
                     child: Text(
-                      _tabs[index],
+                      tabs[index],
                       style: TextStyle(
                         fontSize: 14.sp,
                         fontWeight: FontWeight.w500,
@@ -69,7 +70,7 @@ class InfoScreen extends GetView<InfoController> {
           controller: controller.pageController,
           onPageChanged: controller.onPageChanged, // Sync tab with page
           children: [
-            Center(child: Text("Topics")),
+            ListTopicsScreen(),
             Center(child: Text("Game Info")),
             Center(child: Text("Player")),
             Center(child: Text("Team")),

@@ -4,6 +4,7 @@ class Routes {
     return SPLASH;
   }
 
+  static const CALENDAR = '/calendar';
   static const HOME = '/home';
   static const INFO = '/info';
   static const MAIN = '/main';
@@ -11,5 +12,5 @@ class Routes {
   static const SPLASH = '/splash';
   static const STADIUM = '/stadium';
   static const WALLPAPER = '/wallpaper';
-  static const CALENDAR = '/calendar';
+  static const LIST_TOPICS = '/list-topics';
 }

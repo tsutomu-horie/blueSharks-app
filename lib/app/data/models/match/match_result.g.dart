@@ -107,6 +107,9 @@ _$CustomFieldImpl _$$CustomFieldImplFromJson(Map<String, dynamic> json) =>
       team_logo_2: (json['team_logo_2'] as List<dynamic>)
           .map((e) => e as String)
           .toList(),
+      game_result: (json['game_result'] as List<dynamic>?)
+          ?.map((e) => e as String)
+          .toList(),
     );
 
 Map<String, dynamic> _$$CustomFieldImplToJson(_$CustomFieldImpl instance) =>
@@ -118,6 +121,7 @@ Map<String, dynamic> _$$CustomFieldImplToJson(_$CustomFieldImpl instance) =>
       'team_logo_1': instance.team_logo_1,
       'team_2': instance.team_2,
       'team_logo_2': instance.team_logo_2,
+      'game_result': instance.game_result,
     };
 
 _$RenderedImpl _$$RenderedImplFromJson(Map<String, dynamic> json) =>

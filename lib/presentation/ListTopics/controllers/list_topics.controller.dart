@@ -3,9 +3,25 @@ import 'package:get/get.dart';
 import 'package:koto_blue_sharks/app/data/api/info/info_provider.dart';
 import 'package:koto_blue_sharks/app/data/models/info/post.dart';
 
-class InfoController extends GetxController {
+class ListTopicsController extends GetxController {
+  final InfoProvider apiProvider = InfoProvider();
+  final Rx<List<Post>> topicsData = Rx([]);
   PageController pageController = PageController();
   var selectedIndex = 0.obs; // Observable to track the selected tab index
+
+  @override
+  void onInit() {
+    super.onInit();
+    apiProvider.onInit();
+    getInfo();
+  }
+
+  void getInfo() async {
+    print("get info");
+    final List<Post> data = await apiProvider.getTopics();
+
+    topicsData.value = data;
+  }
 
   void changeTab(int index) async {
     pageController.animateToPage(
@@ -22,5 +38,6 @@ class InfoController extends GetxController {
   void onPageChanged(int index) {
     selectedIndex.value = index;
   }
+
 
 }
