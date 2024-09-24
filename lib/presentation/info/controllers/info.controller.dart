@@ -10,7 +10,7 @@ class InfoController extends GetxController {
   void changeTab(int index) async {
     pageController.animateToPage(
       index,
-      duration: Duration(milliseconds: 300),
+      duration: const Duration(milliseconds: 300),
       curve: Curves.easeInOut,
     );
 

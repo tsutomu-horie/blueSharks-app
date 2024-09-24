@@ -20,4 +20,29 @@ class MediaProvider extends GetConnect {
 
     return Media.fromJson(response.body);
   }
+
+  //fetch image with end point : /wp-json/wp/v2/media?parent=19702
+  Future<Media> fetchParentMedia(String mediaId) async {
+    final response = await get('media?parent=$mediaId');
+
+    print("fetch image parent ${httpClient.baseUrl}media?parent=$mediaId");
+    if (response.hasError) {
+      throw Exception('Failed to load media with ID: $mediaId');
+    }
+
+    print("finish with ${response.body}");
+
+    List<dynamic> bodyList = response.body;
+
+    if (bodyList.isEmpty) {
+      throw Exception('No media found with ID: $mediaId');
+    }
+
+    // Parse the first item in the list to Media
+    final media = Media.fromJson(bodyList.first);
+
+    print("get media ${media.title}");
+
+    return media;
+  }
 }

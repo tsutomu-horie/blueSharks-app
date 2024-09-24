@@ -32,6 +32,10 @@ class LocaleKeys {
   static const calendar = 'calendar';
   static const topics = 'topics';
   static const topics_en = 'topics_en';
+  static const ticket_information = 'ticket_information';
+  static const buy_ticket = 'buy_ticket';
+  static const featured_topics_en = 'featured_topics_en';
+  static const featured_topics = 'featured_topics';
 }
 
 class Locales {
@@ -58,5 +62,9 @@ class Locales {
     'calendar': 'Calendar',
     'topics': 'Topics',
     'topics_en': 'トピックス',
+    'ticket_information': 'TICKET INFORMATION',
+    'buy_ticket': 'チケットを購入',
+    'featured_topics_en': 'FEATURED TOPICS',
+    'featured_topics': '情報をピックアップ',
   };
 }

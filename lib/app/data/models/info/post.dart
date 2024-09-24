@@ -13,6 +13,7 @@ class Post with _$Post {
     required PostTitle title,
     required PostContent content,
     required PostExcerpt excerpt,
+    required List<int> categories,
   }) = _Post;
 
   factory Post.fromJson(Map<String, dynamic> json) => _$PostFromJson(json);

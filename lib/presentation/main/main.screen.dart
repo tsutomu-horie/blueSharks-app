@@ -14,6 +14,8 @@ import 'package:koto_blue_sharks/utils/app_color.dart';
 import 'controllers/main.controller.dart';
 
 class MainScreen extends StatefulWidget {
+  const MainScreen({super.key});
+
   @override
   _MainScreenState createState() => _MainScreenState();
 }

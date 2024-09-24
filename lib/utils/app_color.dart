@@ -121,5 +121,6 @@ abstract class BrandColor {
   static final surface = RGBA.rgba(235, 248, 255, 1);
   static final border = RGBA.rgba(209, 241, 255, 1);
   static final content = RGBA.rgba(255, 255, 255, 1);
+  static final background = RGBA.rgba(0, 172, 238, 1);
 }
 

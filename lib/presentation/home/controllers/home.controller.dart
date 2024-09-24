@@ -1,23 +1,40 @@
+import 'dart:ffi';
+
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
+import 'package:koto_blue_sharks/app/data/api/info/info_provider.dart';
 import 'package:koto_blue_sharks/app/data/api/match/match_provider.dart';
 import 'package:koto_blue_sharks/app/data/api/media/media_provider.dart';
+import 'package:koto_blue_sharks/app/data/models/info/post.dart';
 import 'package:koto_blue_sharks/app/data/models/match/match_result.dart';
 import 'package:koto_blue_sharks/utils/Constant.dart';
 
 class HomeController extends GetxController {
   final MatchProvider apiProvider = MatchProvider();
   final MediaProvider mediaProvider = MediaProvider();
+  final InfoProvider infoProvider = InfoProvider();
   final Rx<List<MatchResultBySeason>> threeLatestMatch =
       Rx<List<MatchResultBySeason>>([]);
   final text = "".obs;
+  final Rx<List<Post>> topicsData = Rx([]);
 
   @override
   void onInit() {
     super.onInit();
     apiProvider.onInit();
     mediaProvider.onInit();
+    infoProvider.onInit();
     fetchMatchResult();
+    print("get info after this");
+    getTopics();
+  }
+
+  void getTopics() async {
+    print("get info");
+    final List<Post> data = await infoProvider.getNotice();
+
+    data.take(6).toList();
+    topicsData.value = data;
   }
 
   void fetchMatchResult() async {
@@ -140,9 +157,17 @@ class HomeController extends GetxController {
   }
 
   Future<String> getImage(String mediaId) async {
+
     final imageData = await mediaProvider.fetchMedia(mediaId);
     final image = imageData.media_details.sizes.thumbnail.source_url;
-    print("getImage success $image");
     return image;
+  }
+
+  Future<String> getNewsImage(String mediaId) async {
+    final imageData = await mediaProvider.fetchParentMedia(mediaId);
+    print("GET NEWS IMAGE ${imageData}");
+    final image = imageData?.media_details.sizes.thumbnail.source_url;
+    print("GET NEWS IMAGE ${mediaId}, ${image}");
+    return image ?? "";
   }
 }
