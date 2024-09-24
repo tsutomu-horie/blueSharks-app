@@ -8,7 +8,9 @@ import 'package:koto_blue_sharks/utils/app_color.dart';
 import 'controllers/info.controller.dart';
 
 class InfoScreen extends GetView<InfoController> {
-  const InfoScreen({super.key});
+  const InfoScreen(this.onOpenDetail, {super.key});
+
+  final Function(int) onOpenDetail;
 
   @override
   Widget build(BuildContext context) {
@@ -71,7 +73,11 @@ class InfoScreen extends GetView<InfoController> {
         controller: controller.pageController,
         onPageChanged: controller.onPageChanged, // Sync tab with page
         children: [
-          ListTopicsScreen(),
+          ListTopicsScreen(
+            onOpenDetail: (value) {
+              onOpenDetail(value);
+            },
+          ),
           Center(child: Text("Game Info")),
           Center(child: Text("Player")),
           Center(child: Text("Team")),

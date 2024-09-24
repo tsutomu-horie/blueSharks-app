@@ -12,8 +12,11 @@ import 'package:shimmer/shimmer.dart';
 
 import 'controllers/list_topics.controller.dart';
 
-class ListTopicsScreen extends GetView<ListTopicsController> {
-  const ListTopicsScreen({super.key});
+class ListTopicsScreen  extends StatelessWidget {
+  final Rx<int?> selectedTopicId = Rx<int?>(null);
+
+  ListTopicsScreen({super.key, required this.onOpenDetail}); // Observable to store the selected topic ID
+  final Function(int) onOpenDetail;
 
   @override
   Widget build(BuildContext context) {
@@ -136,6 +139,10 @@ class ListTopicsScreen extends GetView<ListTopicsController> {
                               );
                             } else if (snapshot.hasError) {
                               return TopicItemView(
+                                (){
+                                  print("tapp TopicItemView ");
+                                  onOpenDetail(data[itemIndex].id);
+                                },
                                 image: null,
                                 date: data[itemIndex].date,
                                 title: data[itemIndex].title.rendered,
@@ -147,6 +154,9 @@ class ListTopicsScreen extends GetView<ListTopicsController> {
 
                               // Ensure that TopicItemView is returned
                               return TopicItemView(
+                                (){
+                                  onOpenDetail(data[itemIndex].id);
+                                },
                                 image: postImage,
                                 date: data[itemIndex].date,
                                 title: data[itemIndex].title.rendered,

@@ -1,4 +1,5 @@
 export 'package:koto_blue_sharks/infrastructure/navigation/bindings/controllers/calendar.controller.binding.dart'; 
+export 'package:koto_blue_sharks/infrastructure/navigation/bindings/controllers/detail_info.controller.binding.dart'; 
 export 'package:koto_blue_sharks/infrastructure/navigation/bindings/controllers/home.controller.binding.dart'; 
 export 'package:koto_blue_sharks/infrastructure/navigation/bindings/controllers/info.controller.binding.dart'; 
 export 'package:koto_blue_sharks/infrastructure/navigation/bindings/controllers/list_topics.controller.binding.dart'; 

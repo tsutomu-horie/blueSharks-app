@@ -9,6 +9,7 @@ import 'package:koto_blue_sharks/app/views/views/default_header_title_view.dart'
 import 'package:koto_blue_sharks/app/views/views/match/views/match_item_view.dart';
 import 'package:koto_blue_sharks/app/views/views/topic/views/topic_item_view.dart';
 import 'package:koto_blue_sharks/generated/locales.g.dart';
+import 'package:koto_blue_sharks/presentation/main/controllers/main.controller.dart';
 import 'package:koto_blue_sharks/utils/app_color.dart';
 import 'package:koto_blue_sharks/utils/date_formatter.dart';
 import 'package:koto_blue_sharks/utils/map_id_to_categories.dart';
@@ -16,12 +17,14 @@ import 'package:shimmer/shimmer.dart';
 
 import 'controllers/home.controller.dart';
 
-class HomeScreen extends GetView<HomeController> {
-  const HomeScreen({super.key});
+class HomeScreen extends GetView<MainController> {
+  const HomeScreen(this.onOpenDetail, {super.key});
+
+  final Function(int) onOpenDetail;
 
   @override
   Widget build(BuildContext context) {
-    final HomeController controller = Get.put(HomeController());
+    final HomeController homeController = Get.put(HomeController());
 
     return Scaffold(
       body: SingleChildScrollView(
@@ -37,7 +40,7 @@ class HomeScreen extends GetView<HomeController> {
               LocaleKeys.next_match.tr, LocaleKeys.next_match_en.tr),
           Obx(() {
             // Access the observable list value directly
-            final nextMatchData = controller.threeLatestMatch.value;
+            final nextMatchData = homeController.threeLatestMatch.value;
 
             if (nextMatchData.isEmpty) {
               return Text(
@@ -52,7 +55,7 @@ class HomeScreen extends GetView<HomeController> {
                 child: Row(
                   children: nextMatchData.map((element) {
                     final matchStatus =
-                        controller.getStatusMatch(element.custom_field);
+                    homeController.getStatusMatch(element.custom_field);
                     final date = convertJapaneseDate(
                         element.custom_field.gameDate.first);
 
@@ -62,7 +65,7 @@ class HomeScreen extends GetView<HomeController> {
                         element.custom_field.location.isNotEmpty) {
                       return FutureBuilder<String>(
                         future:
-                            controller.getImage(matchStatus["opponentLogo"]),
+                        homeController.getImage(matchStatus["opponentLogo"]),
                         // Wait for the image URL to resolve
                         builder: (context, snapshot) {
                           if (snapshot.connectionState ==
@@ -209,11 +212,11 @@ class HomeScreen extends GetView<HomeController> {
           ),
           DefaultHeaderTitleView(LocaleKeys.featured_topics.tr, LocaleKeys.featured_topics_en.tr),
           Obx(() {
-            final data = controller.topicsData.value;
+            final data = homeController.topicsData.value;
             return Column(
               children: data.map((element) {
                 return FutureBuilder<String>(
-                  future: controller.getNewsImage("${element.id}"),
+                  future: homeController.getNewsImage("${element.id}"),
                   builder: (context, snapshot) {
                     if (snapshot.connectionState == ConnectionState.waiting) {
                       return Padding(
@@ -222,6 +225,10 @@ class HomeScreen extends GetView<HomeController> {
                       );
                     } else if (snapshot.hasError) {
                       return TopicItemView(
+                        (){
+                          print("open ${element.id}");
+                          onOpenDetail(element.id);
+                        },
                         image: null,
                         date: element.date,
                         title: element.title.rendered,
@@ -233,6 +240,9 @@ class HomeScreen extends GetView<HomeController> {
 
                       // Ensure that TopicItemView is returned
                       return TopicItemView(
+                        (){
+                          onOpenDetail(element.id);
+                        },
                         image: postImage,
                         date: element.date,
                         title: element.title.rendered,
