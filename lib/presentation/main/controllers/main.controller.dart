@@ -1,23 +1,6 @@
 import 'package:get/get.dart';
 
 class MainController extends GetxController {
-  //TODO: Implement MainController
-
-  final count = 0.obs;
-  @override
-  void onInit() {
-    super.onInit();
-  }
-
-  @override
-  void onReady() {
-    super.onReady();
-  }
-
-  @override
-  void onClose() {
-    super.onClose();
-  }
-
-  void increment() => count.value++;
+  var selectedIndex = 0.obs;
+  var selectedTopicId = Rx<int?>(null); // Track the selected topic ID
 }
