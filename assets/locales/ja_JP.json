@@ -20,5 +20,9 @@
   "stadium": "Stadium",
   "calendar": "Calendar",
   "topics": "Topics",
-  "topics_en": "トピックス"
+  "topics_en": "トピックス",
+  "ticket_information": "TICKET INFORMATION",
+  "buy_ticket": "チケットを購入",
+  "featured_topics_en": "FEATURED TOPICS",
+  "featured_topics": "情報をピックアップ"
 }

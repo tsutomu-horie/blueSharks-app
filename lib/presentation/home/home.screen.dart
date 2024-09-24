@@ -7,9 +7,11 @@ import 'package:koto_blue_sharks/app/views/views/custom_image_view.dart';
 import 'package:koto_blue_sharks/app/views/views/custom_text_view.dart';
 import 'package:koto_blue_sharks/app/views/views/default_header_title_view.dart';
 import 'package:koto_blue_sharks/app/views/views/match/views/match_item_view.dart';
+import 'package:koto_blue_sharks/app/views/views/topic/views/topic_item_view.dart';
 import 'package:koto_blue_sharks/generated/locales.g.dart';
 import 'package:koto_blue_sharks/utils/app_color.dart';
 import 'package:koto_blue_sharks/utils/date_formatter.dart';
+import 'package:koto_blue_sharks/utils/map_id_to_categories.dart';
 import 'package:shimmer/shimmer.dart';
 
 import 'controllers/home.controller.dart';
@@ -123,60 +125,80 @@ class HomeScreen extends GetView<HomeController> {
               Flexible(
                 child: Stack(
                   children: [
+                    // The background image with border radius
                     ClipRRect(
                       borderRadius: BorderRadius.circular(12.r),
-                      child: Image.asset(
-                        "assets/images/img_banner_ticket.png",
-                      ),
-                    ),
-                    Container(
-                      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 24.h),
                       child: SizedBox(
-                        height: 120.h, // Set a fixed height for the Container
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                SvgPicture.asset(
-                                  "assets/vectors/app_logo_label.svg",
-                                  width: 80.w,
-                                  height: 13.h,
-                                  colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
-                                ),
-                                SizedBox(height: 8.h),
-                                Text(
-                                  "#TICKET INFORMATION",
-                                  style: TextStyle(
-                                    color: TextColor.inverse,
-                                    fontSize: 24.sp,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ],
-                            ),
-
-                            Spacer(), // Spacer will push the button down
-                            ElevatedButton.icon(
-                              onPressed: () {},
-                              label: CustomTextView(
-                                "#チケットを購入",
-                                color: TextColor.primary,
-                                type: TDSFontType.labelMedium,
-                              ),
-                              icon: SvgPicture.asset(
-                                width: 14.w,
-                                "assets/vectors/ic_goods.svg",
-                                colorFilter: ColorFilter.mode(BrandColor.main, BlendMode.srcIn),
-                              ),
-                              style: ButtonStyle(),
-                            ),
-                          ],
+                        width: double.infinity,
+                        child: Image.asset(
+                          "assets/images/img_banner_ticket.png",
+                          fit: BoxFit
+                              .cover, // Ensure the image covers the entire container
                         ),
                       ),
-                    )
-
+                    ),
+                    // The overlaying container that also respects the border radius
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(12.r),
+                      // Apply the same borderRadius here
+                      child: Container(
+                        padding: EdgeInsets.symmetric(
+                            horizontal: 16.w, vertical: 24.h),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(12.r),
+                          // Ensure the radius is applied
+                          color: Colors.black.withOpacity(
+                              0.5), // Optional: add some background overlay color
+                        ),
+                        child: SizedBox(
+                          width: double.infinity,
+                          height: 120.h,
+                          // Set a fixed height for the Container
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  SvgPicture.asset(
+                                    "assets/vectors/app_logo_label.svg",
+                                    width: 80.w,
+                                    height: 13.h,
+                                    colorFilter: const ColorFilter.mode(
+                                        Colors.white, BlendMode.srcIn),
+                                  ),
+                                  SizedBox(height: 8.h),
+                                  Text(
+                                    LocaleKeys.ticket_information.tr,
+                                    style: TextStyle(
+                                      color: TextColor.inverse,
+                                      fontSize: 24.sp,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              Spacer(), // Spacer will push the button down
+                              ElevatedButton.icon(
+                                onPressed: () {},
+                                label: CustomTextView(
+                                  LocaleKeys.buy_ticket.tr,
+                                  color: TextColor.primary,
+                                  type: TDSFontType.labelMedium,
+                                ),
+                                icon: SvgPicture.asset(
+                                  width: 14.w,
+                                  "assets/vectors/ic_goods.svg",
+                                  colorFilter: ColorFilter.mode(
+                                      BrandColor.main, BlendMode.srcIn),
+                                ),
+                                style: const ButtonStyle(),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -185,6 +207,43 @@ class HomeScreen extends GetView<HomeController> {
               ),
             ],
           ),
+          DefaultHeaderTitleView(LocaleKeys.featured_topics.tr, LocaleKeys.featured_topics_en.tr),
+          Obx(() {
+            final data = controller.topicsData.value;
+            return Column(
+              children: data.map((element) {
+                return FutureBuilder<String>(
+                  future: controller.getNewsImage("${element.id}"),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return Padding(
+                        padding: EdgeInsets.only(right: 12.w),
+                        child: shimmer(),
+                      );
+                    } else if (snapshot.hasError) {
+                      return TopicItemView(
+                        image: null,
+                        date: element.date,
+                        title: element.title.rendered,
+                        categories: mapCategoryIdsToNames(element.categories),
+                      );
+                    } else {
+                      final postImage = snapshot.data ??
+                          'https://example.com/placeholder.png'; // Fallback in case of null
+
+                      // Ensure that TopicItemView is returned
+                      return TopicItemView(
+                        image: postImage,
+                        date: element.date,
+                        title: element.title.rendered,
+                        categories: mapCategoryIdsToNames(element.categories),
+                      );
+                    }
+                  },
+                );
+              }).toList(), // Convert the Iterable to a List<Widget>
+            );
+          }),
         ],
       )),
     );

@@ -27,6 +27,7 @@ mixin _$Post {
   PostTitle get title => throw _privateConstructorUsedError;
   PostContent get content => throw _privateConstructorUsedError;
   PostExcerpt get excerpt => throw _privateConstructorUsedError;
+  List<int> get categories => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
   @JsonKey(ignore: true)
@@ -45,7 +46,8 @@ abstract class $PostCopyWith<$Res> {
       String link,
       PostTitle title,
       PostContent content,
-      PostExcerpt excerpt});
+      PostExcerpt excerpt,
+      List<int> categories});
 
   $PostTitleCopyWith<$Res> get title;
   $PostContentCopyWith<$Res> get content;
@@ -72,6 +74,7 @@ class _$PostCopyWithImpl<$Res, $Val extends Post>
     Object? title = null,
     Object? content = null,
     Object? excerpt = null,
+    Object? categories = null,
   }) {
     return _then(_value.copyWith(
       id: null == id
@@ -102,6 +105,10 @@ class _$PostCopyWithImpl<$Res, $Val extends Post>
           ? _value.excerpt
           : excerpt // ignore: cast_nullable_to_non_nullable
               as PostExcerpt,
+      categories: null == categories
+          ? _value.categories
+          : categories // ignore: cast_nullable_to_non_nullable
+              as List<int>,
     ) as $Val);
   }
 
@@ -144,7 +151,8 @@ abstract class _$$PostImplCopyWith<$Res> implements $PostCopyWith<$Res> {
       String link,
       PostTitle title,
       PostContent content,
-      PostExcerpt excerpt});
+      PostExcerpt excerpt,
+      List<int> categories});
 
   @override
   $PostTitleCopyWith<$Res> get title;
@@ -171,6 +179,7 @@ class __$$PostImplCopyWithImpl<$Res>
     Object? title = null,
     Object? content = null,
     Object? excerpt = null,
+    Object? categories = null,
   }) {
     return _then(_$PostImpl(
       id: null == id
@@ -201,6 +210,10 @@ class __$$PostImplCopyWithImpl<$Res>
           ? _value.excerpt
           : excerpt // ignore: cast_nullable_to_non_nullable
               as PostExcerpt,
+      categories: null == categories
+          ? _value._categories
+          : categories // ignore: cast_nullable_to_non_nullable
+              as List<int>,
     ));
   }
 }
@@ -215,7 +228,9 @@ class _$PostImpl implements _Post {
       required this.link,
       required this.title,
       required this.content,
-      required this.excerpt});
+      required this.excerpt,
+      required final List<int> categories})
+      : _categories = categories;
 
   factory _$PostImpl.fromJson(Map<String, dynamic> json) =>
       _$$PostImplFromJson(json);
@@ -234,10 +249,17 @@ class _$PostImpl implements _Post {
   final PostContent content;
   @override
   final PostExcerpt excerpt;
+  final List<int> _categories;
+  @override
+  List<int> get categories {
+    if (_categories is EqualUnmodifiableListView) return _categories;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_categories);
+  }
 
   @override
   String toString() {
-    return 'Post(id: $id, date: $date, slug: $slug, link: $link, title: $title, content: $content, excerpt: $excerpt)';
+    return 'Post(id: $id, date: $date, slug: $slug, link: $link, title: $title, content: $content, excerpt: $excerpt, categories: $categories)';
   }
 
   @override
@@ -251,13 +273,15 @@ class _$PostImpl implements _Post {
             (identical(other.link, link) || other.link == link) &&
             (identical(other.title, title) || other.title == title) &&
             (identical(other.content, content) || other.content == content) &&
-            (identical(other.excerpt, excerpt) || other.excerpt == excerpt));
+            (identical(other.excerpt, excerpt) || other.excerpt == excerpt) &&
+            const DeepCollectionEquality()
+                .equals(other._categories, _categories));
   }
 
   @JsonKey(ignore: true)
   @override
-  int get hashCode =>
-      Object.hash(runtimeType, id, date, slug, link, title, content, excerpt);
+  int get hashCode => Object.hash(runtimeType, id, date, slug, link, title,
+      content, excerpt, const DeepCollectionEquality().hash(_categories));
 
   @JsonKey(ignore: true)
   @override
@@ -281,7 +305,8 @@ abstract class _Post implements Post {
       required final String link,
       required final PostTitle title,
       required final PostContent content,
-      required final PostExcerpt excerpt}) = _$PostImpl;
+      required final PostExcerpt excerpt,
+      required final List<int> categories}) = _$PostImpl;
 
   factory _Post.fromJson(Map<String, dynamic> json) = _$PostImpl.fromJson;
 
@@ -299,6 +324,8 @@ abstract class _Post implements Post {
   PostContent get content;
   @override
   PostExcerpt get excerpt;
+  @override
+  List<int> get categories;
   @override
   @JsonKey(ignore: true)
   _$$PostImplCopyWith<_$PostImpl> get copyWith =>

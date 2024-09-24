@@ -25,7 +25,8 @@ class InfoScreen extends GetView<InfoController> {
 
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: PrimaryColor.hover, // Replace with your BrandColor.hover
+        backgroundColor: PrimaryColor.hover,
+        // Replace with your BrandColor.hover
         toolbarHeight: 44.h,
         titleSpacing: 0,
         title: SingleChildScrollView(
@@ -37,8 +38,8 @@ class InfoScreen extends GetView<InfoController> {
                 child: Obx(() {
                   return AnimatedContainer(
                     duration: const Duration(milliseconds: 300),
-                    padding: EdgeInsets.symmetric(horizontal: 16.w,
-                        vertical: 12.h),
+                    padding:
+                        EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
                     decoration: BoxDecoration(
                       border: Border(
                         bottom: BorderSide(
@@ -54,8 +55,9 @@ class InfoScreen extends GetView<InfoController> {
                       style: TextStyle(
                         fontSize: 14.sp,
                         fontWeight: FontWeight.w500,
-                        color: controller.selectedIndex.value == index ? Colors
-                            .white : PrimaryColor.border, // Selected/Unselected Color
+                        color: controller.selectedIndex.value == index
+                            ? Colors.white
+                            : PrimaryColor.border, // Selected/Unselected Color
                       ),
                     ),
                   );
@@ -65,19 +67,18 @@ class InfoScreen extends GetView<InfoController> {
           ),
         ),
       ),
-      body:
-             PageView(
-          controller: controller.pageController,
-          onPageChanged: controller.onPageChanged, // Sync tab with page
-          children: [
-            ListTopicsScreen(),
-            Center(child: Text("Game Info")),
-            Center(child: Text("Player")),
-            Center(child: Text("Team")),
-            Center(child: Text("Gallery")),
-            Center(child: Text("Partner")),
-          ],
-        ),
+      body: PageView(
+        controller: controller.pageController,
+        onPageChanged: controller.onPageChanged, // Sync tab with page
+        children: [
+          ListTopicsScreen(),
+          Center(child: Text("Game Info")),
+          Center(child: Text("Player")),
+          Center(child: Text("Team")),
+          Center(child: Text("Gallery")),
+          Center(child: Text("Partner")),
+        ],
+      ),
     );
   }
 }
