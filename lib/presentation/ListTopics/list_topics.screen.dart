@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import 'package:get/get.dart';
+import 'package:koto_blue_sharks/app/data/models/info/post.dart';
 import 'package:koto_blue_sharks/app/views/views/custom_text_view.dart';
 import 'package:koto_blue_sharks/app/views/views/default_header_title_view.dart';
 import 'package:koto_blue_sharks/app/views/views/topic/views/topic_item_view.dart';
@@ -16,7 +17,7 @@ class ListTopicsScreen  extends StatelessWidget {
   final Rx<int?> selectedTopicId = Rx<int?>(null);
 
   ListTopicsScreen({super.key, required this.onOpenDetail}); // Observable to store the selected topic ID
-  final Function(int) onOpenDetail;
+  final Function(Post) onOpenDetail;
 
   @override
   Widget build(BuildContext context) {
@@ -48,8 +49,7 @@ class ListTopicsScreen  extends StatelessWidget {
                   children: [
                     Container(
                       color: const Color(0xFFFAFAFA),
-                      child: DefaultHeaderTitleView(
-                          LocaleKeys.topics_en.tr, LocaleKeys.topics.tr),
+                      child: DefaultHeaderTitleView(LocaleKeys.topics.tr, LocaleKeys.topics_en.tr.toUpperCase()),
                     ),
                     Container(
                       color: BorderColor.primary,
@@ -141,7 +141,7 @@ class ListTopicsScreen  extends StatelessWidget {
                               return TopicItemView(
                                 (){
                                   print("tapp TopicItemView ");
-                                  onOpenDetail(data[itemIndex].id);
+                                  onOpenDetail(data[itemIndex]);
                                 },
                                 image: null,
                                 date: data[itemIndex].date,
@@ -155,7 +155,7 @@ class ListTopicsScreen  extends StatelessWidget {
                               // Ensure that TopicItemView is returned
                               return TopicItemView(
                                 (){
-                                  onOpenDetail(data[itemIndex].id);
+                                  onOpenDetail(data[itemIndex]);
                                 },
                                 image: postImage,
                                 date: data[itemIndex].date,
@@ -165,11 +165,6 @@ class ListTopicsScreen  extends StatelessWidget {
                             }
                           },
                         );
-                        // return ListTile(
-                        //   title: Text(data[itemIndex].title.rendered),
-                        //   // Customize the display here
-                        //   subtitle: Text(data[itemIndex].date),
-                        // );
                       },
                     );
                   });

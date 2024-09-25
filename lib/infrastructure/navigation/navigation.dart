@@ -73,7 +73,7 @@ class Nav {
     ),
     GetPage(
       name: Routes.DETAIL_INFO,
-      page: () => const DetailInfoScreen(),
+      page: () => DetailInfoScreen((){}, null),
       binding: DetailInfoControllerBinding(),
     ),
   ];

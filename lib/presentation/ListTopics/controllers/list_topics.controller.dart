@@ -119,13 +119,6 @@ class ListTopicsController extends GetxController {
   }
 
   void changeTab(int index) async {
-    // pageController.animateToPage(
-    //   index,
-    //   duration: Duration(milliseconds: 300),
-    //   curve: Curves.easeInOut,
-    // );
-    //
-    // await Future.delayed(Duration(milliseconds: 300)); // Add delay of 200ms
     selectedIndex.value = index; // Update selected tab index after the delay
 
     selectedIndex.value = index;

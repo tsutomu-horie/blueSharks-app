@@ -36,6 +36,7 @@ class LocaleKeys {
   static const buy_ticket = 'buy_ticket';
   static const featured_topics_en = 'featured_topics_en';
   static const featured_topics = 'featured_topics';
+  static const back_to_list = 'back_to_list';
 }
 
 class Locales {
@@ -60,11 +61,12 @@ class Locales {
     'my_page': 'My Page',
     'stadium': 'Stadium',
     'calendar': 'Calendar',
-    'topics': 'Topics',
-    'topics_en': 'トピックス',
+    'topics': 'トピックス',
+    'topics_en': 'Topics',
     'ticket_information': 'TICKET INFORMATION',
     'buy_ticket': 'チケットを購入',
     'featured_topics_en': 'FEATURED TOPICS',
     'featured_topics': '情報をピックアップ',
+    'back_to_list': 'リストに戻る',
   };
 }

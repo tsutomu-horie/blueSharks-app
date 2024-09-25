@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 import 'package:get/get.dart';
+import 'package:koto_blue_sharks/app/data/models/info/post.dart';
 import 'package:koto_blue_sharks/app/views/views/custom_image_view.dart';
 import 'package:koto_blue_sharks/app/views/views/custom_text_view.dart';
 import 'package:koto_blue_sharks/app/views/views/default_header_title_view.dart';
@@ -20,7 +21,7 @@ import 'controllers/home.controller.dart';
 class HomeScreen extends GetView<MainController> {
   const HomeScreen(this.onOpenDetail, {super.key});
 
-  final Function(int) onOpenDetail;
+  final Function(Post) onOpenDetail;
 
   @override
   Widget build(BuildContext context) {
@@ -227,7 +228,7 @@ class HomeScreen extends GetView<MainController> {
                       return TopicItemView(
                         (){
                           print("open ${element.id}");
-                          onOpenDetail(element.id);
+                          onOpenDetail(element);
                         },
                         image: null,
                         date: element.date,
@@ -241,7 +242,7 @@ class HomeScreen extends GetView<MainController> {
                       // Ensure that TopicItemView is returned
                       return TopicItemView(
                         (){
-                          onOpenDetail(element.id);
+                          onOpenDetail(element);
                         },
                         image: postImage,
                         date: element.date,

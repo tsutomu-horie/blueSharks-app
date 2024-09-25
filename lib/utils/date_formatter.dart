@@ -1,8 +1,10 @@
+import 'package:intl/date_symbol_data_local.dart';
 import 'package:intl/intl.dart';
 
 Map<String, String> convertJapaneseDate(String japaneseDate) {
   // Regular expression to extract the date and day of the week
   final RegExp dateRegExp = RegExp(r'(\d{4})年(\d{2})月(\d{2})日（(.+)）');
+  print("convertData to = ${japaneseDate}");
 
   // Extract year, month, day, and day of the week
   final match = dateRegExp.firstMatch(japaneseDate);
@@ -41,4 +43,19 @@ Map<String, String> convertJapaneseDate(String japaneseDate) {
   } else {
     throw FormatException('Invalid Japanese date format');
   }
+}
+
+Future<String>  convertToJapaneseFormat(String dateString) async {
+  // Parse the input string into a DateTime object
+  await initializeDateFormatting('ja', null);
+
+  // Parse the input string into a DateTime object
+  DateTime dateTime = DateTime.parse(dateString);
+
+  // Manual formatting to add 年, 月, 日 symbols
+  String year = DateFormat.y('ja').format(dateTime);
+  String month = DateFormat.M('ja').format(dateTime);
+  String day = DateFormat.d('ja').format(dateTime);
+
+  return '$year $month $day';
 }

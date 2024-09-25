@@ -1,23 +1,20 @@
 import 'package:get/get.dart';
+import 'package:koto_blue_sharks/app/data/api/media/media_provider.dart';
 
 class DetailInfoController extends GetxController {
-  //TODO: Implement DetailInfoController
+  final MediaProvider mediaProvider = MediaProvider();
 
-  final count = 0.obs;
   @override
   void onInit() {
     super.onInit();
+    mediaProvider.onInit();
   }
 
-  @override
-  void onReady() {
-    super.onReady();
+  Future<String> getNewsImage(String mediaId) async {
+    final imageData = await mediaProvider.fetchParentMedia(mediaId);
+    print("GET NEWS IMAGE ${imageData}");
+    final image = imageData?.media_details.sizes.thumbnail.source_url;
+    print("GET NEWS IMAGE ${mediaId}, ${image}");
+    return image ?? "";
   }
-
-  @override
-  void onClose() {
-    super.onClose();
-  }
-
-  void increment() => count.value++;
 }

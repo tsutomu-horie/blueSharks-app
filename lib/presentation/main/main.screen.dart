@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 import 'package:get/get.dart';
+import 'package:koto_blue_sharks/app/data/models/info/post.dart';
 import 'package:koto_blue_sharks/app/views/views/custom_text_view.dart';
 import 'package:koto_blue_sharks/generated/locales.g.dart';
 import 'package:koto_blue_sharks/presentation/home/controllers/home.controller.dart';
@@ -24,18 +25,14 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> {
   final MainController controller = Get.put(MainController());
 
-  void selectTopic(int? id) {
-    print("selectTopic $id");
-    controller.selectedTopicId.value = id;
-    if (id != null) {
-      controller.selectedIndex.value =
-      1; // Set the bottom nav index to 1 (Topics tab)
+  void selectTopic(Post? data) {
+    print("selectTopic ${data?.id}");
+    controller.selectedTopicId.value = data?.id;
+    if (data?.id != null) {
+      controller.selectedIndex.value = 1; // Set the bottom nav index to 1 (Topics tab)
+      controller.selectedPost.value = data;
     }
   }
-
-  // _selectedIndex = 0.obs;
-  // var selectedTopicId = Rx<int?>(null); // Track the selected topic ID
-
 
   void _onItemTapped(int index) {
     setState(() {
@@ -157,7 +154,9 @@ class _MainScreenState extends State<MainScreen> {
             ],
           ),
         ),
-        body: controller.selectedTopicId.value == null ? _pages[controller.selectedIndex.value] : DetailInfoScreen(),
+        body: controller.selectedTopicId.value == null ? _pages[controller.selectedIndex.value] : DetailInfoScreen((){
+          selectTopic(null);
+        }, controller.selectedPost.value),
         // Display the selected page
         bottomNavigationBar: Obx(() {
           return BottomNavigationBar(
