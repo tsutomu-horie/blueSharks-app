@@ -8,6 +8,7 @@ import 'package:koto_blue_sharks/app/views/views/custom_image_view.dart';
 import 'package:koto_blue_sharks/app/views/views/custom_text_view.dart';
 import 'package:koto_blue_sharks/app/views/views/default_header_title_view.dart';
 import 'package:koto_blue_sharks/app/views/views/match/views/match_item_view.dart';
+import 'package:koto_blue_sharks/app/views/views/other/views/video_thumbnail_view.dart';
 import 'package:koto_blue_sharks/app/views/views/topic/views/topic_item_view.dart';
 import 'package:koto_blue_sharks/generated/locales.g.dart';
 import 'package:koto_blue_sharks/presentation/main/controllers/main.controller.dart';
@@ -19,9 +20,10 @@ import 'package:shimmer/shimmer.dart';
 import 'controllers/home.controller.dart';
 
 class HomeScreen extends GetView<MainController> {
-  const HomeScreen(this.onOpenDetail, {super.key});
+  const HomeScreen(this.onOpenDetail, this.navigateToInfoList, {super.key});
 
   final Function(Post) onOpenDetail;
+  final Function() navigateToInfoList;
 
   @override
   Widget build(BuildContext context) {
@@ -256,6 +258,28 @@ class HomeScreen extends GetView<MainController> {
               }).toList(), // Convert the Iterable to a List<Widget>
             );
           }),
+          Padding(
+            padding: EdgeInsets.symmetric(vertical: 12.h, horizontal: 16.w),
+            child: Flexible(
+              child: SizedBox(
+                width: double.infinity,
+                child: OutlinedButton(
+                  onPressed: () {
+                    navigateToInfoList();
+                  },
+                  child: CustomTextView(
+                    LocaleKeys.see_more.tr,
+                    type: TDSFontType.bodyTextMedium,
+                    color: TextColor.primary,
+                  ),
+                ),
+              ),
+            ),
+          ),
+          Container(height: 1.h, color: BorderColor.primary,),
+          DefaultHeaderTitleView(LocaleKeys.promotion_video.tr, LocaleKeys.promotion_video_en.tr),
+          const VideoThumbnailView(),
+
         ],
       )),
     );
