@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_html/flutter_html.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:flutter_widget_from_html/flutter_widget_from_html.dart';
 
 import 'package:get/get.dart';
 import 'package:koto_blue_sharks/app/views/views/custom_image_view.dart';
@@ -101,8 +102,7 @@ class MatchItemView extends GetView {
                   SizedBox(
                     width: 10.w,
                   ),
-                  CustomTextView(formatLocation(location),
-                      color: TextColor.inverse),
+                  CustomTextView(formatLocation(location),color: TextColor.inverse),
                 ],
               ),
             ),
@@ -113,8 +113,16 @@ class MatchItemView extends GetView {
   }
 
   String formatLocation(String title) {
-    print(title);
+    // Replace all occurrences of "／" with "・"
     final formattedTitle = title.replaceAll("／", "・");
+
+    // Check if the title contains <br> and split if it does
+    if (formattedTitle.contains("<br>")) {
+      // Split the string at <br> and return the text before <br>
+      return formattedTitle.split("<br>").first.trim();
+    }
+
+    // Return the formatted title if <br> is not found
     return formattedTitle;
   }
 }

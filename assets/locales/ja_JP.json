@@ -8,6 +8,7 @@
   "user_registration": "User Registration",
   "register_user_title": "江東ブルーシャークアプリに会員登録する",
   "register_user_desc": "アプリで現在のメンバーシップを取得するには、現在のアクティブなメンバーシップを入力するだけで済みます。",
+  "new_title": "New",
   "fan_club": "Fan Club",
   "ticket": "Ticket",
   "goods": "Goods",
@@ -25,5 +26,8 @@
   "buy_ticket": "チケットを購入",
   "featured_topics_en": "FEATURED TOPICS",
   "featured_topics": "情報をピックアップ",
-  "back_to_list": "リストに戻る"
+  "back_to_list": "リストに戻る",
+  "game_info": "試合日程・結果",
+  "game_info_en": "GAME INFO",
+  "select": "選択"
 }

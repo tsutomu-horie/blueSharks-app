@@ -14,7 +14,7 @@ class HomeController extends GetxController {
   final MediaProvider mediaProvider = MediaProvider();
   final InfoProvider infoProvider = InfoProvider();
   final Rx<List<MatchResultBySeason>> threeLatestMatch =
-      Rx<List<MatchResultBySeason>>([]);
+  Rx<List<MatchResultBySeason>>([]);
   final text = "".obs;
   final Rx<List<Post>> topicsData = Rx([]);
 
@@ -138,20 +138,24 @@ class HomeController extends GetxController {
   * This Function will return isHome, opponentLogo, opponentName
   * */
   Map<String, dynamic> getStatusMatch(CustomField customField) {
-    final isHome = customField.team_1.first.contains(Constants.teamName);
+    final team1 = customField.team_1 ?? [];
+    final team2 = customField.team_2 ?? [];
+    final team2Logo = customField.team_logo_2 ?? [];
 
-    print("get status ${isHome} ${customField.team_1.first}");
+    final isHome = team1.first.contains(Constants.teamName);
+
+    print("get status ${isHome} ${team1.first}");
     if (isHome) {
       return {
         'isHome': true,
-        'opponentLogo': customField.team_logo_2.first,
-        'opponentName': customField.team_2.first,
+        'opponentLogo': team2Logo.first,
+        'opponentName': team2.first,
       };
     } else {
       return {
         'isHome': false,
         'opponentLogo': customField.team_logo_1?.first,
-        'opponentName': customField.team_1.first,
+        'opponentName': team1.first,
       };
     }
   }

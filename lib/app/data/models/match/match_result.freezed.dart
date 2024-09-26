@@ -963,14 +963,14 @@ CustomField _$CustomFieldFromJson(Map<String, dynamic> json) {
 /// @nodoc
 mixin _$CustomField {
   @JsonKey(name: 'game_date')
-  List<String> get gameDate => throw _privateConstructorUsedError;
+  List<String>? get gameDate => throw _privateConstructorUsedError;
   @JsonKey(name: 'game_time')
-  List<String> get gameTime => throw _privateConstructorUsedError;
-  List<String> get location => throw _privateConstructorUsedError;
-  List<String> get team_1 => throw _privateConstructorUsedError;
+  List<String>? get gameTime => throw _privateConstructorUsedError;
+  List<String>? get location => throw _privateConstructorUsedError;
+  List<String>? get team_1 => throw _privateConstructorUsedError;
   List<String>? get team_logo_1 => throw _privateConstructorUsedError;
-  List<String> get team_2 => throw _privateConstructorUsedError;
-  List<String> get team_logo_2 => throw _privateConstructorUsedError;
+  List<String>? get team_2 => throw _privateConstructorUsedError;
+  List<String>? get team_logo_2 => throw _privateConstructorUsedError;
   List<String>? get game_result => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -986,13 +986,13 @@ abstract class $CustomFieldCopyWith<$Res> {
       _$CustomFieldCopyWithImpl<$Res, CustomField>;
   @useResult
   $Res call(
-      {@JsonKey(name: 'game_date') List<String> gameDate,
-      @JsonKey(name: 'game_time') List<String> gameTime,
-      List<String> location,
-      List<String> team_1,
+      {@JsonKey(name: 'game_date') List<String>? gameDate,
+      @JsonKey(name: 'game_time') List<String>? gameTime,
+      List<String>? location,
+      List<String>? team_1,
       List<String>? team_logo_1,
-      List<String> team_2,
-      List<String> team_logo_2,
+      List<String>? team_2,
+      List<String>? team_logo_2,
       List<String>? game_result});
 }
 
@@ -1009,44 +1009,44 @@ class _$CustomFieldCopyWithImpl<$Res, $Val extends CustomField>
   @pragma('vm:prefer-inline')
   @override
   $Res call({
-    Object? gameDate = null,
-    Object? gameTime = null,
-    Object? location = null,
-    Object? team_1 = null,
+    Object? gameDate = freezed,
+    Object? gameTime = freezed,
+    Object? location = freezed,
+    Object? team_1 = freezed,
     Object? team_logo_1 = freezed,
-    Object? team_2 = null,
-    Object? team_logo_2 = null,
+    Object? team_2 = freezed,
+    Object? team_logo_2 = freezed,
     Object? game_result = freezed,
   }) {
     return _then(_value.copyWith(
-      gameDate: null == gameDate
+      gameDate: freezed == gameDate
           ? _value.gameDate
           : gameDate // ignore: cast_nullable_to_non_nullable
-              as List<String>,
-      gameTime: null == gameTime
+              as List<String>?,
+      gameTime: freezed == gameTime
           ? _value.gameTime
           : gameTime // ignore: cast_nullable_to_non_nullable
-              as List<String>,
-      location: null == location
+              as List<String>?,
+      location: freezed == location
           ? _value.location
           : location // ignore: cast_nullable_to_non_nullable
-              as List<String>,
-      team_1: null == team_1
+              as List<String>?,
+      team_1: freezed == team_1
           ? _value.team_1
           : team_1 // ignore: cast_nullable_to_non_nullable
-              as List<String>,
+              as List<String>?,
       team_logo_1: freezed == team_logo_1
           ? _value.team_logo_1
           : team_logo_1 // ignore: cast_nullable_to_non_nullable
               as List<String>?,
-      team_2: null == team_2
+      team_2: freezed == team_2
           ? _value.team_2
           : team_2 // ignore: cast_nullable_to_non_nullable
-              as List<String>,
-      team_logo_2: null == team_logo_2
+              as List<String>?,
+      team_logo_2: freezed == team_logo_2
           ? _value.team_logo_2
           : team_logo_2 // ignore: cast_nullable_to_non_nullable
-              as List<String>,
+              as List<String>?,
       game_result: freezed == game_result
           ? _value.game_result
           : game_result // ignore: cast_nullable_to_non_nullable
@@ -1064,13 +1064,13 @@ abstract class _$$CustomFieldImplCopyWith<$Res>
   @override
   @useResult
   $Res call(
-      {@JsonKey(name: 'game_date') List<String> gameDate,
-      @JsonKey(name: 'game_time') List<String> gameTime,
-      List<String> location,
-      List<String> team_1,
+      {@JsonKey(name: 'game_date') List<String>? gameDate,
+      @JsonKey(name: 'game_time') List<String>? gameTime,
+      List<String>? location,
+      List<String>? team_1,
       List<String>? team_logo_1,
-      List<String> team_2,
-      List<String> team_logo_2,
+      List<String>? team_2,
+      List<String>? team_logo_2,
       List<String>? game_result});
 }
 
@@ -1085,44 +1085,44 @@ class __$$CustomFieldImplCopyWithImpl<$Res>
   @pragma('vm:prefer-inline')
   @override
   $Res call({
-    Object? gameDate = null,
-    Object? gameTime = null,
-    Object? location = null,
-    Object? team_1 = null,
+    Object? gameDate = freezed,
+    Object? gameTime = freezed,
+    Object? location = freezed,
+    Object? team_1 = freezed,
     Object? team_logo_1 = freezed,
-    Object? team_2 = null,
-    Object? team_logo_2 = null,
+    Object? team_2 = freezed,
+    Object? team_logo_2 = freezed,
     Object? game_result = freezed,
   }) {
     return _then(_$CustomFieldImpl(
-      gameDate: null == gameDate
+      gameDate: freezed == gameDate
           ? _value._gameDate
           : gameDate // ignore: cast_nullable_to_non_nullable
-              as List<String>,
-      gameTime: null == gameTime
+              as List<String>?,
+      gameTime: freezed == gameTime
           ? _value._gameTime
           : gameTime // ignore: cast_nullable_to_non_nullable
-              as List<String>,
-      location: null == location
+              as List<String>?,
+      location: freezed == location
           ? _value._location
           : location // ignore: cast_nullable_to_non_nullable
-              as List<String>,
-      team_1: null == team_1
+              as List<String>?,
+      team_1: freezed == team_1
           ? _value._team_1
           : team_1 // ignore: cast_nullable_to_non_nullable
-              as List<String>,
+              as List<String>?,
       team_logo_1: freezed == team_logo_1
           ? _value._team_logo_1
           : team_logo_1 // ignore: cast_nullable_to_non_nullable
               as List<String>?,
-      team_2: null == team_2
+      team_2: freezed == team_2
           ? _value._team_2
           : team_2 // ignore: cast_nullable_to_non_nullable
-              as List<String>,
-      team_logo_2: null == team_logo_2
+              as List<String>?,
+      team_logo_2: freezed == team_logo_2
           ? _value._team_logo_2
           : team_logo_2 // ignore: cast_nullable_to_non_nullable
-              as List<String>,
+              as List<String>?,
       game_result: freezed == game_result
           ? _value._game_result
           : game_result // ignore: cast_nullable_to_non_nullable
@@ -1135,13 +1135,13 @@ class __$$CustomFieldImplCopyWithImpl<$Res>
 @JsonSerializable()
 class _$CustomFieldImpl implements _CustomField {
   _$CustomFieldImpl(
-      {@JsonKey(name: 'game_date') required final List<String> gameDate,
-      @JsonKey(name: 'game_time') required final List<String> gameTime,
-      required final List<String> location,
-      required final List<String> team_1,
+      {@JsonKey(name: 'game_date') required final List<String>? gameDate,
+      @JsonKey(name: 'game_time') required final List<String>? gameTime,
+      required final List<String>? location,
+      required final List<String>? team_1,
       final List<String>? team_logo_1,
-      required final List<String> team_2,
-      required final List<String> team_logo_2,
+      required final List<String>? team_2,
+      required final List<String>? team_logo_2,
       required final List<String>? game_result})
       : _gameDate = gameDate,
         _gameTime = gameTime,
@@ -1155,38 +1155,46 @@ class _$CustomFieldImpl implements _CustomField {
   factory _$CustomFieldImpl.fromJson(Map<String, dynamic> json) =>
       _$$CustomFieldImplFromJson(json);
 
-  final List<String> _gameDate;
+  final List<String>? _gameDate;
   @override
   @JsonKey(name: 'game_date')
-  List<String> get gameDate {
+  List<String>? get gameDate {
+    final value = _gameDate;
+    if (value == null) return null;
     if (_gameDate is EqualUnmodifiableListView) return _gameDate;
     // ignore: implicit_dynamic_type
-    return EqualUnmodifiableListView(_gameDate);
+    return EqualUnmodifiableListView(value);
   }
 
-  final List<String> _gameTime;
+  final List<String>? _gameTime;
   @override
   @JsonKey(name: 'game_time')
-  List<String> get gameTime {
+  List<String>? get gameTime {
+    final value = _gameTime;
+    if (value == null) return null;
     if (_gameTime is EqualUnmodifiableListView) return _gameTime;
     // ignore: implicit_dynamic_type
-    return EqualUnmodifiableListView(_gameTime);
+    return EqualUnmodifiableListView(value);
   }
 
-  final List<String> _location;
+  final List<String>? _location;
   @override
-  List<String> get location {
+  List<String>? get location {
+    final value = _location;
+    if (value == null) return null;
     if (_location is EqualUnmodifiableListView) return _location;
     // ignore: implicit_dynamic_type
-    return EqualUnmodifiableListView(_location);
+    return EqualUnmodifiableListView(value);
   }
 
-  final List<String> _team_1;
+  final List<String>? _team_1;
   @override
-  List<String> get team_1 {
+  List<String>? get team_1 {
+    final value = _team_1;
+    if (value == null) return null;
     if (_team_1 is EqualUnmodifiableListView) return _team_1;
     // ignore: implicit_dynamic_type
-    return EqualUnmodifiableListView(_team_1);
+    return EqualUnmodifiableListView(value);
   }
 
   final List<String>? _team_logo_1;
@@ -1199,20 +1207,24 @@ class _$CustomFieldImpl implements _CustomField {
     return EqualUnmodifiableListView(value);
   }
 
-  final List<String> _team_2;
+  final List<String>? _team_2;
   @override
-  List<String> get team_2 {
+  List<String>? get team_2 {
+    final value = _team_2;
+    if (value == null) return null;
     if (_team_2 is EqualUnmodifiableListView) return _team_2;
     // ignore: implicit_dynamic_type
-    return EqualUnmodifiableListView(_team_2);
+    return EqualUnmodifiableListView(value);
   }
 
-  final List<String> _team_logo_2;
+  final List<String>? _team_logo_2;
   @override
-  List<String> get team_logo_2 {
+  List<String>? get team_logo_2 {
+    final value = _team_logo_2;
+    if (value == null) return null;
     if (_team_logo_2 is EqualUnmodifiableListView) return _team_logo_2;
     // ignore: implicit_dynamic_type
-    return EqualUnmodifiableListView(_team_logo_2);
+    return EqualUnmodifiableListView(value);
   }
 
   final List<String>? _game_result;
@@ -1277,13 +1289,13 @@ class _$CustomFieldImpl implements _CustomField {
 
 abstract class _CustomField implements CustomField {
   factory _CustomField(
-      {@JsonKey(name: 'game_date') required final List<String> gameDate,
-      @JsonKey(name: 'game_time') required final List<String> gameTime,
-      required final List<String> location,
-      required final List<String> team_1,
+      {@JsonKey(name: 'game_date') required final List<String>? gameDate,
+      @JsonKey(name: 'game_time') required final List<String>? gameTime,
+      required final List<String>? location,
+      required final List<String>? team_1,
       final List<String>? team_logo_1,
-      required final List<String> team_2,
-      required final List<String> team_logo_2,
+      required final List<String>? team_2,
+      required final List<String>? team_logo_2,
       required final List<String>? game_result}) = _$CustomFieldImpl;
 
   factory _CustomField.fromJson(Map<String, dynamic> json) =
@@ -1291,20 +1303,20 @@ abstract class _CustomField implements CustomField {
 
   @override
   @JsonKey(name: 'game_date')
-  List<String> get gameDate;
+  List<String>? get gameDate;
   @override
   @JsonKey(name: 'game_time')
-  List<String> get gameTime;
+  List<String>? get gameTime;
   @override
-  List<String> get location;
+  List<String>? get location;
   @override
-  List<String> get team_1;
+  List<String>? get team_1;
   @override
   List<String>? get team_logo_1;
   @override
-  List<String> get team_2;
+  List<String>? get team_2;
   @override
-  List<String> get team_logo_2;
+  List<String>? get team_logo_2;
   @override
   List<String>? get game_result;
   @override

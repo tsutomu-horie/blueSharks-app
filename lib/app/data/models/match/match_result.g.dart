@@ -91,21 +91,24 @@ Map<String, dynamic> _$$MatchResultBySeasonImplToJson(
 
 _$CustomFieldImpl _$$CustomFieldImplFromJson(Map<String, dynamic> json) =>
     _$CustomFieldImpl(
-      gameDate:
-          (json['game_date'] as List<dynamic>).map((e) => e as String).toList(),
-      gameTime:
-          (json['game_time'] as List<dynamic>).map((e) => e as String).toList(),
-      location:
-          (json['location'] as List<dynamic>).map((e) => e as String).toList(),
+      gameDate: (json['game_date'] as List<dynamic>?)
+          ?.map((e) => e as String)
+          .toList(),
+      gameTime: (json['game_time'] as List<dynamic>?)
+          ?.map((e) => e as String)
+          .toList(),
+      location: (json['location'] as List<dynamic>?)
+          ?.map((e) => e as String)
+          .toList(),
       team_1:
-          (json['team_1'] as List<dynamic>).map((e) => e as String).toList(),
+          (json['team_1'] as List<dynamic>?)?.map((e) => e as String).toList(),
       team_logo_1: (json['team_logo_1'] as List<dynamic>?)
           ?.map((e) => e as String)
           .toList(),
       team_2:
-          (json['team_2'] as List<dynamic>).map((e) => e as String).toList(),
-      team_logo_2: (json['team_logo_2'] as List<dynamic>)
-          .map((e) => e as String)
+          (json['team_2'] as List<dynamic>?)?.map((e) => e as String).toList(),
+      team_logo_2: (json['team_logo_2'] as List<dynamic>?)
+          ?.map((e) => e as String)
           .toList(),
       game_result: (json['game_result'] as List<dynamic>?)
           ?.map((e) => e as String)
