@@ -1,6 +1,7 @@
 export 'package:koto_blue_sharks/presentation/ListTopics/list_topics.screen.dart';
 export 'package:koto_blue_sharks/presentation/calendar/calendar.screen.dart';
 export 'package:koto_blue_sharks/presentation/detailInfo/detail_info.screen.dart';
+export 'package:koto_blue_sharks/presentation/gameInfo/game_info.screen.dart';
 export 'package:koto_blue_sharks/presentation/home/home.screen.dart';
 export 'package:koto_blue_sharks/presentation/info/info.screen.dart';
 export 'package:koto_blue_sharks/presentation/main/main.screen.dart';

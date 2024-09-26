@@ -28,7 +28,7 @@ class Nav {
   static List<GetPage> routes = [
     GetPage(
       name: Routes.HOME,
-      page: () => HomeScreen((value){}),
+      page: () => HomeScreen((value) {}),
       binding: HomeControllerBinding(),
     ),
     GetPage(
@@ -48,7 +48,7 @@ class Nav {
     ),
     GetPage(
       name: Routes.INFO,
-      page: () => InfoScreen((value){}),
+      page: () => InfoScreen((value) {}),
       binding: InfoControllerBinding(),
     ),
     GetPage(
@@ -68,13 +68,20 @@ class Nav {
     ),
     GetPage(
       name: Routes.LIST_TOPICS,
-      page: () => ListTopicsScreen(onOpenDetail: (value) {  },),
+      page: () => ListTopicsScreen(
+        onOpenDetail: (value) {},
+      ),
       binding: ListTopicsControllerBinding(),
     ),
     GetPage(
       name: Routes.DETAIL_INFO,
-      page: () => DetailInfoScreen((){}, null),
+      page: () => DetailInfoScreen(() {}, null),
       binding: DetailInfoControllerBinding(),
+    ),
+    GetPage(
+      name: Routes.GAME_INFO,
+      page: () => const GameInfoScreen(),
+      binding: GameInfoControllerBinding(),
     ),
   ];
 }

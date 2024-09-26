@@ -56,13 +56,13 @@ class MatchResultBySeason with _$MatchResultBySeason {
 @freezed
 class CustomField with _$CustomField {
   factory CustomField({
-    @JsonKey(name: 'game_date') required List<String> gameDate,
-    @JsonKey(name: 'game_time') required List<String> gameTime,
-    required List<String> location,
-    required List<String> team_1,
+    @JsonKey(name: 'game_date') required List<String>? gameDate,
+    @JsonKey(name: 'game_time') required List<String>? gameTime,
+    required List<String>? location,
+    required List<String>? team_1,
     List<String>? team_logo_1,
-    required List<String> team_2,
-    required List<String> team_logo_2,
+    required List<String>? team_2,
+    required List<String>? team_logo_2,
     required List<String>? game_result,
     // Add other fields as needed
   }) = _CustomField;

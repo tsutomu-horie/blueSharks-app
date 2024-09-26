@@ -19,6 +19,7 @@ class LocaleKeys {
   static const user_registration = 'user_registration';
   static const register_user_title = 'register_user_title';
   static const register_user_desc = 'register_user_desc';
+  static const new_title = 'new_title';
   static const fan_club = 'fan_club';
   static const ticket = 'ticket';
   static const goods = 'goods';
@@ -37,6 +38,9 @@ class LocaleKeys {
   static const featured_topics_en = 'featured_topics_en';
   static const featured_topics = 'featured_topics';
   static const back_to_list = 'back_to_list';
+  static const game_info = 'game_info';
+  static const game_info_en = 'game_info_en';
+  static const select = 'select';
 }
 
 class Locales {
@@ -50,6 +54,7 @@ class Locales {
     'user_registration': 'User Registration',
     'register_user_title': '江東ブルーシャークアプリに会員登録する',
     'register_user_desc': 'アプリで現在のメンバーシップを取得するには、現在のアクティブなメンバーシップを入力するだけで済みます。',
+    'new_title': 'New',
     'fan_club': 'Fan Club',
     'ticket': 'Ticket',
     'goods': 'Goods',
@@ -68,5 +73,8 @@ class Locales {
     'featured_topics_en': 'FEATURED TOPICS',
     'featured_topics': '情報をピックアップ',
     'back_to_list': 'リストに戻る',
+    'game_info': '試合日程・結果',
+    'game_info_en': 'GAME INFO',
+    'select': '選択',
   };
 }

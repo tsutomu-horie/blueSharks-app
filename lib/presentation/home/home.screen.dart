@@ -55,15 +55,16 @@ class HomeScreen extends GetView<MainController> {
                 padding: EdgeInsets.only(left: 12.w, top: 20.h, bottom: 20.h),
                 child: Row(
                   children: nextMatchData.map((element) {
-                    final matchStatus =
-                    homeController.getStatusMatch(element.custom_field);
-                    final date = convertJapaneseDate(
-                        element.custom_field.gameDate.first);
+                    final gameDate = element.custom_field.gameDate ?? [];
+                    final gameTime = element.custom_field.gameTime ?? [];
+                    final location = element.custom_field.location ?? [];
+
+                    final matchStatus = homeController.getStatusMatch(element.custom_field);
+                    final date = convertJapaneseDate(gameDate.first);
+
 
                     // Ensure gameDate and other fields are lists and check their contents
-                    if (element.custom_field.gameDate.isNotEmpty &&
-                        element.custom_field.gameTime.isNotEmpty &&
-                        element.custom_field.location.isNotEmpty) {
+                    if (gameDate.isNotEmpty && gameTime.isNotEmpty && location.isNotEmpty) {
                       return FutureBuilder<String>(
                         future:
                         homeController.getImage(matchStatus["opponentLogo"]),
@@ -94,13 +95,13 @@ class HomeScreen extends GetView<MainController> {
                             return MatchItemView(
                               isHome: matchStatus["isHome"],
                               title: element.title.rendered,
-                              location: element.custom_field.location.first,
+                              location:location.first,
                               // Ensure location is a valid list and access its first item
                               date: date['formattedDate'] ?? "",
                               // Format the date
                               day: date['dayOfWeek'] ?? "",
                               // Get the day of the week
-                              time: element.custom_field.gameTime.first,
+                              time: gameTime.first,
                               // Access the first time element
                               opponentLogo: opponentLogo,
                               // Use the resolved image URL

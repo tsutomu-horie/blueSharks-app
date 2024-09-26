@@ -29,7 +29,8 @@ class _MainScreenState extends State<MainScreen> {
     print("selectTopic ${data?.id}");
     controller.selectedTopicId.value = data?.id;
     if (data?.id != null) {
-      controller.selectedIndex.value = 1; // Set the bottom nav index to 1 (Topics tab)
+      controller.selectedIndex.value =
+          1; // Set the bottom nav index to 1 (Topics tab)
       controller.selectedPost.value = data;
     }
   }
@@ -75,21 +76,6 @@ class _MainScreenState extends State<MainScreen> {
               ),
               Row(
                 children: [
-                  if (controller.selectedIndex.value == 0)
-                    Flexible(
-                      child: Row(
-                        mainAxisSize: MainAxisSize.max,
-                        children: [
-                          IconButton(
-                              onPressed: () {},
-                              icon: SvgPicture.asset(
-                                'assets/vectors/ic_notification.svg',
-                                width: 24.w,
-                                height: 24.h,
-                              )),
-                        ],
-                      ),
-                    ),
                   Row(
                     children: [
                       SizedBox(
@@ -116,8 +102,21 @@ class _MainScreenState extends State<MainScreen> {
                       ),
                     ],
                   ),
-                  if (controller.selectedIndex.value != 0)
-                    const Flexible(child: SizedBox(width: double.infinity,)),
+                  Flexible(
+                    child: Row(
+                      mainAxisSize: MainAxisSize.max,
+                      children: [
+                        toolbarButton(
+                            SvgPicture.asset(
+                              'assets/vectors/ic_notification.svg',
+                              width: 24.w,
+                              height: 24.h,
+                            ),
+                            LocaleKeys.new_title.tr),
+                      ],
+                    ),
+                  ),
+
                   Row(
                     children: [
                       toolbarButton(
@@ -154,9 +153,11 @@ class _MainScreenState extends State<MainScreen> {
             ],
           ),
         ),
-        body: controller.selectedTopicId.value == null ? _pages[controller.selectedIndex.value] : DetailInfoScreen((){
-          selectTopic(null);
-        }, controller.selectedPost.value),
+        body: controller.selectedTopicId.value == null
+            ? _pages[controller.selectedIndex.value]
+            : DetailInfoScreen(() {
+                selectTopic(null);
+              }, controller.selectedPost.value),
         // Display the selected page
         bottomNavigationBar: Obx(() {
           return BottomNavigationBar(
@@ -164,41 +165,37 @@ class _MainScreenState extends State<MainScreen> {
             items: <BottomNavigationBarItem>[
               BottomNavigationBarItem(
                 icon: _customBottomNavItem(
-                    "assets/vectors/ic_home_${controller.selectedIndex.value ==
-                        0
-                        ? "enabled"
-                        : "default"}.svg", LocaleKeys.home.tr, 0),
+                    "assets/vectors/ic_home_${controller.selectedIndex.value == 0 ? "enabled" : "default"}.svg",
+                    LocaleKeys.home.tr,
+                    0),
                 label: '',
               ),
               BottomNavigationBarItem(
                 icon: _customBottomNavItem(
-                    "assets/vectors/ic_info_${controller.selectedIndex.value ==
-                        1
-                        ? "enabled"
-                        : "default"}.svg", LocaleKeys.info.tr, 1),
+                    "assets/vectors/ic_info_${controller.selectedIndex.value == 1 ? "enabled" : "default"}.svg",
+                    LocaleKeys.info.tr,
+                    1),
                 label: '',
               ),
               BottomNavigationBarItem(
                 icon: _customBottomNavItem(
-                    "assets/vectors/ic_member_${controller.selectedIndex
-                        .value ==
-                        2 ? "enabled" : "default"}.svg", LocaleKeys.my_page.tr,
+                    "assets/vectors/ic_member_${controller.selectedIndex.value == 2 ? "enabled" : "default"}.svg",
+                    LocaleKeys.my_page.tr,
                     2),
                 label: '',
               ),
               BottomNavigationBarItem(
                 icon: _customBottomNavItem(
-                    "assets/vectors/ic_stadium_${controller.selectedIndex
-                        .value ==
-                        3 ? "enabled" : "default"}.svg", LocaleKeys.stadium.tr,
+                    "assets/vectors/ic_stadium_${controller.selectedIndex.value == 3 ? "enabled" : "default"}.svg",
+                    LocaleKeys.stadium.tr,
                     3),
                 label: '',
               ),
               BottomNavigationBarItem(
                 icon: _customBottomNavItem(
-                    "assets/vectors/ic_calendar_${controller.selectedIndex
-                        .value == 4 ? "enabled" : "default"}.svg",
-                    LocaleKeys.calendar.tr, 4),
+                    "assets/vectors/ic_calendar_${controller.selectedIndex.value == 4 ? "enabled" : "default"}.svg",
+                    LocaleKeys.calendar.tr,
+                    4),
                 label: '',
               ),
             ],
@@ -236,7 +233,11 @@ class _MainScreenState extends State<MainScreen> {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        SvgPicture.asset(icon, width: 20, height: 20,),
+        SvgPicture.asset(
+          icon,
+          width: 20,
+          height: 20,
+        ),
         SizedBox(height: 4.h), // Space between icon and label
         Text(
           label,
