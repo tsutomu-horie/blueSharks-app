@@ -41,6 +41,9 @@ class LocaleKeys {
   static const game_info = 'game_info';
   static const game_info_en = 'game_info_en';
   static const select = 'select';
+  static const promotion_video = 'promotion_video';
+  static const promotion_video_en = 'promotion_video_en';
+  static const see_more = 'see_more';
 }
 
 class Locales {
@@ -76,5 +79,8 @@ class Locales {
     'game_info': '試合日程・結果',
     'game_info_en': 'GAME INFO',
     'select': '選択',
+    'promotion_video': '公式ソングを視聴する',
+    'promotion_video_en': 'Promotion Video',
+    'see_more': 'もっと見る',
   };
 }

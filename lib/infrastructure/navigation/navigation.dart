@@ -28,7 +28,7 @@ class Nav {
   static List<GetPage> routes = [
     GetPage(
       name: Routes.HOME,
-      page: () => HomeScreen((value) {}),
+      page: () => HomeScreen((value) {},(){}),
       binding: HomeControllerBinding(),
     ),
     GetPage(
