@@ -28,7 +28,7 @@ class Nav {
   static List<GetPage> routes = [
     GetPage(
       name: Routes.HOME,
-      page: () => HomeScreen((value) {},(){}),
+      page: () => HomeScreen((value) {}, () {}),
       binding: HomeControllerBinding(),
     ),
     GetPage(
@@ -82,6 +82,11 @@ class Nav {
       name: Routes.GAME_INFO,
       page: () => const GameInfoScreen(),
       binding: GameInfoControllerBinding(),
+    ),
+    GetPage(
+      name: Routes.MATCH_DETAIL,
+      page: () => const MatchDetailScreen(null),
+      binding: MatchDetailControllerBinding(),
     ),
   ];
 }

@@ -6,6 +6,7 @@ class Routes {
 
   static const CALENDAR = '/calendar';
   static const DETAIL_INFO = '/detail-info';
+  static const GAME_INFO = '/game-info';
   static const HOME = '/home';
   static const INFO = '/info';
   static const LIST_TOPICS = '/list-topics';
@@ -14,5 +15,5 @@ class Routes {
   static const SPLASH = '/splash';
   static const STADIUM = '/stadium';
   static const WALLPAPER = '/wallpaper';
-  static const GAME_INFO = '/game-info';
+  static const MATCH_DETAIL = '/match-detail';
 }

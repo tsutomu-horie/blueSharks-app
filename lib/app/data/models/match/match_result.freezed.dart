@@ -326,6 +326,7 @@ mixin _$MatchResultBySeason {
   bool? get jetpack_sharing_enabled => throw _privateConstructorUsedError;
   String? get jetpack_shortlink => throw _privateConstructorUsedError;
   CustomField get custom_field => throw _privateConstructorUsedError;
+  Rendered get content => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
   @JsonKey(ignore: true)
@@ -362,10 +363,12 @@ abstract class $MatchResultBySeasonCopyWith<$Res> {
       String? jetpack_featured_media_url,
       bool? jetpack_sharing_enabled,
       String? jetpack_shortlink,
-      CustomField custom_field});
+      CustomField custom_field,
+      Rendered content});
 
   $RenderedCopyWith<$Res> get title;
   $CustomFieldCopyWith<$Res> get custom_field;
+  $RenderedCopyWith<$Res> get content;
 }
 
 /// @nodoc
@@ -404,6 +407,7 @@ class _$MatchResultBySeasonCopyWithImpl<$Res, $Val extends MatchResultBySeason>
     Object? jetpack_sharing_enabled = freezed,
     Object? jetpack_shortlink = freezed,
     Object? custom_field = null,
+    Object? content = null,
   }) {
     return _then(_value.copyWith(
       id: null == id
@@ -498,6 +502,10 @@ class _$MatchResultBySeasonCopyWithImpl<$Res, $Val extends MatchResultBySeason>
           ? _value.custom_field
           : custom_field // ignore: cast_nullable_to_non_nullable
               as CustomField,
+      content: null == content
+          ? _value.content
+          : content // ignore: cast_nullable_to_non_nullable
+              as Rendered,
     ) as $Val);
   }
 
@@ -514,6 +522,14 @@ class _$MatchResultBySeasonCopyWithImpl<$Res, $Val extends MatchResultBySeason>
   $CustomFieldCopyWith<$Res> get custom_field {
     return $CustomFieldCopyWith<$Res>(_value.custom_field, (value) {
       return _then(_value.copyWith(custom_field: value) as $Val);
+    });
+  }
+
+  @override
+  @pragma('vm:prefer-inline')
+  $RenderedCopyWith<$Res> get content {
+    return $RenderedCopyWith<$Res>(_value.content, (value) {
+      return _then(_value.copyWith(content: value) as $Val);
     });
   }
 }
@@ -549,12 +565,15 @@ abstract class _$$MatchResultBySeasonImplCopyWith<$Res>
       String? jetpack_featured_media_url,
       bool? jetpack_sharing_enabled,
       String? jetpack_shortlink,
-      CustomField custom_field});
+      CustomField custom_field,
+      Rendered content});
 
   @override
   $RenderedCopyWith<$Res> get title;
   @override
   $CustomFieldCopyWith<$Res> get custom_field;
+  @override
+  $RenderedCopyWith<$Res> get content;
 }
 
 /// @nodoc
@@ -591,6 +610,7 @@ class __$$MatchResultBySeasonImplCopyWithImpl<$Res>
     Object? jetpack_sharing_enabled = freezed,
     Object? jetpack_shortlink = freezed,
     Object? custom_field = null,
+    Object? content = null,
   }) {
     return _then(_$MatchResultBySeasonImpl(
       id: null == id
@@ -685,6 +705,10 @@ class __$$MatchResultBySeasonImplCopyWithImpl<$Res>
           ? _value.custom_field
           : custom_field // ignore: cast_nullable_to_non_nullable
               as CustomField,
+      content: null == content
+          ? _value.content
+          : content // ignore: cast_nullable_to_non_nullable
+              as Rendered,
     ));
   }
 }
@@ -715,7 +739,8 @@ class _$MatchResultBySeasonImpl implements _MatchResultBySeason {
       required this.jetpack_featured_media_url,
       required this.jetpack_sharing_enabled,
       required this.jetpack_shortlink,
-      required this.custom_field})
+      required this.custom_field,
+      required this.content})
       : _categories = categories,
         _tags = tags;
 
@@ -780,10 +805,12 @@ class _$MatchResultBySeasonImpl implements _MatchResultBySeason {
   final String? jetpack_shortlink;
   @override
   final CustomField custom_field;
+  @override
+  final Rendered content;
 
   @override
   String toString() {
-    return 'MatchResultBySeason(id: $id, date: $date, date_gmt: $date_gmt, modified: $modified, modified_gmt: $modified_gmt, slug: $slug, status: $status, type: $type, link: $link, author: $author, title: $title, featured_media: $featured_media, comment_status: $comment_status, ping_status: $ping_status, sticky: $sticky, template: $template, format: $format, categories: $categories, tags: $tags, jetpack_featured_media_url: $jetpack_featured_media_url, jetpack_sharing_enabled: $jetpack_sharing_enabled, jetpack_shortlink: $jetpack_shortlink, custom_field: $custom_field)';
+    return 'MatchResultBySeason(id: $id, date: $date, date_gmt: $date_gmt, modified: $modified, modified_gmt: $modified_gmt, slug: $slug, status: $status, type: $type, link: $link, author: $author, title: $title, featured_media: $featured_media, comment_status: $comment_status, ping_status: $ping_status, sticky: $sticky, template: $template, format: $format, categories: $categories, tags: $tags, jetpack_featured_media_url: $jetpack_featured_media_url, jetpack_sharing_enabled: $jetpack_sharing_enabled, jetpack_shortlink: $jetpack_shortlink, custom_field: $custom_field, content: $content)';
   }
 
   @override
@@ -828,7 +855,8 @@ class _$MatchResultBySeasonImpl implements _MatchResultBySeason {
             (identical(other.jetpack_shortlink, jetpack_shortlink) ||
                 other.jetpack_shortlink == jetpack_shortlink) &&
             (identical(other.custom_field, custom_field) ||
-                other.custom_field == custom_field));
+                other.custom_field == custom_field) &&
+            (identical(other.content, content) || other.content == content));
   }
 
   @JsonKey(ignore: true)
@@ -857,7 +885,8 @@ class _$MatchResultBySeasonImpl implements _MatchResultBySeason {
         jetpack_featured_media_url,
         jetpack_sharing_enabled,
         jetpack_shortlink,
-        custom_field
+        custom_field,
+        content
       ]);
 
   @JsonKey(ignore: true)
@@ -899,7 +928,8 @@ abstract class _MatchResultBySeason implements MatchResultBySeason {
       required final String? jetpack_featured_media_url,
       required final bool? jetpack_sharing_enabled,
       required final String? jetpack_shortlink,
-      required final CustomField custom_field}) = _$MatchResultBySeasonImpl;
+      required final CustomField custom_field,
+      required final Rendered content}) = _$MatchResultBySeasonImpl;
 
   factory _MatchResultBySeason.fromJson(Map<String, dynamic> json) =
       _$MatchResultBySeasonImpl.fromJson;
@@ -951,6 +981,8 @@ abstract class _MatchResultBySeason implements MatchResultBySeason {
   @override
   CustomField get custom_field;
   @override
+  Rendered get content;
+  @override
   @JsonKey(ignore: true)
   _$$MatchResultBySeasonImplCopyWith<_$MatchResultBySeasonImpl> get copyWith =>
       throw _privateConstructorUsedError;
@@ -972,6 +1004,32 @@ mixin _$CustomField {
   List<String>? get team_2 => throw _privateConstructorUsedError;
   List<String>? get team_logo_2 => throw _privateConstructorUsedError;
   List<String>? get game_result => throw _privateConstructorUsedError;
+  List<String>? get team_score_1 => throw _privateConstructorUsedError;
+  List<String>? get team_score_2 => throw _privateConstructorUsedError;
+  List<String>? get team_T_first_half_1 => throw _privateConstructorUsedError;
+  List<String>? get team_T_second_half_1 => throw _privateConstructorUsedError;
+  List<String>? get team_G_first_half_1 => throw _privateConstructorUsedError;
+  List<String>? get team_G_second_half_1 => throw _privateConstructorUsedError;
+  List<String>? get team_PG_first_half_1 => throw _privateConstructorUsedError;
+  List<String>? get team_PG_second_half_1 => throw _privateConstructorUsedError;
+  List<String>? get team_DG_first_half_1 => throw _privateConstructorUsedError;
+  List<String>? get team_DG_second_half_1 => throw _privateConstructorUsedError;
+  List<String>? get team_RESULT_first_half_1 =>
+      throw _privateConstructorUsedError;
+  List<String>? get team_RESULT_second_half_1 =>
+      throw _privateConstructorUsedError;
+  List<String>? get team_T_first_half_2 => throw _privateConstructorUsedError;
+  List<String>? get team_T_second_half_2 => throw _privateConstructorUsedError;
+  List<String>? get team_G_first_half_2 => throw _privateConstructorUsedError;
+  List<String>? get team_G_second_half_2 => throw _privateConstructorUsedError;
+  List<String>? get team_PG_first_half_2 => throw _privateConstructorUsedError;
+  List<String>? get team_PG_second_half_2 => throw _privateConstructorUsedError;
+  List<String>? get team_DG_first_half_2 => throw _privateConstructorUsedError;
+  List<String>? get team_DG_second_half_2 => throw _privateConstructorUsedError;
+  List<String>? get team_RESULT_first_half_2 =>
+      throw _privateConstructorUsedError;
+  List<String>? get team_RESULT_second_half_2 =>
+      throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
   @JsonKey(ignore: true)
@@ -993,7 +1051,29 @@ abstract class $CustomFieldCopyWith<$Res> {
       List<String>? team_logo_1,
       List<String>? team_2,
       List<String>? team_logo_2,
-      List<String>? game_result});
+      List<String>? game_result,
+      List<String>? team_score_1,
+      List<String>? team_score_2,
+      List<String>? team_T_first_half_1,
+      List<String>? team_T_second_half_1,
+      List<String>? team_G_first_half_1,
+      List<String>? team_G_second_half_1,
+      List<String>? team_PG_first_half_1,
+      List<String>? team_PG_second_half_1,
+      List<String>? team_DG_first_half_1,
+      List<String>? team_DG_second_half_1,
+      List<String>? team_RESULT_first_half_1,
+      List<String>? team_RESULT_second_half_1,
+      List<String>? team_T_first_half_2,
+      List<String>? team_T_second_half_2,
+      List<String>? team_G_first_half_2,
+      List<String>? team_G_second_half_2,
+      List<String>? team_PG_first_half_2,
+      List<String>? team_PG_second_half_2,
+      List<String>? team_DG_first_half_2,
+      List<String>? team_DG_second_half_2,
+      List<String>? team_RESULT_first_half_2,
+      List<String>? team_RESULT_second_half_2});
 }
 
 /// @nodoc
@@ -1017,6 +1097,28 @@ class _$CustomFieldCopyWithImpl<$Res, $Val extends CustomField>
     Object? team_2 = freezed,
     Object? team_logo_2 = freezed,
     Object? game_result = freezed,
+    Object? team_score_1 = freezed,
+    Object? team_score_2 = freezed,
+    Object? team_T_first_half_1 = freezed,
+    Object? team_T_second_half_1 = freezed,
+    Object? team_G_first_half_1 = freezed,
+    Object? team_G_second_half_1 = freezed,
+    Object? team_PG_first_half_1 = freezed,
+    Object? team_PG_second_half_1 = freezed,
+    Object? team_DG_first_half_1 = freezed,
+    Object? team_DG_second_half_1 = freezed,
+    Object? team_RESULT_first_half_1 = freezed,
+    Object? team_RESULT_second_half_1 = freezed,
+    Object? team_T_first_half_2 = freezed,
+    Object? team_T_second_half_2 = freezed,
+    Object? team_G_first_half_2 = freezed,
+    Object? team_G_second_half_2 = freezed,
+    Object? team_PG_first_half_2 = freezed,
+    Object? team_PG_second_half_2 = freezed,
+    Object? team_DG_first_half_2 = freezed,
+    Object? team_DG_second_half_2 = freezed,
+    Object? team_RESULT_first_half_2 = freezed,
+    Object? team_RESULT_second_half_2 = freezed,
   }) {
     return _then(_value.copyWith(
       gameDate: freezed == gameDate
@@ -1051,6 +1153,94 @@ class _$CustomFieldCopyWithImpl<$Res, $Val extends CustomField>
           ? _value.game_result
           : game_result // ignore: cast_nullable_to_non_nullable
               as List<String>?,
+      team_score_1: freezed == team_score_1
+          ? _value.team_score_1
+          : team_score_1 // ignore: cast_nullable_to_non_nullable
+              as List<String>?,
+      team_score_2: freezed == team_score_2
+          ? _value.team_score_2
+          : team_score_2 // ignore: cast_nullable_to_non_nullable
+              as List<String>?,
+      team_T_first_half_1: freezed == team_T_first_half_1
+          ? _value.team_T_first_half_1
+          : team_T_first_half_1 // ignore: cast_nullable_to_non_nullable
+              as List<String>?,
+      team_T_second_half_1: freezed == team_T_second_half_1
+          ? _value.team_T_second_half_1
+          : team_T_second_half_1 // ignore: cast_nullable_to_non_nullable
+              as List<String>?,
+      team_G_first_half_1: freezed == team_G_first_half_1
+          ? _value.team_G_first_half_1
+          : team_G_first_half_1 // ignore: cast_nullable_to_non_nullable
+              as List<String>?,
+      team_G_second_half_1: freezed == team_G_second_half_1
+          ? _value.team_G_second_half_1
+          : team_G_second_half_1 // ignore: cast_nullable_to_non_nullable
+              as List<String>?,
+      team_PG_first_half_1: freezed == team_PG_first_half_1
+          ? _value.team_PG_first_half_1
+          : team_PG_first_half_1 // ignore: cast_nullable_to_non_nullable
+              as List<String>?,
+      team_PG_second_half_1: freezed == team_PG_second_half_1
+          ? _value.team_PG_second_half_1
+          : team_PG_second_half_1 // ignore: cast_nullable_to_non_nullable
+              as List<String>?,
+      team_DG_first_half_1: freezed == team_DG_first_half_1
+          ? _value.team_DG_first_half_1
+          : team_DG_first_half_1 // ignore: cast_nullable_to_non_nullable
+              as List<String>?,
+      team_DG_second_half_1: freezed == team_DG_second_half_1
+          ? _value.team_DG_second_half_1
+          : team_DG_second_half_1 // ignore: cast_nullable_to_non_nullable
+              as List<String>?,
+      team_RESULT_first_half_1: freezed == team_RESULT_first_half_1
+          ? _value.team_RESULT_first_half_1
+          : team_RESULT_first_half_1 // ignore: cast_nullable_to_non_nullable
+              as List<String>?,
+      team_RESULT_second_half_1: freezed == team_RESULT_second_half_1
+          ? _value.team_RESULT_second_half_1
+          : team_RESULT_second_half_1 // ignore: cast_nullable_to_non_nullable
+              as List<String>?,
+      team_T_first_half_2: freezed == team_T_first_half_2
+          ? _value.team_T_first_half_2
+          : team_T_first_half_2 // ignore: cast_nullable_to_non_nullable
+              as List<String>?,
+      team_T_second_half_2: freezed == team_T_second_half_2
+          ? _value.team_T_second_half_2
+          : team_T_second_half_2 // ignore: cast_nullable_to_non_nullable
+              as List<String>?,
+      team_G_first_half_2: freezed == team_G_first_half_2
+          ? _value.team_G_first_half_2
+          : team_G_first_half_2 // ignore: cast_nullable_to_non_nullable
+              as List<String>?,
+      team_G_second_half_2: freezed == team_G_second_half_2
+          ? _value.team_G_second_half_2
+          : team_G_second_half_2 // ignore: cast_nullable_to_non_nullable
+              as List<String>?,
+      team_PG_first_half_2: freezed == team_PG_first_half_2
+          ? _value.team_PG_first_half_2
+          : team_PG_first_half_2 // ignore: cast_nullable_to_non_nullable
+              as List<String>?,
+      team_PG_second_half_2: freezed == team_PG_second_half_2
+          ? _value.team_PG_second_half_2
+          : team_PG_second_half_2 // ignore: cast_nullable_to_non_nullable
+              as List<String>?,
+      team_DG_first_half_2: freezed == team_DG_first_half_2
+          ? _value.team_DG_first_half_2
+          : team_DG_first_half_2 // ignore: cast_nullable_to_non_nullable
+              as List<String>?,
+      team_DG_second_half_2: freezed == team_DG_second_half_2
+          ? _value.team_DG_second_half_2
+          : team_DG_second_half_2 // ignore: cast_nullable_to_non_nullable
+              as List<String>?,
+      team_RESULT_first_half_2: freezed == team_RESULT_first_half_2
+          ? _value.team_RESULT_first_half_2
+          : team_RESULT_first_half_2 // ignore: cast_nullable_to_non_nullable
+              as List<String>?,
+      team_RESULT_second_half_2: freezed == team_RESULT_second_half_2
+          ? _value.team_RESULT_second_half_2
+          : team_RESULT_second_half_2 // ignore: cast_nullable_to_non_nullable
+              as List<String>?,
     ) as $Val);
   }
 }
@@ -1071,7 +1261,29 @@ abstract class _$$CustomFieldImplCopyWith<$Res>
       List<String>? team_logo_1,
       List<String>? team_2,
       List<String>? team_logo_2,
-      List<String>? game_result});
+      List<String>? game_result,
+      List<String>? team_score_1,
+      List<String>? team_score_2,
+      List<String>? team_T_first_half_1,
+      List<String>? team_T_second_half_1,
+      List<String>? team_G_first_half_1,
+      List<String>? team_G_second_half_1,
+      List<String>? team_PG_first_half_1,
+      List<String>? team_PG_second_half_1,
+      List<String>? team_DG_first_half_1,
+      List<String>? team_DG_second_half_1,
+      List<String>? team_RESULT_first_half_1,
+      List<String>? team_RESULT_second_half_1,
+      List<String>? team_T_first_half_2,
+      List<String>? team_T_second_half_2,
+      List<String>? team_G_first_half_2,
+      List<String>? team_G_second_half_2,
+      List<String>? team_PG_first_half_2,
+      List<String>? team_PG_second_half_2,
+      List<String>? team_DG_first_half_2,
+      List<String>? team_DG_second_half_2,
+      List<String>? team_RESULT_first_half_2,
+      List<String>? team_RESULT_second_half_2});
 }
 
 /// @nodoc
@@ -1093,6 +1305,28 @@ class __$$CustomFieldImplCopyWithImpl<$Res>
     Object? team_2 = freezed,
     Object? team_logo_2 = freezed,
     Object? game_result = freezed,
+    Object? team_score_1 = freezed,
+    Object? team_score_2 = freezed,
+    Object? team_T_first_half_1 = freezed,
+    Object? team_T_second_half_1 = freezed,
+    Object? team_G_first_half_1 = freezed,
+    Object? team_G_second_half_1 = freezed,
+    Object? team_PG_first_half_1 = freezed,
+    Object? team_PG_second_half_1 = freezed,
+    Object? team_DG_first_half_1 = freezed,
+    Object? team_DG_second_half_1 = freezed,
+    Object? team_RESULT_first_half_1 = freezed,
+    Object? team_RESULT_second_half_1 = freezed,
+    Object? team_T_first_half_2 = freezed,
+    Object? team_T_second_half_2 = freezed,
+    Object? team_G_first_half_2 = freezed,
+    Object? team_G_second_half_2 = freezed,
+    Object? team_PG_first_half_2 = freezed,
+    Object? team_PG_second_half_2 = freezed,
+    Object? team_DG_first_half_2 = freezed,
+    Object? team_DG_second_half_2 = freezed,
+    Object? team_RESULT_first_half_2 = freezed,
+    Object? team_RESULT_second_half_2 = freezed,
   }) {
     return _then(_$CustomFieldImpl(
       gameDate: freezed == gameDate
@@ -1127,6 +1361,94 @@ class __$$CustomFieldImplCopyWithImpl<$Res>
           ? _value._game_result
           : game_result // ignore: cast_nullable_to_non_nullable
               as List<String>?,
+      team_score_1: freezed == team_score_1
+          ? _value._team_score_1
+          : team_score_1 // ignore: cast_nullable_to_non_nullable
+              as List<String>?,
+      team_score_2: freezed == team_score_2
+          ? _value._team_score_2
+          : team_score_2 // ignore: cast_nullable_to_non_nullable
+              as List<String>?,
+      team_T_first_half_1: freezed == team_T_first_half_1
+          ? _value._team_T_first_half_1
+          : team_T_first_half_1 // ignore: cast_nullable_to_non_nullable
+              as List<String>?,
+      team_T_second_half_1: freezed == team_T_second_half_1
+          ? _value._team_T_second_half_1
+          : team_T_second_half_1 // ignore: cast_nullable_to_non_nullable
+              as List<String>?,
+      team_G_first_half_1: freezed == team_G_first_half_1
+          ? _value._team_G_first_half_1
+          : team_G_first_half_1 // ignore: cast_nullable_to_non_nullable
+              as List<String>?,
+      team_G_second_half_1: freezed == team_G_second_half_1
+          ? _value._team_G_second_half_1
+          : team_G_second_half_1 // ignore: cast_nullable_to_non_nullable
+              as List<String>?,
+      team_PG_first_half_1: freezed == team_PG_first_half_1
+          ? _value._team_PG_first_half_1
+          : team_PG_first_half_1 // ignore: cast_nullable_to_non_nullable
+              as List<String>?,
+      team_PG_second_half_1: freezed == team_PG_second_half_1
+          ? _value._team_PG_second_half_1
+          : team_PG_second_half_1 // ignore: cast_nullable_to_non_nullable
+              as List<String>?,
+      team_DG_first_half_1: freezed == team_DG_first_half_1
+          ? _value._team_DG_first_half_1
+          : team_DG_first_half_1 // ignore: cast_nullable_to_non_nullable
+              as List<String>?,
+      team_DG_second_half_1: freezed == team_DG_second_half_1
+          ? _value._team_DG_second_half_1
+          : team_DG_second_half_1 // ignore: cast_nullable_to_non_nullable
+              as List<String>?,
+      team_RESULT_first_half_1: freezed == team_RESULT_first_half_1
+          ? _value._team_RESULT_first_half_1
+          : team_RESULT_first_half_1 // ignore: cast_nullable_to_non_nullable
+              as List<String>?,
+      team_RESULT_second_half_1: freezed == team_RESULT_second_half_1
+          ? _value._team_RESULT_second_half_1
+          : team_RESULT_second_half_1 // ignore: cast_nullable_to_non_nullable
+              as List<String>?,
+      team_T_first_half_2: freezed == team_T_first_half_2
+          ? _value._team_T_first_half_2
+          : team_T_first_half_2 // ignore: cast_nullable_to_non_nullable
+              as List<String>?,
+      team_T_second_half_2: freezed == team_T_second_half_2
+          ? _value._team_T_second_half_2
+          : team_T_second_half_2 // ignore: cast_nullable_to_non_nullable
+              as List<String>?,
+      team_G_first_half_2: freezed == team_G_first_half_2
+          ? _value._team_G_first_half_2
+          : team_G_first_half_2 // ignore: cast_nullable_to_non_nullable
+              as List<String>?,
+      team_G_second_half_2: freezed == team_G_second_half_2
+          ? _value._team_G_second_half_2
+          : team_G_second_half_2 // ignore: cast_nullable_to_non_nullable
+              as List<String>?,
+      team_PG_first_half_2: freezed == team_PG_first_half_2
+          ? _value._team_PG_first_half_2
+          : team_PG_first_half_2 // ignore: cast_nullable_to_non_nullable
+              as List<String>?,
+      team_PG_second_half_2: freezed == team_PG_second_half_2
+          ? _value._team_PG_second_half_2
+          : team_PG_second_half_2 // ignore: cast_nullable_to_non_nullable
+              as List<String>?,
+      team_DG_first_half_2: freezed == team_DG_first_half_2
+          ? _value._team_DG_first_half_2
+          : team_DG_first_half_2 // ignore: cast_nullable_to_non_nullable
+              as List<String>?,
+      team_DG_second_half_2: freezed == team_DG_second_half_2
+          ? _value._team_DG_second_half_2
+          : team_DG_second_half_2 // ignore: cast_nullable_to_non_nullable
+              as List<String>?,
+      team_RESULT_first_half_2: freezed == team_RESULT_first_half_2
+          ? _value._team_RESULT_first_half_2
+          : team_RESULT_first_half_2 // ignore: cast_nullable_to_non_nullable
+              as List<String>?,
+      team_RESULT_second_half_2: freezed == team_RESULT_second_half_2
+          ? _value._team_RESULT_second_half_2
+          : team_RESULT_second_half_2 // ignore: cast_nullable_to_non_nullable
+              as List<String>?,
     ));
   }
 }
@@ -1142,7 +1464,29 @@ class _$CustomFieldImpl implements _CustomField {
       final List<String>? team_logo_1,
       required final List<String>? team_2,
       required final List<String>? team_logo_2,
-      required final List<String>? game_result})
+      required final List<String>? game_result,
+      required final List<String>? team_score_1,
+      required final List<String>? team_score_2,
+      required final List<String>? team_T_first_half_1,
+      required final List<String>? team_T_second_half_1,
+      required final List<String>? team_G_first_half_1,
+      required final List<String>? team_G_second_half_1,
+      required final List<String>? team_PG_first_half_1,
+      required final List<String>? team_PG_second_half_1,
+      required final List<String>? team_DG_first_half_1,
+      required final List<String>? team_DG_second_half_1,
+      required final List<String>? team_RESULT_first_half_1,
+      required final List<String>? team_RESULT_second_half_1,
+      required final List<String>? team_T_first_half_2,
+      required final List<String>? team_T_second_half_2,
+      required final List<String>? team_G_first_half_2,
+      required final List<String>? team_G_second_half_2,
+      required final List<String>? team_PG_first_half_2,
+      required final List<String>? team_PG_second_half_2,
+      required final List<String>? team_DG_first_half_2,
+      required final List<String>? team_DG_second_half_2,
+      required final List<String>? team_RESULT_first_half_2,
+      required final List<String>? team_RESULT_second_half_2})
       : _gameDate = gameDate,
         _gameTime = gameTime,
         _location = location,
@@ -1150,7 +1494,29 @@ class _$CustomFieldImpl implements _CustomField {
         _team_logo_1 = team_logo_1,
         _team_2 = team_2,
         _team_logo_2 = team_logo_2,
-        _game_result = game_result;
+        _game_result = game_result,
+        _team_score_1 = team_score_1,
+        _team_score_2 = team_score_2,
+        _team_T_first_half_1 = team_T_first_half_1,
+        _team_T_second_half_1 = team_T_second_half_1,
+        _team_G_first_half_1 = team_G_first_half_1,
+        _team_G_second_half_1 = team_G_second_half_1,
+        _team_PG_first_half_1 = team_PG_first_half_1,
+        _team_PG_second_half_1 = team_PG_second_half_1,
+        _team_DG_first_half_1 = team_DG_first_half_1,
+        _team_DG_second_half_1 = team_DG_second_half_1,
+        _team_RESULT_first_half_1 = team_RESULT_first_half_1,
+        _team_RESULT_second_half_1 = team_RESULT_second_half_1,
+        _team_T_first_half_2 = team_T_first_half_2,
+        _team_T_second_half_2 = team_T_second_half_2,
+        _team_G_first_half_2 = team_G_first_half_2,
+        _team_G_second_half_2 = team_G_second_half_2,
+        _team_PG_first_half_2 = team_PG_first_half_2,
+        _team_PG_second_half_2 = team_PG_second_half_2,
+        _team_DG_first_half_2 = team_DG_first_half_2,
+        _team_DG_second_half_2 = team_DG_second_half_2,
+        _team_RESULT_first_half_2 = team_RESULT_first_half_2,
+        _team_RESULT_second_half_2 = team_RESULT_second_half_2;
 
   factory _$CustomFieldImpl.fromJson(Map<String, dynamic> json) =>
       _$$CustomFieldImplFromJson(json);
@@ -1237,9 +1603,249 @@ class _$CustomFieldImpl implements _CustomField {
     return EqualUnmodifiableListView(value);
   }
 
+  final List<String>? _team_score_1;
+  @override
+  List<String>? get team_score_1 {
+    final value = _team_score_1;
+    if (value == null) return null;
+    if (_team_score_1 is EqualUnmodifiableListView) return _team_score_1;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(value);
+  }
+
+  final List<String>? _team_score_2;
+  @override
+  List<String>? get team_score_2 {
+    final value = _team_score_2;
+    if (value == null) return null;
+    if (_team_score_2 is EqualUnmodifiableListView) return _team_score_2;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(value);
+  }
+
+  final List<String>? _team_T_first_half_1;
+  @override
+  List<String>? get team_T_first_half_1 {
+    final value = _team_T_first_half_1;
+    if (value == null) return null;
+    if (_team_T_first_half_1 is EqualUnmodifiableListView)
+      return _team_T_first_half_1;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(value);
+  }
+
+  final List<String>? _team_T_second_half_1;
+  @override
+  List<String>? get team_T_second_half_1 {
+    final value = _team_T_second_half_1;
+    if (value == null) return null;
+    if (_team_T_second_half_1 is EqualUnmodifiableListView)
+      return _team_T_second_half_1;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(value);
+  }
+
+  final List<String>? _team_G_first_half_1;
+  @override
+  List<String>? get team_G_first_half_1 {
+    final value = _team_G_first_half_1;
+    if (value == null) return null;
+    if (_team_G_first_half_1 is EqualUnmodifiableListView)
+      return _team_G_first_half_1;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(value);
+  }
+
+  final List<String>? _team_G_second_half_1;
+  @override
+  List<String>? get team_G_second_half_1 {
+    final value = _team_G_second_half_1;
+    if (value == null) return null;
+    if (_team_G_second_half_1 is EqualUnmodifiableListView)
+      return _team_G_second_half_1;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(value);
+  }
+
+  final List<String>? _team_PG_first_half_1;
+  @override
+  List<String>? get team_PG_first_half_1 {
+    final value = _team_PG_first_half_1;
+    if (value == null) return null;
+    if (_team_PG_first_half_1 is EqualUnmodifiableListView)
+      return _team_PG_first_half_1;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(value);
+  }
+
+  final List<String>? _team_PG_second_half_1;
+  @override
+  List<String>? get team_PG_second_half_1 {
+    final value = _team_PG_second_half_1;
+    if (value == null) return null;
+    if (_team_PG_second_half_1 is EqualUnmodifiableListView)
+      return _team_PG_second_half_1;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(value);
+  }
+
+  final List<String>? _team_DG_first_half_1;
+  @override
+  List<String>? get team_DG_first_half_1 {
+    final value = _team_DG_first_half_1;
+    if (value == null) return null;
+    if (_team_DG_first_half_1 is EqualUnmodifiableListView)
+      return _team_DG_first_half_1;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(value);
+  }
+
+  final List<String>? _team_DG_second_half_1;
+  @override
+  List<String>? get team_DG_second_half_1 {
+    final value = _team_DG_second_half_1;
+    if (value == null) return null;
+    if (_team_DG_second_half_1 is EqualUnmodifiableListView)
+      return _team_DG_second_half_1;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(value);
+  }
+
+  final List<String>? _team_RESULT_first_half_1;
+  @override
+  List<String>? get team_RESULT_first_half_1 {
+    final value = _team_RESULT_first_half_1;
+    if (value == null) return null;
+    if (_team_RESULT_first_half_1 is EqualUnmodifiableListView)
+      return _team_RESULT_first_half_1;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(value);
+  }
+
+  final List<String>? _team_RESULT_second_half_1;
+  @override
+  List<String>? get team_RESULT_second_half_1 {
+    final value = _team_RESULT_second_half_1;
+    if (value == null) return null;
+    if (_team_RESULT_second_half_1 is EqualUnmodifiableListView)
+      return _team_RESULT_second_half_1;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(value);
+  }
+
+  final List<String>? _team_T_first_half_2;
+  @override
+  List<String>? get team_T_first_half_2 {
+    final value = _team_T_first_half_2;
+    if (value == null) return null;
+    if (_team_T_first_half_2 is EqualUnmodifiableListView)
+      return _team_T_first_half_2;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(value);
+  }
+
+  final List<String>? _team_T_second_half_2;
+  @override
+  List<String>? get team_T_second_half_2 {
+    final value = _team_T_second_half_2;
+    if (value == null) return null;
+    if (_team_T_second_half_2 is EqualUnmodifiableListView)
+      return _team_T_second_half_2;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(value);
+  }
+
+  final List<String>? _team_G_first_half_2;
+  @override
+  List<String>? get team_G_first_half_2 {
+    final value = _team_G_first_half_2;
+    if (value == null) return null;
+    if (_team_G_first_half_2 is EqualUnmodifiableListView)
+      return _team_G_first_half_2;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(value);
+  }
+
+  final List<String>? _team_G_second_half_2;
+  @override
+  List<String>? get team_G_second_half_2 {
+    final value = _team_G_second_half_2;
+    if (value == null) return null;
+    if (_team_G_second_half_2 is EqualUnmodifiableListView)
+      return _team_G_second_half_2;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(value);
+  }
+
+  final List<String>? _team_PG_first_half_2;
+  @override
+  List<String>? get team_PG_first_half_2 {
+    final value = _team_PG_first_half_2;
+    if (value == null) return null;
+    if (_team_PG_first_half_2 is EqualUnmodifiableListView)
+      return _team_PG_first_half_2;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(value);
+  }
+
+  final List<String>? _team_PG_second_half_2;
+  @override
+  List<String>? get team_PG_second_half_2 {
+    final value = _team_PG_second_half_2;
+    if (value == null) return null;
+    if (_team_PG_second_half_2 is EqualUnmodifiableListView)
+      return _team_PG_second_half_2;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(value);
+  }
+
+  final List<String>? _team_DG_first_half_2;
+  @override
+  List<String>? get team_DG_first_half_2 {
+    final value = _team_DG_first_half_2;
+    if (value == null) return null;
+    if (_team_DG_first_half_2 is EqualUnmodifiableListView)
+      return _team_DG_first_half_2;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(value);
+  }
+
+  final List<String>? _team_DG_second_half_2;
+  @override
+  List<String>? get team_DG_second_half_2 {
+    final value = _team_DG_second_half_2;
+    if (value == null) return null;
+    if (_team_DG_second_half_2 is EqualUnmodifiableListView)
+      return _team_DG_second_half_2;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(value);
+  }
+
+  final List<String>? _team_RESULT_first_half_2;
+  @override
+  List<String>? get team_RESULT_first_half_2 {
+    final value = _team_RESULT_first_half_2;
+    if (value == null) return null;
+    if (_team_RESULT_first_half_2 is EqualUnmodifiableListView)
+      return _team_RESULT_first_half_2;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(value);
+  }
+
+  final List<String>? _team_RESULT_second_half_2;
+  @override
+  List<String>? get team_RESULT_second_half_2 {
+    final value = _team_RESULT_second_half_2;
+    if (value == null) return null;
+    if (_team_RESULT_second_half_2 is EqualUnmodifiableListView)
+      return _team_RESULT_second_half_2;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(value);
+  }
+
   @override
   String toString() {
-    return 'CustomField(gameDate: $gameDate, gameTime: $gameTime, location: $location, team_1: $team_1, team_logo_1: $team_logo_1, team_2: $team_2, team_logo_2: $team_logo_2, game_result: $game_result)';
+    return 'CustomField(gameDate: $gameDate, gameTime: $gameTime, location: $location, team_1: $team_1, team_logo_1: $team_logo_1, team_2: $team_2, team_logo_2: $team_logo_2, game_result: $game_result, team_score_1: $team_score_1, team_score_2: $team_score_2, team_T_first_half_1: $team_T_first_half_1, team_T_second_half_1: $team_T_second_half_1, team_G_first_half_1: $team_G_first_half_1, team_G_second_half_1: $team_G_second_half_1, team_PG_first_half_1: $team_PG_first_half_1, team_PG_second_half_1: $team_PG_second_half_1, team_DG_first_half_1: $team_DG_first_half_1, team_DG_second_half_1: $team_DG_second_half_1, team_RESULT_first_half_1: $team_RESULT_first_half_1, team_RESULT_second_half_1: $team_RESULT_second_half_1, team_T_first_half_2: $team_T_first_half_2, team_T_second_half_2: $team_T_second_half_2, team_G_first_half_2: $team_G_first_half_2, team_G_second_half_2: $team_G_second_half_2, team_PG_first_half_2: $team_PG_first_half_2, team_PG_second_half_2: $team_PG_second_half_2, team_DG_first_half_2: $team_DG_first_half_2, team_DG_second_half_2: $team_DG_second_half_2, team_RESULT_first_half_2: $team_RESULT_first_half_2, team_RESULT_second_half_2: $team_RESULT_second_half_2)';
   }
 
   @override
@@ -1257,21 +1863,88 @@ class _$CustomFieldImpl implements _CustomField {
             const DeepCollectionEquality()
                 .equals(other._team_logo_2, _team_logo_2) &&
             const DeepCollectionEquality()
-                .equals(other._game_result, _game_result));
+                .equals(other._game_result, _game_result) &&
+            const DeepCollectionEquality()
+                .equals(other._team_score_1, _team_score_1) &&
+            const DeepCollectionEquality()
+                .equals(other._team_score_2, _team_score_2) &&
+            const DeepCollectionEquality()
+                .equals(other._team_T_first_half_1, _team_T_first_half_1) &&
+            const DeepCollectionEquality()
+                .equals(other._team_T_second_half_1, _team_T_second_half_1) &&
+            const DeepCollectionEquality()
+                .equals(other._team_G_first_half_1, _team_G_first_half_1) &&
+            const DeepCollectionEquality()
+                .equals(other._team_G_second_half_1, _team_G_second_half_1) &&
+            const DeepCollectionEquality()
+                .equals(other._team_PG_first_half_1, _team_PG_first_half_1) &&
+            const DeepCollectionEquality()
+                .equals(other._team_PG_second_half_1, _team_PG_second_half_1) &&
+            const DeepCollectionEquality()
+                .equals(other._team_DG_first_half_1, _team_DG_first_half_1) &&
+            const DeepCollectionEquality()
+                .equals(other._team_DG_second_half_1, _team_DG_second_half_1) &&
+            const DeepCollectionEquality().equals(
+                other._team_RESULT_first_half_1, _team_RESULT_first_half_1) &&
+            const DeepCollectionEquality().equals(
+                other._team_RESULT_second_half_1, _team_RESULT_second_half_1) &&
+            const DeepCollectionEquality()
+                .equals(other._team_T_first_half_2, _team_T_first_half_2) &&
+            const DeepCollectionEquality()
+                .equals(other._team_T_second_half_2, _team_T_second_half_2) &&
+            const DeepCollectionEquality()
+                .equals(other._team_G_first_half_2, _team_G_first_half_2) &&
+            const DeepCollectionEquality()
+                .equals(other._team_G_second_half_2, _team_G_second_half_2) &&
+            const DeepCollectionEquality()
+                .equals(other._team_PG_first_half_2, _team_PG_first_half_2) &&
+            const DeepCollectionEquality()
+                .equals(other._team_PG_second_half_2, _team_PG_second_half_2) &&
+            const DeepCollectionEquality()
+                .equals(other._team_DG_first_half_2, _team_DG_first_half_2) &&
+            const DeepCollectionEquality()
+                .equals(other._team_DG_second_half_2, _team_DG_second_half_2) &&
+            const DeepCollectionEquality().equals(
+                other._team_RESULT_first_half_2, _team_RESULT_first_half_2) &&
+            const DeepCollectionEquality().equals(
+                other._team_RESULT_second_half_2, _team_RESULT_second_half_2));
   }
 
   @JsonKey(ignore: true)
   @override
-  int get hashCode => Object.hash(
-      runtimeType,
-      const DeepCollectionEquality().hash(_gameDate),
-      const DeepCollectionEquality().hash(_gameTime),
-      const DeepCollectionEquality().hash(_location),
-      const DeepCollectionEquality().hash(_team_1),
-      const DeepCollectionEquality().hash(_team_logo_1),
-      const DeepCollectionEquality().hash(_team_2),
-      const DeepCollectionEquality().hash(_team_logo_2),
-      const DeepCollectionEquality().hash(_game_result));
+  int get hashCode => Object.hashAll([
+        runtimeType,
+        const DeepCollectionEquality().hash(_gameDate),
+        const DeepCollectionEquality().hash(_gameTime),
+        const DeepCollectionEquality().hash(_location),
+        const DeepCollectionEquality().hash(_team_1),
+        const DeepCollectionEquality().hash(_team_logo_1),
+        const DeepCollectionEquality().hash(_team_2),
+        const DeepCollectionEquality().hash(_team_logo_2),
+        const DeepCollectionEquality().hash(_game_result),
+        const DeepCollectionEquality().hash(_team_score_1),
+        const DeepCollectionEquality().hash(_team_score_2),
+        const DeepCollectionEquality().hash(_team_T_first_half_1),
+        const DeepCollectionEquality().hash(_team_T_second_half_1),
+        const DeepCollectionEquality().hash(_team_G_first_half_1),
+        const DeepCollectionEquality().hash(_team_G_second_half_1),
+        const DeepCollectionEquality().hash(_team_PG_first_half_1),
+        const DeepCollectionEquality().hash(_team_PG_second_half_1),
+        const DeepCollectionEquality().hash(_team_DG_first_half_1),
+        const DeepCollectionEquality().hash(_team_DG_second_half_1),
+        const DeepCollectionEquality().hash(_team_RESULT_first_half_1),
+        const DeepCollectionEquality().hash(_team_RESULT_second_half_1),
+        const DeepCollectionEquality().hash(_team_T_first_half_2),
+        const DeepCollectionEquality().hash(_team_T_second_half_2),
+        const DeepCollectionEquality().hash(_team_G_first_half_2),
+        const DeepCollectionEquality().hash(_team_G_second_half_2),
+        const DeepCollectionEquality().hash(_team_PG_first_half_2),
+        const DeepCollectionEquality().hash(_team_PG_second_half_2),
+        const DeepCollectionEquality().hash(_team_DG_first_half_2),
+        const DeepCollectionEquality().hash(_team_DG_second_half_2),
+        const DeepCollectionEquality().hash(_team_RESULT_first_half_2),
+        const DeepCollectionEquality().hash(_team_RESULT_second_half_2)
+      ]);
 
   @JsonKey(ignore: true)
   @override
@@ -1289,14 +1962,37 @@ class _$CustomFieldImpl implements _CustomField {
 
 abstract class _CustomField implements CustomField {
   factory _CustomField(
-      {@JsonKey(name: 'game_date') required final List<String>? gameDate,
-      @JsonKey(name: 'game_time') required final List<String>? gameTime,
-      required final List<String>? location,
-      required final List<String>? team_1,
-      final List<String>? team_logo_1,
-      required final List<String>? team_2,
-      required final List<String>? team_logo_2,
-      required final List<String>? game_result}) = _$CustomFieldImpl;
+          {@JsonKey(name: 'game_date') required final List<String>? gameDate,
+          @JsonKey(name: 'game_time') required final List<String>? gameTime,
+          required final List<String>? location,
+          required final List<String>? team_1,
+          final List<String>? team_logo_1,
+          required final List<String>? team_2,
+          required final List<String>? team_logo_2,
+          required final List<String>? game_result,
+          required final List<String>? team_score_1,
+          required final List<String>? team_score_2,
+          required final List<String>? team_T_first_half_1,
+          required final List<String>? team_T_second_half_1,
+          required final List<String>? team_G_first_half_1,
+          required final List<String>? team_G_second_half_1,
+          required final List<String>? team_PG_first_half_1,
+          required final List<String>? team_PG_second_half_1,
+          required final List<String>? team_DG_first_half_1,
+          required final List<String>? team_DG_second_half_1,
+          required final List<String>? team_RESULT_first_half_1,
+          required final List<String>? team_RESULT_second_half_1,
+          required final List<String>? team_T_first_half_2,
+          required final List<String>? team_T_second_half_2,
+          required final List<String>? team_G_first_half_2,
+          required final List<String>? team_G_second_half_2,
+          required final List<String>? team_PG_first_half_2,
+          required final List<String>? team_PG_second_half_2,
+          required final List<String>? team_DG_first_half_2,
+          required final List<String>? team_DG_second_half_2,
+          required final List<String>? team_RESULT_first_half_2,
+          required final List<String>? team_RESULT_second_half_2}) =
+      _$CustomFieldImpl;
 
   factory _CustomField.fromJson(Map<String, dynamic> json) =
       _$CustomFieldImpl.fromJson;
@@ -1319,6 +2015,50 @@ abstract class _CustomField implements CustomField {
   List<String>? get team_logo_2;
   @override
   List<String>? get game_result;
+  @override
+  List<String>? get team_score_1;
+  @override
+  List<String>? get team_score_2;
+  @override
+  List<String>? get team_T_first_half_1;
+  @override
+  List<String>? get team_T_second_half_1;
+  @override
+  List<String>? get team_G_first_half_1;
+  @override
+  List<String>? get team_G_second_half_1;
+  @override
+  List<String>? get team_PG_first_half_1;
+  @override
+  List<String>? get team_PG_second_half_1;
+  @override
+  List<String>? get team_DG_first_half_1;
+  @override
+  List<String>? get team_DG_second_half_1;
+  @override
+  List<String>? get team_RESULT_first_half_1;
+  @override
+  List<String>? get team_RESULT_second_half_1;
+  @override
+  List<String>? get team_T_first_half_2;
+  @override
+  List<String>? get team_T_second_half_2;
+  @override
+  List<String>? get team_G_first_half_2;
+  @override
+  List<String>? get team_G_second_half_2;
+  @override
+  List<String>? get team_PG_first_half_2;
+  @override
+  List<String>? get team_PG_second_half_2;
+  @override
+  List<String>? get team_DG_first_half_2;
+  @override
+  List<String>? get team_DG_second_half_2;
+  @override
+  List<String>? get team_RESULT_first_half_2;
+  @override
+  List<String>? get team_RESULT_second_half_2;
   @override
   @JsonKey(ignore: true)
   _$$CustomFieldImplCopyWith<_$CustomFieldImpl> get copyWith =>

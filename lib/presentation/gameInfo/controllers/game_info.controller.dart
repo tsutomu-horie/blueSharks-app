@@ -98,39 +98,6 @@ class GameInfoController extends GetxController {
     return posts.toList();
   }
 
-  /*
-  * This Function will return isHome, opponentLogo, opponentName
-  * */
-  Map<String, dynamic> getStatusMatch(CustomField customField) {
-    final team1 = customField.team_1 ?? [];
-    final team2 = customField.team_2 ?? [];
-    final team2Logo = customField.team_logo_2 ?? [];
-
-    try {
-      final isHome = team1.first.contains(Constants.teamName);
-      print("get status ${isHome} ${team1.first}");
-      if (isHome) {
-        return {
-          'isHome': true,
-          'opponentLogo': team2Logo.first,
-          'opponentName': team2.first,
-        };
-      } else {
-        return {
-          'isHome': false,
-          'opponentLogo': customField.team_logo_1?.first,
-          'opponentName': team1.first,
-        };
-      }
-    } catch (e) {
-      return {
-        'isHome': false,
-        'opponentLogo': customField.team_logo_1?.first,
-        'opponentName': "",
-      };
-    }
-  }
-
   Future<String> getImage(String mediaId) async {
 
     final imageData = await mediaProvider.fetchMedia(mediaId);

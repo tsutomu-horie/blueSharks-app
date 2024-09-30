@@ -122,51 +122,62 @@ class ListTopicsScreen  extends StatelessWidget {
                     final data = controller.getTabData(controller
                         .selectedIndex.value); // Fetch data for the current tab
 
-                    return ListView.builder(
-                      shrinkWrap: true,
-                      // Use shrinkWrap for smooth scrolling
-                      physics: const NeverScrollableScrollPhysics(),
-                      // Disable ListView scrolling
-                      itemCount: data.length,
-                      itemBuilder: (context, itemIndex) {
-                        return FutureBuilder<String>(
-                            future: controller.getNewsImage("${data[itemIndex].id}"),
-                          builder: (context, snapshot) {
-                            if (snapshot.connectionState == ConnectionState.waiting) {
-                              return Padding(
-                                padding: EdgeInsets.only(right: 12.w),
-                                child: shimmer(),
-                              );
-                            } else if (snapshot.hasError) {
-                              return TopicItemView(
-                                (){
-                                  print("tapp TopicItemView ");
-                                  onOpenDetail(data[itemIndex]);
-                                },
-                                image: null,
-                                date: data[itemIndex].date,
-                                title: data[itemIndex].title.rendered,
-                                categories: mapCategoryIdsToNames(data[itemIndex].categories),
-                              );
-                            } else {
-                              final postImage = snapshot.data ??
-                                  'https://example.com/placeholder.png'; // Fallback in case of null
+                    if (data.isEmpty) {
+                      return Column(
+                        children: [
+                          shimmer(),
+                          shimmer(),
+                          shimmer(),
+                        ],
+                      );
+                    } else {
+                      return ListView.builder(
+                        shrinkWrap: true,
+                        // Use shrinkWrap for smooth scrolling
+                        physics: const NeverScrollableScrollPhysics(),
+                        // Disable ListView scrolling
+                        itemCount: data.length,
+                        itemBuilder: (context, itemIndex) {
+                          return FutureBuilder<String>(
+                            future: controller.getNewsImage(
+                                "${data[itemIndex].id}"),
+                            builder: (context, snapshot) {
+                              if (snapshot.connectionState ==
+                                  ConnectionState.waiting) {
+                                return shimmer();
+                              } else if (snapshot.hasError) {
+                                return TopicItemView(
+                                      () {
+                                    print("tapp TopicItemView ");
+                                    onOpenDetail(data[itemIndex]);
+                                  },
+                                  image: null,
+                                  date: data[itemIndex].date,
+                                  title: data[itemIndex].title.rendered,
+                                  categories: mapCategoryIdsToNames(
+                                      data[itemIndex].categories),
+                                );
+                              } else {
+                                final postImage = snapshot.data ??
+                                    'https://example.com/placeholder.png'; // Fallback in case of null
 
-                              // Ensure that TopicItemView is returned
-                              return TopicItemView(
-                                (){
-                                  onOpenDetail(data[itemIndex]);
-                                },
-                                image: postImage,
-                                date: data[itemIndex].date,
-                                title: data[itemIndex].title.rendered,
-                                categories: mapCategoryIdsToNames(data[itemIndex].categories),
-                              );
-                            }
-                          },
-                        );
-                      },
-                    );
+                                // Ensure that TopicItemView is returned
+                                return TopicItemView(
+                                      () {
+                                    onOpenDetail(data[itemIndex]);
+                                  },
+                                  image: postImage,
+                                  date: data[itemIndex].date,
+                                  title: data[itemIndex].title.rendered,
+                                  categories: mapCategoryIdsToNames(
+                                      data[itemIndex].categories),
+                                );
+                              }
+                            },
+                          );
+                        },
+                      );
+                    }
                   });
                 },
                 childCount: 1, // You can manage this based on your data
@@ -183,7 +194,7 @@ class ListTopicsScreen  extends StatelessWidget {
       baseColor: BorderColor.disabled,
       highlightColor: BorderColor.subtle,
       child: Container(
-        width: 320.w,
+        width: double.infinity,
         height: 200.h,
         decoration: BoxDecoration(
           color: BorderColor.disabled,

@@ -1,4 +1,5 @@
 export 'package:koto_blue_sharks/presentation/ListTopics/list_topics.screen.dart';
+export 'package:koto_blue_sharks/presentation/MatchDetail/match_detail.screen.dart';
 export 'package:koto_blue_sharks/presentation/calendar/calendar.screen.dart';
 export 'package:koto_blue_sharks/presentation/detailInfo/detail_info.screen.dart';
 export 'package:koto_blue_sharks/presentation/gameInfo/game_info.screen.dart';
