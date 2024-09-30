@@ -59,6 +59,7 @@ _$MatchResultBySeasonImpl _$$MatchResultBySeasonImplFromJson(
       jetpack_shortlink: json['jetpack_shortlink'] as String?,
       custom_field:
           CustomField.fromJson(json['custom_field'] as Map<String, dynamic>),
+      content: Rendered.fromJson(json['content'] as Map<String, dynamic>),
     );
 
 Map<String, dynamic> _$$MatchResultBySeasonImplToJson(
@@ -87,6 +88,7 @@ Map<String, dynamic> _$$MatchResultBySeasonImplToJson(
       'jetpack_sharing_enabled': instance.jetpack_sharing_enabled,
       'jetpack_shortlink': instance.jetpack_shortlink,
       'custom_field': instance.custom_field,
+      'content': instance.content,
     };
 
 _$CustomFieldImpl _$$CustomFieldImplFromJson(Map<String, dynamic> json) =>
@@ -113,6 +115,76 @@ _$CustomFieldImpl _$$CustomFieldImplFromJson(Map<String, dynamic> json) =>
       game_result: (json['game_result'] as List<dynamic>?)
           ?.map((e) => e as String)
           .toList(),
+      team_score_1: (json['team_score_1'] as List<dynamic>?)
+          ?.map((e) => e as String)
+          .toList(),
+      team_score_2: (json['team_score_2'] as List<dynamic>?)
+          ?.map((e) => e as String)
+          .toList(),
+      team_T_first_half_1: (json['team_T_first_half_1'] as List<dynamic>?)
+          ?.map((e) => e as String)
+          .toList(),
+      team_T_second_half_1: (json['team_T_second_half_1'] as List<dynamic>?)
+          ?.map((e) => e as String)
+          .toList(),
+      team_G_first_half_1: (json['team_G_first_half_1'] as List<dynamic>?)
+          ?.map((e) => e as String)
+          .toList(),
+      team_G_second_half_1: (json['team_G_second_half_1'] as List<dynamic>?)
+          ?.map((e) => e as String)
+          .toList(),
+      team_PG_first_half_1: (json['team_PG_first_half_1'] as List<dynamic>?)
+          ?.map((e) => e as String)
+          .toList(),
+      team_PG_second_half_1: (json['team_PG_second_half_1'] as List<dynamic>?)
+          ?.map((e) => e as String)
+          .toList(),
+      team_DG_first_half_1: (json['team_DG_first_half_1'] as List<dynamic>?)
+          ?.map((e) => e as String)
+          .toList(),
+      team_DG_second_half_1: (json['team_DG_second_half_1'] as List<dynamic>?)
+          ?.map((e) => e as String)
+          .toList(),
+      team_RESULT_first_half_1:
+          (json['team_RESULT_first_half_1'] as List<dynamic>?)
+              ?.map((e) => e as String)
+              .toList(),
+      team_RESULT_second_half_1:
+          (json['team_RESULT_second_half_1'] as List<dynamic>?)
+              ?.map((e) => e as String)
+              .toList(),
+      team_T_first_half_2: (json['team_T_first_half_2'] as List<dynamic>?)
+          ?.map((e) => e as String)
+          .toList(),
+      team_T_second_half_2: (json['team_T_second_half_2'] as List<dynamic>?)
+          ?.map((e) => e as String)
+          .toList(),
+      team_G_first_half_2: (json['team_G_first_half_2'] as List<dynamic>?)
+          ?.map((e) => e as String)
+          .toList(),
+      team_G_second_half_2: (json['team_G_second_half_2'] as List<dynamic>?)
+          ?.map((e) => e as String)
+          .toList(),
+      team_PG_first_half_2: (json['team_PG_first_half_2'] as List<dynamic>?)
+          ?.map((e) => e as String)
+          .toList(),
+      team_PG_second_half_2: (json['team_PG_second_half_2'] as List<dynamic>?)
+          ?.map((e) => e as String)
+          .toList(),
+      team_DG_first_half_2: (json['team_DG_first_half_2'] as List<dynamic>?)
+          ?.map((e) => e as String)
+          .toList(),
+      team_DG_second_half_2: (json['team_DG_second_half_2'] as List<dynamic>?)
+          ?.map((e) => e as String)
+          .toList(),
+      team_RESULT_first_half_2:
+          (json['team_RESULT_first_half_2'] as List<dynamic>?)
+              ?.map((e) => e as String)
+              .toList(),
+      team_RESULT_second_half_2:
+          (json['team_RESULT_second_half_2'] as List<dynamic>?)
+              ?.map((e) => e as String)
+              .toList(),
     );
 
 Map<String, dynamic> _$$CustomFieldImplToJson(_$CustomFieldImpl instance) =>
@@ -125,6 +197,28 @@ Map<String, dynamic> _$$CustomFieldImplToJson(_$CustomFieldImpl instance) =>
       'team_2': instance.team_2,
       'team_logo_2': instance.team_logo_2,
       'game_result': instance.game_result,
+      'team_score_1': instance.team_score_1,
+      'team_score_2': instance.team_score_2,
+      'team_T_first_half_1': instance.team_T_first_half_1,
+      'team_T_second_half_1': instance.team_T_second_half_1,
+      'team_G_first_half_1': instance.team_G_first_half_1,
+      'team_G_second_half_1': instance.team_G_second_half_1,
+      'team_PG_first_half_1': instance.team_PG_first_half_1,
+      'team_PG_second_half_1': instance.team_PG_second_half_1,
+      'team_DG_first_half_1': instance.team_DG_first_half_1,
+      'team_DG_second_half_1': instance.team_DG_second_half_1,
+      'team_RESULT_first_half_1': instance.team_RESULT_first_half_1,
+      'team_RESULT_second_half_1': instance.team_RESULT_second_half_1,
+      'team_T_first_half_2': instance.team_T_first_half_2,
+      'team_T_second_half_2': instance.team_T_second_half_2,
+      'team_G_first_half_2': instance.team_G_first_half_2,
+      'team_G_second_half_2': instance.team_G_second_half_2,
+      'team_PG_first_half_2': instance.team_PG_first_half_2,
+      'team_PG_second_half_2': instance.team_PG_second_half_2,
+      'team_DG_first_half_2': instance.team_DG_first_half_2,
+      'team_DG_second_half_2': instance.team_DG_second_half_2,
+      'team_RESULT_first_half_2': instance.team_RESULT_first_half_2,
+      'team_RESULT_second_half_2': instance.team_RESULT_second_half_2,
     };
 
 _$RenderedImpl _$$RenderedImplFromJson(Map<String, dynamic> json) =>

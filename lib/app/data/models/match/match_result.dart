@@ -47,6 +47,7 @@ class MatchResultBySeason with _$MatchResultBySeason {
     required bool? jetpack_sharing_enabled,
     required String? jetpack_shortlink,
     required CustomField custom_field,
+    required Rendered content,
   }) = _MatchResultBySeason;
 
   factory MatchResultBySeason.fromJson(Map<String, dynamic> json) =>
@@ -64,6 +65,28 @@ class CustomField with _$CustomField {
     required List<String>? team_2,
     required List<String>? team_logo_2,
     required List<String>? game_result,
+    required List<String>? team_score_1,
+    required List<String>? team_score_2,
+    required List<String>? team_T_first_half_1,
+    required List<String>? team_T_second_half_1,
+    required List<String>? team_G_first_half_1,
+    required List<String>? team_G_second_half_1,
+    required List<String>? team_PG_first_half_1,
+    required List<String>? team_PG_second_half_1,
+    required List<String>? team_DG_first_half_1,
+    required List<String>? team_DG_second_half_1,
+    required List<String>? team_RESULT_first_half_1,
+    required List<String>? team_RESULT_second_half_1,
+    required List<String>? team_T_first_half_2,
+    required List<String>? team_T_second_half_2,
+    required List<String>? team_G_first_half_2,
+    required List<String>? team_G_second_half_2,
+    required List<String>? team_PG_first_half_2,
+    required List<String>? team_PG_second_half_2,
+    required List<String>? team_DG_first_half_2,
+    required List<String>? team_DG_second_half_2,
+    required List<String>? team_RESULT_first_half_2,
+    required List<String>? team_RESULT_second_half_2,
     // Add other fields as needed
   }) = _CustomField;
 

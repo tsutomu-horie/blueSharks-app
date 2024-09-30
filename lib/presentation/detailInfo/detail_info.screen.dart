@@ -48,7 +48,8 @@ class DetailInfoScreen extends GetView<DetailInfoController> {
                 height: 1,
                 color: BorderColor.primary,
               ),
-              Padding(
+              Container(
+                color: BackgroundColor.primary,
                 padding: EdgeInsets.symmetric(vertical: 20.h, horizontal: 16.w),
                 child: Column(
                   children: [

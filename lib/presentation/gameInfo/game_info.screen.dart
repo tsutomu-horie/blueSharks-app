@@ -7,8 +7,10 @@ import 'package:koto_blue_sharks/app/views/views/custom_text_view.dart';
 import 'package:koto_blue_sharks/app/views/views/default_header_title_view.dart';
 import 'package:koto_blue_sharks/app/views/views/match/views/match_item_view.dart';
 import 'package:koto_blue_sharks/generated/locales.g.dart';
+import 'package:koto_blue_sharks/presentation/MatchDetail/match_detail.screen.dart';
 import 'package:koto_blue_sharks/utils/app_color.dart';
 import 'package:koto_blue_sharks/utils/date_formatter.dart';
+import 'package:koto_blue_sharks/utils/match+extensions.dart';
 import 'package:shimmer/shimmer.dart';
 
 import 'controllers/game_info.controller.dart';
@@ -21,6 +23,7 @@ class GameInfoScreen extends GetView<GameInfoController> {
     final GameInfoController gameInfoController = Get.put(GameInfoController());
 
     return Scaffold(
+      backgroundColor: BackgroundColor.primary,
         body: SingleChildScrollView(
           child: Column(
             children: [
@@ -32,13 +35,15 @@ class GameInfoScreen extends GetView<GameInfoController> {
                 height: 1.h,
                 color: BorderColor.primary,
               ),
-              Padding(
+              Container(
+                color: BackgroundColor.primary,
                 padding: EdgeInsets.symmetric(vertical: 12.h, horizontal: 16.w),
                 child: OutlinedButton(
                   onPressed: () {
                     showYearFilterBottomSheet(context);
                   },
                   style: ButtonStyle(
+                    padding: WidgetStateProperty.all(EdgeInsets.zero),
                     shape: MaterialStateProperty.all(
                       RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8.r),
@@ -47,6 +52,7 @@ class GameInfoScreen extends GetView<GameInfoController> {
                   ),
                   child: Row(
                     children: [
+                      SizedBox(width: 12.w,),
                       SvgPicture.asset(
                         "assets/vectors/calendar-search.svg",
                         width: 20.w,
@@ -74,6 +80,7 @@ class GameInfoScreen extends GetView<GameInfoController> {
                         Icons.keyboard_arrow_down,
                         size: 20.w,
                       ),
+                      SizedBox(width: 12.w,),
                     ],
                   ),
                 ),
@@ -84,6 +91,7 @@ class GameInfoScreen extends GetView<GameInfoController> {
               Obx(() {
                 return ListView.builder(
                     shrinkWrap: true,
+                    reverse: true,
                     // Use shrinkWrap for smooth scrolling
                     physics: const NeverScrollableScrollPhysics(),
                     itemCount: controller.listMatch.value.length,
@@ -93,9 +101,10 @@ class GameInfoScreen extends GetView<GameInfoController> {
                       final gameTime = data.custom_field.gameTime ?? [];
                       final location = data.custom_field.location ?? [];
 
-                      final matchStatus = gameInfoController.getStatusMatch(data.custom_field);
+                      final matchStatus = getStatusMatch(data.custom_field);
                       final date = gameDate.isNotEmpty ? convertJapaneseDate(gameDate.first) : {'formattedDate' : "", "dayOfWeek": ""};
 
+                      print("load success ${date['formattedDate']}");
 
                       if (gameDate.isNotEmpty && gameTime.isNotEmpty && location.isNotEmpty) {
                         return FutureBuilder<String>(
@@ -139,6 +148,11 @@ class GameInfoScreen extends GetView<GameInfoController> {
                                 opponentLogo: opponentLogo,
                                 // Use the resolved image URL
                                 opponentName: matchStatus["opponentName"],
+                                gameResult: data.custom_field.game_result?.first,
+                                team1Score: data.custom_field.team_score_1?.first,
+                                team2Score: data.custom_field.team_score_2?.first, onTap: (){
+                                  Get.to(MatchDetailScreen(data));
+                              },
                               );
                             }
                           },

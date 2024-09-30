@@ -44,6 +44,16 @@ class LocaleKeys {
   static const promotion_video = 'promotion_video';
   static const promotion_video_en = 'promotion_video_en';
   static const see_more = 'see_more';
+  static const game_detail = 'game_detail';
+  static const first_half = 'first_half';
+  static const second_half = 'second_half';
+  static const total_amount = 'total_amount';
+  static const member = 'member';
+  static const member_en = 'member_en';
+  static const report = 'report';
+  static const report_en = 'report_en';
+  static const gallery = 'gallery';
+  static const gallery_en = 'gallery_en';
 }
 
 class Locales {
@@ -82,5 +92,15 @@ class Locales {
     'promotion_video': '公式ソングを視聴する',
     'promotion_video_en': 'Promotion Video',
     'see_more': 'もっと見る',
+    'game_detail': 'ゲーム詳細',
+    'first_half': '前半',
+    'second_half': '後半',
+    'total_amount': '合計',
+    'member': 'メンバー',
+    'member_en': 'Member',
+    'report': '報告',
+    'report_en': 'report',
+    'gallery': 'ギャラリー',
+    'gallery_en': 'gallery',
   };
 }

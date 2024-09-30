@@ -11,10 +11,12 @@ import 'package:koto_blue_sharks/app/views/views/match/views/match_item_view.dar
 import 'package:koto_blue_sharks/app/views/views/other/views/video_thumbnail_view.dart';
 import 'package:koto_blue_sharks/app/views/views/topic/views/topic_item_view.dart';
 import 'package:koto_blue_sharks/generated/locales.g.dart';
+import 'package:koto_blue_sharks/presentation/MatchDetail/match_detail.screen.dart';
 import 'package:koto_blue_sharks/presentation/main/controllers/main.controller.dart';
 import 'package:koto_blue_sharks/utils/app_color.dart';
 import 'package:koto_blue_sharks/utils/date_formatter.dart';
 import 'package:koto_blue_sharks/utils/map_id_to_categories.dart';
+import 'package:koto_blue_sharks/utils/match+extensions.dart';
 import 'package:shimmer/shimmer.dart';
 
 import 'controllers/home.controller.dart';
@@ -41,85 +43,106 @@ class HomeScreen extends GetView<MainController> {
           ),
           DefaultHeaderTitleView(
               LocaleKeys.next_match.tr, LocaleKeys.next_match_en.tr),
+
           Obx(() {
             // Access the observable list value directly
             final nextMatchData = homeController.threeLatestMatch.value;
 
             if (nextMatchData.isEmpty) {
-              return Text(
-                  'No match data available'); // Show a message if the list is empty
+              return SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: [
+                    SizedBox(width: 16.w),
+                    Padding(
+                      padding: EdgeInsets.only(right: 12.w),
+                      child: shimmer(),
+                    ),
+                    SizedBox(width: 8.w),
+                    Padding(
+                      padding: EdgeInsets.only(right: 12.w),
+                      child: shimmer(),
+                    ),
+                  ],
+                ),
+              );
+            } else {
+              return SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                // Set scrolling direction to horizontal
+                child: Padding(
+                  padding: EdgeInsets.only(left: 12.w, top: 20.h, bottom: 20.h),
+                  child: Row(
+                    children: nextMatchData.map((element) {
+                      final gameDate = element.custom_field.gameDate ?? [];
+                      final gameTime = element.custom_field.gameTime ?? [];
+                      final location = element.custom_field.location ?? [];
+
+                      final matchStatus = getStatusMatch(element.custom_field);
+                      final date = convertJapaneseDate(gameDate.first);
+
+
+                      // Ensure gameDate and other fields are lists and check their contents
+                      if (gameDate.isNotEmpty && gameTime.isNotEmpty && location.isNotEmpty) {
+                        return FutureBuilder<String>(
+                          future:
+                          homeController.getImage(matchStatus["opponentLogo"]),
+                          // Wait for the image URL to resolve
+                          builder: (context, snapshot) {
+                            if (snapshot.connectionState ==
+                                ConnectionState.waiting) {
+                              return Padding(
+                                padding: EdgeInsets.only(right: 12.w),
+                                child: shimmer(),
+                              );
+                            } else if (snapshot.hasError) {
+                              return Padding(
+                                padding: EdgeInsets.only(right: 12.w),
+                                child: Container(
+                                    decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(2.r),
+                                        color: BorderColor.primary),
+                                    width: 320.w,
+                                    height: 200.h,
+                                    child: const Icon(Icons.warning)),
+                              );
+                            } else {
+                              // Use the actual image URL returned from the Future
+                              final opponentLogo = snapshot.data ??
+                                  'https://example.com/placeholder.png'; // Fallback in case of null
+
+                              return MatchItemView(
+                                isHome: matchStatus["isHome"],
+                                title: element.title.rendered,
+                                location:location.first,
+                                // Ensure location is a valid list and access its first item
+                                date: date['formattedDate'] ?? "",
+                                // Format the date
+                                day: date['dayOfWeek'] ?? "",
+                                // Get the day of the week
+                                time: gameTime.first,
+                                // Access the first time element
+                                opponentLogo: opponentLogo,
+                                // Use the resolved image URL
+                                opponentName: matchStatus["opponentName"],
+                                onTap: (){
+                                  Get.to(MatchDetailScreen(element));
+                                },
+                              );
+                            }
+                          },
+                        );
+                      } else {
+                        return Text(
+                            'Missing match data'); // Handle cases where fields are missing
+                      }
+                    }).toList(), // Convert the Iterable to a List<Widget>
+                  ),
+                ),
+              );
+
             }
 
-            return SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              // Set scrolling direction to horizontal
-              child: Padding(
-                padding: EdgeInsets.only(left: 12.w, top: 20.h, bottom: 20.h),
-                child: Row(
-                  children: nextMatchData.map((element) {
-                    final gameDate = element.custom_field.gameDate ?? [];
-                    final gameTime = element.custom_field.gameTime ?? [];
-                    final location = element.custom_field.location ?? [];
-
-                    final matchStatus = homeController.getStatusMatch(element.custom_field);
-                    final date = convertJapaneseDate(gameDate.first);
-
-
-                    // Ensure gameDate and other fields are lists and check their contents
-                    if (gameDate.isNotEmpty && gameTime.isNotEmpty && location.isNotEmpty) {
-                      return FutureBuilder<String>(
-                        future:
-                        homeController.getImage(matchStatus["opponentLogo"]),
-                        // Wait for the image URL to resolve
-                        builder: (context, snapshot) {
-                          if (snapshot.connectionState ==
-                              ConnectionState.waiting) {
-                            return Padding(
-                              padding: EdgeInsets.only(right: 12.w),
-                              child: shimmer(),
-                            );
-                          } else if (snapshot.hasError) {
-                            return Padding(
-                              padding: EdgeInsets.only(right: 12.w),
-                              child: Container(
-                                  decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(2.r),
-                                      color: BorderColor.primary),
-                                  width: 320.w,
-                                  height: 200.h,
-                                  child: const Icon(Icons.warning)),
-                            );
-                          } else {
-                            // Use the actual image URL returned from the Future
-                            final opponentLogo = snapshot.data ??
-                                'https://example.com/placeholder.png'; // Fallback in case of null
-
-                            return MatchItemView(
-                              isHome: matchStatus["isHome"],
-                              title: element.title.rendered,
-                              location:location.first,
-                              // Ensure location is a valid list and access its first item
-                              date: date['formattedDate'] ?? "",
-                              // Format the date
-                              day: date['dayOfWeek'] ?? "",
-                              // Get the day of the week
-                              time: gameTime.first,
-                              // Access the first time element
-                              opponentLogo: opponentLogo,
-                              // Use the resolved image URL
-                              opponentName: matchStatus["opponentName"],
-                            );
-                          }
-                        },
-                      );
-                    } else {
-                      return Text(
-                          'Missing match data'); // Handle cases where fields are missing
-                    }
-                  }).toList(), // Convert the Iterable to a List<Widget>
-                ),
-              ),
-            );
           }),
           SizedBox(
             height: 40.h,
