@@ -1,6 +1,8 @@
 /*
   * This Function will return isHome, opponentLogo, opponentName
   * */
+import 'package:koto_blue_sharks/app/data/api/match/match_provider.dart';
+import 'package:koto_blue_sharks/app/data/api/media/media_provider.dart';
 import 'package:koto_blue_sharks/app/data/models/match/match_result.dart';
 import 'package:koto_blue_sharks/utils/Constant.dart';
 
@@ -36,6 +38,27 @@ Map<String, dynamic> getStatusMatch(CustomField customField) {
       'isHome': false,
       'opponentLogo': customField.team_logo_1?.first,
       'opponentName': "",
+    };
+  }
+}
+
+Future<Map<String, String>> getAdditionalInfo(MediaProvider mediaProvider, MatchProvider matchProvider, String mediaId, String gameSerialId) async {
+
+  try {
+    final imageData = await mediaProvider.fetchMedia(mediaId);
+    final image = imageData.media_details.sizes.thumbnail.source_url;
+    print("there is error2 ${image}");
+    final matchStatus = gameSerialId != "" ? await matchProvider.getMatchStatus(gameSerialId) : Rendered(rendered: "");
+    print("there is error1 ${matchStatus}");
+    return {
+      'image': image,
+      'matchStatus': matchStatus.rendered
+    };
+  } catch (e) {
+    print("there is error ${e}");
+    return {
+      'image': "",
+      'matchStatus': ""
     };
   }
 }

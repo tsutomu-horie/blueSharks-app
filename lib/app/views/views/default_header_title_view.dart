@@ -17,92 +17,96 @@ class DefaultHeaderTitleView extends GetView {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        SizedBox(
-          height: 24.h,
-        ),
-        Row(
-          children: [
-            SizedBox(
-              width: 16.w,
-            ),
-            Flexible(
-                child: Center(
-                    child: CustomTextView(
-              title,
-              color: TextColor.tertiary,
-              type: TDSFontType.bodyTextMedium,
-              align: TextAlign.center,
-            ))),
-            SizedBox(
-              width: 16.w,
-            ),
-          ],
-        ),
-        SizedBox(
-          height: 4.h,
-        ),
-        Row(
-          mainAxisSize: MainAxisSize.max,
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            SizedBox(
-              width: 16.w,
-            ),
-            Container(
-              height: 1,
-              width: 15.w,
-              color: BrandColor.main,
-            ),
-            SizedBox(
-              width: 16.w,
-            ),
-            //todo:: custom font
-            Flexible(
-              child: Text(
-                description,
-                style: TextStyle(
-                    fontSize: 20.sp,
-                    color: BrandColor.main,
-                    fontWeight: FontWeight.w600),
-              ),
-            ),
-            SizedBox(
-              width: 16.w,
-            ),
-            Container(
-              height: 1,
-              width: 15.w,
-              color: BrandColor.main,
-            ),
-            SizedBox(
-              width: 16.w,
-            ),
-          ],
-        ),
-        if (onBack != null)
-          Column(
+    return Container(
+      color: const Color(0xFFFAFAFA),
+      child: Column(
+        children: [
+          SizedBox(
+            height: 24.h,
+          ),
+          Row(
             children: [
               SizedBox(
-                height: 12.h,
+                width: 16.w,
               ),
-              TextButton(
-                onPressed: () {
-                  onBack!();
-                },
-                child: CustomTextView(
-                  LocaleKeys.back_to_list.tr,
-                  style: TextStyle(
-                      fontWeight: FontWeight.w600, color: BrandColor.main, decoration: TextDecoration.underline),
-                ),
+              Flexible(
+                  child: Center(
+                      child: CustomTextView(
+                title,
+                color: TextColor.tertiary,
+                type: TDSFontType.bodyTextMedium,
+                align: TextAlign.center,
+              ))),
+              SizedBox(
+                width: 16.w,
               ),
             ],
           ),
-        SizedBox(
-          height: 24.h,
-        ),
-      ],
+          SizedBox(
+            height: 4.h,
+          ),
+          Row(
+            mainAxisSize: MainAxisSize.max,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              SizedBox(
+                width: 16.w,
+              ),
+              Container(
+                height: 1,
+                width: 15.w,
+                color: BrandColor.main,
+              ),
+              SizedBox(
+                width: 16.w,
+              ),
+              //todo:: custom font
+              Flexible(
+                child: Text(
+                  description,
+                  style: TextStyle(
+                      fontSize: 20.sp,
+                      color: BrandColor.main,
+                      fontWeight: FontWeight.w600),
+                ),
+              ),
+              SizedBox(
+                width: 16.w,
+              ),
+              Container(
+                height: 1,
+                width: 15.w,
+                color: BrandColor.main,
+              ),
+              SizedBox(
+                width: 16.w,
+              ),
+            ],
+          ),
+          if (onBack != null)
+            Column(
+              children: [
+                SizedBox(
+                  height: 12.h,
+                ),
+                TextButton(
+                  onPressed: () {
+                    onBack!();
+                  },
+                  child: CustomTextView(
+                    LocaleKeys.back_to_list.tr,
+                    style: TextStyle(
+                        fontWeight: FontWeight.w600, color: BrandColor.main, decoration: TextDecoration.underline),
+                  ),
+                ),
+              ],
+            ),
+          SizedBox(
+            height: 24.h,
+          ),
+          Divider(color: BorderColor.primary,  height: 0,),
+        ],
+      ),
     );
   }
 }

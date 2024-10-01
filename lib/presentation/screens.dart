@@ -6,6 +6,7 @@ export 'package:koto_blue_sharks/presentation/gameInfo/game_info.screen.dart';
 export 'package:koto_blue_sharks/presentation/home/home.screen.dart';
 export 'package:koto_blue_sharks/presentation/info/info.screen.dart';
 export 'package:koto_blue_sharks/presentation/main/main.screen.dart';
+export 'package:koto_blue_sharks/presentation/member/member.screen.dart';
 export 'package:koto_blue_sharks/presentation/mypage/mypage.screen.dart';
 export 'package:koto_blue_sharks/presentation/splash/splash.screen.dart';
 export 'package:koto_blue_sharks/presentation/stadium/stadium.screen.dart';

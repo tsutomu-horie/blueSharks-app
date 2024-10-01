@@ -54,6 +54,8 @@ class LocaleKeys {
   static const report_en = 'report_en';
   static const gallery = 'gallery';
   static const gallery_en = 'gallery_en';
+  static const all_position = 'all_position';
+  static const captain = 'captain';
 }
 
 class Locales {
@@ -102,5 +104,7 @@ class Locales {
     'report_en': 'report',
     'gallery': 'ギャラリー',
     'gallery_en': 'gallery',
+    'all_position': 'All Position',
+    'captain': 'キャプテン',
   };
 }

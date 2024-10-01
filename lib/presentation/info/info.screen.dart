@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import 'package:koto_blue_sharks/app/data/models/info/post.dart';
 import 'package:koto_blue_sharks/presentation/ListTopics/list_topics.screen.dart';
 import 'package:koto_blue_sharks/presentation/gameInfo/game_info.screen.dart';
+import 'package:koto_blue_sharks/presentation/member/member.screen.dart';
 import 'package:koto_blue_sharks/utils/app_color.dart';
 
 import 'controllers/info.controller.dart';
@@ -80,10 +81,8 @@ class InfoScreen extends GetView<InfoController> {
               onOpenDetail(value);
             },
           ),
-          GameInfoScreen(
-
-          ),
-          Center(child: Text("Player")),
+          const GameInfoScreen(),
+          MemberScreen(),
           Center(child: Text("Team")),
           Center(child: Text("Gallery")),
           Center(child: Text("Partner")),

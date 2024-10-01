@@ -185,6 +185,20 @@ _$CustomFieldImpl _$$CustomFieldImplFromJson(Map<String, dynamic> json) =>
           (json['team_RESULT_second_half_2'] as List<dynamic>?)
               ?.map((e) => e as String)
               .toList(),
+      member_starting: (json['member_starting'] as List<dynamic>?)
+          ?.map((e) => e as String)
+          .toList(),
+      member_reserves: (json['member_reserves'] as List<dynamic>?)
+          ?.map((e) => e as String)
+          .toList(),
+      photos:
+          (json['photos'] as List<dynamic>?)?.map((e) => e as String).toList(),
+      game_serial: (json['game_serial'] as List<dynamic>?)
+          ?.map((e) => e as String)
+          .toList(),
+      member_captain: (json['member_captain'] as List<dynamic>?)
+          ?.map((e) => e as String)
+          .toList(),
     );
 
 Map<String, dynamic> _$$CustomFieldImplToJson(_$CustomFieldImpl instance) =>
@@ -219,6 +233,11 @@ Map<String, dynamic> _$$CustomFieldImplToJson(_$CustomFieldImpl instance) =>
       'team_DG_second_half_2': instance.team_DG_second_half_2,
       'team_RESULT_first_half_2': instance.team_RESULT_first_half_2,
       'team_RESULT_second_half_2': instance.team_RESULT_second_half_2,
+      'member_starting': instance.member_starting,
+      'member_reserves': instance.member_reserves,
+      'photos': instance.photos,
+      'game_serial': instance.game_serial,
+      'member_captain': instance.member_captain,
     };
 
 _$RenderedImpl _$$RenderedImplFromJson(Map<String, dynamic> json) =>

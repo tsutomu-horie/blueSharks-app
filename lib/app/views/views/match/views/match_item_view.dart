@@ -18,14 +18,14 @@ class MatchItemView extends GetView {
       required this.date,
       required this.day,
       required this.time,
-      required this.isHome,
+      required this.matchStatus,
       required this.opponentLogo,
       required this.opponentName,
       this.gameResult,
       this.team1Score,
       this.team2Score, required this.onTap});
 
-  final bool isHome;
+  final String matchStatus;
   final String title;
   final String location;
   final String date;
@@ -43,7 +43,6 @@ class MatchItemView extends GetView {
 
   @override
   Widget build(BuildContext context) {
-    print("isHome $isHome");
 
     return GestureDetector(
       onTap: (){
@@ -64,12 +63,18 @@ class MatchItemView extends GetView {
                 mainAxisSize: MainAxisSize.max,
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Container(
-                    padding: EdgeInsets.symmetric(vertical: 4.w, horizontal: 8.h),
-                    color: isHome ? DangerColor.main : BrandColor.main,
-                    child: CustomTextView(isHome ? "HOME" : "VISITOR", style: TextStyle(fontSize: 10.sp, color: BrandColor.content),),
-                  ),
-                  SizedBox(width: 8.w,),
+                  if (matchStatus != "")
+                    Row(
+                      children: [
+                        Container(
+                          padding: EdgeInsets.symmetric(vertical: 4.w, horizontal: 8.h),
+                          color: matchStatus == "host" ? DangerColor.main : BrandColor.background,
+                          child: CustomTextView(matchStatus.toUpperCase(), style: TextStyle(fontSize: 10.sp, color: BrandColor.content),),
+                        ),
+                        SizedBox(width: 8.w,),
+                      ],
+                    ),
+
                   Row(
                     mainAxisAlignment: MainAxisAlignment.end,
                     crossAxisAlignment: CrossAxisAlignment.end,

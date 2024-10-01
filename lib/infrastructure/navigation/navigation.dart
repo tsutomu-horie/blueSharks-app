@@ -85,8 +85,13 @@ class Nav {
     ),
     GetPage(
       name: Routes.MATCH_DETAIL,
-      page: () => const MatchDetailScreen(null),
+      page: () => const MatchDetailScreen(null, homeStatus: "",),
       binding: MatchDetailControllerBinding(),
+    ),
+    GetPage(
+      name: Routes.MEMBER,
+      page: () => const MemberScreen(),
+      binding: MemberControllerBinding(),
     ),
   ];
 }

@@ -23,7 +23,7 @@ class GameInfoScreen extends GetView<GameInfoController> {
     final GameInfoController gameInfoController = Get.put(GameInfoController());
 
     return Scaffold(
-      backgroundColor: BackgroundColor.primary,
+        backgroundColor: BackgroundColor.primary,
         body: SingleChildScrollView(
           child: Column(
             children: [
@@ -52,7 +52,9 @@ class GameInfoScreen extends GetView<GameInfoController> {
                   ),
                   child: Row(
                     children: [
-                      SizedBox(width: 12.w,),
+                      SizedBox(
+                        width: 12.w,
+                      ),
                       SvgPicture.asset(
                         "assets/vectors/calendar-search.svg",
                         width: 20.w,
@@ -80,7 +82,9 @@ class GameInfoScreen extends GetView<GameInfoController> {
                         Icons.keyboard_arrow_down,
                         size: 20.w,
                       ),
-                      SizedBox(width: 12.w,),
+                      SizedBox(
+                        width: 12.w,
+                      ),
                     ],
                   ),
                 ),
@@ -100,16 +104,24 @@ class GameInfoScreen extends GetView<GameInfoController> {
                       final gameDate = data.custom_field.gameDate ?? [];
                       final gameTime = data.custom_field.gameTime ?? [];
                       final location = data.custom_field.location ?? [];
+                      final gameSerial = data.custom_field.game_serial ?? [""];
 
                       final matchStatus = getStatusMatch(data.custom_field);
-                      final date = gameDate.isNotEmpty ? convertJapaneseDate(gameDate.first) : {'formattedDate' : "", "dayOfWeek": ""};
+                      final date = gameDate.isNotEmpty
+                          ? convertJapaneseDate(gameDate.first)
+                          : {'formattedDate': "", "dayOfWeek": ""};
 
                       print("load success ${date['formattedDate']}");
 
-                      if (gameDate.isNotEmpty && gameTime.isNotEmpty && location.isNotEmpty) {
-                        return FutureBuilder<String>(
-                          future:
-                          gameInfoController.getImage(matchStatus["opponentLogo"]),
+                      if (gameDate.isNotEmpty &&
+                          gameTime.isNotEmpty &&
+                          location.isNotEmpty) {
+                        return FutureBuilder<Map<String, String>>(
+                          future: getAdditionalInfo(
+                              gameInfoController.mediaProvider,
+                              gameInfoController.apiProvider,
+                              matchStatus["opponentLogo"],
+                              gameSerial.first),
                           // Wait for the image URL to resolve
                           builder: (context, snapshot) {
                             if (snapshot.connectionState ==
@@ -123,7 +135,8 @@ class GameInfoScreen extends GetView<GameInfoController> {
                                 padding: EdgeInsets.only(right: 12.w),
                                 child: Container(
                                     decoration: BoxDecoration(
-                                        borderRadius: BorderRadius.circular(2.r),
+                                        borderRadius:
+                                            BorderRadius.circular(2.r),
                                         color: BorderColor.primary),
                                     width: 320.w,
                                     height: 200.h,
@@ -131,13 +144,14 @@ class GameInfoScreen extends GetView<GameInfoController> {
                               );
                             } else {
                               // Use the actual image URL returned from the Future
-                              final opponentLogo = snapshot.data ??
+                              final opponentLogo = snapshot.data?['image'] ??
                                   'https://example.com/placeholder.png'; // Fallback in case of null
 
                               return MatchItemView(
-                                isHome: matchStatus["isHome"],
+                                matchStatus:
+                                    snapshot.data?['matchStatus'] ?? "",
                                 title: data.title.rendered,
-                                location:location.first,
+                                location: location.first,
                                 // Ensure location is a valid list and access its first item
                                 date: date['formattedDate'] ?? "",
                                 // Format the date
@@ -148,11 +162,19 @@ class GameInfoScreen extends GetView<GameInfoController> {
                                 opponentLogo: opponentLogo,
                                 // Use the resolved image URL
                                 opponentName: matchStatus["opponentName"],
-                                gameResult: data.custom_field.game_result?.first,
-                                team1Score: data.custom_field.team_score_1?.first,
-                                team2Score: data.custom_field.team_score_2?.first, onTap: (){
-                                  Get.to(MatchDetailScreen(data));
-                              },
+                                gameResult:
+                                    data.custom_field.game_result?.first,
+                                team1Score:
+                                    data.custom_field.team_score_1?.first,
+                                team2Score:
+                                    data.custom_field.team_score_2?.first,
+                                onTap: () {
+                                  Get.to(MatchDetailScreen(
+                                    data,
+                                    homeStatus:
+                                        snapshot.data?['matchStatus'] ?? "",
+                                  ));
+                                },
                               );
                             }
                           },
@@ -184,10 +206,10 @@ class GameInfoScreen extends GetView<GameInfoController> {
               SizedBox(height: 8.h),
               Center(
                   child: Container(
-                    width: 48.w,
-                    height: 4.w,
-                    color: BorderColor.primary,
-                  )),
+                width: 48.w,
+                height: 4.w,
+                color: BorderColor.primary,
+              )),
               SizedBox(height: 16.h),
               Expanded(
                 // Wrap ListView with Expanded to avoid unbounded height
@@ -255,5 +277,4 @@ class GameInfoScreen extends GetView<GameInfoController> {
       ),
     );
   }
-
 }

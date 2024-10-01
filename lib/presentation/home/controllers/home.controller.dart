@@ -61,7 +61,7 @@ class HomeController extends GetxController {
     int page = 1; // Start with page 1
 
     while (true) {
-      List<MatchResult> response = await apiProvider.getMatch(page: page);
+      List<Category> response = await apiProvider.getMatch(page: page);
 
       if (response.isEmpty) {
         break; // If the page is empty, break the loop
@@ -134,12 +134,26 @@ class HomeController extends GetxController {
     }
   }
 
-  Future<String> getImage(String mediaId) async {
-
-    final imageData = await mediaProvider.fetchMedia(mediaId);
-    final image = imageData.media_details.sizes.thumbnail.source_url;
-    return image;
-  }
+  // Future<Map<String, String>> getAdditionalInfo(String mediaId, String gameSerialId) async {
+  //
+  //   try {
+  //     final imageData = await mediaProvider.fetchMedia(mediaId);
+  //     final image = imageData.media_details.sizes.thumbnail.source_url;
+  //     print("there is error2 ${image}");
+  //     final matchStatus = gameSerialId != "" ? await apiProvider.getMatchStatus(gameSerialId) : Rendered(rendered: "");
+  //     print("there is error1 ${matchStatus}");
+  //     return {
+  //       'image': image,
+  //       'matchStatus': matchStatus.rendered
+  //     };
+  //   } catch (e) {
+  //     print("there is error ${e}");
+  //     return {
+  //       'image': "",
+  //       'matchStatus': ""
+  //     };
+  //   }
+  // }
 
   Future<String> getNewsImage(String mediaId) async {
     final imageData = await mediaProvider.fetchParentMedia(mediaId);
