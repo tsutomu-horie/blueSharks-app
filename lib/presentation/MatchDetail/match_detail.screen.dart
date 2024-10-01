@@ -1,4 +1,6 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_html/flutter_html.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -19,9 +21,10 @@ import 'package:shimmer/shimmer.dart';
 import 'controllers/match_detail.controller.dart';
 
 class MatchDetailScreen extends GetView<MatchDetailController> {
-  const MatchDetailScreen(this.data, {super.key});
+  const MatchDetailScreen(this.data, {super.key, required this.homeStatus});
 
   final MatchResultBySeason? data;
+  final String homeStatus;
 
   @override
   Widget build(BuildContext context) {
@@ -130,19 +133,19 @@ class MatchDetailScreen extends GetView<MatchDetailController> {
                   ),
                   Row(
                     children: [
-                      Container(
-                        padding: EdgeInsets.symmetric(
-                            horizontal: 16.w, vertical: 8.h),
-                        color: matchStatus?["isHome"] == true
-                            ? DangerColor.main
-                            : BrandColor.main,
-                        child: CustomTextView(
-                            matchStatus?["isHome"] ? "HOME" : "VISITOR",
-                            style: TextStyle(
-                                fontWeight: FontWeight.w600,
-                                color: TextColor.inverse,
-                                fontSize: 14.sp)),
-                      ),
+                      if (homeStatus != "")
+                        Container(
+                          padding: EdgeInsets.symmetric(
+                              horizontal: 16.w, vertical: 8.h),
+                          color: homeStatus == 'host'
+                              ? DangerColor.main
+                              : BrandColor.background,
+                          child: CustomTextView(homeStatus.toUpperCase(),
+                              style: TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                  color: TextColor.inverse,
+                                  fontSize: 14.sp)),
+                        ),
                       Flexible(
                         child: Container(
                           width: double.infinity,
@@ -179,8 +182,8 @@ class MatchDetailScreen extends GetView<MatchDetailController> {
                         Column(
                           children: [
                             FutureBuilder<String>(
-                              future:
-                                  controller.getImage(matchStatus?["teamLogo"]),
+                              future: controller
+                                  .getAdditionalInfo(matchStatus?["teamLogo"]),
                               // Wait for the image URL to resolve
                               builder: (context, snapshot) {
                                 if (snapshot.connectionState ==
@@ -299,8 +302,8 @@ class MatchDetailScreen extends GetView<MatchDetailController> {
                         Column(
                           children: [
                             FutureBuilder<String>(
-                              future:
-                              controller.getImage(matchStatus?["opponentLogo"]),
+                              future: controller.getAdditionalInfo(
+                                  matchStatus?["opponentLogo"]),
                               // Wait for the image URL to resolve
                               builder: (context, snapshot) {
                                 if (snapshot.connectionState ==
@@ -864,13 +867,23 @@ class MatchDetailScreen extends GetView<MatchDetailController> {
                           ),
                         ),
                         Obx(() {
-                          return IndexedStack(
-                            index: controller.selectedIndex.value,
-                            children: [
-                              Center(child: Text("Team")),
-                              ReportView(data?.content.rendered ?? ""),
-                              Center(child: Text("Partner")),
-                            ],
+                          return SingleChildScrollView(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                // You can add your common header here if needed
+                                // Now, dynamically render the content based on the selected index
+                                if (controller.selectedIndex.value == 0)
+                                  MemberView(
+                                      data?.custom_field.member_starting,
+                                      data?.custom_field.member_reserves,
+                                      data?.custom_field.member_captain),
+                                if (controller.selectedIndex.value == 1)
+                                  ReportView(data?.content.rendered ?? ""),
+                                if (controller.selectedIndex.value == 2)
+                                  GalleryView(controller, data?.custom_field.photos ?? [""]),
+                              ],
+                            ),
                           );
                         }),
                       ],
@@ -931,6 +944,277 @@ class MatchDetailScreen extends GetView<MatchDetailController> {
         )
       ],
     );
+  }
+
+  Widget GalleryView(MatchDetailController controller, List<String> listMedia) {
+    return Column(
+      children: [
+        DefaultHeaderTitleView(
+            LocaleKeys.gallery.tr, LocaleKeys.gallery_en.tr.toUpperCase()),
+        SizedBox(
+          child: GridView.builder(
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 3, // Number of columns
+              crossAxisSpacing: 2.w, // Horizontal space between items
+              mainAxisSpacing: 2.h, // Vertical space between items
+              childAspectRatio: 1.0, // Aspect ratio of grid items
+            ),
+            shrinkWrap: true,
+            // Use shrinkWrap for smooth scrolling
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: listMedia.length, // Total number of items
+            itemBuilder: (context, index) {
+              return FutureBuilder<String>(
+                future: controller.getAdditionalInfo(listMedia[index]), // The Future you want to resolve
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(
+                        child:
+                            CircularProgressIndicator()); // Loading indicator
+                  } else if (snapshot.hasError) {
+                    return const Center(child: Text('Error loading data'));
+                  } else {
+                    final postImage = snapshot.data ??
+                        'https://example.com/placeholder.png'; // Fallback in case of null
+
+                    // Use your CustomImageView with the fetched image URL
+                    return CustomImageView(image: postImage, radius: 0,); // Display image
+                  }
+                },
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget MemberView(List<String>? startingMember, List<String>? reserveMember,
+      List<String>? captain) {
+    return Container(
+      color: Colors.white,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          DefaultHeaderTitleView(
+              LocaleKeys.member.tr, LocaleKeys.member_en.tr.toUpperCase()),
+          SizedBox(
+            height: 12.h,
+          ),
+          if (startingMember != null)
+            Column(
+              children: [
+                Row(
+                  children: [
+                    SizedBox(
+                      width: 16.w,
+                    ),
+                    Container(
+                      padding:
+                          EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+                      decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(12.r),
+                          color: BrandColor.main),
+                      child: CustomTextView(
+                        "Starting ${startingMember.length}",
+                        style: TextStyle(
+                          fontSize: 14.sp,
+                          color: TextColor.inverse,
+                        ),
+                      ),
+                    ),
+                    SizedBox(
+                      width: 16.w,
+                    ),
+                  ],
+                ),
+                Padding(
+                  padding:
+                      EdgeInsets.symmetric(vertical: 16.h, horizontal: 16.w),
+                  child: ListView.builder(
+                    padding: EdgeInsets.zero,
+                    shrinkWrap: true,
+                    // Use shrinkWrap for smooth scrolling
+                    physics: const NeverScrollableScrollPhysics(),
+                    // Disable ListView scrolling
+                    itemCount: startingMember.length,
+                    itemBuilder: (context, itemIndex) {
+                      final playerData =
+                          getPlayerDetail(startingMember[itemIndex]);
+                      final captainString = captain?.first ?? "";
+                      return Column(
+                        children: [
+                          Container(
+                            decoration: BoxDecoration(
+                                color: const Color(0xFFFAFAFA),
+                                borderRadius: BorderRadius.circular(8.r)),
+                            child: Padding(
+                              padding: EdgeInsets.symmetric(
+                                  vertical: 12.h, horizontal: 12.w),
+                              child: Row(
+                                children: [
+                                  Container(
+                                      width: 28.w,
+                                      height: 28.w,
+                                      decoration: BoxDecoration(
+                                          color: BackgroundColor.secondary,
+                                          borderRadius:
+                                              BorderRadius.circular(28.r)),
+                                      child: Center(
+                                          child: CustomTextView(
+                                        "#" + playerData['number'],
+                                        type: TDSFontType.labelMedium,
+                                      ))),
+                                  SizedBox(
+                                    width: 12.w,
+                                  ),
+                                  Flexible(
+                                    child: SizedBox(
+                                      width: double.infinity,
+                                      child: CustomTextView(
+                                        playerData['name'],
+                                        type: TDSFontType.bodyTextMedium,
+                                        color: TextColor.secondary,
+                                      ),
+                                    ),
+                                  ),
+                                  SizedBox(
+                                    width: 12.w,
+                                  ),
+                                  if (playerData['name'] == captainString)
+                                    Row(
+                                      children: [
+                                        Container(
+                                          decoration: BoxDecoration(
+                                            color: BrandColor.background,
+                                            borderRadius:
+                                                BorderRadius.circular(24.r),
+                                          ),
+                                          padding: EdgeInsets.symmetric(
+                                              horizontal: 8.w, vertical: 4.w),
+                                          child: CustomTextView(
+                                            LocaleKeys.captain.tr,
+                                            type: TDSFontType.labelMedium,
+                                            color: TextColor.inverse,
+                                          ),
+                                        ),
+                                        SizedBox(
+                                          width: 12.w,
+                                        ),
+                                      ],
+                                    ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          SizedBox(
+                            height: 4.h,
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+                )
+              ],
+            ),
+          if (reserveMember != null)
+            Column(
+              children: [
+                Row(
+                  children: [
+                    SizedBox(
+                      width: 16.w,
+                    ),
+                    Container(
+                      padding:
+                          EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+                      decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(12.r),
+                          color: BrandColor.main),
+                      child: CustomTextView(
+                        "Starting ${reserveMember.length}",
+                        style: TextStyle(
+                          fontSize: 14.sp,
+                          color: TextColor.inverse,
+                        ),
+                      ),
+                    ),
+                    SizedBox(
+                      width: 16.w,
+                    ),
+                  ],
+                ),
+                Padding(
+                  padding:
+                      EdgeInsets.symmetric(vertical: 16.h, horizontal: 16.w),
+                  child: ListView.builder(
+                    padding: EdgeInsets.zero,
+                    shrinkWrap: true,
+                    // Use shrinkWrap for smooth scrolling
+                    physics: const NeverScrollableScrollPhysics(),
+                    // Disable ListView scrolling
+                    itemCount: reserveMember.length,
+                    itemBuilder: (context, itemIndex) {
+                      final playerData =
+                          getPlayerDetail(reserveMember[itemIndex]);
+                      return Column(
+                        children: [
+                          Container(
+                            decoration: BoxDecoration(
+                                color: const Color(0xFFFAFAFA),
+                                borderRadius: BorderRadius.circular(8.r)),
+                            child: Padding(
+                              padding: EdgeInsets.symmetric(
+                                  vertical: 12.h, horizontal: 12.w),
+                              child: Row(
+                                children: [
+                                  Container(
+                                      width: 28.w,
+                                      height: 28.w,
+                                      decoration: BoxDecoration(
+                                          color: BackgroundColor.secondary,
+                                          borderRadius:
+                                              BorderRadius.circular(28.r)),
+                                      child: Center(
+                                          child: CustomTextView(
+                                        playerData['number'],
+                                        type: TDSFontType.labelMedium,
+                                      ))),
+                                  SizedBox(
+                                    width: 12.w,
+                                  ),
+                                  CustomTextView(
+                                    playerData['name'],
+                                    type: TDSFontType.bodyTextMedium,
+                                    color: TextColor.secondary,
+                                  )
+                                ],
+                              ),
+                            ),
+                          ),
+                          SizedBox(
+                            height: 4.h,
+                          )
+                        ],
+                      );
+                    },
+                  ),
+                )
+              ],
+            ),
+        ],
+      ),
+    );
+  }
+
+  Map<String, dynamic> getPlayerDetail(String attribute) {
+    List<String> parts = attribute.split('\u3000');
+
+    String number = parts[0].trim(); // "1"
+    String name = parts.sublist(1).join(" ").trim(); // "志村 太基"
+
+    return {'number': number, 'name': name};
   }
 
   Widget shimmer() {

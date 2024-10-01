@@ -11,9 +11,10 @@ class Routes {
   static const INFO = '/info';
   static const LIST_TOPICS = '/list-topics';
   static const MAIN = '/main';
+  static const MATCH_DETAIL = '/match-detail';
   static const MYPAGE = '/mypage';
   static const SPLASH = '/splash';
   static const STADIUM = '/stadium';
   static const WALLPAPER = '/wallpaper';
-  static const MATCH_DETAIL = '/match-detail';
+  static const MEMBER = '/member';
 }

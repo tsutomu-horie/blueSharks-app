@@ -121,13 +121,13 @@ class TopicItemView extends GetView {
                                             decoration: BoxDecoration(
                                               color: BrandColor.background,
                                               borderRadius:
-                                                  BorderRadius.circular(6.r),
+                                                  BorderRadius.circular(24.r),
                                             ),
                                             child: CustomTextView(
                                               element,
                                               style: TextStyle(
                                                   fontSize: 10.sp,
-                                                  fontWeight: FontWeight.w500,
+                                                  fontWeight: FontWeight.w700,
                                                   color: Colors.white),
                                             ),
                                           ),

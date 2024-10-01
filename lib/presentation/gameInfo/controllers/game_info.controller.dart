@@ -7,8 +7,8 @@ import 'package:koto_blue_sharks/utils/Constant.dart';
 class GameInfoController extends GetxController {
   final MatchProvider apiProvider = MatchProvider();
   final MediaProvider mediaProvider = MediaProvider();
-  final Rx<List<MatchResult>> matchCategory =
-  Rx<List<MatchResult>>([]);
+  final Rx<List<Category>> matchCategory =
+  Rx<List<Category>>([]);
   final seasonSlug = ''.obs;  final selectedYear = "".obs;
 
   final Rx<List<MatchResultBySeason>> listMatch =
@@ -26,7 +26,7 @@ class GameInfoController extends GetxController {
     fetchMatchResult();
   }
 
-  void selectYear(MatchResult selectedDate) async {
+  void selectYear(Category selectedDate) async {
     selectedYear.value = selectedDate.name;
     seasonSlug.value = selectedDate.slug;
     listMatch.value.clear();
@@ -53,7 +53,7 @@ class GameInfoController extends GetxController {
     int page = 1; // Start with page 1
 
     while (true) {
-      List<MatchResult> response = await apiProvider.getMatch(page: page);
+      List<Category> response = await apiProvider.getMatch(page: page);
 
       if (response.isEmpty) {
         break; // If the page is empty, break the loop
@@ -96,12 +96,5 @@ class GameInfoController extends GetxController {
 
     // Return only the first 4 matches after the current date and time
     return posts.toList();
-  }
-
-  Future<String> getImage(String mediaId) async {
-
-    final imageData = await mediaProvider.fetchMedia(mediaId);
-    final image = imageData.media_details.sizes.thumbnail.source_url;
-    return image;
   }
 }

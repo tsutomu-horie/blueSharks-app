@@ -5,8 +5,8 @@ part 'match_result.freezed.dart';
 part 'match_result.g.dart';
 
 @Freezed()
-class MatchResult with _$MatchResult {
-  factory MatchResult({
+class Category with _$Category {
+  factory Category({
     required int id,
     required int count,
     required String description,
@@ -17,8 +17,8 @@ class MatchResult with _$MatchResult {
     required int parent,
   }) = _MatchResult;
 
-  factory MatchResult.fromJson(Map<String, dynamic> json) =>
-      _$MatchResultFromJson(json);
+  factory Category.fromJson(Map<String, dynamic> json) =>
+      _$CategoryFromJson(json);
 }
 
 @Freezed()
@@ -87,6 +87,11 @@ class CustomField with _$CustomField {
     required List<String>? team_DG_second_half_2,
     required List<String>? team_RESULT_first_half_2,
     required List<String>? team_RESULT_second_half_2,
+    required List<String>? member_starting,
+    required List<String>? member_reserves,
+    required List<String>? photos,
+    required List<String>? game_serial,
+    required List<String>? member_captain,
     // Add other fields as needed
   }) = _CustomField;
 

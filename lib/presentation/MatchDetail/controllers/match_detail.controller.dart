@@ -22,9 +22,10 @@ class MatchDetailController extends GetxController {
     selectedIndex.value = index;
   }
 
-  Future<String> getImage(String mediaId) async {
+  Future<String> getAdditionalInfo(String mediaId) async {
     final imageData = await mediaProvider.fetchMedia(mediaId);
-    final image = imageData.media_details.sizes.thumbnail.source_url;
+    final image = imageData.guid.rendered;
+    print("getAdditional ${imageData.guid.rendered}");
     return image;
   }
 }
