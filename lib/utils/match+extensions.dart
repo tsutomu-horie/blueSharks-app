@@ -62,3 +62,19 @@ Future<Map<String, String>> getAdditionalInfo(MediaProvider mediaProvider, Match
     };
   }
 }
+
+Future<String> getImage(MediaProvider mediaProvider, String mediaId) async {
+  print("getAdditional2 ${mediaId}");
+  try {
+    final imageData = await mediaProvider.fetchMedia(mediaId);
+    print("getAdditional1 ${imageData}");
+    final image = imageData.media_details.sizes.full.source_url;
+    if (mediaId == "20160" ) {
+      print("getImagexx ${image}");
+    }
+    return image;
+  } catch (e){
+    print(e);
+    return "";
+  }
+}

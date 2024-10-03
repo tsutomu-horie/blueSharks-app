@@ -56,6 +56,42 @@ class LocaleKeys {
   static const gallery_en = 'gallery_en';
   static const all_position = 'all_position';
   static const captain = 'captain';
+  static const forward = 'forward';
+  static const back = 'back';
+  static const staff = 'staff';
+  static const player_data = 'player_data';
+  static const position_en = 'position_en';
+  static const personal_data = 'personal_data';
+  static const position = 'position';
+  static const play_position = 'play_position';
+  static const personal_number = 'personal_number';
+  static const birth_date_age = 'birth_date_age';
+  static const height_weight = 'height_weight';
+  static const birth_place = 'birth_place';
+  static const school = 'school';
+  static const high_school = 'high_school';
+  static const university = 'university';
+  static const representative_history = 'representative_history';
+  static const related_company = 'related_company';
+  static const team_awards = 'team_awards';
+  static const years_of_service = 'years_of_service';
+  static const official_caps = 'official_caps';
+  static const personal_words = 'personal_words';
+  static const nickname = 'nickname';
+  static const childhood_dream = 'childhood_dream';
+  static const rugby_reason = 'rugby_reason';
+  static const season_highlight = 'season_highlight';
+  static const team_attraction = 'team_attraction';
+  static const one_wish = 'one_wish';
+  static const current_obsession = 'current_obsession';
+  static const favorite_brand = 'favorite_brand';
+  static const favorite_color = 'favorite_color';
+  static const recommended_shop = 'recommended_shop';
+  static const favorite_gift = 'favorite_gift';
+  static const favorite_food = 'favorite_food';
+  static const local_gourmet_spot = 'local_gourmet_spot';
+  static const forward_short = 'forward_short';
+  static const back_short = 'back_short';
 }
 
 class Locales {
@@ -106,5 +142,41 @@ class Locales {
     'gallery_en': 'gallery',
     'all_position': 'All Position',
     'captain': 'キャプテン',
+    'forward': 'Forward (FW)',
+    'back': 'Back (BK)',
+    'staff': 'Staff',
+    'player_data': 'Player Data',
+    'position_en': 'Position',
+    'personal_data': 'Personal Data',
+    'position': '役職',
+    'play_position': '位置',
+    'personal_number': '個人番号',
+    'birth_date_age': '生年月日（年齢）',
+    'height_weight': '身長/体重',
+    'birth_place': '出生地',
+    'school': '学校',
+    'high_school': '高校',
+    'university': '大学',
+    'representative_history': '代表経歴',
+    'related_company': '関連会社',
+    'team_awards': 'チームとして受賞した賞（SNS賞など.）',
+    'years_of_service': '勤続年数',
+    'official_caps': '公式戦キャップ数',
+    'personal_words': 'PERSONAL WORDS',
+    'nickname': 'ニックネーム',
+    'childhood_dream': '子供の頃の夢',
+    'rugby_reason': 'ラグビーを始めたきっかけは何ですか？',
+    'season_highlight': '今シーズンの注目プレー',
+    'team_attraction': 'ブルーシャークスの魅力',
+    'one_wish': '願いがひとつ叶うなら...',
+    'current_obsession': '私の現在の執着',
+    'favorite_brand': '好きなブランド',
+    'favorite_color': '好きな色',
+    'recommended_shop': 'おすすめショップ',
+    'favorite_gift': 'もらって嬉しかったプレゼント',
+    'favorite_food': '好きな食べ物',
+    'local_gourmet_spot': 'おすすめのご当地グルメとスポット',
+    'forward_short': 'FW',
+    'back_short': 'BK',
   };
 }

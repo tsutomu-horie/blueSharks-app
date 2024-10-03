@@ -1,4 +1,5 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 
 part 'media.freezed.dart';
 part 'media.g.dart';
@@ -6,16 +7,6 @@ part 'media.g.dart';
 @freezed
 class Media with _$Media {
   factory Media({
-    required int id,
-    required String date,
-    required String modified,
-    required Guid guid,
-    required String slug,
-    required String status,
-    required String type,
-    required String link,
-    required Title title,
-    required String source_url,
     required MediaDetails media_details, // Add media_details field
   }) = _Media;
 
@@ -32,8 +23,10 @@ class Guid with _$Guid {
 }
 
 @freezed
+@HiveType(typeId: 3)
 class Title with _$Title {
   factory Title({
+    @HiveField(0)
     required String rendered,
   }) = _Title;
 
