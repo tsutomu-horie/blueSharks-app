@@ -48,6 +48,9 @@ dependencies:
   flutter_html: ^3.0.0-beta.2
   flutter_widget_from_html: ^0.15.2
   url_launcher: ^6.3.0
+  hive: ^2.2.3  # local database (SQFlite replacement)
+  hive_flutter: ^1.1.0 # make it easy to use hive (no need for path provider)
+  dotted_line: ^3.2.2
 
 dev_dependencies:
   flutter_test:
@@ -60,6 +63,7 @@ dev_dependencies:
   # rules and activating additional ones.
   flutter_lints: ^4.0.0
   build_runner: ^2.4.11
+  hive_generator: # generate hive files
   freezed: ^2.5.2
   json_serializable: ^6.7.1
 

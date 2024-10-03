@@ -11,7 +11,7 @@ class MediaProvider extends GetConnect {
   Future<Media> fetchMedia(String mediaId) async {
     final response = await get('media/$mediaId');
 
-    print("fetch ${httpClient.baseUrl}/media/${mediaId}");
+    print("fetch ${httpClient.baseUrl}/media/${mediaId}?_fields={id,media_details,content,custom_field}");
     if (response.hasError) {
       throw Exception('Failed to load media with ID: $mediaId');
     }
@@ -40,8 +40,6 @@ class MediaProvider extends GetConnect {
 
     // Parse the first item in the list to Media
     final media = Media.fromJson(bodyList.first);
-
-    print("get media ${media.title}");
 
     return media;
   }

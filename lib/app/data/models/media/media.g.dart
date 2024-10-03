@@ -3,36 +3,54 @@
 part of 'media.dart';
 
 // **************************************************************************
+// TypeAdapterGenerator
+// **************************************************************************
+
+class TitleAdapter extends TypeAdapter<Title> {
+  @override
+  final int typeId = 3;
+
+  @override
+  Title read(BinaryReader reader) {
+    final numOfFields = reader.readByte();
+    final fields = <int, dynamic>{
+      for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
+    };
+    return Title(
+      rendered: fields[0] as String,
+    );
+  }
+
+  @override
+  void write(BinaryWriter writer, Title obj) {
+    writer
+      ..writeByte(1)
+      ..writeByte(0)
+      ..write(obj.rendered);
+  }
+
+  @override
+  int get hashCode => typeId.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is TitleAdapter &&
+          runtimeType == other.runtimeType &&
+          typeId == other.typeId;
+}
+
+// **************************************************************************
 // JsonSerializableGenerator
 // **************************************************************************
 
 _$MediaImpl _$$MediaImplFromJson(Map<String, dynamic> json) => _$MediaImpl(
-      id: (json['id'] as num).toInt(),
-      date: json['date'] as String,
-      modified: json['modified'] as String,
-      guid: Guid.fromJson(json['guid'] as Map<String, dynamic>),
-      slug: json['slug'] as String,
-      status: json['status'] as String,
-      type: json['type'] as String,
-      link: json['link'] as String,
-      title: Title.fromJson(json['title'] as Map<String, dynamic>),
-      source_url: json['source_url'] as String,
       media_details:
           MediaDetails.fromJson(json['media_details'] as Map<String, dynamic>),
     );
 
 Map<String, dynamic> _$$MediaImplToJson(_$MediaImpl instance) =>
     <String, dynamic>{
-      'id': instance.id,
-      'date': instance.date,
-      'modified': instance.modified,
-      'guid': instance.guid,
-      'slug': instance.slug,
-      'status': instance.status,
-      'type': instance.type,
-      'link': instance.link,
-      'title': instance.title,
-      'source_url': instance.source_url,
       'media_details': instance.media_details,
     };
 

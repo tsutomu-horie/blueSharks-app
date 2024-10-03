@@ -21,11 +21,4 @@ class MatchDetailController extends GetxController {
   void onPageChanged(int index) {
     selectedIndex.value = index;
   }
-
-  Future<String> getAdditionalInfo(String mediaId) async {
-    final imageData = await mediaProvider.fetchMedia(mediaId);
-    final image = imageData.guid.rendered;
-    print("getAdditional ${imageData.guid.rendered}");
-    return image;
-  }
 }

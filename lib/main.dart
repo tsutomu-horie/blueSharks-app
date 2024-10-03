@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import 'package:get/get.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+import 'package:koto_blue_sharks/app/data/models/match/match_result.dart';
+import 'package:koto_blue_sharks/app/data/models/media/media.dart';
+import 'package:koto_blue_sharks/app/data/models/member/member.dart';
 
 import 'generated/locales.g.dart';
 import 'infrastructure/navigation/navigation.dart';
@@ -9,6 +13,17 @@ import 'infrastructure/navigation/routes.dart';
 
 void main() async {
   var initialRoute = await Routes.initialRoute;
+
+  // Initialize Hive
+  await Hive.initFlutter();
+
+  // Register the Category adapter
+  Hive.registerAdapter(CategoryAdapter());
+  Hive.registerAdapter(MemberAdapter());
+  Hive.registerAdapter(CombineMemberAdapter());
+  Hive.registerAdapter(TitleAdapter());
+  Hive.registerAdapter(CustomFieldAdapter());
+
   runApp(Main(initialRoute));
 }
 

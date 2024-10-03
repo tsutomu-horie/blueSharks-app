@@ -20,13 +20,21 @@ Category _$CategoryFromJson(Map<String, dynamic> json) {
 
 /// @nodoc
 mixin _$Category {
+  @HiveField(0)
   int get id => throw _privateConstructorUsedError;
+  @HiveField(1)
   int get count => throw _privateConstructorUsedError;
+  @HiveField(2)
   String get description => throw _privateConstructorUsedError;
+  @HiveField(3)
   String get link => throw _privateConstructorUsedError;
+  @HiveField(4)
   String get name => throw _privateConstructorUsedError;
+  @HiveField(5)
   String get slug => throw _privateConstructorUsedError;
+  @HiveField(6)
   String get taxonomy => throw _privateConstructorUsedError;
+  @HiveField(7)
   int get parent => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -41,14 +49,14 @@ abstract class $CategoryCopyWith<$Res> {
       _$CategoryCopyWithImpl<$Res, Category>;
   @useResult
   $Res call(
-      {int id,
-      int count,
-      String description,
-      String link,
-      String name,
-      String slug,
-      String taxonomy,
-      int parent});
+      {@HiveField(0) int id,
+      @HiveField(1) int count,
+      @HiveField(2) String description,
+      @HiveField(3) String link,
+      @HiveField(4) String name,
+      @HiveField(5) String slug,
+      @HiveField(6) String taxonomy,
+      @HiveField(7) int parent});
 }
 
 /// @nodoc
@@ -119,14 +127,14 @@ abstract class _$$MatchResultImplCopyWith<$Res>
   @override
   @useResult
   $Res call(
-      {int id,
-      int count,
-      String description,
-      String link,
-      String name,
-      String slug,
-      String taxonomy,
-      int parent});
+      {@HiveField(0) int id,
+      @HiveField(1) int count,
+      @HiveField(2) String description,
+      @HiveField(3) String link,
+      @HiveField(4) String name,
+      @HiveField(5) String slug,
+      @HiveField(6) String taxonomy,
+      @HiveField(7) int parent});
 }
 
 /// @nodoc
@@ -189,34 +197,42 @@ class __$$MatchResultImplCopyWithImpl<$Res>
 /// @nodoc
 @JsonSerializable()
 class _$MatchResultImpl implements _MatchResult {
-  _$MatchResultImpl(
-      {required this.id,
-      required this.count,
-      required this.description,
-      required this.link,
-      required this.name,
-      required this.slug,
-      required this.taxonomy,
-      required this.parent});
+  const _$MatchResultImpl(
+      {@HiveField(0) required this.id,
+      @HiveField(1) required this.count,
+      @HiveField(2) required this.description,
+      @HiveField(3) required this.link,
+      @HiveField(4) required this.name,
+      @HiveField(5) required this.slug,
+      @HiveField(6) required this.taxonomy,
+      @HiveField(7) required this.parent});
 
   factory _$MatchResultImpl.fromJson(Map<String, dynamic> json) =>
       _$$MatchResultImplFromJson(json);
 
   @override
+  @HiveField(0)
   final int id;
   @override
+  @HiveField(1)
   final int count;
   @override
+  @HiveField(2)
   final String description;
   @override
+  @HiveField(3)
   final String link;
   @override
+  @HiveField(4)
   final String name;
   @override
+  @HiveField(5)
   final String slug;
   @override
+  @HiveField(6)
   final String taxonomy;
   @override
+  @HiveField(7)
   final int parent;
 
   @override
@@ -261,34 +277,42 @@ class _$MatchResultImpl implements _MatchResult {
 }
 
 abstract class _MatchResult implements Category {
-  factory _MatchResult(
-      {required final int id,
-      required final int count,
-      required final String description,
-      required final String link,
-      required final String name,
-      required final String slug,
-      required final String taxonomy,
-      required final int parent}) = _$MatchResultImpl;
+  const factory _MatchResult(
+      {@HiveField(0) required final int id,
+      @HiveField(1) required final int count,
+      @HiveField(2) required final String description,
+      @HiveField(3) required final String link,
+      @HiveField(4) required final String name,
+      @HiveField(5) required final String slug,
+      @HiveField(6) required final String taxonomy,
+      @HiveField(7) required final int parent}) = _$MatchResultImpl;
 
   factory _MatchResult.fromJson(Map<String, dynamic> json) =
       _$MatchResultImpl.fromJson;
 
   @override
+  @HiveField(0)
   int get id;
   @override
+  @HiveField(1)
   int get count;
   @override
+  @HiveField(2)
   String get description;
   @override
+  @HiveField(3)
   String get link;
   @override
+  @HiveField(4)
   String get name;
   @override
+  @HiveField(5)
   String get slug;
   @override
+  @HiveField(6)
   String get taxonomy;
   @override
+  @HiveField(7)
   int get parent;
   @override
   @JsonKey(ignore: true)
@@ -993,47 +1017,148 @@ CustomField _$CustomFieldFromJson(Map<String, dynamic> json) {
 
 /// @nodoc
 mixin _$CustomField {
+  @HiveField(0)
   @JsonKey(name: 'game_date')
   List<String>? get gameDate => throw _privateConstructorUsedError;
+  @HiveField(1)
   @JsonKey(name: 'game_time')
   List<String>? get gameTime => throw _privateConstructorUsedError;
+  @HiveField(2)
   List<String>? get location => throw _privateConstructorUsedError;
+  @HiveField(3)
   List<String>? get team_1 => throw _privateConstructorUsedError;
+  @HiveField(4)
   List<String>? get team_logo_1 => throw _privateConstructorUsedError;
+  @HiveField(5)
   List<String>? get team_2 => throw _privateConstructorUsedError;
+  @HiveField(6)
   List<String>? get team_logo_2 => throw _privateConstructorUsedError;
+  @HiveField(7)
   List<String>? get game_result => throw _privateConstructorUsedError;
+  @HiveField(8)
   List<String>? get team_score_1 => throw _privateConstructorUsedError;
+  @HiveField(9)
   List<String>? get team_score_2 => throw _privateConstructorUsedError;
+  @HiveField(10)
   List<String>? get team_T_first_half_1 => throw _privateConstructorUsedError;
+  @HiveField(11)
   List<String>? get team_T_second_half_1 => throw _privateConstructorUsedError;
+  @HiveField(12)
   List<String>? get team_G_first_half_1 => throw _privateConstructorUsedError;
+  @HiveField(13)
   List<String>? get team_G_second_half_1 => throw _privateConstructorUsedError;
+  @HiveField(14)
   List<String>? get team_PG_first_half_1 => throw _privateConstructorUsedError;
+  @HiveField(15)
   List<String>? get team_PG_second_half_1 => throw _privateConstructorUsedError;
+  @HiveField(16)
   List<String>? get team_DG_first_half_1 => throw _privateConstructorUsedError;
+  @HiveField(17)
   List<String>? get team_DG_second_half_1 => throw _privateConstructorUsedError;
+  @HiveField(18)
   List<String>? get team_RESULT_first_half_1 =>
       throw _privateConstructorUsedError;
+  @HiveField(19)
   List<String>? get team_RESULT_second_half_1 =>
       throw _privateConstructorUsedError;
+  @HiveField(20)
   List<String>? get team_T_first_half_2 => throw _privateConstructorUsedError;
+  @HiveField(21)
   List<String>? get team_T_second_half_2 => throw _privateConstructorUsedError;
+  @HiveField(22)
   List<String>? get team_G_first_half_2 => throw _privateConstructorUsedError;
+  @HiveField(23)
   List<String>? get team_G_second_half_2 => throw _privateConstructorUsedError;
+  @HiveField(24)
   List<String>? get team_PG_first_half_2 => throw _privateConstructorUsedError;
+  @HiveField(25)
   List<String>? get team_PG_second_half_2 => throw _privateConstructorUsedError;
+  @HiveField(26)
   List<String>? get team_DG_first_half_2 => throw _privateConstructorUsedError;
+  @HiveField(27)
   List<String>? get team_DG_second_half_2 => throw _privateConstructorUsedError;
+  @HiveField(28)
   List<String>? get team_RESULT_first_half_2 =>
       throw _privateConstructorUsedError;
+  @HiveField(29)
   List<String>? get team_RESULT_second_half_2 =>
       throw _privateConstructorUsedError;
+  @HiveField(30)
   List<String>? get member_starting => throw _privateConstructorUsedError;
+  @HiveField(31)
   List<String>? get member_reserves => throw _privateConstructorUsedError;
+  @HiveField(32)
   List<String>? get photos => throw _privateConstructorUsedError;
+  @HiveField(33)
   List<String>? get game_serial => throw _privateConstructorUsedError;
-  List<String>? get member_captain => throw _privateConstructorUsedError;
+  @HiveField(34)
+  List<String>? get member_captain =>
+      throw _privateConstructorUsedError; //specific for player
+  @HiveField(35)
+  List<String>? get profile_image_1 =>
+      throw _privateConstructorUsedError; //for profile picture
+  @HiveField(36)
+  List<String>? get main_image => throw _privateConstructorUsedError;
+  @HiveField(37)
+  List<String>? get profile_image_2 => throw _privateConstructorUsedError;
+  @HiveField(38)
+  List<String>? get graph_image => throw _privateConstructorUsedError;
+  @HiveField(39)
+  List<String>? get position_image => throw _privateConstructorUsedError;
+  @HiveField(40)
+  List<String>? get data_position => throw _privateConstructorUsedError;
+  @HiveField(65)
+  List<String>? get data_play_position => throw _privateConstructorUsedError;
+  @HiveField(41)
+  List<String>? get data_number => throw _privateConstructorUsedError;
+  @HiveField(42)
+  List<String>? get data_birthday => throw _privateConstructorUsedError;
+  @HiveField(43)
+  List<String>? get data_height_weight => throw _privateConstructorUsedError;
+  @HiveField(44)
+  List<String>? get data_birthplace => throw _privateConstructorUsedError;
+  @HiveField(45)
+  List<String>? get data_school => throw _privateConstructorUsedError;
+  @HiveField(46)
+  List<String>? get data_highschool => throw _privateConstructorUsedError;
+  @HiveField(47)
+  List<String>? get data_university => throw _privateConstructorUsedError;
+  @HiveField(48)
+  List<String>? get data_career => throw _privateConstructorUsedError;
+  @HiveField(49)
+  List<String>? get data_belong => throw _privateConstructorUsedError;
+  @HiveField(50)
+  List<String>? get data_award => throw _privateConstructorUsedError;
+  @HiveField(51)
+  List<String>? get data_enrolledyears => throw _privateConstructorUsedError;
+  @HiveField(52)
+  List<String>? get data_caps => throw _privateConstructorUsedError;
+  @HiveField(53)
+  List<String>? get words_nickname => throw _privateConstructorUsedError;
+  @HiveField(54)
+  List<String>? get words_dream_child_age => throw _privateConstructorUsedError;
+  @HiveField(55)
+  List<String>? get words_opportunity => throw _privateConstructorUsedError;
+  @HiveField(56)
+  List<String>? get words_playsseason => throw _privateConstructorUsedError;
+  @HiveField(57)
+  List<String>? get words_goodplay => throw _privateConstructorUsedError;
+  @HiveField(58)
+  List<String>? get words_wish => throw _privateConstructorUsedError;
+  @HiveField(59)
+  List<String>? get words_myboom => throw _privateConstructorUsedError;
+  @HiveField(60)
+  List<String>? get words_favoritebrand => throw _privateConstructorUsedError;
+  @HiveField(61)
+  List<String>? get words_color => throw _privateConstructorUsedError;
+  @HiveField(62)
+  List<String>? get words_shop => throw _privateConstructorUsedError;
+  @HiveField(63)
+  List<String>? get words_gift => throw _privateConstructorUsedError;
+  @HiveField(64)
+  List<String>? get words_favoritefood => throw _privateConstructorUsedError;
+  @HiveField(66)
+  List<String>? get words_localfood => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
   @JsonKey(ignore: true)
@@ -1048,41 +1173,73 @@ abstract class $CustomFieldCopyWith<$Res> {
       _$CustomFieldCopyWithImpl<$Res, CustomField>;
   @useResult
   $Res call(
-      {@JsonKey(name: 'game_date') List<String>? gameDate,
-      @JsonKey(name: 'game_time') List<String>? gameTime,
-      List<String>? location,
-      List<String>? team_1,
-      List<String>? team_logo_1,
-      List<String>? team_2,
-      List<String>? team_logo_2,
-      List<String>? game_result,
-      List<String>? team_score_1,
-      List<String>? team_score_2,
-      List<String>? team_T_first_half_1,
-      List<String>? team_T_second_half_1,
-      List<String>? team_G_first_half_1,
-      List<String>? team_G_second_half_1,
-      List<String>? team_PG_first_half_1,
-      List<String>? team_PG_second_half_1,
-      List<String>? team_DG_first_half_1,
-      List<String>? team_DG_second_half_1,
-      List<String>? team_RESULT_first_half_1,
-      List<String>? team_RESULT_second_half_1,
-      List<String>? team_T_first_half_2,
-      List<String>? team_T_second_half_2,
-      List<String>? team_G_first_half_2,
-      List<String>? team_G_second_half_2,
-      List<String>? team_PG_first_half_2,
-      List<String>? team_PG_second_half_2,
-      List<String>? team_DG_first_half_2,
-      List<String>? team_DG_second_half_2,
-      List<String>? team_RESULT_first_half_2,
-      List<String>? team_RESULT_second_half_2,
-      List<String>? member_starting,
-      List<String>? member_reserves,
-      List<String>? photos,
-      List<String>? game_serial,
-      List<String>? member_captain});
+      {@HiveField(0) @JsonKey(name: 'game_date') List<String>? gameDate,
+      @HiveField(1) @JsonKey(name: 'game_time') List<String>? gameTime,
+      @HiveField(2) List<String>? location,
+      @HiveField(3) List<String>? team_1,
+      @HiveField(4) List<String>? team_logo_1,
+      @HiveField(5) List<String>? team_2,
+      @HiveField(6) List<String>? team_logo_2,
+      @HiveField(7) List<String>? game_result,
+      @HiveField(8) List<String>? team_score_1,
+      @HiveField(9) List<String>? team_score_2,
+      @HiveField(10) List<String>? team_T_first_half_1,
+      @HiveField(11) List<String>? team_T_second_half_1,
+      @HiveField(12) List<String>? team_G_first_half_1,
+      @HiveField(13) List<String>? team_G_second_half_1,
+      @HiveField(14) List<String>? team_PG_first_half_1,
+      @HiveField(15) List<String>? team_PG_second_half_1,
+      @HiveField(16) List<String>? team_DG_first_half_1,
+      @HiveField(17) List<String>? team_DG_second_half_1,
+      @HiveField(18) List<String>? team_RESULT_first_half_1,
+      @HiveField(19) List<String>? team_RESULT_second_half_1,
+      @HiveField(20) List<String>? team_T_first_half_2,
+      @HiveField(21) List<String>? team_T_second_half_2,
+      @HiveField(22) List<String>? team_G_first_half_2,
+      @HiveField(23) List<String>? team_G_second_half_2,
+      @HiveField(24) List<String>? team_PG_first_half_2,
+      @HiveField(25) List<String>? team_PG_second_half_2,
+      @HiveField(26) List<String>? team_DG_first_half_2,
+      @HiveField(27) List<String>? team_DG_second_half_2,
+      @HiveField(28) List<String>? team_RESULT_first_half_2,
+      @HiveField(29) List<String>? team_RESULT_second_half_2,
+      @HiveField(30) List<String>? member_starting,
+      @HiveField(31) List<String>? member_reserves,
+      @HiveField(32) List<String>? photos,
+      @HiveField(33) List<String>? game_serial,
+      @HiveField(34) List<String>? member_captain,
+      @HiveField(35) List<String>? profile_image_1,
+      @HiveField(36) List<String>? main_image,
+      @HiveField(37) List<String>? profile_image_2,
+      @HiveField(38) List<String>? graph_image,
+      @HiveField(39) List<String>? position_image,
+      @HiveField(40) List<String>? data_position,
+      @HiveField(65) List<String>? data_play_position,
+      @HiveField(41) List<String>? data_number,
+      @HiveField(42) List<String>? data_birthday,
+      @HiveField(43) List<String>? data_height_weight,
+      @HiveField(44) List<String>? data_birthplace,
+      @HiveField(45) List<String>? data_school,
+      @HiveField(46) List<String>? data_highschool,
+      @HiveField(47) List<String>? data_university,
+      @HiveField(48) List<String>? data_career,
+      @HiveField(49) List<String>? data_belong,
+      @HiveField(50) List<String>? data_award,
+      @HiveField(51) List<String>? data_enrolledyears,
+      @HiveField(52) List<String>? data_caps,
+      @HiveField(53) List<String>? words_nickname,
+      @HiveField(54) List<String>? words_dream_child_age,
+      @HiveField(55) List<String>? words_opportunity,
+      @HiveField(56) List<String>? words_playsseason,
+      @HiveField(57) List<String>? words_goodplay,
+      @HiveField(58) List<String>? words_wish,
+      @HiveField(59) List<String>? words_myboom,
+      @HiveField(60) List<String>? words_favoritebrand,
+      @HiveField(61) List<String>? words_color,
+      @HiveField(62) List<String>? words_shop,
+      @HiveField(63) List<String>? words_gift,
+      @HiveField(64) List<String>? words_favoritefood,
+      @HiveField(66) List<String>? words_localfood});
 }
 
 /// @nodoc
@@ -1133,6 +1290,38 @@ class _$CustomFieldCopyWithImpl<$Res, $Val extends CustomField>
     Object? photos = freezed,
     Object? game_serial = freezed,
     Object? member_captain = freezed,
+    Object? profile_image_1 = freezed,
+    Object? main_image = freezed,
+    Object? profile_image_2 = freezed,
+    Object? graph_image = freezed,
+    Object? position_image = freezed,
+    Object? data_position = freezed,
+    Object? data_play_position = freezed,
+    Object? data_number = freezed,
+    Object? data_birthday = freezed,
+    Object? data_height_weight = freezed,
+    Object? data_birthplace = freezed,
+    Object? data_school = freezed,
+    Object? data_highschool = freezed,
+    Object? data_university = freezed,
+    Object? data_career = freezed,
+    Object? data_belong = freezed,
+    Object? data_award = freezed,
+    Object? data_enrolledyears = freezed,
+    Object? data_caps = freezed,
+    Object? words_nickname = freezed,
+    Object? words_dream_child_age = freezed,
+    Object? words_opportunity = freezed,
+    Object? words_playsseason = freezed,
+    Object? words_goodplay = freezed,
+    Object? words_wish = freezed,
+    Object? words_myboom = freezed,
+    Object? words_favoritebrand = freezed,
+    Object? words_color = freezed,
+    Object? words_shop = freezed,
+    Object? words_gift = freezed,
+    Object? words_favoritefood = freezed,
+    Object? words_localfood = freezed,
   }) {
     return _then(_value.copyWith(
       gameDate: freezed == gameDate
@@ -1275,6 +1464,134 @@ class _$CustomFieldCopyWithImpl<$Res, $Val extends CustomField>
           ? _value.member_captain
           : member_captain // ignore: cast_nullable_to_non_nullable
               as List<String>?,
+      profile_image_1: freezed == profile_image_1
+          ? _value.profile_image_1
+          : profile_image_1 // ignore: cast_nullable_to_non_nullable
+              as List<String>?,
+      main_image: freezed == main_image
+          ? _value.main_image
+          : main_image // ignore: cast_nullable_to_non_nullable
+              as List<String>?,
+      profile_image_2: freezed == profile_image_2
+          ? _value.profile_image_2
+          : profile_image_2 // ignore: cast_nullable_to_non_nullable
+              as List<String>?,
+      graph_image: freezed == graph_image
+          ? _value.graph_image
+          : graph_image // ignore: cast_nullable_to_non_nullable
+              as List<String>?,
+      position_image: freezed == position_image
+          ? _value.position_image
+          : position_image // ignore: cast_nullable_to_non_nullable
+              as List<String>?,
+      data_position: freezed == data_position
+          ? _value.data_position
+          : data_position // ignore: cast_nullable_to_non_nullable
+              as List<String>?,
+      data_play_position: freezed == data_play_position
+          ? _value.data_play_position
+          : data_play_position // ignore: cast_nullable_to_non_nullable
+              as List<String>?,
+      data_number: freezed == data_number
+          ? _value.data_number
+          : data_number // ignore: cast_nullable_to_non_nullable
+              as List<String>?,
+      data_birthday: freezed == data_birthday
+          ? _value.data_birthday
+          : data_birthday // ignore: cast_nullable_to_non_nullable
+              as List<String>?,
+      data_height_weight: freezed == data_height_weight
+          ? _value.data_height_weight
+          : data_height_weight // ignore: cast_nullable_to_non_nullable
+              as List<String>?,
+      data_birthplace: freezed == data_birthplace
+          ? _value.data_birthplace
+          : data_birthplace // ignore: cast_nullable_to_non_nullable
+              as List<String>?,
+      data_school: freezed == data_school
+          ? _value.data_school
+          : data_school // ignore: cast_nullable_to_non_nullable
+              as List<String>?,
+      data_highschool: freezed == data_highschool
+          ? _value.data_highschool
+          : data_highschool // ignore: cast_nullable_to_non_nullable
+              as List<String>?,
+      data_university: freezed == data_university
+          ? _value.data_university
+          : data_university // ignore: cast_nullable_to_non_nullable
+              as List<String>?,
+      data_career: freezed == data_career
+          ? _value.data_career
+          : data_career // ignore: cast_nullable_to_non_nullable
+              as List<String>?,
+      data_belong: freezed == data_belong
+          ? _value.data_belong
+          : data_belong // ignore: cast_nullable_to_non_nullable
+              as List<String>?,
+      data_award: freezed == data_award
+          ? _value.data_award
+          : data_award // ignore: cast_nullable_to_non_nullable
+              as List<String>?,
+      data_enrolledyears: freezed == data_enrolledyears
+          ? _value.data_enrolledyears
+          : data_enrolledyears // ignore: cast_nullable_to_non_nullable
+              as List<String>?,
+      data_caps: freezed == data_caps
+          ? _value.data_caps
+          : data_caps // ignore: cast_nullable_to_non_nullable
+              as List<String>?,
+      words_nickname: freezed == words_nickname
+          ? _value.words_nickname
+          : words_nickname // ignore: cast_nullable_to_non_nullable
+              as List<String>?,
+      words_dream_child_age: freezed == words_dream_child_age
+          ? _value.words_dream_child_age
+          : words_dream_child_age // ignore: cast_nullable_to_non_nullable
+              as List<String>?,
+      words_opportunity: freezed == words_opportunity
+          ? _value.words_opportunity
+          : words_opportunity // ignore: cast_nullable_to_non_nullable
+              as List<String>?,
+      words_playsseason: freezed == words_playsseason
+          ? _value.words_playsseason
+          : words_playsseason // ignore: cast_nullable_to_non_nullable
+              as List<String>?,
+      words_goodplay: freezed == words_goodplay
+          ? _value.words_goodplay
+          : words_goodplay // ignore: cast_nullable_to_non_nullable
+              as List<String>?,
+      words_wish: freezed == words_wish
+          ? _value.words_wish
+          : words_wish // ignore: cast_nullable_to_non_nullable
+              as List<String>?,
+      words_myboom: freezed == words_myboom
+          ? _value.words_myboom
+          : words_myboom // ignore: cast_nullable_to_non_nullable
+              as List<String>?,
+      words_favoritebrand: freezed == words_favoritebrand
+          ? _value.words_favoritebrand
+          : words_favoritebrand // ignore: cast_nullable_to_non_nullable
+              as List<String>?,
+      words_color: freezed == words_color
+          ? _value.words_color
+          : words_color // ignore: cast_nullable_to_non_nullable
+              as List<String>?,
+      words_shop: freezed == words_shop
+          ? _value.words_shop
+          : words_shop // ignore: cast_nullable_to_non_nullable
+              as List<String>?,
+      words_gift: freezed == words_gift
+          ? _value.words_gift
+          : words_gift // ignore: cast_nullable_to_non_nullable
+              as List<String>?,
+      words_favoritefood: freezed == words_favoritefood
+          ? _value.words_favoritefood
+          : words_favoritefood // ignore: cast_nullable_to_non_nullable
+              as List<String>?,
+      words_localfood: freezed == words_localfood
+          ? _value.words_localfood
+          : words_localfood // ignore: cast_nullable_to_non_nullable
+              as List<String>?,
     ) as $Val);
   }
 }
@@ -1288,41 +1605,73 @@ abstract class _$$CustomFieldImplCopyWith<$Res>
   @override
   @useResult
   $Res call(
-      {@JsonKey(name: 'game_date') List<String>? gameDate,
-      @JsonKey(name: 'game_time') List<String>? gameTime,
-      List<String>? location,
-      List<String>? team_1,
-      List<String>? team_logo_1,
-      List<String>? team_2,
-      List<String>? team_logo_2,
-      List<String>? game_result,
-      List<String>? team_score_1,
-      List<String>? team_score_2,
-      List<String>? team_T_first_half_1,
-      List<String>? team_T_second_half_1,
-      List<String>? team_G_first_half_1,
-      List<String>? team_G_second_half_1,
-      List<String>? team_PG_first_half_1,
-      List<String>? team_PG_second_half_1,
-      List<String>? team_DG_first_half_1,
-      List<String>? team_DG_second_half_1,
-      List<String>? team_RESULT_first_half_1,
-      List<String>? team_RESULT_second_half_1,
-      List<String>? team_T_first_half_2,
-      List<String>? team_T_second_half_2,
-      List<String>? team_G_first_half_2,
-      List<String>? team_G_second_half_2,
-      List<String>? team_PG_first_half_2,
-      List<String>? team_PG_second_half_2,
-      List<String>? team_DG_first_half_2,
-      List<String>? team_DG_second_half_2,
-      List<String>? team_RESULT_first_half_2,
-      List<String>? team_RESULT_second_half_2,
-      List<String>? member_starting,
-      List<String>? member_reserves,
-      List<String>? photos,
-      List<String>? game_serial,
-      List<String>? member_captain});
+      {@HiveField(0) @JsonKey(name: 'game_date') List<String>? gameDate,
+      @HiveField(1) @JsonKey(name: 'game_time') List<String>? gameTime,
+      @HiveField(2) List<String>? location,
+      @HiveField(3) List<String>? team_1,
+      @HiveField(4) List<String>? team_logo_1,
+      @HiveField(5) List<String>? team_2,
+      @HiveField(6) List<String>? team_logo_2,
+      @HiveField(7) List<String>? game_result,
+      @HiveField(8) List<String>? team_score_1,
+      @HiveField(9) List<String>? team_score_2,
+      @HiveField(10) List<String>? team_T_first_half_1,
+      @HiveField(11) List<String>? team_T_second_half_1,
+      @HiveField(12) List<String>? team_G_first_half_1,
+      @HiveField(13) List<String>? team_G_second_half_1,
+      @HiveField(14) List<String>? team_PG_first_half_1,
+      @HiveField(15) List<String>? team_PG_second_half_1,
+      @HiveField(16) List<String>? team_DG_first_half_1,
+      @HiveField(17) List<String>? team_DG_second_half_1,
+      @HiveField(18) List<String>? team_RESULT_first_half_1,
+      @HiveField(19) List<String>? team_RESULT_second_half_1,
+      @HiveField(20) List<String>? team_T_first_half_2,
+      @HiveField(21) List<String>? team_T_second_half_2,
+      @HiveField(22) List<String>? team_G_first_half_2,
+      @HiveField(23) List<String>? team_G_second_half_2,
+      @HiveField(24) List<String>? team_PG_first_half_2,
+      @HiveField(25) List<String>? team_PG_second_half_2,
+      @HiveField(26) List<String>? team_DG_first_half_2,
+      @HiveField(27) List<String>? team_DG_second_half_2,
+      @HiveField(28) List<String>? team_RESULT_first_half_2,
+      @HiveField(29) List<String>? team_RESULT_second_half_2,
+      @HiveField(30) List<String>? member_starting,
+      @HiveField(31) List<String>? member_reserves,
+      @HiveField(32) List<String>? photos,
+      @HiveField(33) List<String>? game_serial,
+      @HiveField(34) List<String>? member_captain,
+      @HiveField(35) List<String>? profile_image_1,
+      @HiveField(36) List<String>? main_image,
+      @HiveField(37) List<String>? profile_image_2,
+      @HiveField(38) List<String>? graph_image,
+      @HiveField(39) List<String>? position_image,
+      @HiveField(40) List<String>? data_position,
+      @HiveField(65) List<String>? data_play_position,
+      @HiveField(41) List<String>? data_number,
+      @HiveField(42) List<String>? data_birthday,
+      @HiveField(43) List<String>? data_height_weight,
+      @HiveField(44) List<String>? data_birthplace,
+      @HiveField(45) List<String>? data_school,
+      @HiveField(46) List<String>? data_highschool,
+      @HiveField(47) List<String>? data_university,
+      @HiveField(48) List<String>? data_career,
+      @HiveField(49) List<String>? data_belong,
+      @HiveField(50) List<String>? data_award,
+      @HiveField(51) List<String>? data_enrolledyears,
+      @HiveField(52) List<String>? data_caps,
+      @HiveField(53) List<String>? words_nickname,
+      @HiveField(54) List<String>? words_dream_child_age,
+      @HiveField(55) List<String>? words_opportunity,
+      @HiveField(56) List<String>? words_playsseason,
+      @HiveField(57) List<String>? words_goodplay,
+      @HiveField(58) List<String>? words_wish,
+      @HiveField(59) List<String>? words_myboom,
+      @HiveField(60) List<String>? words_favoritebrand,
+      @HiveField(61) List<String>? words_color,
+      @HiveField(62) List<String>? words_shop,
+      @HiveField(63) List<String>? words_gift,
+      @HiveField(64) List<String>? words_favoritefood,
+      @HiveField(66) List<String>? words_localfood});
 }
 
 /// @nodoc
@@ -1371,6 +1720,38 @@ class __$$CustomFieldImplCopyWithImpl<$Res>
     Object? photos = freezed,
     Object? game_serial = freezed,
     Object? member_captain = freezed,
+    Object? profile_image_1 = freezed,
+    Object? main_image = freezed,
+    Object? profile_image_2 = freezed,
+    Object? graph_image = freezed,
+    Object? position_image = freezed,
+    Object? data_position = freezed,
+    Object? data_play_position = freezed,
+    Object? data_number = freezed,
+    Object? data_birthday = freezed,
+    Object? data_height_weight = freezed,
+    Object? data_birthplace = freezed,
+    Object? data_school = freezed,
+    Object? data_highschool = freezed,
+    Object? data_university = freezed,
+    Object? data_career = freezed,
+    Object? data_belong = freezed,
+    Object? data_award = freezed,
+    Object? data_enrolledyears = freezed,
+    Object? data_caps = freezed,
+    Object? words_nickname = freezed,
+    Object? words_dream_child_age = freezed,
+    Object? words_opportunity = freezed,
+    Object? words_playsseason = freezed,
+    Object? words_goodplay = freezed,
+    Object? words_wish = freezed,
+    Object? words_myboom = freezed,
+    Object? words_favoritebrand = freezed,
+    Object? words_color = freezed,
+    Object? words_shop = freezed,
+    Object? words_gift = freezed,
+    Object? words_favoritefood = freezed,
+    Object? words_localfood = freezed,
   }) {
     return _then(_$CustomFieldImpl(
       gameDate: freezed == gameDate
@@ -1513,6 +1894,134 @@ class __$$CustomFieldImplCopyWithImpl<$Res>
           ? _value._member_captain
           : member_captain // ignore: cast_nullable_to_non_nullable
               as List<String>?,
+      profile_image_1: freezed == profile_image_1
+          ? _value._profile_image_1
+          : profile_image_1 // ignore: cast_nullable_to_non_nullable
+              as List<String>?,
+      main_image: freezed == main_image
+          ? _value._main_image
+          : main_image // ignore: cast_nullable_to_non_nullable
+              as List<String>?,
+      profile_image_2: freezed == profile_image_2
+          ? _value._profile_image_2
+          : profile_image_2 // ignore: cast_nullable_to_non_nullable
+              as List<String>?,
+      graph_image: freezed == graph_image
+          ? _value._graph_image
+          : graph_image // ignore: cast_nullable_to_non_nullable
+              as List<String>?,
+      position_image: freezed == position_image
+          ? _value._position_image
+          : position_image // ignore: cast_nullable_to_non_nullable
+              as List<String>?,
+      data_position: freezed == data_position
+          ? _value._data_position
+          : data_position // ignore: cast_nullable_to_non_nullable
+              as List<String>?,
+      data_play_position: freezed == data_play_position
+          ? _value._data_play_position
+          : data_play_position // ignore: cast_nullable_to_non_nullable
+              as List<String>?,
+      data_number: freezed == data_number
+          ? _value._data_number
+          : data_number // ignore: cast_nullable_to_non_nullable
+              as List<String>?,
+      data_birthday: freezed == data_birthday
+          ? _value._data_birthday
+          : data_birthday // ignore: cast_nullable_to_non_nullable
+              as List<String>?,
+      data_height_weight: freezed == data_height_weight
+          ? _value._data_height_weight
+          : data_height_weight // ignore: cast_nullable_to_non_nullable
+              as List<String>?,
+      data_birthplace: freezed == data_birthplace
+          ? _value._data_birthplace
+          : data_birthplace // ignore: cast_nullable_to_non_nullable
+              as List<String>?,
+      data_school: freezed == data_school
+          ? _value._data_school
+          : data_school // ignore: cast_nullable_to_non_nullable
+              as List<String>?,
+      data_highschool: freezed == data_highschool
+          ? _value._data_highschool
+          : data_highschool // ignore: cast_nullable_to_non_nullable
+              as List<String>?,
+      data_university: freezed == data_university
+          ? _value._data_university
+          : data_university // ignore: cast_nullable_to_non_nullable
+              as List<String>?,
+      data_career: freezed == data_career
+          ? _value._data_career
+          : data_career // ignore: cast_nullable_to_non_nullable
+              as List<String>?,
+      data_belong: freezed == data_belong
+          ? _value._data_belong
+          : data_belong // ignore: cast_nullable_to_non_nullable
+              as List<String>?,
+      data_award: freezed == data_award
+          ? _value._data_award
+          : data_award // ignore: cast_nullable_to_non_nullable
+              as List<String>?,
+      data_enrolledyears: freezed == data_enrolledyears
+          ? _value._data_enrolledyears
+          : data_enrolledyears // ignore: cast_nullable_to_non_nullable
+              as List<String>?,
+      data_caps: freezed == data_caps
+          ? _value._data_caps
+          : data_caps // ignore: cast_nullable_to_non_nullable
+              as List<String>?,
+      words_nickname: freezed == words_nickname
+          ? _value._words_nickname
+          : words_nickname // ignore: cast_nullable_to_non_nullable
+              as List<String>?,
+      words_dream_child_age: freezed == words_dream_child_age
+          ? _value._words_dream_child_age
+          : words_dream_child_age // ignore: cast_nullable_to_non_nullable
+              as List<String>?,
+      words_opportunity: freezed == words_opportunity
+          ? _value._words_opportunity
+          : words_opportunity // ignore: cast_nullable_to_non_nullable
+              as List<String>?,
+      words_playsseason: freezed == words_playsseason
+          ? _value._words_playsseason
+          : words_playsseason // ignore: cast_nullable_to_non_nullable
+              as List<String>?,
+      words_goodplay: freezed == words_goodplay
+          ? _value._words_goodplay
+          : words_goodplay // ignore: cast_nullable_to_non_nullable
+              as List<String>?,
+      words_wish: freezed == words_wish
+          ? _value._words_wish
+          : words_wish // ignore: cast_nullable_to_non_nullable
+              as List<String>?,
+      words_myboom: freezed == words_myboom
+          ? _value._words_myboom
+          : words_myboom // ignore: cast_nullable_to_non_nullable
+              as List<String>?,
+      words_favoritebrand: freezed == words_favoritebrand
+          ? _value._words_favoritebrand
+          : words_favoritebrand // ignore: cast_nullable_to_non_nullable
+              as List<String>?,
+      words_color: freezed == words_color
+          ? _value._words_color
+          : words_color // ignore: cast_nullable_to_non_nullable
+              as List<String>?,
+      words_shop: freezed == words_shop
+          ? _value._words_shop
+          : words_shop // ignore: cast_nullable_to_non_nullable
+              as List<String>?,
+      words_gift: freezed == words_gift
+          ? _value._words_gift
+          : words_gift // ignore: cast_nullable_to_non_nullable
+              as List<String>?,
+      words_favoritefood: freezed == words_favoritefood
+          ? _value._words_favoritefood
+          : words_favoritefood // ignore: cast_nullable_to_non_nullable
+              as List<String>?,
+      words_localfood: freezed == words_localfood
+          ? _value._words_localfood
+          : words_localfood // ignore: cast_nullable_to_non_nullable
+              as List<String>?,
     ));
   }
 }
@@ -1521,41 +2030,77 @@ class __$$CustomFieldImplCopyWithImpl<$Res>
 @JsonSerializable()
 class _$CustomFieldImpl implements _CustomField {
   _$CustomFieldImpl(
-      {@JsonKey(name: 'game_date') required final List<String>? gameDate,
-      @JsonKey(name: 'game_time') required final List<String>? gameTime,
-      required final List<String>? location,
-      required final List<String>? team_1,
-      final List<String>? team_logo_1,
-      required final List<String>? team_2,
-      required final List<String>? team_logo_2,
-      required final List<String>? game_result,
-      required final List<String>? team_score_1,
-      required final List<String>? team_score_2,
-      required final List<String>? team_T_first_half_1,
-      required final List<String>? team_T_second_half_1,
-      required final List<String>? team_G_first_half_1,
-      required final List<String>? team_G_second_half_1,
-      required final List<String>? team_PG_first_half_1,
-      required final List<String>? team_PG_second_half_1,
-      required final List<String>? team_DG_first_half_1,
-      required final List<String>? team_DG_second_half_1,
-      required final List<String>? team_RESULT_first_half_1,
-      required final List<String>? team_RESULT_second_half_1,
-      required final List<String>? team_T_first_half_2,
-      required final List<String>? team_T_second_half_2,
-      required final List<String>? team_G_first_half_2,
-      required final List<String>? team_G_second_half_2,
-      required final List<String>? team_PG_first_half_2,
-      required final List<String>? team_PG_second_half_2,
-      required final List<String>? team_DG_first_half_2,
-      required final List<String>? team_DG_second_half_2,
-      required final List<String>? team_RESULT_first_half_2,
-      required final List<String>? team_RESULT_second_half_2,
-      required final List<String>? member_starting,
-      required final List<String>? member_reserves,
-      required final List<String>? photos,
-      required final List<String>? game_serial,
-      required final List<String>? member_captain})
+      {@HiveField(0)
+      @JsonKey(name: 'game_date')
+      required final List<String>? gameDate,
+      @HiveField(1)
+      @JsonKey(name: 'game_time')
+      required final List<String>? gameTime,
+      @HiveField(2) required final List<String>? location,
+      @HiveField(3) required final List<String>? team_1,
+      @HiveField(4) final List<String>? team_logo_1,
+      @HiveField(5) required final List<String>? team_2,
+      @HiveField(6) required final List<String>? team_logo_2,
+      @HiveField(7) required final List<String>? game_result,
+      @HiveField(8) required final List<String>? team_score_1,
+      @HiveField(9) required final List<String>? team_score_2,
+      @HiveField(10) required final List<String>? team_T_first_half_1,
+      @HiveField(11) required final List<String>? team_T_second_half_1,
+      @HiveField(12) required final List<String>? team_G_first_half_1,
+      @HiveField(13) required final List<String>? team_G_second_half_1,
+      @HiveField(14) required final List<String>? team_PG_first_half_1,
+      @HiveField(15) required final List<String>? team_PG_second_half_1,
+      @HiveField(16) required final List<String>? team_DG_first_half_1,
+      @HiveField(17) required final List<String>? team_DG_second_half_1,
+      @HiveField(18) required final List<String>? team_RESULT_first_half_1,
+      @HiveField(19) required final List<String>? team_RESULT_second_half_1,
+      @HiveField(20) required final List<String>? team_T_first_half_2,
+      @HiveField(21) required final List<String>? team_T_second_half_2,
+      @HiveField(22) required final List<String>? team_G_first_half_2,
+      @HiveField(23) required final List<String>? team_G_second_half_2,
+      @HiveField(24) required final List<String>? team_PG_first_half_2,
+      @HiveField(25) required final List<String>? team_PG_second_half_2,
+      @HiveField(26) required final List<String>? team_DG_first_half_2,
+      @HiveField(27) required final List<String>? team_DG_second_half_2,
+      @HiveField(28) required final List<String>? team_RESULT_first_half_2,
+      @HiveField(29) required final List<String>? team_RESULT_second_half_2,
+      @HiveField(30) required final List<String>? member_starting,
+      @HiveField(31) required final List<String>? member_reserves,
+      @HiveField(32) required final List<String>? photos,
+      @HiveField(33) required final List<String>? game_serial,
+      @HiveField(34) required final List<String>? member_captain,
+      @HiveField(35) final List<String>? profile_image_1,
+      @HiveField(36) final List<String>? main_image,
+      @HiveField(37) final List<String>? profile_image_2,
+      @HiveField(38) final List<String>? graph_image,
+      @HiveField(39) final List<String>? position_image,
+      @HiveField(40) final List<String>? data_position,
+      @HiveField(65) final List<String>? data_play_position,
+      @HiveField(41) final List<String>? data_number,
+      @HiveField(42) final List<String>? data_birthday,
+      @HiveField(43) final List<String>? data_height_weight,
+      @HiveField(44) final List<String>? data_birthplace,
+      @HiveField(45) final List<String>? data_school,
+      @HiveField(46) final List<String>? data_highschool,
+      @HiveField(47) final List<String>? data_university,
+      @HiveField(48) final List<String>? data_career,
+      @HiveField(49) final List<String>? data_belong,
+      @HiveField(50) final List<String>? data_award,
+      @HiveField(51) final List<String>? data_enrolledyears,
+      @HiveField(52) final List<String>? data_caps,
+      @HiveField(53) final List<String>? words_nickname,
+      @HiveField(54) final List<String>? words_dream_child_age,
+      @HiveField(55) final List<String>? words_opportunity,
+      @HiveField(56) final List<String>? words_playsseason,
+      @HiveField(57) final List<String>? words_goodplay,
+      @HiveField(58) final List<String>? words_wish,
+      @HiveField(59) final List<String>? words_myboom,
+      @HiveField(60) final List<String>? words_favoritebrand,
+      @HiveField(61) final List<String>? words_color,
+      @HiveField(62) final List<String>? words_shop,
+      @HiveField(63) final List<String>? words_gift,
+      @HiveField(64) final List<String>? words_favoritefood,
+      @HiveField(66) final List<String>? words_localfood})
       : _gameDate = gameDate,
         _gameTime = gameTime,
         _location = location,
@@ -1590,13 +2135,46 @@ class _$CustomFieldImpl implements _CustomField {
         _member_reserves = member_reserves,
         _photos = photos,
         _game_serial = game_serial,
-        _member_captain = member_captain;
+        _member_captain = member_captain,
+        _profile_image_1 = profile_image_1,
+        _main_image = main_image,
+        _profile_image_2 = profile_image_2,
+        _graph_image = graph_image,
+        _position_image = position_image,
+        _data_position = data_position,
+        _data_play_position = data_play_position,
+        _data_number = data_number,
+        _data_birthday = data_birthday,
+        _data_height_weight = data_height_weight,
+        _data_birthplace = data_birthplace,
+        _data_school = data_school,
+        _data_highschool = data_highschool,
+        _data_university = data_university,
+        _data_career = data_career,
+        _data_belong = data_belong,
+        _data_award = data_award,
+        _data_enrolledyears = data_enrolledyears,
+        _data_caps = data_caps,
+        _words_nickname = words_nickname,
+        _words_dream_child_age = words_dream_child_age,
+        _words_opportunity = words_opportunity,
+        _words_playsseason = words_playsseason,
+        _words_goodplay = words_goodplay,
+        _words_wish = words_wish,
+        _words_myboom = words_myboom,
+        _words_favoritebrand = words_favoritebrand,
+        _words_color = words_color,
+        _words_shop = words_shop,
+        _words_gift = words_gift,
+        _words_favoritefood = words_favoritefood,
+        _words_localfood = words_localfood;
 
   factory _$CustomFieldImpl.fromJson(Map<String, dynamic> json) =>
       _$$CustomFieldImplFromJson(json);
 
   final List<String>? _gameDate;
   @override
+  @HiveField(0)
   @JsonKey(name: 'game_date')
   List<String>? get gameDate {
     final value = _gameDate;
@@ -1608,6 +2186,7 @@ class _$CustomFieldImpl implements _CustomField {
 
   final List<String>? _gameTime;
   @override
+  @HiveField(1)
   @JsonKey(name: 'game_time')
   List<String>? get gameTime {
     final value = _gameTime;
@@ -1619,6 +2198,7 @@ class _$CustomFieldImpl implements _CustomField {
 
   final List<String>? _location;
   @override
+  @HiveField(2)
   List<String>? get location {
     final value = _location;
     if (value == null) return null;
@@ -1629,6 +2209,7 @@ class _$CustomFieldImpl implements _CustomField {
 
   final List<String>? _team_1;
   @override
+  @HiveField(3)
   List<String>? get team_1 {
     final value = _team_1;
     if (value == null) return null;
@@ -1639,6 +2220,7 @@ class _$CustomFieldImpl implements _CustomField {
 
   final List<String>? _team_logo_1;
   @override
+  @HiveField(4)
   List<String>? get team_logo_1 {
     final value = _team_logo_1;
     if (value == null) return null;
@@ -1649,6 +2231,7 @@ class _$CustomFieldImpl implements _CustomField {
 
   final List<String>? _team_2;
   @override
+  @HiveField(5)
   List<String>? get team_2 {
     final value = _team_2;
     if (value == null) return null;
@@ -1659,6 +2242,7 @@ class _$CustomFieldImpl implements _CustomField {
 
   final List<String>? _team_logo_2;
   @override
+  @HiveField(6)
   List<String>? get team_logo_2 {
     final value = _team_logo_2;
     if (value == null) return null;
@@ -1669,6 +2253,7 @@ class _$CustomFieldImpl implements _CustomField {
 
   final List<String>? _game_result;
   @override
+  @HiveField(7)
   List<String>? get game_result {
     final value = _game_result;
     if (value == null) return null;
@@ -1679,6 +2264,7 @@ class _$CustomFieldImpl implements _CustomField {
 
   final List<String>? _team_score_1;
   @override
+  @HiveField(8)
   List<String>? get team_score_1 {
     final value = _team_score_1;
     if (value == null) return null;
@@ -1689,6 +2275,7 @@ class _$CustomFieldImpl implements _CustomField {
 
   final List<String>? _team_score_2;
   @override
+  @HiveField(9)
   List<String>? get team_score_2 {
     final value = _team_score_2;
     if (value == null) return null;
@@ -1699,6 +2286,7 @@ class _$CustomFieldImpl implements _CustomField {
 
   final List<String>? _team_T_first_half_1;
   @override
+  @HiveField(10)
   List<String>? get team_T_first_half_1 {
     final value = _team_T_first_half_1;
     if (value == null) return null;
@@ -1710,6 +2298,7 @@ class _$CustomFieldImpl implements _CustomField {
 
   final List<String>? _team_T_second_half_1;
   @override
+  @HiveField(11)
   List<String>? get team_T_second_half_1 {
     final value = _team_T_second_half_1;
     if (value == null) return null;
@@ -1721,6 +2310,7 @@ class _$CustomFieldImpl implements _CustomField {
 
   final List<String>? _team_G_first_half_1;
   @override
+  @HiveField(12)
   List<String>? get team_G_first_half_1 {
     final value = _team_G_first_half_1;
     if (value == null) return null;
@@ -1732,6 +2322,7 @@ class _$CustomFieldImpl implements _CustomField {
 
   final List<String>? _team_G_second_half_1;
   @override
+  @HiveField(13)
   List<String>? get team_G_second_half_1 {
     final value = _team_G_second_half_1;
     if (value == null) return null;
@@ -1743,6 +2334,7 @@ class _$CustomFieldImpl implements _CustomField {
 
   final List<String>? _team_PG_first_half_1;
   @override
+  @HiveField(14)
   List<String>? get team_PG_first_half_1 {
     final value = _team_PG_first_half_1;
     if (value == null) return null;
@@ -1754,6 +2346,7 @@ class _$CustomFieldImpl implements _CustomField {
 
   final List<String>? _team_PG_second_half_1;
   @override
+  @HiveField(15)
   List<String>? get team_PG_second_half_1 {
     final value = _team_PG_second_half_1;
     if (value == null) return null;
@@ -1765,6 +2358,7 @@ class _$CustomFieldImpl implements _CustomField {
 
   final List<String>? _team_DG_first_half_1;
   @override
+  @HiveField(16)
   List<String>? get team_DG_first_half_1 {
     final value = _team_DG_first_half_1;
     if (value == null) return null;
@@ -1776,6 +2370,7 @@ class _$CustomFieldImpl implements _CustomField {
 
   final List<String>? _team_DG_second_half_1;
   @override
+  @HiveField(17)
   List<String>? get team_DG_second_half_1 {
     final value = _team_DG_second_half_1;
     if (value == null) return null;
@@ -1787,6 +2382,7 @@ class _$CustomFieldImpl implements _CustomField {
 
   final List<String>? _team_RESULT_first_half_1;
   @override
+  @HiveField(18)
   List<String>? get team_RESULT_first_half_1 {
     final value = _team_RESULT_first_half_1;
     if (value == null) return null;
@@ -1798,6 +2394,7 @@ class _$CustomFieldImpl implements _CustomField {
 
   final List<String>? _team_RESULT_second_half_1;
   @override
+  @HiveField(19)
   List<String>? get team_RESULT_second_half_1 {
     final value = _team_RESULT_second_half_1;
     if (value == null) return null;
@@ -1809,6 +2406,7 @@ class _$CustomFieldImpl implements _CustomField {
 
   final List<String>? _team_T_first_half_2;
   @override
+  @HiveField(20)
   List<String>? get team_T_first_half_2 {
     final value = _team_T_first_half_2;
     if (value == null) return null;
@@ -1820,6 +2418,7 @@ class _$CustomFieldImpl implements _CustomField {
 
   final List<String>? _team_T_second_half_2;
   @override
+  @HiveField(21)
   List<String>? get team_T_second_half_2 {
     final value = _team_T_second_half_2;
     if (value == null) return null;
@@ -1831,6 +2430,7 @@ class _$CustomFieldImpl implements _CustomField {
 
   final List<String>? _team_G_first_half_2;
   @override
+  @HiveField(22)
   List<String>? get team_G_first_half_2 {
     final value = _team_G_first_half_2;
     if (value == null) return null;
@@ -1842,6 +2442,7 @@ class _$CustomFieldImpl implements _CustomField {
 
   final List<String>? _team_G_second_half_2;
   @override
+  @HiveField(23)
   List<String>? get team_G_second_half_2 {
     final value = _team_G_second_half_2;
     if (value == null) return null;
@@ -1853,6 +2454,7 @@ class _$CustomFieldImpl implements _CustomField {
 
   final List<String>? _team_PG_first_half_2;
   @override
+  @HiveField(24)
   List<String>? get team_PG_first_half_2 {
     final value = _team_PG_first_half_2;
     if (value == null) return null;
@@ -1864,6 +2466,7 @@ class _$CustomFieldImpl implements _CustomField {
 
   final List<String>? _team_PG_second_half_2;
   @override
+  @HiveField(25)
   List<String>? get team_PG_second_half_2 {
     final value = _team_PG_second_half_2;
     if (value == null) return null;
@@ -1875,6 +2478,7 @@ class _$CustomFieldImpl implements _CustomField {
 
   final List<String>? _team_DG_first_half_2;
   @override
+  @HiveField(26)
   List<String>? get team_DG_first_half_2 {
     final value = _team_DG_first_half_2;
     if (value == null) return null;
@@ -1886,6 +2490,7 @@ class _$CustomFieldImpl implements _CustomField {
 
   final List<String>? _team_DG_second_half_2;
   @override
+  @HiveField(27)
   List<String>? get team_DG_second_half_2 {
     final value = _team_DG_second_half_2;
     if (value == null) return null;
@@ -1897,6 +2502,7 @@ class _$CustomFieldImpl implements _CustomField {
 
   final List<String>? _team_RESULT_first_half_2;
   @override
+  @HiveField(28)
   List<String>? get team_RESULT_first_half_2 {
     final value = _team_RESULT_first_half_2;
     if (value == null) return null;
@@ -1908,6 +2514,7 @@ class _$CustomFieldImpl implements _CustomField {
 
   final List<String>? _team_RESULT_second_half_2;
   @override
+  @HiveField(29)
   List<String>? get team_RESULT_second_half_2 {
     final value = _team_RESULT_second_half_2;
     if (value == null) return null;
@@ -1919,6 +2526,7 @@ class _$CustomFieldImpl implements _CustomField {
 
   final List<String>? _member_starting;
   @override
+  @HiveField(30)
   List<String>? get member_starting {
     final value = _member_starting;
     if (value == null) return null;
@@ -1929,6 +2537,7 @@ class _$CustomFieldImpl implements _CustomField {
 
   final List<String>? _member_reserves;
   @override
+  @HiveField(31)
   List<String>? get member_reserves {
     final value = _member_reserves;
     if (value == null) return null;
@@ -1939,6 +2548,7 @@ class _$CustomFieldImpl implements _CustomField {
 
   final List<String>? _photos;
   @override
+  @HiveField(32)
   List<String>? get photos {
     final value = _photos;
     if (value == null) return null;
@@ -1949,6 +2559,7 @@ class _$CustomFieldImpl implements _CustomField {
 
   final List<String>? _game_serial;
   @override
+  @HiveField(33)
   List<String>? get game_serial {
     final value = _game_serial;
     if (value == null) return null;
@@ -1959,6 +2570,7 @@ class _$CustomFieldImpl implements _CustomField {
 
   final List<String>? _member_captain;
   @override
+  @HiveField(34)
   List<String>? get member_captain {
     final value = _member_captain;
     if (value == null) return null;
@@ -1967,9 +2579,373 @@ class _$CustomFieldImpl implements _CustomField {
     return EqualUnmodifiableListView(value);
   }
 
+//specific for player
+  final List<String>? _profile_image_1;
+//specific for player
+  @override
+  @HiveField(35)
+  List<String>? get profile_image_1 {
+    final value = _profile_image_1;
+    if (value == null) return null;
+    if (_profile_image_1 is EqualUnmodifiableListView) return _profile_image_1;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(value);
+  }
+
+//for profile picture
+  final List<String>? _main_image;
+//for profile picture
+  @override
+  @HiveField(36)
+  List<String>? get main_image {
+    final value = _main_image;
+    if (value == null) return null;
+    if (_main_image is EqualUnmodifiableListView) return _main_image;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(value);
+  }
+
+  final List<String>? _profile_image_2;
+  @override
+  @HiveField(37)
+  List<String>? get profile_image_2 {
+    final value = _profile_image_2;
+    if (value == null) return null;
+    if (_profile_image_2 is EqualUnmodifiableListView) return _profile_image_2;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(value);
+  }
+
+  final List<String>? _graph_image;
+  @override
+  @HiveField(38)
+  List<String>? get graph_image {
+    final value = _graph_image;
+    if (value == null) return null;
+    if (_graph_image is EqualUnmodifiableListView) return _graph_image;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(value);
+  }
+
+  final List<String>? _position_image;
+  @override
+  @HiveField(39)
+  List<String>? get position_image {
+    final value = _position_image;
+    if (value == null) return null;
+    if (_position_image is EqualUnmodifiableListView) return _position_image;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(value);
+  }
+
+  final List<String>? _data_position;
+  @override
+  @HiveField(40)
+  List<String>? get data_position {
+    final value = _data_position;
+    if (value == null) return null;
+    if (_data_position is EqualUnmodifiableListView) return _data_position;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(value);
+  }
+
+  final List<String>? _data_play_position;
+  @override
+  @HiveField(65)
+  List<String>? get data_play_position {
+    final value = _data_play_position;
+    if (value == null) return null;
+    if (_data_play_position is EqualUnmodifiableListView)
+      return _data_play_position;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(value);
+  }
+
+  final List<String>? _data_number;
+  @override
+  @HiveField(41)
+  List<String>? get data_number {
+    final value = _data_number;
+    if (value == null) return null;
+    if (_data_number is EqualUnmodifiableListView) return _data_number;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(value);
+  }
+
+  final List<String>? _data_birthday;
+  @override
+  @HiveField(42)
+  List<String>? get data_birthday {
+    final value = _data_birthday;
+    if (value == null) return null;
+    if (_data_birthday is EqualUnmodifiableListView) return _data_birthday;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(value);
+  }
+
+  final List<String>? _data_height_weight;
+  @override
+  @HiveField(43)
+  List<String>? get data_height_weight {
+    final value = _data_height_weight;
+    if (value == null) return null;
+    if (_data_height_weight is EqualUnmodifiableListView)
+      return _data_height_weight;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(value);
+  }
+
+  final List<String>? _data_birthplace;
+  @override
+  @HiveField(44)
+  List<String>? get data_birthplace {
+    final value = _data_birthplace;
+    if (value == null) return null;
+    if (_data_birthplace is EqualUnmodifiableListView) return _data_birthplace;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(value);
+  }
+
+  final List<String>? _data_school;
+  @override
+  @HiveField(45)
+  List<String>? get data_school {
+    final value = _data_school;
+    if (value == null) return null;
+    if (_data_school is EqualUnmodifiableListView) return _data_school;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(value);
+  }
+
+  final List<String>? _data_highschool;
+  @override
+  @HiveField(46)
+  List<String>? get data_highschool {
+    final value = _data_highschool;
+    if (value == null) return null;
+    if (_data_highschool is EqualUnmodifiableListView) return _data_highschool;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(value);
+  }
+
+  final List<String>? _data_university;
+  @override
+  @HiveField(47)
+  List<String>? get data_university {
+    final value = _data_university;
+    if (value == null) return null;
+    if (_data_university is EqualUnmodifiableListView) return _data_university;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(value);
+  }
+
+  final List<String>? _data_career;
+  @override
+  @HiveField(48)
+  List<String>? get data_career {
+    final value = _data_career;
+    if (value == null) return null;
+    if (_data_career is EqualUnmodifiableListView) return _data_career;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(value);
+  }
+
+  final List<String>? _data_belong;
+  @override
+  @HiveField(49)
+  List<String>? get data_belong {
+    final value = _data_belong;
+    if (value == null) return null;
+    if (_data_belong is EqualUnmodifiableListView) return _data_belong;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(value);
+  }
+
+  final List<String>? _data_award;
+  @override
+  @HiveField(50)
+  List<String>? get data_award {
+    final value = _data_award;
+    if (value == null) return null;
+    if (_data_award is EqualUnmodifiableListView) return _data_award;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(value);
+  }
+
+  final List<String>? _data_enrolledyears;
+  @override
+  @HiveField(51)
+  List<String>? get data_enrolledyears {
+    final value = _data_enrolledyears;
+    if (value == null) return null;
+    if (_data_enrolledyears is EqualUnmodifiableListView)
+      return _data_enrolledyears;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(value);
+  }
+
+  final List<String>? _data_caps;
+  @override
+  @HiveField(52)
+  List<String>? get data_caps {
+    final value = _data_caps;
+    if (value == null) return null;
+    if (_data_caps is EqualUnmodifiableListView) return _data_caps;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(value);
+  }
+
+  final List<String>? _words_nickname;
+  @override
+  @HiveField(53)
+  List<String>? get words_nickname {
+    final value = _words_nickname;
+    if (value == null) return null;
+    if (_words_nickname is EqualUnmodifiableListView) return _words_nickname;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(value);
+  }
+
+  final List<String>? _words_dream_child_age;
+  @override
+  @HiveField(54)
+  List<String>? get words_dream_child_age {
+    final value = _words_dream_child_age;
+    if (value == null) return null;
+    if (_words_dream_child_age is EqualUnmodifiableListView)
+      return _words_dream_child_age;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(value);
+  }
+
+  final List<String>? _words_opportunity;
+  @override
+  @HiveField(55)
+  List<String>? get words_opportunity {
+    final value = _words_opportunity;
+    if (value == null) return null;
+    if (_words_opportunity is EqualUnmodifiableListView)
+      return _words_opportunity;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(value);
+  }
+
+  final List<String>? _words_playsseason;
+  @override
+  @HiveField(56)
+  List<String>? get words_playsseason {
+    final value = _words_playsseason;
+    if (value == null) return null;
+    if (_words_playsseason is EqualUnmodifiableListView)
+      return _words_playsseason;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(value);
+  }
+
+  final List<String>? _words_goodplay;
+  @override
+  @HiveField(57)
+  List<String>? get words_goodplay {
+    final value = _words_goodplay;
+    if (value == null) return null;
+    if (_words_goodplay is EqualUnmodifiableListView) return _words_goodplay;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(value);
+  }
+
+  final List<String>? _words_wish;
+  @override
+  @HiveField(58)
+  List<String>? get words_wish {
+    final value = _words_wish;
+    if (value == null) return null;
+    if (_words_wish is EqualUnmodifiableListView) return _words_wish;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(value);
+  }
+
+  final List<String>? _words_myboom;
+  @override
+  @HiveField(59)
+  List<String>? get words_myboom {
+    final value = _words_myboom;
+    if (value == null) return null;
+    if (_words_myboom is EqualUnmodifiableListView) return _words_myboom;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(value);
+  }
+
+  final List<String>? _words_favoritebrand;
+  @override
+  @HiveField(60)
+  List<String>? get words_favoritebrand {
+    final value = _words_favoritebrand;
+    if (value == null) return null;
+    if (_words_favoritebrand is EqualUnmodifiableListView)
+      return _words_favoritebrand;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(value);
+  }
+
+  final List<String>? _words_color;
+  @override
+  @HiveField(61)
+  List<String>? get words_color {
+    final value = _words_color;
+    if (value == null) return null;
+    if (_words_color is EqualUnmodifiableListView) return _words_color;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(value);
+  }
+
+  final List<String>? _words_shop;
+  @override
+  @HiveField(62)
+  List<String>? get words_shop {
+    final value = _words_shop;
+    if (value == null) return null;
+    if (_words_shop is EqualUnmodifiableListView) return _words_shop;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(value);
+  }
+
+  final List<String>? _words_gift;
+  @override
+  @HiveField(63)
+  List<String>? get words_gift {
+    final value = _words_gift;
+    if (value == null) return null;
+    if (_words_gift is EqualUnmodifiableListView) return _words_gift;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(value);
+  }
+
+  final List<String>? _words_favoritefood;
+  @override
+  @HiveField(64)
+  List<String>? get words_favoritefood {
+    final value = _words_favoritefood;
+    if (value == null) return null;
+    if (_words_favoritefood is EqualUnmodifiableListView)
+      return _words_favoritefood;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(value);
+  }
+
+  final List<String>? _words_localfood;
+  @override
+  @HiveField(66)
+  List<String>? get words_localfood {
+    final value = _words_localfood;
+    if (value == null) return null;
+    if (_words_localfood is EqualUnmodifiableListView) return _words_localfood;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(value);
+  }
+
   @override
   String toString() {
-    return 'CustomField(gameDate: $gameDate, gameTime: $gameTime, location: $location, team_1: $team_1, team_logo_1: $team_logo_1, team_2: $team_2, team_logo_2: $team_logo_2, game_result: $game_result, team_score_1: $team_score_1, team_score_2: $team_score_2, team_T_first_half_1: $team_T_first_half_1, team_T_second_half_1: $team_T_second_half_1, team_G_first_half_1: $team_G_first_half_1, team_G_second_half_1: $team_G_second_half_1, team_PG_first_half_1: $team_PG_first_half_1, team_PG_second_half_1: $team_PG_second_half_1, team_DG_first_half_1: $team_DG_first_half_1, team_DG_second_half_1: $team_DG_second_half_1, team_RESULT_first_half_1: $team_RESULT_first_half_1, team_RESULT_second_half_1: $team_RESULT_second_half_1, team_T_first_half_2: $team_T_first_half_2, team_T_second_half_2: $team_T_second_half_2, team_G_first_half_2: $team_G_first_half_2, team_G_second_half_2: $team_G_second_half_2, team_PG_first_half_2: $team_PG_first_half_2, team_PG_second_half_2: $team_PG_second_half_2, team_DG_first_half_2: $team_DG_first_half_2, team_DG_second_half_2: $team_DG_second_half_2, team_RESULT_first_half_2: $team_RESULT_first_half_2, team_RESULT_second_half_2: $team_RESULT_second_half_2, member_starting: $member_starting, member_reserves: $member_reserves, photos: $photos, game_serial: $game_serial, member_captain: $member_captain)';
+    return 'CustomField(gameDate: $gameDate, gameTime: $gameTime, location: $location, team_1: $team_1, team_logo_1: $team_logo_1, team_2: $team_2, team_logo_2: $team_logo_2, game_result: $game_result, team_score_1: $team_score_1, team_score_2: $team_score_2, team_T_first_half_1: $team_T_first_half_1, team_T_second_half_1: $team_T_second_half_1, team_G_first_half_1: $team_G_first_half_1, team_G_second_half_1: $team_G_second_half_1, team_PG_first_half_1: $team_PG_first_half_1, team_PG_second_half_1: $team_PG_second_half_1, team_DG_first_half_1: $team_DG_first_half_1, team_DG_second_half_1: $team_DG_second_half_1, team_RESULT_first_half_1: $team_RESULT_first_half_1, team_RESULT_second_half_1: $team_RESULT_second_half_1, team_T_first_half_2: $team_T_first_half_2, team_T_second_half_2: $team_T_second_half_2, team_G_first_half_2: $team_G_first_half_2, team_G_second_half_2: $team_G_second_half_2, team_PG_first_half_2: $team_PG_first_half_2, team_PG_second_half_2: $team_PG_second_half_2, team_DG_first_half_2: $team_DG_first_half_2, team_DG_second_half_2: $team_DG_second_half_2, team_RESULT_first_half_2: $team_RESULT_first_half_2, team_RESULT_second_half_2: $team_RESULT_second_half_2, member_starting: $member_starting, member_reserves: $member_reserves, photos: $photos, game_serial: $game_serial, member_captain: $member_captain, profile_image_1: $profile_image_1, main_image: $main_image, profile_image_2: $profile_image_2, graph_image: $graph_image, position_image: $position_image, data_position: $data_position, data_play_position: $data_play_position, data_number: $data_number, data_birthday: $data_birthday, data_height_weight: $data_height_weight, data_birthplace: $data_birthplace, data_school: $data_school, data_highschool: $data_highschool, data_university: $data_university, data_career: $data_career, data_belong: $data_belong, data_award: $data_award, data_enrolledyears: $data_enrolledyears, data_caps: $data_caps, words_nickname: $words_nickname, words_dream_child_age: $words_dream_child_age, words_opportunity: $words_opportunity, words_playsseason: $words_playsseason, words_goodplay: $words_goodplay, words_wish: $words_wish, words_myboom: $words_myboom, words_favoritebrand: $words_favoritebrand, words_color: $words_color, words_shop: $words_shop, words_gift: $words_gift, words_favoritefood: $words_favoritefood, words_localfood: $words_localfood)';
   }
 
   @override
@@ -2040,7 +3016,52 @@ class _$CustomFieldImpl implements _CustomField {
             const DeepCollectionEquality()
                 .equals(other._game_serial, _game_serial) &&
             const DeepCollectionEquality()
-                .equals(other._member_captain, _member_captain));
+                .equals(other._member_captain, _member_captain) &&
+            const DeepCollectionEquality()
+                .equals(other._profile_image_1, _profile_image_1) &&
+            const DeepCollectionEquality()
+                .equals(other._main_image, _main_image) &&
+            const DeepCollectionEquality()
+                .equals(other._profile_image_2, _profile_image_2) &&
+            const DeepCollectionEquality()
+                .equals(other._graph_image, _graph_image) &&
+            const DeepCollectionEquality()
+                .equals(other._position_image, _position_image) &&
+            const DeepCollectionEquality()
+                .equals(other._data_position, _data_position) &&
+            const DeepCollectionEquality()
+                .equals(other._data_play_position, _data_play_position) &&
+            const DeepCollectionEquality()
+                .equals(other._data_number, _data_number) &&
+            const DeepCollectionEquality()
+                .equals(other._data_birthday, _data_birthday) &&
+            const DeepCollectionEquality()
+                .equals(other._data_height_weight, _data_height_weight) &&
+            const DeepCollectionEquality()
+                .equals(other._data_birthplace, _data_birthplace) &&
+            const DeepCollectionEquality()
+                .equals(other._data_school, _data_school) &&
+            const DeepCollectionEquality()
+                .equals(other._data_highschool, _data_highschool) &&
+            const DeepCollectionEquality().equals(other._data_university, _data_university) &&
+            const DeepCollectionEquality().equals(other._data_career, _data_career) &&
+            const DeepCollectionEquality().equals(other._data_belong, _data_belong) &&
+            const DeepCollectionEquality().equals(other._data_award, _data_award) &&
+            const DeepCollectionEquality().equals(other._data_enrolledyears, _data_enrolledyears) &&
+            const DeepCollectionEquality().equals(other._data_caps, _data_caps) &&
+            const DeepCollectionEquality().equals(other._words_nickname, _words_nickname) &&
+            const DeepCollectionEquality().equals(other._words_dream_child_age, _words_dream_child_age) &&
+            const DeepCollectionEquality().equals(other._words_opportunity, _words_opportunity) &&
+            const DeepCollectionEquality().equals(other._words_playsseason, _words_playsseason) &&
+            const DeepCollectionEquality().equals(other._words_goodplay, _words_goodplay) &&
+            const DeepCollectionEquality().equals(other._words_wish, _words_wish) &&
+            const DeepCollectionEquality().equals(other._words_myboom, _words_myboom) &&
+            const DeepCollectionEquality().equals(other._words_favoritebrand, _words_favoritebrand) &&
+            const DeepCollectionEquality().equals(other._words_color, _words_color) &&
+            const DeepCollectionEquality().equals(other._words_shop, _words_shop) &&
+            const DeepCollectionEquality().equals(other._words_gift, _words_gift) &&
+            const DeepCollectionEquality().equals(other._words_favoritefood, _words_favoritefood) &&
+            const DeepCollectionEquality().equals(other._words_localfood, _words_localfood));
   }
 
   @JsonKey(ignore: true)
@@ -2081,7 +3102,39 @@ class _$CustomFieldImpl implements _CustomField {
         const DeepCollectionEquality().hash(_member_reserves),
         const DeepCollectionEquality().hash(_photos),
         const DeepCollectionEquality().hash(_game_serial),
-        const DeepCollectionEquality().hash(_member_captain)
+        const DeepCollectionEquality().hash(_member_captain),
+        const DeepCollectionEquality().hash(_profile_image_1),
+        const DeepCollectionEquality().hash(_main_image),
+        const DeepCollectionEquality().hash(_profile_image_2),
+        const DeepCollectionEquality().hash(_graph_image),
+        const DeepCollectionEquality().hash(_position_image),
+        const DeepCollectionEquality().hash(_data_position),
+        const DeepCollectionEquality().hash(_data_play_position),
+        const DeepCollectionEquality().hash(_data_number),
+        const DeepCollectionEquality().hash(_data_birthday),
+        const DeepCollectionEquality().hash(_data_height_weight),
+        const DeepCollectionEquality().hash(_data_birthplace),
+        const DeepCollectionEquality().hash(_data_school),
+        const DeepCollectionEquality().hash(_data_highschool),
+        const DeepCollectionEquality().hash(_data_university),
+        const DeepCollectionEquality().hash(_data_career),
+        const DeepCollectionEquality().hash(_data_belong),
+        const DeepCollectionEquality().hash(_data_award),
+        const DeepCollectionEquality().hash(_data_enrolledyears),
+        const DeepCollectionEquality().hash(_data_caps),
+        const DeepCollectionEquality().hash(_words_nickname),
+        const DeepCollectionEquality().hash(_words_dream_child_age),
+        const DeepCollectionEquality().hash(_words_opportunity),
+        const DeepCollectionEquality().hash(_words_playsseason),
+        const DeepCollectionEquality().hash(_words_goodplay),
+        const DeepCollectionEquality().hash(_words_wish),
+        const DeepCollectionEquality().hash(_words_myboom),
+        const DeepCollectionEquality().hash(_words_favoritebrand),
+        const DeepCollectionEquality().hash(_words_color),
+        const DeepCollectionEquality().hash(_words_shop),
+        const DeepCollectionEquality().hash(_words_gift),
+        const DeepCollectionEquality().hash(_words_favoritefood),
+        const DeepCollectionEquality().hash(_words_localfood)
       ]);
 
   @JsonKey(ignore: true)
@@ -2100,117 +3153,284 @@ class _$CustomFieldImpl implements _CustomField {
 
 abstract class _CustomField implements CustomField {
   factory _CustomField(
-      {@JsonKey(name: 'game_date') required final List<String>? gameDate,
-      @JsonKey(name: 'game_time') required final List<String>? gameTime,
-      required final List<String>? location,
-      required final List<String>? team_1,
-      final List<String>? team_logo_1,
-      required final List<String>? team_2,
-      required final List<String>? team_logo_2,
-      required final List<String>? game_result,
-      required final List<String>? team_score_1,
-      required final List<String>? team_score_2,
-      required final List<String>? team_T_first_half_1,
-      required final List<String>? team_T_second_half_1,
-      required final List<String>? team_G_first_half_1,
-      required final List<String>? team_G_second_half_1,
-      required final List<String>? team_PG_first_half_1,
-      required final List<String>? team_PG_second_half_1,
-      required final List<String>? team_DG_first_half_1,
-      required final List<String>? team_DG_second_half_1,
-      required final List<String>? team_RESULT_first_half_1,
-      required final List<String>? team_RESULT_second_half_1,
-      required final List<String>? team_T_first_half_2,
-      required final List<String>? team_T_second_half_2,
-      required final List<String>? team_G_first_half_2,
-      required final List<String>? team_G_second_half_2,
-      required final List<String>? team_PG_first_half_2,
-      required final List<String>? team_PG_second_half_2,
-      required final List<String>? team_DG_first_half_2,
-      required final List<String>? team_DG_second_half_2,
-      required final List<String>? team_RESULT_first_half_2,
-      required final List<String>? team_RESULT_second_half_2,
-      required final List<String>? member_starting,
-      required final List<String>? member_reserves,
-      required final List<String>? photos,
-      required final List<String>? game_serial,
-      required final List<String>? member_captain}) = _$CustomFieldImpl;
+      {@HiveField(0)
+      @JsonKey(name: 'game_date')
+      required final List<String>? gameDate,
+      @HiveField(1)
+      @JsonKey(name: 'game_time')
+      required final List<String>? gameTime,
+      @HiveField(2) required final List<String>? location,
+      @HiveField(3) required final List<String>? team_1,
+      @HiveField(4) final List<String>? team_logo_1,
+      @HiveField(5) required final List<String>? team_2,
+      @HiveField(6) required final List<String>? team_logo_2,
+      @HiveField(7) required final List<String>? game_result,
+      @HiveField(8) required final List<String>? team_score_1,
+      @HiveField(9) required final List<String>? team_score_2,
+      @HiveField(10) required final List<String>? team_T_first_half_1,
+      @HiveField(11) required final List<String>? team_T_second_half_1,
+      @HiveField(12) required final List<String>? team_G_first_half_1,
+      @HiveField(13) required final List<String>? team_G_second_half_1,
+      @HiveField(14) required final List<String>? team_PG_first_half_1,
+      @HiveField(15) required final List<String>? team_PG_second_half_1,
+      @HiveField(16) required final List<String>? team_DG_first_half_1,
+      @HiveField(17) required final List<String>? team_DG_second_half_1,
+      @HiveField(18) required final List<String>? team_RESULT_first_half_1,
+      @HiveField(19) required final List<String>? team_RESULT_second_half_1,
+      @HiveField(20) required final List<String>? team_T_first_half_2,
+      @HiveField(21) required final List<String>? team_T_second_half_2,
+      @HiveField(22) required final List<String>? team_G_first_half_2,
+      @HiveField(23) required final List<String>? team_G_second_half_2,
+      @HiveField(24) required final List<String>? team_PG_first_half_2,
+      @HiveField(25) required final List<String>? team_PG_second_half_2,
+      @HiveField(26) required final List<String>? team_DG_first_half_2,
+      @HiveField(27) required final List<String>? team_DG_second_half_2,
+      @HiveField(28) required final List<String>? team_RESULT_first_half_2,
+      @HiveField(29) required final List<String>? team_RESULT_second_half_2,
+      @HiveField(30) required final List<String>? member_starting,
+      @HiveField(31) required final List<String>? member_reserves,
+      @HiveField(32) required final List<String>? photos,
+      @HiveField(33) required final List<String>? game_serial,
+      @HiveField(34) required final List<String>? member_captain,
+      @HiveField(35) final List<String>? profile_image_1,
+      @HiveField(36) final List<String>? main_image,
+      @HiveField(37) final List<String>? profile_image_2,
+      @HiveField(38) final List<String>? graph_image,
+      @HiveField(39) final List<String>? position_image,
+      @HiveField(40) final List<String>? data_position,
+      @HiveField(65) final List<String>? data_play_position,
+      @HiveField(41) final List<String>? data_number,
+      @HiveField(42) final List<String>? data_birthday,
+      @HiveField(43) final List<String>? data_height_weight,
+      @HiveField(44) final List<String>? data_birthplace,
+      @HiveField(45) final List<String>? data_school,
+      @HiveField(46) final List<String>? data_highschool,
+      @HiveField(47) final List<String>? data_university,
+      @HiveField(48) final List<String>? data_career,
+      @HiveField(49) final List<String>? data_belong,
+      @HiveField(50) final List<String>? data_award,
+      @HiveField(51) final List<String>? data_enrolledyears,
+      @HiveField(52) final List<String>? data_caps,
+      @HiveField(53) final List<String>? words_nickname,
+      @HiveField(54) final List<String>? words_dream_child_age,
+      @HiveField(55) final List<String>? words_opportunity,
+      @HiveField(56) final List<String>? words_playsseason,
+      @HiveField(57) final List<String>? words_goodplay,
+      @HiveField(58) final List<String>? words_wish,
+      @HiveField(59) final List<String>? words_myboom,
+      @HiveField(60) final List<String>? words_favoritebrand,
+      @HiveField(61) final List<String>? words_color,
+      @HiveField(62) final List<String>? words_shop,
+      @HiveField(63) final List<String>? words_gift,
+      @HiveField(64) final List<String>? words_favoritefood,
+      @HiveField(66) final List<String>? words_localfood}) = _$CustomFieldImpl;
 
   factory _CustomField.fromJson(Map<String, dynamic> json) =
       _$CustomFieldImpl.fromJson;
 
   @override
+  @HiveField(0)
   @JsonKey(name: 'game_date')
   List<String>? get gameDate;
   @override
+  @HiveField(1)
   @JsonKey(name: 'game_time')
   List<String>? get gameTime;
   @override
+  @HiveField(2)
   List<String>? get location;
   @override
+  @HiveField(3)
   List<String>? get team_1;
   @override
+  @HiveField(4)
   List<String>? get team_logo_1;
   @override
+  @HiveField(5)
   List<String>? get team_2;
   @override
+  @HiveField(6)
   List<String>? get team_logo_2;
   @override
+  @HiveField(7)
   List<String>? get game_result;
   @override
+  @HiveField(8)
   List<String>? get team_score_1;
   @override
+  @HiveField(9)
   List<String>? get team_score_2;
   @override
+  @HiveField(10)
   List<String>? get team_T_first_half_1;
   @override
+  @HiveField(11)
   List<String>? get team_T_second_half_1;
   @override
+  @HiveField(12)
   List<String>? get team_G_first_half_1;
   @override
+  @HiveField(13)
   List<String>? get team_G_second_half_1;
   @override
+  @HiveField(14)
   List<String>? get team_PG_first_half_1;
   @override
+  @HiveField(15)
   List<String>? get team_PG_second_half_1;
   @override
+  @HiveField(16)
   List<String>? get team_DG_first_half_1;
   @override
+  @HiveField(17)
   List<String>? get team_DG_second_half_1;
   @override
+  @HiveField(18)
   List<String>? get team_RESULT_first_half_1;
   @override
+  @HiveField(19)
   List<String>? get team_RESULT_second_half_1;
   @override
+  @HiveField(20)
   List<String>? get team_T_first_half_2;
   @override
+  @HiveField(21)
   List<String>? get team_T_second_half_2;
   @override
+  @HiveField(22)
   List<String>? get team_G_first_half_2;
   @override
+  @HiveField(23)
   List<String>? get team_G_second_half_2;
   @override
+  @HiveField(24)
   List<String>? get team_PG_first_half_2;
   @override
+  @HiveField(25)
   List<String>? get team_PG_second_half_2;
   @override
+  @HiveField(26)
   List<String>? get team_DG_first_half_2;
   @override
+  @HiveField(27)
   List<String>? get team_DG_second_half_2;
   @override
+  @HiveField(28)
   List<String>? get team_RESULT_first_half_2;
   @override
+  @HiveField(29)
   List<String>? get team_RESULT_second_half_2;
   @override
+  @HiveField(30)
   List<String>? get member_starting;
   @override
+  @HiveField(31)
   List<String>? get member_reserves;
   @override
+  @HiveField(32)
   List<String>? get photos;
   @override
+  @HiveField(33)
   List<String>? get game_serial;
   @override
+  @HiveField(34)
   List<String>? get member_captain;
+  @override //specific for player
+  @HiveField(35)
+  List<String>? get profile_image_1;
+  @override //for profile picture
+  @HiveField(36)
+  List<String>? get main_image;
+  @override
+  @HiveField(37)
+  List<String>? get profile_image_2;
+  @override
+  @HiveField(38)
+  List<String>? get graph_image;
+  @override
+  @HiveField(39)
+  List<String>? get position_image;
+  @override
+  @HiveField(40)
+  List<String>? get data_position;
+  @override
+  @HiveField(65)
+  List<String>? get data_play_position;
+  @override
+  @HiveField(41)
+  List<String>? get data_number;
+  @override
+  @HiveField(42)
+  List<String>? get data_birthday;
+  @override
+  @HiveField(43)
+  List<String>? get data_height_weight;
+  @override
+  @HiveField(44)
+  List<String>? get data_birthplace;
+  @override
+  @HiveField(45)
+  List<String>? get data_school;
+  @override
+  @HiveField(46)
+  List<String>? get data_highschool;
+  @override
+  @HiveField(47)
+  List<String>? get data_university;
+  @override
+  @HiveField(48)
+  List<String>? get data_career;
+  @override
+  @HiveField(49)
+  List<String>? get data_belong;
+  @override
+  @HiveField(50)
+  List<String>? get data_award;
+  @override
+  @HiveField(51)
+  List<String>? get data_enrolledyears;
+  @override
+  @HiveField(52)
+  List<String>? get data_caps;
+  @override
+  @HiveField(53)
+  List<String>? get words_nickname;
+  @override
+  @HiveField(54)
+  List<String>? get words_dream_child_age;
+  @override
+  @HiveField(55)
+  List<String>? get words_opportunity;
+  @override
+  @HiveField(56)
+  List<String>? get words_playsseason;
+  @override
+  @HiveField(57)
+  List<String>? get words_goodplay;
+  @override
+  @HiveField(58)
+  List<String>? get words_wish;
+  @override
+  @HiveField(59)
+  List<String>? get words_myboom;
+  @override
+  @HiveField(60)
+  List<String>? get words_favoritebrand;
+  @override
+  @HiveField(61)
+  List<String>? get words_color;
+  @override
+  @HiveField(62)
+  List<String>? get words_shop;
+  @override
+  @HiveField(63)
+  List<String>? get words_gift;
+  @override
+  @HiveField(64)
+  List<String>? get words_favoritefood;
+  @override
+  @HiveField(66)
+  List<String>? get words_localfood;
   @override
   @JsonKey(ignore: true)
   _$$CustomFieldImplCopyWith<_$CustomFieldImpl> get copyWith =>

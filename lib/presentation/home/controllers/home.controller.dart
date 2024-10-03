@@ -1,12 +1,15 @@
 import 'dart:ffi';
 
 import 'package:get/get.dart';
+import 'package:hive/hive.dart';
 import 'package:intl/intl.dart';
 import 'package:koto_blue_sharks/app/data/api/info/info_provider.dart';
 import 'package:koto_blue_sharks/app/data/api/match/match_provider.dart';
 import 'package:koto_blue_sharks/app/data/api/media/media_provider.dart';
+import 'package:koto_blue_sharks/app/data/api/member/member_provider.dart';
 import 'package:koto_blue_sharks/app/data/models/info/post.dart';
 import 'package:koto_blue_sharks/app/data/models/match/match_result.dart';
+import 'package:koto_blue_sharks/app/data/models/member/member.dart';
 import 'package:koto_blue_sharks/utils/Constant.dart';
 
 class HomeController extends GetxController {
@@ -14,18 +17,17 @@ class HomeController extends GetxController {
   final MediaProvider mediaProvider = MediaProvider();
   final InfoProvider infoProvider = InfoProvider();
   final Rx<List<MatchResultBySeason>> threeLatestMatch =
-  Rx<List<MatchResultBySeason>>([]);
+      Rx<List<MatchResultBySeason>>([]);
   final text = "".obs;
   final Rx<List<Post>> topicsData = Rx([]);
 
   @override
-  void onInit() {
+  void onInit() async {
     super.onInit();
     apiProvider.onInit();
     mediaProvider.onInit();
     infoProvider.onInit();
     fetchMatchResult();
-    print("get info after this");
     getTopics();
   }
 
@@ -104,7 +106,8 @@ class HomeController extends GetxController {
 
     List<MatchResultBySeason> filteredPosts = posts.where((post) {
       return post.custom_field.game_result == null ||
-          post.custom_field.game_result!.isEmpty || post.custom_field.game_result?.first == "試合前";
+          post.custom_field.game_result!.isEmpty ||
+          post.custom_field.game_result?.first == "試合前";
     }).toList();
 
     // Return only the first 4 matches after the current date and time
@@ -133,27 +136,6 @@ class HomeController extends GetxController {
       return null;
     }
   }
-
-  // Future<Map<String, String>> getAdditionalInfo(String mediaId, String gameSerialId) async {
-  //
-  //   try {
-  //     final imageData = await mediaProvider.fetchMedia(mediaId);
-  //     final image = imageData.media_details.sizes.thumbnail.source_url;
-  //     print("there is error2 ${image}");
-  //     final matchStatus = gameSerialId != "" ? await apiProvider.getMatchStatus(gameSerialId) : Rendered(rendered: "");
-  //     print("there is error1 ${matchStatus}");
-  //     return {
-  //       'image': image,
-  //       'matchStatus': matchStatus.rendered
-  //     };
-  //   } catch (e) {
-  //     print("there is error ${e}");
-  //     return {
-  //       'image': "",
-  //       'matchStatus': ""
-  //     };
-  //   }
-  // }
 
   Future<String> getNewsImage(String mediaId) async {
     final imageData = await mediaProvider.fetchParentMedia(mediaId);

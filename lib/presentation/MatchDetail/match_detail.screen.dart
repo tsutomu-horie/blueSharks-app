@@ -17,6 +17,7 @@ import 'package:koto_blue_sharks/utils/date_formatter.dart';
 import 'package:koto_blue_sharks/utils/match+extensions.dart';
 import 'package:koto_blue_sharks/app/views/views/html_text_view.dart';
 import 'package:shimmer/shimmer.dart';
+import 'package:koto_blue_sharks/utils/match+extensions.dart';
 
 import 'controllers/match_detail.controller.dart';
 
@@ -182,8 +183,7 @@ class MatchDetailScreen extends GetView<MatchDetailController> {
                         Column(
                           children: [
                             FutureBuilder<String>(
-                              future: controller
-                                  .getAdditionalInfo(matchStatus?["teamLogo"]),
+                              future: getImage(controller.mediaProvider, matchStatus?["teamLogo"]),
                               // Wait for the image URL to resolve
                               builder: (context, snapshot) {
                                 if (snapshot.connectionState ==
@@ -302,7 +302,7 @@ class MatchDetailScreen extends GetView<MatchDetailController> {
                         Column(
                           children: [
                             FutureBuilder<String>(
-                              future: controller.getAdditionalInfo(
+                              future: getImage(controller.mediaProvider,
                                   matchStatus?["opponentLogo"]),
                               // Wait for the image URL to resolve
                               builder: (context, snapshot) {
@@ -965,7 +965,7 @@ class MatchDetailScreen extends GetView<MatchDetailController> {
             itemCount: listMedia.length, // Total number of items
             itemBuilder: (context, index) {
               return FutureBuilder<String>(
-                future: controller.getAdditionalInfo(listMedia[index]), // The Future you want to resolve
+                future: getImage(controller.mediaProvider,listMedia[index]), // The Future you want to resolve
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return const Center(

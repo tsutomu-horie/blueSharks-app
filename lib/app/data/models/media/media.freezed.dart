@@ -20,16 +20,6 @@ Media _$MediaFromJson(Map<String, dynamic> json) {
 
 /// @nodoc
 mixin _$Media {
-  int get id => throw _privateConstructorUsedError;
-  String get date => throw _privateConstructorUsedError;
-  String get modified => throw _privateConstructorUsedError;
-  Guid get guid => throw _privateConstructorUsedError;
-  String get slug => throw _privateConstructorUsedError;
-  String get status => throw _privateConstructorUsedError;
-  String get type => throw _privateConstructorUsedError;
-  String get link => throw _privateConstructorUsedError;
-  Title get title => throw _privateConstructorUsedError;
-  String get source_url => throw _privateConstructorUsedError;
   MediaDetails get media_details => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -42,21 +32,8 @@ abstract class $MediaCopyWith<$Res> {
   factory $MediaCopyWith(Media value, $Res Function(Media) then) =
       _$MediaCopyWithImpl<$Res, Media>;
   @useResult
-  $Res call(
-      {int id,
-      String date,
-      String modified,
-      Guid guid,
-      String slug,
-      String status,
-      String type,
-      String link,
-      Title title,
-      String source_url,
-      MediaDetails media_details});
+  $Res call({MediaDetails media_details});
 
-  $GuidCopyWith<$Res> get guid;
-  $TitleCopyWith<$Res> get title;
   $MediaDetailsCopyWith<$Res> get media_details;
 }
 
@@ -73,80 +50,14 @@ class _$MediaCopyWithImpl<$Res, $Val extends Media>
   @pragma('vm:prefer-inline')
   @override
   $Res call({
-    Object? id = null,
-    Object? date = null,
-    Object? modified = null,
-    Object? guid = null,
-    Object? slug = null,
-    Object? status = null,
-    Object? type = null,
-    Object? link = null,
-    Object? title = null,
-    Object? source_url = null,
     Object? media_details = null,
   }) {
     return _then(_value.copyWith(
-      id: null == id
-          ? _value.id
-          : id // ignore: cast_nullable_to_non_nullable
-              as int,
-      date: null == date
-          ? _value.date
-          : date // ignore: cast_nullable_to_non_nullable
-              as String,
-      modified: null == modified
-          ? _value.modified
-          : modified // ignore: cast_nullable_to_non_nullable
-              as String,
-      guid: null == guid
-          ? _value.guid
-          : guid // ignore: cast_nullable_to_non_nullable
-              as Guid,
-      slug: null == slug
-          ? _value.slug
-          : slug // ignore: cast_nullable_to_non_nullable
-              as String,
-      status: null == status
-          ? _value.status
-          : status // ignore: cast_nullable_to_non_nullable
-              as String,
-      type: null == type
-          ? _value.type
-          : type // ignore: cast_nullable_to_non_nullable
-              as String,
-      link: null == link
-          ? _value.link
-          : link // ignore: cast_nullable_to_non_nullable
-              as String,
-      title: null == title
-          ? _value.title
-          : title // ignore: cast_nullable_to_non_nullable
-              as Title,
-      source_url: null == source_url
-          ? _value.source_url
-          : source_url // ignore: cast_nullable_to_non_nullable
-              as String,
       media_details: null == media_details
           ? _value.media_details
           : media_details // ignore: cast_nullable_to_non_nullable
               as MediaDetails,
     ) as $Val);
-  }
-
-  @override
-  @pragma('vm:prefer-inline')
-  $GuidCopyWith<$Res> get guid {
-    return $GuidCopyWith<$Res>(_value.guid, (value) {
-      return _then(_value.copyWith(guid: value) as $Val);
-    });
-  }
-
-  @override
-  @pragma('vm:prefer-inline')
-  $TitleCopyWith<$Res> get title {
-    return $TitleCopyWith<$Res>(_value.title, (value) {
-      return _then(_value.copyWith(title: value) as $Val);
-    });
   }
 
   @override
@@ -165,23 +76,8 @@ abstract class _$$MediaImplCopyWith<$Res> implements $MediaCopyWith<$Res> {
       __$$MediaImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call(
-      {int id,
-      String date,
-      String modified,
-      Guid guid,
-      String slug,
-      String status,
-      String type,
-      String link,
-      Title title,
-      String source_url,
-      MediaDetails media_details});
+  $Res call({MediaDetails media_details});
 
-  @override
-  $GuidCopyWith<$Res> get guid;
-  @override
-  $TitleCopyWith<$Res> get title;
   @override
   $MediaDetailsCopyWith<$Res> get media_details;
 }
@@ -197,59 +93,9 @@ class __$$MediaImplCopyWithImpl<$Res>
   @pragma('vm:prefer-inline')
   @override
   $Res call({
-    Object? id = null,
-    Object? date = null,
-    Object? modified = null,
-    Object? guid = null,
-    Object? slug = null,
-    Object? status = null,
-    Object? type = null,
-    Object? link = null,
-    Object? title = null,
-    Object? source_url = null,
     Object? media_details = null,
   }) {
     return _then(_$MediaImpl(
-      id: null == id
-          ? _value.id
-          : id // ignore: cast_nullable_to_non_nullable
-              as int,
-      date: null == date
-          ? _value.date
-          : date // ignore: cast_nullable_to_non_nullable
-              as String,
-      modified: null == modified
-          ? _value.modified
-          : modified // ignore: cast_nullable_to_non_nullable
-              as String,
-      guid: null == guid
-          ? _value.guid
-          : guid // ignore: cast_nullable_to_non_nullable
-              as Guid,
-      slug: null == slug
-          ? _value.slug
-          : slug // ignore: cast_nullable_to_non_nullable
-              as String,
-      status: null == status
-          ? _value.status
-          : status // ignore: cast_nullable_to_non_nullable
-              as String,
-      type: null == type
-          ? _value.type
-          : type // ignore: cast_nullable_to_non_nullable
-              as String,
-      link: null == link
-          ? _value.link
-          : link // ignore: cast_nullable_to_non_nullable
-              as String,
-      title: null == title
-          ? _value.title
-          : title // ignore: cast_nullable_to_non_nullable
-              as Title,
-      source_url: null == source_url
-          ? _value.source_url
-          : source_url // ignore: cast_nullable_to_non_nullable
-              as String,
       media_details: null == media_details
           ? _value.media_details
           : media_details // ignore: cast_nullable_to_non_nullable
@@ -261,48 +107,17 @@ class __$$MediaImplCopyWithImpl<$Res>
 /// @nodoc
 @JsonSerializable()
 class _$MediaImpl implements _Media {
-  _$MediaImpl(
-      {required this.id,
-      required this.date,
-      required this.modified,
-      required this.guid,
-      required this.slug,
-      required this.status,
-      required this.type,
-      required this.link,
-      required this.title,
-      required this.source_url,
-      required this.media_details});
+  _$MediaImpl({required this.media_details});
 
   factory _$MediaImpl.fromJson(Map<String, dynamic> json) =>
       _$$MediaImplFromJson(json);
 
   @override
-  final int id;
-  @override
-  final String date;
-  @override
-  final String modified;
-  @override
-  final Guid guid;
-  @override
-  final String slug;
-  @override
-  final String status;
-  @override
-  final String type;
-  @override
-  final String link;
-  @override
-  final Title title;
-  @override
-  final String source_url;
-  @override
   final MediaDetails media_details;
 
   @override
   String toString() {
-    return 'Media(id: $id, date: $date, modified: $modified, guid: $guid, slug: $slug, status: $status, type: $type, link: $link, title: $title, source_url: $source_url, media_details: $media_details)';
+    return 'Media(media_details: $media_details)';
   }
 
   @override
@@ -310,26 +125,13 @@ class _$MediaImpl implements _Media {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
             other is _$MediaImpl &&
-            (identical(other.id, id) || other.id == id) &&
-            (identical(other.date, date) || other.date == date) &&
-            (identical(other.modified, modified) ||
-                other.modified == modified) &&
-            (identical(other.guid, guid) || other.guid == guid) &&
-            (identical(other.slug, slug) || other.slug == slug) &&
-            (identical(other.status, status) || other.status == status) &&
-            (identical(other.type, type) || other.type == type) &&
-            (identical(other.link, link) || other.link == link) &&
-            (identical(other.title, title) || other.title == title) &&
-            (identical(other.source_url, source_url) ||
-                other.source_url == source_url) &&
             (identical(other.media_details, media_details) ||
                 other.media_details == media_details));
   }
 
   @JsonKey(ignore: true)
   @override
-  int get hashCode => Object.hash(runtimeType, id, date, modified, guid, slug,
-      status, type, link, title, source_url, media_details);
+  int get hashCode => Object.hash(runtimeType, media_details);
 
   @JsonKey(ignore: true)
   @override
@@ -346,41 +148,10 @@ class _$MediaImpl implements _Media {
 }
 
 abstract class _Media implements Media {
-  factory _Media(
-      {required final int id,
-      required final String date,
-      required final String modified,
-      required final Guid guid,
-      required final String slug,
-      required final String status,
-      required final String type,
-      required final String link,
-      required final Title title,
-      required final String source_url,
-      required final MediaDetails media_details}) = _$MediaImpl;
+  factory _Media({required final MediaDetails media_details}) = _$MediaImpl;
 
   factory _Media.fromJson(Map<String, dynamic> json) = _$MediaImpl.fromJson;
 
-  @override
-  int get id;
-  @override
-  String get date;
-  @override
-  String get modified;
-  @override
-  Guid get guid;
-  @override
-  String get slug;
-  @override
-  String get status;
-  @override
-  String get type;
-  @override
-  String get link;
-  @override
-  Title get title;
-  @override
-  String get source_url;
   @override
   MediaDetails get media_details;
   @override
@@ -527,6 +298,7 @@ Title _$TitleFromJson(Map<String, dynamic> json) {
 
 /// @nodoc
 mixin _$Title {
+  @HiveField(0)
   String get rendered => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -539,7 +311,7 @@ abstract class $TitleCopyWith<$Res> {
   factory $TitleCopyWith(Title value, $Res Function(Title) then) =
       _$TitleCopyWithImpl<$Res, Title>;
   @useResult
-  $Res call({String rendered});
+  $Res call({@HiveField(0) String rendered});
 }
 
 /// @nodoc
@@ -573,7 +345,7 @@ abstract class _$$TitleImplCopyWith<$Res> implements $TitleCopyWith<$Res> {
       __$$TitleImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({String rendered});
+  $Res call({@HiveField(0) String rendered});
 }
 
 /// @nodoc
@@ -601,12 +373,13 @@ class __$$TitleImplCopyWithImpl<$Res>
 /// @nodoc
 @JsonSerializable()
 class _$TitleImpl implements _Title {
-  _$TitleImpl({required this.rendered});
+  _$TitleImpl({@HiveField(0) required this.rendered});
 
   factory _$TitleImpl.fromJson(Map<String, dynamic> json) =>
       _$$TitleImplFromJson(json);
 
   @override
+  @HiveField(0)
   final String rendered;
 
   @override
@@ -642,11 +415,12 @@ class _$TitleImpl implements _Title {
 }
 
 abstract class _Title implements Title {
-  factory _Title({required final String rendered}) = _$TitleImpl;
+  factory _Title({@HiveField(0) required final String rendered}) = _$TitleImpl;
 
   factory _Title.fromJson(Map<String, dynamic> json) = _$TitleImpl.fromJson;
 
   @override
+  @HiveField(0)
   String get rendered;
   @override
   @JsonKey(ignore: true)
