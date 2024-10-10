@@ -1,23 +1,27 @@
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 class StadiumController extends GetxController {
-  //TODO: Implement StadiumController
+  final ScrollController scrollController = ScrollController();
 
-  final count = 0.obs;
-  @override
-  void onInit() {
-    super.onInit();
+  // Method to scroll to specific position
+  void scrollToPosition(double position) {
+    scrollController.animateTo(
+      position,
+      duration: Duration(seconds: 1),
+      curve: Curves.easeInOut,
+    );
   }
 
-  @override
-  void onReady() {
-    super.onReady();
+  // Method to scroll to specific widget with GlobalKey
+  void scrollToWidget(GlobalKey key) {
+    final context = key.currentContext;
+    if (context != null) {
+      Scrollable.ensureVisible(
+        context,
+        duration: Duration(seconds: 1),
+        curve: Curves.easeInOut,
+      );
+    }
   }
-
-  @override
-  void onClose() {
-    super.onClose();
-  }
-
-  void increment() => count.value++;
 }

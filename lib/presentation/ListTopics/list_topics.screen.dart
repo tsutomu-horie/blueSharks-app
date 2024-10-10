@@ -31,6 +31,7 @@ class ListTopicsScreen  extends StatelessWidget {
     ];
 
     return Scaffold(
+      backgroundColor: BackgroundColor.primary,
       body: NestedScrollView(
         controller: controller.matchScrollController,
         // Unified scroll controller

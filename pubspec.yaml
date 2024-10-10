@@ -51,6 +51,8 @@ dependencies:
   hive: ^2.2.3  # local database (SQFlite replacement)
   hive_flutter: ^1.1.0 # make it easy to use hive (no need for path provider)
   dotted_line: ^3.2.2
+  webview_flutter: ^4.8.0
+  iconsax_plus: ^1.0.0
 
 dev_dependencies:
   flutter_test:
@@ -80,6 +82,9 @@ flutter:
 
   assets:
     - assets/images/
+    - assets/images/image_stadium_parking/
+    - assets/images/image_stadium_bus/
+    - assets/images/home_stadium/
     - assets/vectors/
 
   # To add assets to your application, add an assets section, like this:
