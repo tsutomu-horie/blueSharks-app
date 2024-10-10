@@ -55,7 +55,7 @@ class _MainScreenState extends State<MainScreen> {
       }),
       const MypageScreen(),
       const StadiumScreen(),
-      const CalendarScreen(),
+      CalendarScreen(),
     ];
 
     print("onOpen ${controller.selectedTopicId}");

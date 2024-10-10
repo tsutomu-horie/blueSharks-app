@@ -63,7 +63,7 @@ class Nav {
     ),
     GetPage(
       name: Routes.CALENDAR,
-      page: () => const CalendarScreen(),
+      page: () => CalendarScreen(),
       binding: CalendarControllerBinding(),
     ),
     GetPage(
