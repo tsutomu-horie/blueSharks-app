@@ -9,16 +9,18 @@ import 'custom_text_view.dart';
 
 class DefaultHeaderTitleView extends GetView {
   const DefaultHeaderTitleView(this.title, this.description,
-      {super.key, this.onBack,});
+      {super.key, this.onBack, this.backgroundColor, this.showDivider,});
 
   final String title;
   final String description;
   final Function? onBack;
+  final Color? backgroundColor;
+  final bool? showDivider;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: const Color(0xFFFAFAFA),
+      color: Color(0xFFFAFAFA),
       child: Column(
         children: [
           SizedBox(
@@ -104,7 +106,7 @@ class DefaultHeaderTitleView extends GetView {
           SizedBox(
             height: 24.h,
           ),
-          Divider(color: BorderColor.primary,  height: 0,),
+          showDivider == false ? const SizedBox() : Divider(color: BorderColor.primary,  height: 0,),
         ],
       ),
     );

@@ -6,7 +6,6 @@ import 'package:get/get.dart';
 import 'package:koto_blue_sharks/app/data/models/info/post.dart';
 import 'package:koto_blue_sharks/app/views/views/custom_text_view.dart';
 import 'package:koto_blue_sharks/generated/locales.g.dart';
-import 'package:koto_blue_sharks/presentation/home/controllers/home.controller.dart';
 import 'package:koto_blue_sharks/presentation/home/home.screen.dart';
 import 'package:koto_blue_sharks/presentation/info/info.screen.dart';
 import 'package:koto_blue_sharks/presentation/mypage/mypage.screen.dart';
@@ -63,6 +62,7 @@ class _MainScreenState extends State<MainScreen> {
 
     return Obx(() {
       return Scaffold(
+        backgroundColor: BackgroundColor.primary,
         appBar: AppBar(
           backgroundColor: BrandColor.hover,
           toolbarHeight: 64.h,

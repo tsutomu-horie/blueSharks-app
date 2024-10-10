@@ -46,6 +46,7 @@ class MatchDetailScreen extends GetView<MatchDetailController> {
     ];
 
     return Scaffold(
+      backgroundColor: BackgroundColor.primary,
       appBar: AppBar(
         title: CustomTextView(
           LocaleKeys.game_detail.tr,

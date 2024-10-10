@@ -22,6 +22,7 @@ class MemberScreen extends GetView<MemberController> {
     final MemberController memberController = Get.put(MemberController());
 
     return Scaffold(
+        backgroundColor: BackgroundColor.primary,
         body: SingleChildScrollView(
       child: Column(
         children: [

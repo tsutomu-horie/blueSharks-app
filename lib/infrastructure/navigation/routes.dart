@@ -14,8 +14,10 @@ class Routes {
   static const MATCH_DETAIL = '/match-detail';
   static const MEMBER = '/member';
   static const MYPAGE = '/mypage';
+  static const PLAYER_DETAIL = '/player-detail';
   static const SPLASH = '/splash';
   static const STADIUM = '/stadium';
+  static const TEAM = '/team';
   static const WALLPAPER = '/wallpaper';
-  static const PLAYER_DETAIL = '/player-detail';
+  static const WEBVIEW = '/webview';
 }

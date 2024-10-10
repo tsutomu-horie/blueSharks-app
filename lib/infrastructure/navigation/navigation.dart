@@ -101,5 +101,15 @@ class Nav {
       page: () => MemberDetailScreen(null),
       binding: PlayerDetailControllerBinding(),
     ),
+    GetPage(
+      name: Routes.TEAM,
+      page: () => const TeamScreen(),
+      binding: TeamControllerBinding(),
+    ),
+    GetPage(
+      name: Routes.WEBVIEW,
+      page: () => const WebviewScreen(WebviewType.team),
+      binding: WebviewControllerBinding(),
+    ),
   ];
 }

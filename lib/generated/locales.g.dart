@@ -92,6 +92,31 @@ class LocaleKeys {
   static const local_gourmet_spot = 'local_gourmet_spot';
   static const forward_short = 'forward_short';
   static const back_short = 'back_short';
+  static const team = 'team';
+  static const team_en = 'team_en';
+  static const rank = 'rank';
+  static const about_us = 'about_us';
+  static const host_stadium = 'host_stadium';
+  static const host_stadium_en = 'host_stadium_en';
+  static const see_detail = 'see_detail';
+  static const stadium_map = 'stadium_map';
+  static const access = 'access';
+  static const access_en = 'access_en';
+  static const ground = 'ground';
+  static const spectator_rules = 'spectator_rules';
+  static const access_to_the_ground = 'access_to_the_ground';
+  static const access_to_the_ground_desc = 'access_to_the_ground_desc';
+  static const on_foot = 'on_foot';
+  static const on_foot_desc = 'on_foot_desc';
+  static const by_bus = 'by_bus';
+  static const by_bus_desc = 'by_bus_desc';
+  static const parking_fee = 'parking_fee';
+  static const parking_fee_desc = 'parking_fee_desc';
+  static const host_ground = 'host_ground';
+  static const host_ground_en = 'host_ground_en';
+  static const spectator_rules_sub = 'spectator_rules_sub';
+  static const spectator_rules_sub_en = 'spectator_rules_sub_en';
+  static const spectator_rules_desc = 'spectator_rules_desc';
 }
 
 class Locales {
@@ -122,13 +147,13 @@ class Locales {
     'ticket_information': 'TICKET INFORMATION',
     'buy_ticket': 'チケットを購入',
     'featured_topics_en': 'FEATURED TOPICS',
-    'featured_topics': '情報をピックアップ',
+    'featured_topics': '注目ニュース',
     'back_to_list': 'リストに戻る',
     'game_info': '試合日程・結果',
     'game_info_en': 'GAME INFO',
     'select': '選択',
-    'promotion_video': '公式ソングを視聴する',
-    'promotion_video_en': 'Promotion Video',
+    'promotion_video': '公式動画',
+    'promotion_video_en': 'OFFICIAL VIDEO',
     'see_more': 'もっと見る',
     'game_detail': 'ゲーム詳細',
     'first_half': '前半',
@@ -178,5 +203,34 @@ class Locales {
     'local_gourmet_spot': 'おすすめのご当地グルメとスポット',
     'forward_short': 'FW',
     'back_short': 'BK',
+    'team': 'チーム',
+    'team_en': 'team',
+    'rank': 'ランク',
+    'about_us': '私たちについて',
+    'host_stadium': 'ホストスタジアム',
+    'host_stadium_en': 'HOST STADIUM',
+    'see_detail': '詳細を見る',
+    'stadium_map': 'スタジアムマップ',
+    'access': 'アクセス',
+    'access_en': 'access',
+    'ground': '地面',
+    'spectator_rules': '観客のルール',
+    'access_to_the_ground': 'グランドへのアクセス',
+    'access_to_the_ground_desc':
+        '東急田園都市線「江田駅」より徒歩20分（1.7km）\n横浜市営地下鉄ブルーライン「中川駅」より徒歩15分（1.0km）\nグランド北側（隣接）の「横浜市立荏田小学校」が目印です。',
+    'on_foot': '徒歩の場合',
+    'on_foot_desc':
+        '新木場駅出口を右折、直進し首都高速湾岸線をくぐる. 夢の島交差点を直進し、明治通りを少し進むと左手に夢の島競技場が見えてきます.',
+    'by_bus': 'バスの場合',
+    'by_bus_desc': '都営バス 木11、錦18、急行05(土・休日のみ運行) 夢の島停留場下車 徒歩1分',
+    'parking_fee': '駐車場料金',
+    'parking_fee_desc':
+        '普通車・軽自動車\n1台30分 ただし3時間半を超える部分は1時間／100円\n大型バス（バス専用駐車場）\n1台20分／300円',
+    'host_ground': 'ホストグラウンド',
+    'host_ground_en': 'HOST GROUND',
+    'spectator_rules_sub': '観戦ルール',
+    'spectator_rules_sub_en': 'SPECTATOR RULES',
+    'spectator_rules_desc':
+        '駐車場、駐輪場の一切ご用意はございません。 公共の交通機関を使用しグランドへお越しください。\nハイヒールなど靴底のとがった履物での入場は禁止となっております。\n施設内、敷地内すべての場所での喫煙は禁止となっております。\nまた、近隣様への配慮の観点から観客者様の敷地周辺での喫煙も禁止とさせていただきます。\n犬などの動物を連れての観戦は禁止とさせていただきます。\nスタンドへの動線は必ずスタッフの指示に従ってください。\n植栽エリア内はいかなる理由があっても立ち入り禁止となっております。\nグランド内での飲食は禁止とします。但し、熱中症等の観点から、水、スポーツ飲料のみOKとします。\n※NG＝お茶、コーヒー等\n鳴り物での応援はしないこと。（太鼓、トランペットなど）\n観客者様の応援の妨げになる、大きな旗も禁止とさせいただきます。\nゴミ箱のご用意はございません。 持ってきたゴミは各自が責任を持ち必ず持ち帰ってください。\n酒類の持ち込みおよび酒気を帯びた状態での敷地内への立ち入りは禁止とします。',
   };
 }
