@@ -117,6 +117,10 @@ class LocaleKeys {
   static const spectator_rules_sub = 'spectator_rules_sub';
   static const spectator_rules_sub_en = 'spectator_rules_sub_en';
   static const spectator_rules_desc = 'spectator_rules_desc';
+  static const game_schedule = 'game_schedule';
+  static const open_practice_match = 'open_practice_match';
+  static const event = 'event';
+  static const player_birthday = 'player_birthday';
 }
 
 class Locales {
@@ -232,5 +236,9 @@ class Locales {
     'spectator_rules_sub_en': 'SPECTATOR RULES',
     'spectator_rules_desc':
         '駐車場、駐輪場の一切ご用意はございません。 公共の交通機関を使用しグランドへお越しください。\nハイヒールなど靴底のとがった履物での入場は禁止となっております。\n施設内、敷地内すべての場所での喫煙は禁止となっております。\nまた、近隣様への配慮の観点から観客者様の敷地周辺での喫煙も禁止とさせていただきます。\n犬などの動物を連れての観戦は禁止とさせていただきます。\nスタンドへの動線は必ずスタッフの指示に従ってください。\n植栽エリア内はいかなる理由があっても立ち入り禁止となっております。\nグランド内での飲食は禁止とします。但し、熱中症等の観点から、水、スポーツ飲料のみOKとします。\n※NG＝お茶、コーヒー等\n鳴り物での応援はしないこと。（太鼓、トランペットなど）\n観客者様の応援の妨げになる、大きな旗も禁止とさせいただきます。\nゴミ箱のご用意はございません。 持ってきたゴミは各自が責任を持ち必ず持ち帰ってください。\n酒類の持ち込みおよび酒気を帯びた状態での敷地内への立ち入りは禁止とします。',
+    'game_schedule': '試合日程',
+    'open_practice_match': 'オープンの練習試合',
+    'event': 'イベント',
+    'player_birthday': '選手誕生日',
   };
 }

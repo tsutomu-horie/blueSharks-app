@@ -10,6 +10,7 @@ import 'package:koto_blue_sharks/app/data/models/member/member.dart';
 import 'generated/locales.g.dart';
 import 'infrastructure/navigation/navigation.dart';
 import 'infrastructure/navigation/routes.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 
 void main() async {
   var initialRoute = await Routes.initialRoute;
@@ -38,6 +39,13 @@ class Main extends StatelessWidget {
       minTextAdapt: true,
       splitScreenMode: false,
       child: GetMaterialApp(
+        localizationsDelegates: const [
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+        ],
+        supportedLocales: const [
+          Locale('ja', 'JP'),
+        ],
         translations:TranslationService(),  // Your translation class
         locale: const Locale('ja', 'JP'),
         fallbackLocale: const Locale('ja', 'JP'), // Fallback locale// Initial locale
