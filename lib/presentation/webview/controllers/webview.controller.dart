@@ -4,8 +4,15 @@ import 'package:webview_flutter/webview_flutter.dart';
 
 class WebviewController extends GetxController {
   late final WebViewController _controller;
+  late final WebViewController _controllerHistory;
+  late final WebViewController _controllerStadium;
+  late final WebViewController _controllerPartner;
   RxDouble webContentHeight = 300.0.obs; // Default height before content is loaded
 
+  WebViewController get webViewController => _controller;
+  WebViewController get webViewControllerHistory => _controllerHistory;
+  WebViewController get webViewControllerStadium => _controllerStadium;
+  WebViewController get webViewControllerPartner => _controllerPartner;
 
   // Observable variables
   RxBool isLoading = false.obs;
@@ -15,6 +22,9 @@ class WebviewController extends GetxController {
   void onInit() {
     super.onInit();
     setupWebViewController();
+    setupWebViewControllerHistory();
+    setupWebViewControllerStadium();
+    setupWebViewControllerPartner();
   }
 
   void setupWebViewController() {
@@ -29,9 +39,45 @@ class WebviewController extends GetxController {
           onPageStarted: (String url) {
             currentUrl.value = url;
           },
-          onPageFinished: (String url) {
+          onPageFinished: (String url) async {
             currentUrl.value = url;
-            _calculateWebViewHeight();
+            // _calculateWebViewHeight();
+            await _controller.runJavaScript('''
+                  window.scrollTo(0, 280); // Scroll to 500px from the top
+                ''');
+            _controller.runJavaScript(
+              '''
+              
+                  document.querySelectorAll('header').forEach(element => element.remove());
+                   document.querySelectorAll('breadcrumb').forEach(element2 => element2.remove());
+                  
+                  var element = document.getElementById('header');
+                  if (element) {
+                    element.remove();
+                  }
+                  
+                  var element2 = document.getElementById('breadcrumb');
+                  if (element2) {
+                    element2.remove();
+                  }      
+                  
+                  
+                  document.body.style.overflow = 'hidden';
+                  document.documentElement.style.overflow = 'hidden';
+                  // Optionally disable touch actions if required
+                  document.body.style.touchAction = 'none';
+                  document.documentElement.style.touchAction = 'none';
+                  // Disable scrolling for all elements
+                  const disableScrolling = () => {
+                    const allElements = document.querySelectorAll('*');
+                    allElements.forEach(el => {
+                      el.style.overflow = 'hidden';
+                    });
+                  };
+                  disableScrolling();
+                  
+                  ''',
+            );
           },
         ),
       );
@@ -40,7 +86,179 @@ class WebviewController extends GetxController {
     _controller = controller;
   }
 
-  WebViewController get webViewController => _controller;
+  void setupWebViewControllerHistory() {
+    final WebViewController controller = WebViewController();
+    controller
+      ..setJavaScriptMode(JavaScriptMode.unrestricted)
+      ..setNavigationDelegate(
+        NavigationDelegate(
+          onProgress: (int progress) {
+            isLoading.value = progress < 100;
+          },
+          onPageStarted: (String url) {
+            currentUrl.value = url;
+          },
+          onPageFinished: (String url) async {
+            currentUrl.value = url;
+            // _calculateWebViewHeight();
+            await _controllerHistory.runJavaScript('''
+                  window.scrollTo(0, 280); // Scroll to 500px from the top
+                ''');
+            _controllerHistory.runJavaScript(
+              '''
+              
+                  document.querySelectorAll('header').forEach(element => element.remove());
+                   document.querySelectorAll('breadcrumb').forEach(element2 => element2.remove());
+                  
+                  var element = document.getElementById('header');
+                  if (element) {
+                    element.remove();
+                  }
+                  
+                  var element2 = document.getElementById('breadcrumb');
+                  if (element2) {
+                    element2.remove();
+                  }
+                  
+                  document.body.style.overflow = 'hidden';
+                  document.documentElement.style.overflow = 'hidden';
+                  // Optionally disable touch actions if required
+                  document.body.style.touchAction = 'none';
+                  document.documentElement.style.touchAction = 'none';
+                  // Disable scrolling for all elements
+                  const disableScrolling = () => {
+                    const allElements = document.querySelectorAll('*');
+                    allElements.forEach(el => {
+                      el.style.overflow = 'hidden';
+                    });
+                  };
+                  disableScrolling();
+                  
+                  ''',
+            );
+          },
+        ),
+      );
+
+    controller.loadRequest(Uri.parse('${Constants.baseUrlWeb}/team/history'));
+    _controllerHistory = controller;
+  }
+
+  void setupWebViewControllerStadium() {
+    final WebViewController controller = WebViewController();
+    controller
+      ..setJavaScriptMode(JavaScriptMode.unrestricted)
+      ..setNavigationDelegate(
+        NavigationDelegate(
+          onProgress: (int progress) {
+            isLoading.value = progress < 100;
+          },
+          onPageStarted: (String url) {
+            currentUrl.value = url;
+          },
+          onPageFinished: (String url) async {
+            currentUrl.value = url;
+            // _calculateWebViewHeight();
+            await _controllerStadium.runJavaScript('''
+                  window.scrollTo(0, 280); // Scroll to 500px from the top
+                ''');
+            _controllerStadium.runJavaScript(
+              '''
+              
+                  document.querySelectorAll('header').forEach(element => element.remove());
+                   document.querySelectorAll('breadcrumb').forEach(element2 => element2.remove());
+                  
+                  var element = document.getElementById('header');
+                  if (element) {
+                    element.remove();
+                  }
+                  
+                  var element2 = document.getElementById('breadcrumb');
+                  if (element2) {
+                    element2.remove();
+                  }
+                  
+                  document.body.style.overflow = 'hidden';
+                  document.documentElement.style.overflow = 'hidden';
+                  // Optionally disable touch actions if required
+                  document.body.style.touchAction = 'none';
+                  document.documentElement.style.touchAction = 'none';
+                  // Disable scrolling for all elements
+                  const disableScrolling = () => {
+                    const allElements = document.querySelectorAll('*');
+                    allElements.forEach(el => {
+                      el.style.overflow = 'hidden';
+                    });
+                  };
+                  disableScrolling();
+                  
+                  ''',
+            );
+          },
+        ),
+      );
+
+    controller.loadRequest(Uri.parse('${Constants.baseUrlWeb}/team/home'));
+    _controllerStadium = controller;
+  }
+
+  void setupWebViewControllerPartner() {
+    final WebViewController controller = WebViewController();
+    controller
+      ..setJavaScriptMode(JavaScriptMode.unrestricted)
+      ..setNavigationDelegate(
+        NavigationDelegate(
+          onProgress: (int progress) {
+            isLoading.value = progress < 100;
+          },
+          onPageStarted: (String url) {
+            currentUrl.value = url;
+          },
+          onPageFinished: (String url) async {
+            currentUrl.value = url;
+            // _calculateWebViewHeight();
+            await _controllerPartner.runJavaScript('''
+                  window.scrollTo(0, 280); // Scroll to 500px from the top
+                ''');
+            _controllerPartner.runJavaScript(
+              '''
+              
+                  document.querySelectorAll('header').forEach(element => element.remove());
+                   document.querySelectorAll('breadcrumb').forEach(element2 => element2.remove());
+                  
+                  var element = document.getElementById('header');
+                  if (element) {
+                    element.remove();
+                  }
+                  
+                  var element2 = document.getElementById('breadcrumb');
+                  if (element2) {
+                    element2.remove();
+                  }
+                  
+                  document.body.style.overflow = 'hidden';
+                  document.documentElement.style.overflow = 'hidden';
+                  // Optionally disable touch actions if required
+                  document.body.style.touchAction = 'none';
+                  document.documentElement.style.touchAction = 'none';
+                  // Disable scrolling for all elements
+                  const disableScrolling = () => {
+                    const allElements = document.querySelectorAll('*');
+                    allElements.forEach(el => {
+                      el.style.overflow = 'hidden';
+                    });
+                  };
+                  disableScrolling();
+                  
+                  ''',
+            );
+          },
+        ),
+      );
+
+    controller.loadRequest(Uri.parse('${Constants.baseUrlWeb}/partner'));
+    _controllerPartner = controller;
+  }
 
   void loadUrl(String url) {
     _controller.loadRequest(Uri.parse(url));

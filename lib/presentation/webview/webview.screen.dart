@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
@@ -23,22 +25,38 @@ class WebviewScreen extends GetView<WebviewController> {
   Widget build(BuildContext context) {
     final WebviewController webViewCtrl = Get.put(WebviewController());
 
-    return SingleChildScrollView(
-      child: Column(
-        children: [
-          DefaultHeaderTitleView(
-              LocaleKeys.team.tr, LocaleKeys.team_en.tr.toUpperCase()),
-          SizedBox(
-            height: 16.h,
-          ),
-          Obx(() {
-            return SizedBox(
-              height: webViewCtrl.webContentHeight.value, // Dynamic height
-              child: WebViewWidget(controller: webViewCtrl.webViewController),
-            );
-          }),
-        ],
-      ),
-    );
+    if (type == WebviewType.team) {
+      return SingleChildScrollView(
+        child: Column(
+          children: [
+            SizedBox(
+              height: 750.h,
+              child: WebViewWidget(controller: webViewCtrl.webViewController,),
+            ),
+            SizedBox(
+              height: 2670.h,
+              child: WebViewWidget(
+                controller: webViewCtrl.webViewControllerHistory,),
+            ),
+            SizedBox(
+              height: 140.h,
+              child: WebViewWidget(
+                controller: webViewCtrl.webViewControllerStadium,),
+            ),
+          ],
+        ),
+      );
+    } else {
+      return SingleChildScrollView(
+        child: Column(
+          children: [
+            SizedBox(
+              height: 750.h,
+              child: WebViewWidget(controller: webViewCtrl.webViewControllerPartner,),
+            ),
+          ],
+        ),
+      );
+    }
   }
 }

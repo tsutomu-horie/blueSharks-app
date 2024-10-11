@@ -86,7 +86,7 @@ class InfoScreen extends GetView<InfoController> {
           const MemberScreen(),
           WebviewScreen(WebviewType.team),
           Center(child: Text("Gallery")),
-          Center(child: Text("Partner")),
+          WebviewScreen(WebviewType.partner),
         ],
       ),
     );
