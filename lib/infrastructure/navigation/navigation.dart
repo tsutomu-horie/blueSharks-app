@@ -111,5 +111,10 @@ class Nav {
       page: () => const WebviewScreen(WebviewType.team),
       binding: WebviewControllerBinding(),
     ),
+    GetPage(
+      name: Routes.FANCLUB,
+      page: () => const FanclubScreen(),
+      binding: FanclubControllerBinding(),
+    ),
   ];
 }

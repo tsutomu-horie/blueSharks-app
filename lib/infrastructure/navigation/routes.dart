@@ -20,4 +20,5 @@ class Routes {
   static const TEAM = '/team';
   static const WALLPAPER = '/wallpaper';
   static const WEBVIEW = '/webview';
+  static const FANCLUB = '/fanclub';
 }
