@@ -218,7 +218,11 @@ class _MainScreenState extends State<MainScreen> {
         minimumSize: Size(40.w, 48.h),
         padding: EdgeInsets.zero,
       ),
-      onPressed: () {},
+      onPressed: () {
+        if (text == LocaleKeys.fan_club.tr) {
+          Get.to(FanclubScreen());
+        }
+      },
       child: Column(
         children: [
           icon,
