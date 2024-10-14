@@ -22,6 +22,7 @@ class CustomTextView extends GetView {
       TDSFontType.titleSmall => TDSTypography.titleSmall,
       TDSFontType.titleMedium => TDSTypography.titleMedium,
       TDSFontType.titleLarge => TDSTypography.titleLarge,
+      TDSFontType.subtitleLarge => TDSTypography.subtitleLarge,
       TDSFontType.labelSmall => TDSTypography.labelSmall,
       TDSFontType.labelMedium => TDSTypography.labelMedium,
       TDSFontType.labelLarge => TDSTypography.labelLarge,
@@ -53,6 +54,7 @@ enum TDSFontType {
   titleSmall,
   titleMedium,
   titleLarge,
+  subtitleLarge,
   labelSmall,
   labelMedium,
   labelLarge,
@@ -71,6 +73,7 @@ class TDSTypography {
     TDSFontType.titleSmall: FontWeight.w500,
     TDSFontType.titleMedium: FontWeight.w500,
     TDSFontType.labelLarge: FontWeight.w500,
+    TDSFontType.subtitleLarge: FontWeight.w700,
     TDSFontType.labelSmall: FontWeight.w500,
     TDSFontType.labelMedium: FontWeight.w500,
     TDSFontType.bodyTextLarge: FontWeight.w400,
@@ -84,6 +87,7 @@ class TDSTypography {
     TDSFontType.headlineMedium: 28.0.sp,
     TDSFontType.headlineSmall: 24.0.sp,
     TDSFontType.titleLarge: 20.0.sp,
+    TDSFontType.subtitleLarge: 24.0.sp,
     TDSFontType.titleMedium: 18.0.sp,
     TDSFontType.titleSmall: 16.0.sp,
     TDSFontType.labelLarge: 14.0.sp,
@@ -99,6 +103,7 @@ class TDSTypography {
     TDSFontType.headlineLarge: 40.0.h,
     TDSFontType.headlineMedium: 36.0.h,
     TDSFontType.headlineSmall: 32.0.h,
+    TDSFontType.subtitleLarge: 32.0.h,
     TDSFontType.titleLarge: 26.0.h,
     TDSFontType.titleMedium: 24.0.h,
     TDSFontType.titleSmall: 24.0.h,
@@ -124,6 +129,7 @@ class TDSTypography {
   static TextStyle get headlineMedium => _getTextStyle(TDSFontType.headlineMedium);
   static TextStyle get headlineSmall => _getTextStyle(TDSFontType.headlineSmall);
   static TextStyle get titleLarge => _getTextStyle(TDSFontType.titleLarge);
+  static TextStyle get subtitleLarge => _getTextStyle(TDSFontType.subtitleLarge);
   static TextStyle get titleMedium => _getTextStyle(TDSFontType.titleMedium);
   static TextStyle get titleSmall => _getTextStyle(TDSFontType.titleSmall);
   static TextStyle get labelLarge => _getTextStyle(TDSFontType.labelLarge);

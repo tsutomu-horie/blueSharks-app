@@ -121,6 +121,27 @@ class LocaleKeys {
   static const open_practice_match = 'open_practice_match';
   static const event = 'event';
   static const player_birthday = 'player_birthday';
+  static const step = 'step';
+  static const next = 'next';
+  static const set_wallpaper_header = 'set_wallpaper_header';
+  static const step_en = 'step_en';
+  static const set_wallpaper_title = 'set_wallpaper_title';
+  static const set_wallpaper_desc = 'set_wallpaper_desc';
+  static const set_wallpaper_title2 = 'set_wallpaper_title2';
+  static const set_wallpaper_desc2 = 'set_wallpaper_desc2';
+  static const set_wallpaper_desc3 = 'set_wallpaper_desc3';
+  static const jump_to = 'jump_to';
+  static const set_wallpaper_title3 = 'set_wallpaper_title3';
+  static const confirm = 'confirm';
+  static const cancel = 'cancel';
+  static const register_email_title = 'register_email_title';
+  static const register_email_desc = 'register_email_desc';
+  static const email = 'email';
+  static const email_placeholder = 'email_placeholder';
+  static const email_warning = 'email_warning';
+  static const already_have_account = 'already_have_account';
+  static const login_now = 'login_now';
+  static const send = 'send';
 }
 
 class Locales {
@@ -240,5 +261,29 @@ class Locales {
     'open_practice_match': 'オープンの練習試合',
     'event': 'イベント',
     'player_birthday': '選手誕生日',
+    'step': 'ステップ',
+    'next': '次へ',
+    'set_wallpaper_header': 'アプリ設定ガイド',
+    'step_en': 'step @step',
+    'set_wallpaper_title': 'お気に入り選手を壁紙に設定',
+    'set_wallpaper_desc':
+        'アプリホーム画面の壁紙にお気に入り選手を設定することができます。次の画面でお気に入りの選手を選択選択してください。',
+    'set_wallpaper_title2': 'ファンクラブ会員証を表示',
+    'set_wallpaper_desc2':
+        'ファンクラブ会員情報を認証することで、QRコード付きの会員証を表示することができます。\nファンクラブIDとメールアドレスをアプリに登録して会員認証を行ってください。\n',
+    'set_wallpaper_desc3': '下記リストからお気に入りの選手を選択してください。選択した選手がホーム画面の壁紙に設定されます。',
+    'jump_to': 'スキップ',
+    'set_wallpaper_title3': '好きな選手を選択',
+    'confirm': '選択する',
+    'cancel': 'キャンセル',
+    'register_email_title': 'ファンクラブ会員証を表示\n（メールアドレスの登録）',
+    'register_email_desc':
+        'ファンクラブの会員情報を連携するとアプリに会員証が表示されます。\n\n入力フォームにファンクラブに登録済みのメールアドレスを登録してください。\n\nメールアドレス送信後に、ワンタイムパスワードが送信されます。',
+    'email': 'メールアドレス',
+    'email_placeholder': '例 : @example',
+    'email_warning': '※メールアドレスが異なる場合、ファンクラブ会員との連携が出来ませんのでご注意ください。',
+    'already_have_account': 'すでにアカウントをお持ちですか?',
+    'login_now': '今すぐログイン',
+    'send': '送信',
   };
 }

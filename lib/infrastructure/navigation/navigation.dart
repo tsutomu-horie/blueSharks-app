@@ -116,5 +116,15 @@ class Nav {
       page: () => const FanclubScreen(),
       binding: FanclubControllerBinding(),
     ),
+    GetPage(
+      name: Routes.WALLPAPER_SET_PLAYER,
+      page: () => const WallpaperSetPlayerScreen(),
+      binding: WallpaperSetPlayerControllerBinding(),
+    ),
+    GetPage(
+      name: Routes.REGISTER_EMAIL,
+      page: () => const RegisterEmailScreen(),
+      binding: RegisterEmailControllerBinding(),
+    ),
   ];
 }

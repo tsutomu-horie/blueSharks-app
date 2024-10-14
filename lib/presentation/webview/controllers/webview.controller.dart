@@ -225,6 +225,13 @@ class WebviewController extends GetxController {
               
                   document.querySelectorAll('header').forEach(element => element.remove());
                    document.querySelectorAll('breadcrumb').forEach(element2 => element2.remove());
+                   document.querySelectorAll('rc-anchor-container').forEach(element3 => element3.remove());
+                   document.querySelectorAll('page-top isView').forEach(element4 => element4.remove());
+                  
+                  var element4 = document.getElementById('page-top isView');
+                  if (element4) {
+                    element4.remove();
+                  }
                   
                   var element = document.getElementById('header');
                   if (element) {
@@ -234,6 +241,11 @@ class WebviewController extends GetxController {
                   var element2 = document.getElementById('breadcrumb');
                   if (element2) {
                     element2.remove();
+                  }    
+                  
+                  var element3 = document.getElementById('anchor');
+                  if (element3) {
+                    element3.remove();
                   }
                   
                   document.body.style.overflow = 'hidden';

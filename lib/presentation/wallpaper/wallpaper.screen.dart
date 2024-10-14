@@ -40,7 +40,7 @@ class WallpaperScreen extends GetView<WallpaperController> {
           onPressed: () {
             controller.onNext();
           },
-          child: CustomTextView(LocaleKeys.ok.tr, color: BrandColor.content,),
+          child: CustomTextView(LocaleKeys.next.tr, color: BrandColor.content,),
 
         ),
 
@@ -50,8 +50,13 @@ class WallpaperScreen extends GetView<WallpaperController> {
           color:  RGBA.rgba(250, 250, 250, 1),
           child: Column(
             children: [
-              DefaultHeaderTitleView(LocaleKeys.wallpaper_information.tr, LocaleKeys.wallpaper_setting.tr.toUpperCase()),
-              SizedBox(height: 28.h,),
+              CustomTextView(LocaleKeys.set_wallpaper_header.tr, color: BrandColor.main, type: TDSFontType.subtitleLarge,),
+              SizedBox(height: 24.h,),
+              CustomTextView(LocaleKeys.step_en.trParams({'step': '1'}).toUpperCase(), color: BrandColor.main, type: TDSFontType.titleSmall,),
+              SizedBox(height: 4.h,),
+              CustomTextView(LocaleKeys.set_wallpaper_title.tr, color: BrandColor.main, type: TDSFontType.subtitleLarge,),
+              SizedBox(height: 24.h,),
+
               Stack(
                 children: [
                   SizedBox(
@@ -76,10 +81,24 @@ class WallpaperScreen extends GetView<WallpaperController> {
                   ),
                 ],
               ),
-              descriptionSection(LocaleKeys.wallpaper_setting_title.tr, LocaleKeys.wallpaper_setting_desc.tr),
+              Row(
+                children: [
+                  SizedBox(width: 16.w,),
+                  Flexible(child: CustomTextView(LocaleKeys.set_wallpaper_desc.tr, color: TextColor.secondary, type: TDSFontType.bodyTextMedium,)),
+                  SizedBox(width: 16.w,),
+                ],
+              ),
+
+              SizedBox(height: 24.h,),
               Container(color: BorderColor.primary, height: 1.h,),
-              DefaultHeaderTitleView(LocaleKeys.register_user_information.tr, LocaleKeys.user_registration.tr.toUpperCase()),
-              SizedBox(height: 28.h,),
+              SizedBox(height: 24.h,),
+
+              CustomTextView(LocaleKeys.step_en.trParams({'step': '2'}).toUpperCase(), color: BrandColor.main, type: TDSFontType.titleSmall,),
+              SizedBox(height: 4.h,),
+              CustomTextView(LocaleKeys.set_wallpaper_title2.tr, color: BrandColor.main, type: TDSFontType.subtitleLarge,),
+
+              SizedBox(height: 24.h,),
+
               Stack(
                 children: [
                   SizedBox(
@@ -105,7 +124,13 @@ class WallpaperScreen extends GetView<WallpaperController> {
                 ],
               ),
               SizedBox(height: 16.h,),
-              descriptionSection(LocaleKeys.register_user_title.tr, LocaleKeys.register_user_desc.tr),
+              Row(
+                children: [
+                  SizedBox(width: 16.w,),
+                  Flexible(child: CustomTextView(LocaleKeys.set_wallpaper_desc2.tr, color: TextColor.secondary, type: TDSFontType.bodyTextMedium,)),
+                  SizedBox(width: 16.w,),
+                ],
+              ),
               Container(color: BorderColor.primary, height: 1.h,),
 
             ],
