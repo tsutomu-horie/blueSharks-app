@@ -6,6 +6,7 @@ class Routes {
 
   static const CALENDAR = '/calendar';
   static const DETAIL_INFO = '/detail-info';
+  static const FANCLUB = '/fanclub';
   static const GAME_INFO = '/game-info';
   static const HOME = '/home';
   static const INFO = '/info';
@@ -19,6 +20,7 @@ class Routes {
   static const STADIUM = '/stadium';
   static const TEAM = '/team';
   static const WALLPAPER = '/wallpaper';
+  static const WALLPAPER_SET_PLAYER = '/wallpaper-set-player';
   static const WEBVIEW = '/webview';
-  static const FANCLUB = '/fanclub';
+  static const REGISTER_EMAIL = '/register-email';
 }
