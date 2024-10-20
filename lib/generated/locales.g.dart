@@ -142,6 +142,35 @@ class LocaleKeys {
   static const already_have_account = 'already_have_account';
   static const login_now = 'login_now';
   static const send = 'send';
+  static const email_sent_dialog_title = 'email_sent_dialog_title';
+  static const email_sent_dialog_message = 'email_sent_dialog_message';
+  static const close = 'close';
+  static const otp_title = 'otp_title';
+  static const otp_message = 'otp_message';
+  static const registered_email = 'registered_email';
+  static const resend_otp_email = 'resend_otp_email';
+  static const authentication = 'authentication';
+  static const fanclub_register_title = 'fanclub_register_title';
+  static const fanclub_register_desc = 'fanclub_register_desc';
+  static const fanclub_member_id = 'fanclub_member_id';
+  static const password = 'password';
+  static const login_to_your_account = 'login_to_your_account';
+  static const login_to_your_account_desc = 'login_to_your_account_desc';
+  static const forgot_password_desc = 'forgot_password_desc';
+  static const forgot_password_navigation = 'forgot_password_navigation';
+  static const forgot_password_desc2 = 'forgot_password_desc2';
+  static const login = 'login';
+  static const password_placeholder = 'password_placeholder';
+  static const set_a_new_password = 'set_a_new_password';
+  static const new_password = 'new_password';
+  static const new_password_placeholder = 'new_password_placeholder';
+  static const confirm_new_password = 'confirm_new_password';
+  static const confirm_new_password_placeholder =
+      'confirm_new_password_placeholder';
+  static const password_desc = 'password_desc';
+  static const save_changes = 'save_changes';
+  static const error_login_message = 'error_login_message';
+  static const close_dialog = 'close_dialog';
 }
 
 class Locales {
@@ -285,5 +314,38 @@ class Locales {
     'already_have_account': 'すでにアカウントをお持ちですか?',
     'login_now': '今すぐログイン',
     'send': '送信',
+    'email_sent_dialog_title': 'ワンタイムパスワードを電子メールで送信しました。',
+    'email_sent_dialog_message':
+        '\n次の画面でメール本文に認証コードを入力してください。メールが届かない場合。スパムフォルダを確認してください。',
+    'close': '閉じる',
+    'otp_title': 'メールアドレスの認証',
+    'otp_message':
+        '送信済みメールに記載のワンタイムパスワードを入力してください。メールが見つからない場合には、迷惑メールフォルダをご確認ください。',
+    'registered_email': '登録メールアドレス @email',
+    'resend_otp_email': 'メールを再送信する。',
+    'authentication': '認証。',
+    'fanclub_register_title': 'ファンクラブ会員証表示\n(ファンクラブIDの登録)',
+    'fanclub_register_desc':
+        'ファンクラブIDとパスワードを入力してください。ファンクラブIDがわからない場合には、ファンクラブサイトからご確認ください。\n\nパスワードは本アプリへのログイン用のため、ファンクラブと異なるパスワードをご登録いただいても認証可能です。\n',
+    'fanclub_member_id': 'ファンクラブ会員ID',
+    'password': 'パスワード',
+    'login_to_your_account': 'アカウントにログイン',
+    'login_to_your_account_desc':
+        'メールアドレスとパスワードを入力してログインしてください。ログインするとファンクラブ会員証が表示されます。',
+    'forgot_password_desc': 'パスワードをお忘れの場合、こちらから再設定してください。',
+    'forgot_password_navigation': 'こちらから',
+    'forgot_password_desc2': '再設定してください。',
+    'login': 'ログイン',
+    'password_placeholder': 'パスワードを入力してください',
+    'set_a_new_password': '新しいパスワードを設定してください',
+    'new_password': '新しいパスワード',
+    'new_password_placeholder': '新しいパスワードを入力してください',
+    'confirm_new_password': '新しいパスワードの確認',
+    'confirm_new_password_placeholder': '新しいパスワードでも同様',
+    'password_desc': 'パスワードは半角英数8〜12文字以内を入力してください。',
+    'save_changes': '変更を保存する',
+    'error_login_message':
+        'メールアドレスまたはパスワードが確認できませんでした。\nご入力情報をご確認の上、再度ログインしてください。',
+    'close_dialog': '近い',
   };
 }

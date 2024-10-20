@@ -1,0 +1,347 @@
+// coverage:ignore-file
+// GENERATED CODE - DO NOT MODIFY BY HAND
+// ignore_for_file: type=lint
+// ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
+
+part of 'auth.dart';
+
+// **************************************************************************
+// FreezedGenerator
+// **************************************************************************
+
+T _$identity<T>(T value) => value;
+
+final _privateConstructorUsedError = UnsupportedError(
+    'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models');
+
+Auth _$AuthFromJson(Map<String, dynamic> json) {
+  return _Auth.fromJson(json);
+}
+
+/// @nodoc
+mixin _$Auth {
+  int get id => throw _privateConstructorUsedError;
+  String get name => throw _privateConstructorUsedError;
+  String get email => throw _privateConstructorUsedError;
+  String? get email_verified_at => throw _privateConstructorUsedError;
+  String get type => throw _privateConstructorUsedError;
+  String get userable_type => throw _privateConstructorUsedError;
+  int get userable_id => throw _privateConstructorUsedError;
+  String get created_at => throw _privateConstructorUsedError;
+  String get updated_at => throw _privateConstructorUsedError;
+  String get access_token => throw _privateConstructorUsedError;
+
+  Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
+  @JsonKey(ignore: true)
+  $AuthCopyWith<Auth> get copyWith => throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class $AuthCopyWith<$Res> {
+  factory $AuthCopyWith(Auth value, $Res Function(Auth) then) =
+      _$AuthCopyWithImpl<$Res, Auth>;
+  @useResult
+  $Res call(
+      {int id,
+      String name,
+      String email,
+      String? email_verified_at,
+      String type,
+      String userable_type,
+      int userable_id,
+      String created_at,
+      String updated_at,
+      String access_token});
+}
+
+/// @nodoc
+class _$AuthCopyWithImpl<$Res, $Val extends Auth>
+    implements $AuthCopyWith<$Res> {
+  _$AuthCopyWithImpl(this._value, this._then);
+
+  // ignore: unused_field
+  final $Val _value;
+  // ignore: unused_field
+  final $Res Function($Val) _then;
+
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? id = null,
+    Object? name = null,
+    Object? email = null,
+    Object? email_verified_at = freezed,
+    Object? type = null,
+    Object? userable_type = null,
+    Object? userable_id = null,
+    Object? created_at = null,
+    Object? updated_at = null,
+    Object? access_token = null,
+  }) {
+    return _then(_value.copyWith(
+      id: null == id
+          ? _value.id
+          : id // ignore: cast_nullable_to_non_nullable
+              as int,
+      name: null == name
+          ? _value.name
+          : name // ignore: cast_nullable_to_non_nullable
+              as String,
+      email: null == email
+          ? _value.email
+          : email // ignore: cast_nullable_to_non_nullable
+              as String,
+      email_verified_at: freezed == email_verified_at
+          ? _value.email_verified_at
+          : email_verified_at // ignore: cast_nullable_to_non_nullable
+              as String?,
+      type: null == type
+          ? _value.type
+          : type // ignore: cast_nullable_to_non_nullable
+              as String,
+      userable_type: null == userable_type
+          ? _value.userable_type
+          : userable_type // ignore: cast_nullable_to_non_nullable
+              as String,
+      userable_id: null == userable_id
+          ? _value.userable_id
+          : userable_id // ignore: cast_nullable_to_non_nullable
+              as int,
+      created_at: null == created_at
+          ? _value.created_at
+          : created_at // ignore: cast_nullable_to_non_nullable
+              as String,
+      updated_at: null == updated_at
+          ? _value.updated_at
+          : updated_at // ignore: cast_nullable_to_non_nullable
+              as String,
+      access_token: null == access_token
+          ? _value.access_token
+          : access_token // ignore: cast_nullable_to_non_nullable
+              as String,
+    ) as $Val);
+  }
+}
+
+/// @nodoc
+abstract class _$$AuthImplCopyWith<$Res> implements $AuthCopyWith<$Res> {
+  factory _$$AuthImplCopyWith(
+          _$AuthImpl value, $Res Function(_$AuthImpl) then) =
+      __$$AuthImplCopyWithImpl<$Res>;
+  @override
+  @useResult
+  $Res call(
+      {int id,
+      String name,
+      String email,
+      String? email_verified_at,
+      String type,
+      String userable_type,
+      int userable_id,
+      String created_at,
+      String updated_at,
+      String access_token});
+}
+
+/// @nodoc
+class __$$AuthImplCopyWithImpl<$Res>
+    extends _$AuthCopyWithImpl<$Res, _$AuthImpl>
+    implements _$$AuthImplCopyWith<$Res> {
+  __$$AuthImplCopyWithImpl(_$AuthImpl _value, $Res Function(_$AuthImpl) _then)
+      : super(_value, _then);
+
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? id = null,
+    Object? name = null,
+    Object? email = null,
+    Object? email_verified_at = freezed,
+    Object? type = null,
+    Object? userable_type = null,
+    Object? userable_id = null,
+    Object? created_at = null,
+    Object? updated_at = null,
+    Object? access_token = null,
+  }) {
+    return _then(_$AuthImpl(
+      id: null == id
+          ? _value.id
+          : id // ignore: cast_nullable_to_non_nullable
+              as int,
+      name: null == name
+          ? _value.name
+          : name // ignore: cast_nullable_to_non_nullable
+              as String,
+      email: null == email
+          ? _value.email
+          : email // ignore: cast_nullable_to_non_nullable
+              as String,
+      email_verified_at: freezed == email_verified_at
+          ? _value.email_verified_at
+          : email_verified_at // ignore: cast_nullable_to_non_nullable
+              as String?,
+      type: null == type
+          ? _value.type
+          : type // ignore: cast_nullable_to_non_nullable
+              as String,
+      userable_type: null == userable_type
+          ? _value.userable_type
+          : userable_type // ignore: cast_nullable_to_non_nullable
+              as String,
+      userable_id: null == userable_id
+          ? _value.userable_id
+          : userable_id // ignore: cast_nullable_to_non_nullable
+              as int,
+      created_at: null == created_at
+          ? _value.created_at
+          : created_at // ignore: cast_nullable_to_non_nullable
+              as String,
+      updated_at: null == updated_at
+          ? _value.updated_at
+          : updated_at // ignore: cast_nullable_to_non_nullable
+              as String,
+      access_token: null == access_token
+          ? _value.access_token
+          : access_token // ignore: cast_nullable_to_non_nullable
+              as String,
+    ));
+  }
+}
+
+/// @nodoc
+@JsonSerializable()
+class _$AuthImpl implements _Auth {
+  _$AuthImpl(
+      {required this.id,
+      required this.name,
+      required this.email,
+      this.email_verified_at,
+      required this.type,
+      required this.userable_type,
+      required this.userable_id,
+      required this.created_at,
+      required this.updated_at,
+      required this.access_token});
+
+  factory _$AuthImpl.fromJson(Map<String, dynamic> json) =>
+      _$$AuthImplFromJson(json);
+
+  @override
+  final int id;
+  @override
+  final String name;
+  @override
+  final String email;
+  @override
+  final String? email_verified_at;
+  @override
+  final String type;
+  @override
+  final String userable_type;
+  @override
+  final int userable_id;
+  @override
+  final String created_at;
+  @override
+  final String updated_at;
+  @override
+  final String access_token;
+
+  @override
+  String toString() {
+    return 'Auth(id: $id, name: $name, email: $email, email_verified_at: $email_verified_at, type: $type, userable_type: $userable_type, userable_id: $userable_id, created_at: $created_at, updated_at: $updated_at, access_token: $access_token)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$AuthImpl &&
+            (identical(other.id, id) || other.id == id) &&
+            (identical(other.name, name) || other.name == name) &&
+            (identical(other.email, email) || other.email == email) &&
+            (identical(other.email_verified_at, email_verified_at) ||
+                other.email_verified_at == email_verified_at) &&
+            (identical(other.type, type) || other.type == type) &&
+            (identical(other.userable_type, userable_type) ||
+                other.userable_type == userable_type) &&
+            (identical(other.userable_id, userable_id) ||
+                other.userable_id == userable_id) &&
+            (identical(other.created_at, created_at) ||
+                other.created_at == created_at) &&
+            (identical(other.updated_at, updated_at) ||
+                other.updated_at == updated_at) &&
+            (identical(other.access_token, access_token) ||
+                other.access_token == access_token));
+  }
+
+  @JsonKey(ignore: true)
+  @override
+  int get hashCode => Object.hash(
+      runtimeType,
+      id,
+      name,
+      email,
+      email_verified_at,
+      type,
+      userable_type,
+      userable_id,
+      created_at,
+      updated_at,
+      access_token);
+
+  @JsonKey(ignore: true)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$AuthImplCopyWith<_$AuthImpl> get copyWith =>
+      __$$AuthImplCopyWithImpl<_$AuthImpl>(this, _$identity);
+
+  @override
+  Map<String, dynamic> toJson() {
+    return _$$AuthImplToJson(
+      this,
+    );
+  }
+}
+
+abstract class _Auth implements Auth {
+  factory _Auth(
+      {required final int id,
+      required final String name,
+      required final String email,
+      final String? email_verified_at,
+      required final String type,
+      required final String userable_type,
+      required final int userable_id,
+      required final String created_at,
+      required final String updated_at,
+      required final String access_token}) = _$AuthImpl;
+
+  factory _Auth.fromJson(Map<String, dynamic> json) = _$AuthImpl.fromJson;
+
+  @override
+  int get id;
+  @override
+  String get name;
+  @override
+  String get email;
+  @override
+  String? get email_verified_at;
+  @override
+  String get type;
+  @override
+  String get userable_type;
+  @override
+  int get userable_id;
+  @override
+  String get created_at;
+  @override
+  String get updated_at;
+  @override
+  String get access_token;
+  @override
+  @JsonKey(ignore: true)
+  _$$AuthImplCopyWith<_$AuthImpl> get copyWith =>
+      throw _privateConstructorUsedError;
+}

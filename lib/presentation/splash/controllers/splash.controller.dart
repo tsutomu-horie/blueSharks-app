@@ -1,5 +1,6 @@
 import 'package:get/get.dart';
 import 'package:hive/hive.dart';
+import 'package:koto_blue_sharks/app/data/api/auth/AuthToken.dart';
 import 'package:koto_blue_sharks/app/data/api/member/member_provider.dart';
 import 'package:koto_blue_sharks/app/data/models/match/match_result.dart';
 import 'package:koto_blue_sharks/app/data/models/member/member.dart';
@@ -63,8 +64,16 @@ class SplashController extends GetxController {
     } catch (e) {
       print('Error loading categories and players: $e');
     } finally {
+      final auth = AuthToken();
+      final token = await auth.getAccessToken();
+
       isLoading.value = false;
-      Get.offAndToNamed('/wallpaper');
+
+      if (token != null) {
+        Get.offAll(() => const MainScreen());
+      } else {
+        Get.offAndToNamed('/wallpaper');
+      }
     }
   }
 
