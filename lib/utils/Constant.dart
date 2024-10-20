@@ -1,5 +1,6 @@
 class Constants {
   static const baseUrl = 'https://blue-sharks.donati.jp/wp-json/wp/v2/';
+  static const baseUrlAuthApi = 'https://dev-blueshark.tmdsite.my.id/api/mobile/v1/';
   static const baseUrlWeb = 'https://blue-sharks.donati.jp/';
   static const teamName = 'シャークス';
   static const videoUrl ='https://www.youtube.com/watch?v=JJqanLQ3y0Q';

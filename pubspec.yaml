@@ -60,6 +60,10 @@ dependencies:
   extension_google_sign_in_as_googleapis_auth: ^2.0.12
   syncfusion_localizations: ^27.1.52
   flutter_localization: ^0.2.2
+  lottie: ^3.1.3
+  flutter_otp_text_field: ^1.1.1
+  pinput: ^5.0.0
+  flutter_secure_storage: ^9.2.2
 
 dev_dependencies:
   flutter_test:
@@ -93,6 +97,7 @@ flutter:
     - assets/images/image_stadium_bus/
     - assets/images/home_stadium/
     - assets/vectors/
+    - assets/lottie/
 
   # To add assets to your application, add an assets section, like this:
   # assets:

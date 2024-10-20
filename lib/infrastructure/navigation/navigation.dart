@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 import 'package:get/get.dart';
 
+import 'package:koto_blue_sharks/presentation/register/register_member_fanclub/register_member_fanclub.screen.dart';
+
 import '../../config.dart';
 import '../../presentation/screens.dart';
 import 'bindings/controllers/controllers_bindings.dart';
@@ -125,6 +127,30 @@ class Nav {
       name: Routes.REGISTER_EMAIL,
       page: () => const RegisterEmailScreen(),
       binding: RegisterEmailControllerBinding(),
+    ),
+    GetPage(
+      name: Routes.REGISTER_OTP,
+      page: () => const RegisterOtpScreen(
+        email: "",
+      ),
+      binding: RegisterOtpControllerBinding(),
+    ),
+    GetPage(
+      name: Routes.REGISTER_MEMBER_FANCLUB,
+      page: () => const RegisterMemberFanclubScreen(
+        email: "",
+      ),
+      binding: RegisterMemberFanclubControllerBinding(),
+    ),
+    GetPage(
+      name: Routes.LOGIN,
+      page: () => const LoginScreen(),
+      binding: LoginControllerBinding(),
+    ),
+    GetPage(
+      name: Routes.FORGOT_PASSWORD,
+      page: () => const ForgotPasswordScreen(),
+      binding: ForgotPasswordControllerBinding(),
     ),
   ];
 }

@@ -34,14 +34,13 @@ class HomeScreen extends GetView<MainController> {
     final HomeController homeController = Get.put(HomeController());
 
     return Scaffold(
+      backgroundColor: Colors.white,
       body: SingleChildScrollView(
           child: Column(
             children: [
               AspectRatio(
                 aspectRatio: 9 / 9.3,
-                child: Container(
-                  child: Image.asset("assets/images/dummy_wallpaper.png"),
-                ),
+                child: Image.asset("assets/images/default_wallpaper.png", fit: BoxFit.fitWidth,),
               ),
               DefaultHeaderTitleView(
                   LocaleKeys.next_match.tr, LocaleKeys.next_match_en.tr),

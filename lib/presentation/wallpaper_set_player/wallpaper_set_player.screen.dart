@@ -6,6 +6,7 @@ import 'package:get/get.dart';
 import 'package:koto_blue_sharks/app/data/models/member/views/memberlist_view.dart';
 import 'package:koto_blue_sharks/app/views/views/custom_text_view.dart';
 import 'package:koto_blue_sharks/generated/locales.g.dart';
+import 'package:koto_blue_sharks/presentation/main/main.screen.dart';
 import 'package:koto_blue_sharks/presentation/member/controllers/member.controller.dart';
 import 'package:koto_blue_sharks/presentation/member/member.screen.dart';
 import 'package:koto_blue_sharks/utils/app_color.dart';
@@ -74,6 +75,24 @@ class WallpaperSetPlayerScreen extends GetView<WallpaperSetPlayerController> {
                 ),
                 SizedBox(height: 30.w,),
                 MemberlistView(memberController, isSetWallpaper: true,),
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
+                  width: double.infinity,
+                  child: OutlinedButton(
+                    style: ButtonStyle(
+                      side: WidgetStateProperty.all(BorderSide(
+                          color: BrandColor.main) // Set your desired color here
+                      ),
+                    ),
+                    onPressed: () {
+                      Get.offAll(() => const MainScreen());
+                    },
+                    child: CustomTextView(
+                      LocaleKeys.jump_to.tr,
+                      color: BrandColor.main,
+                    ),
+                  ),
+                ),
               ],
             ),
           ),

@@ -1,7 +1,7 @@
 import 'package:get/get.dart';
 
-class RegisterEmailController extends GetxController {
-  //TODO: Implement RegisterEmailController
+class RegisterMemberFanclubController extends GetxController {
+  //TODO: Implement RegisterMemberFanclubController
 
   final count = 0.obs;
   @override
