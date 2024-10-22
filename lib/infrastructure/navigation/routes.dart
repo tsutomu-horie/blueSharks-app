@@ -7,6 +7,7 @@ class Routes {
   static const CALENDAR = '/calendar';
   static const DETAIL_INFO = '/detail-info';
   static const FANCLUB = '/fanclub';
+  static const RESET_PASSWORD = '/forgot-password';
   static const GAME_INFO = '/game-info';
   static const HOME = '/home';
   static const INFO = '/info';

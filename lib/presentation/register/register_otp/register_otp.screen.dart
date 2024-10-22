@@ -12,15 +12,20 @@ import 'package:pinput/pinput.dart';
 import 'controllers/register_otp.controller.dart';
 
 class RegisterOtpScreen extends GetView<RegisterOtpController> {
-  const RegisterOtpScreen({super.key, required this.email});
+  const RegisterOtpScreen({super.key, required this.email, required this.otpId, required this.fromScreen});
 
   final String email;
+  final String? otpId;
+  final String fromScreen;
 
   @override
   Widget build(BuildContext context) {
     final RegisterOtpController registerOtpController =
         Get.put(RegisterOtpController());
 
+    if (otpId != null) {
+      registerOtpController.otp_id.value = otpId!;
+    }
     final defaultPinTheme = PinTheme(
       width: 40.w,
       height: 40.h,
@@ -130,7 +135,7 @@ class RegisterOtpScreen extends GetView<RegisterOtpController> {
                 height: 44.h,
               ),
               Pinput(
-                length: 6,
+                length: 5,
                 defaultPinTheme: defaultPinTheme,
                 focusedPinTheme: focusedPinTheme,
                 submittedPinTheme: submittedPinTheme,
@@ -147,6 +152,10 @@ class RegisterOtpScreen extends GetView<RegisterOtpController> {
                 height: 20.h,
               ),
               InkWell(
+                onTap: (){
+                  print("resend");
+                  controller.resendOtp(email, context, otpId);
+                },
                   child: CustomTextView(
                 LocaleKeys.resend_otp_email.tr,
                 color: BrandColor.main,
@@ -161,7 +170,7 @@ class RegisterOtpScreen extends GetView<RegisterOtpController> {
         child: ElevatedButton(
           style: ElevatedButton.styleFrom(backgroundColor: BrandColor.main),
           onPressed: () {
-            controller.onSubmitOtp(email, context);
+            controller.onSubmitOtp(email, context, fromScreen, otpId);
           },
           child: CustomTextView(
             LocaleKeys.send.tr,
