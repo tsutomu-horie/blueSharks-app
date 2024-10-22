@@ -171,6 +171,9 @@ class LocaleKeys {
   static const save_changes = 'save_changes';
   static const error_login_message = 'error_login_message';
   static const close_dialog = 'close_dialog';
+  static const forgot_password_title = 'forgot_password_title';
+  static const forgot_password_page_desc = 'forgot_password_page_desc';
+  static const email_title = 'email_title';
 }
 
 class Locales {
@@ -347,5 +350,9 @@ class Locales {
     'error_login_message':
         'メールアドレスまたはパスワードが確認できませんでした。\nご入力情報をご確認の上、再度ログインしてください。',
     'close_dialog': '近い',
+    'forgot_password_title': 'パスワードをお忘れですか？',
+    'forgot_password_page_desc':
+        'ご登録済みのメールアドレスを入力してください。メールアドレス認証のため、ワンタイムパスワードを送信いたします。\n認証後にパスワード再設定用のリンクを送信いたします。',
+    'email_title': '電子メール',
   };
 }

@@ -289,6 +289,8 @@ class RegisterEmailScreen extends GetView<RegisterEmailController> {
                       Get.to(() => RegisterOtpScreen(
                             email: registerEmailController
                                 .textFieldController.text,
+                        fromScreen: "register",
+                        otpId: null,
                           ));
                     },
                     child: CustomTextView(

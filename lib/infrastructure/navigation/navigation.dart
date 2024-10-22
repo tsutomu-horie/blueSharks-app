@@ -132,6 +132,8 @@ class Nav {
       name: Routes.REGISTER_OTP,
       page: () => const RegisterOtpScreen(
         email: "",
+        fromScreen: "",
+        otpId: "",
       ),
       binding: RegisterOtpControllerBinding(),
     ),
@@ -146,6 +148,11 @@ class Nav {
       name: Routes.LOGIN,
       page: () => const LoginScreen(),
       binding: LoginControllerBinding(),
+    ),
+    GetPage(
+      name: Routes.FORGOT_PASSWORD,
+      page: () => const ResetPasswordScreen(""),
+      binding: ResetPasswordControllerBinding(),
     ),
     GetPage(
       name: Routes.FORGOT_PASSWORD,

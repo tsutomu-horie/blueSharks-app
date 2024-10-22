@@ -6,7 +6,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'package:koto_blue_sharks/app/views/views/custom_text_view.dart';
 import 'package:koto_blue_sharks/generated/locales.g.dart';
-import 'package:koto_blue_sharks/presentation/forgot_password/forgot_password.screen.dart';
+import 'package:koto_blue_sharks/presentation/forgotPassword/forgot_password.screen.dart';
 import 'package:koto_blue_sharks/presentation/main/main.screen.dart';
 import 'package:koto_blue_sharks/utils/app_color.dart';
 

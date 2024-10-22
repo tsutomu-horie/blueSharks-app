@@ -1,23 +1,12 @@
 import 'package:get/get.dart';
+import 'package:koto_blue_sharks/app/data/api/auth/AuthToken.dart';
+import 'package:koto_blue_sharks/presentation/screens.dart';
 
 class MypageController extends GetxController {
-  //TODO: Implement MypageController
+  void logout() async {
+    final auth = AuthToken();
+    await auth.deleteToken();
 
-  final count = 0.obs;
-  @override
-  void onInit() {
-    super.onInit();
+    Get.offAll(() => const SplashScreen());
   }
-
-  @override
-  void onReady() {
-    super.onReady();
-  }
-
-  @override
-  void onClose() {
-    super.onClose();
-  }
-
-  void increment() => count.value++;
 }

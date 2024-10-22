@@ -15,6 +15,7 @@ export 'package:koto_blue_sharks/infrastructure/navigation/bindings/controllers/
 export 'package:koto_blue_sharks/infrastructure/navigation/bindings/controllers/register_email.controller.binding.dart'; 
 export 'package:koto_blue_sharks/infrastructure/navigation/bindings/controllers/register_member_fanclub.controller.binding.dart'; 
 export 'package:koto_blue_sharks/infrastructure/navigation/bindings/controllers/register_otp.controller.binding.dart'; 
+export 'package:koto_blue_sharks/infrastructure/navigation/bindings/controllers/reset_password.controller.binding.dart';
 export 'package:koto_blue_sharks/infrastructure/navigation/bindings/controllers/splash.controller.binding.dart'; 
 export 'package:koto_blue_sharks/infrastructure/navigation/bindings/controllers/stadium.controller.binding.dart'; 
 export 'package:koto_blue_sharks/infrastructure/navigation/bindings/controllers/team.controller.binding.dart'; 
