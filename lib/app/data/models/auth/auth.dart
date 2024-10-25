@@ -10,7 +10,7 @@ class Auth with _$Auth {
     required String name,
     required String email,
     String? email_verified_at,
-    required String type,
+    required String? type,
     required String userable_type,
     required int userable_id,
     required String created_at,

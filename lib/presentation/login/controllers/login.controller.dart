@@ -15,13 +15,14 @@ class LoginController extends GetxController {
 
   final isLoadingLogin = false.obs;
 
+  var isPasswordHidden = true.obs;
+
+
   @override
   void onInit() async {
     super.onInit();
     apiProvider.onInit();
   }
-
-  var isPasswordHidden = true.obs;
 
   void togglePasswordVisibility() {
     isPasswordHidden.value = !isPasswordHidden.value;

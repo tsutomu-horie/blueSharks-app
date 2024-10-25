@@ -24,7 +24,7 @@ mixin _$Auth {
   String get name => throw _privateConstructorUsedError;
   String get email => throw _privateConstructorUsedError;
   String? get email_verified_at => throw _privateConstructorUsedError;
-  String get type => throw _privateConstructorUsedError;
+  String? get type => throw _privateConstructorUsedError;
   String get userable_type => throw _privateConstructorUsedError;
   int get userable_id => throw _privateConstructorUsedError;
   String get created_at => throw _privateConstructorUsedError;
@@ -46,7 +46,7 @@ abstract class $AuthCopyWith<$Res> {
       String name,
       String email,
       String? email_verified_at,
-      String type,
+      String? type,
       String userable_type,
       int userable_id,
       String created_at,
@@ -71,7 +71,7 @@ class _$AuthCopyWithImpl<$Res, $Val extends Auth>
     Object? name = null,
     Object? email = null,
     Object? email_verified_at = freezed,
-    Object? type = null,
+    Object? type = freezed,
     Object? userable_type = null,
     Object? userable_id = null,
     Object? created_at = null,
@@ -95,10 +95,10 @@ class _$AuthCopyWithImpl<$Res, $Val extends Auth>
           ? _value.email_verified_at
           : email_verified_at // ignore: cast_nullable_to_non_nullable
               as String?,
-      type: null == type
+      type: freezed == type
           ? _value.type
           : type // ignore: cast_nullable_to_non_nullable
-              as String,
+              as String?,
       userable_type: null == userable_type
           ? _value.userable_type
           : userable_type // ignore: cast_nullable_to_non_nullable
@@ -135,7 +135,7 @@ abstract class _$$AuthImplCopyWith<$Res> implements $AuthCopyWith<$Res> {
       String name,
       String email,
       String? email_verified_at,
-      String type,
+      String? type,
       String userable_type,
       int userable_id,
       String created_at,
@@ -157,7 +157,7 @@ class __$$AuthImplCopyWithImpl<$Res>
     Object? name = null,
     Object? email = null,
     Object? email_verified_at = freezed,
-    Object? type = null,
+    Object? type = freezed,
     Object? userable_type = null,
     Object? userable_id = null,
     Object? created_at = null,
@@ -181,10 +181,10 @@ class __$$AuthImplCopyWithImpl<$Res>
           ? _value.email_verified_at
           : email_verified_at // ignore: cast_nullable_to_non_nullable
               as String?,
-      type: null == type
+      type: freezed == type
           ? _value.type
           : type // ignore: cast_nullable_to_non_nullable
-              as String,
+              as String?,
       userable_type: null == userable_type
           ? _value.userable_type
           : userable_type // ignore: cast_nullable_to_non_nullable
@@ -236,7 +236,7 @@ class _$AuthImpl implements _Auth {
   @override
   final String? email_verified_at;
   @override
-  final String type;
+  final String? type;
   @override
   final String userable_type;
   @override
@@ -311,7 +311,7 @@ abstract class _Auth implements Auth {
       required final String name,
       required final String email,
       final String? email_verified_at,
-      required final String type,
+      required final String? type,
       required final String userable_type,
       required final int userable_id,
       required final String created_at,
@@ -329,7 +329,7 @@ abstract class _Auth implements Auth {
   @override
   String? get email_verified_at;
   @override
-  String get type;
+  String? get type;
   @override
   String get userable_type;
   @override

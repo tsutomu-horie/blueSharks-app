@@ -125,7 +125,7 @@ class CalendarScreen extends StatelessWidget {
 
                   return Container(
                     decoration: BoxDecoration(
-                      color: appointment.color,
+                      color:  appointment.color,
                       borderRadius: BorderRadius.circular(8),
                     ),
                     padding: const EdgeInsets.all(4), // Adjust padding as needed
@@ -142,8 +142,6 @@ class CalendarScreen extends StatelessWidget {
                     ),
                   );
                 },
-
-
                 todayHighlightColor: BrandColor.main,
                 onViewChanged: (ViewChangedDetails details) {
                   // Get the visible date range from the calendar

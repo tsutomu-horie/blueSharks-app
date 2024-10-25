@@ -37,7 +37,7 @@ void errorDialogView(BuildContext context, String title, String? message) {
                     Container(
                       color: Colors.red,
                       child: CustomTextView(
-                        title,
+                        message,
                         type: TDSFontType.titleMedium,
                         color: TextColor.primary,
                         align: TextAlign.center,

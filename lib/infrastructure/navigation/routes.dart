@@ -7,7 +7,7 @@ class Routes {
   static const CALENDAR = '/calendar';
   static const DETAIL_INFO = '/detail-info';
   static const FANCLUB = '/fanclub';
-  static const RESET_PASSWORD = '/forgot-password';
+  static const FORGOT_PASSWORD = '/forgot-password';
   static const GAME_INFO = '/game-info';
   static const HOME = '/home';
   static const INFO = '/info';
@@ -21,6 +21,7 @@ class Routes {
   static const REGISTER_EMAIL = '/register-email';
   static const REGISTER_MEMBER_FANCLUB = '/register-member-fanclub';
   static const REGISTER_OTP = '/register-otp';
+  static const RESET_PASSWORD = '/forgot-password';
   static const SPLASH = '/splash';
   static const STADIUM = '/stadium';
   static const TEAM = '/team';
@@ -28,5 +29,5 @@ class Routes {
   static const WALLPAPER_SET_PLAYER = '/wallpaper-set-player';
   static const WARNING_DIALOG = '/warning-dialog';
   static const WEBVIEW = '/webview';
-  static const FORGOT_PASSWORD = '/forgot-password';
+  static const FAN_CLUB_CONFIRMATION = '/fan-club-confirmation';
 }

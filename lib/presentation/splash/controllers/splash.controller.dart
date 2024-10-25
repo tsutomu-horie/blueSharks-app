@@ -72,6 +72,7 @@ class SplashController extends GetxController {
       if (token != null) {
         Get.offAll(() => const MainScreen());
       } else {
+        // Get.offAll(() => FanClubConfirmationScreen());
         Get.offAndToNamed('/wallpaper');
       }
     }

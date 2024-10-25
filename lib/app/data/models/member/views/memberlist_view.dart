@@ -420,7 +420,7 @@ class MemberlistView extends GetView {
                       child: ElevatedButton(
                         style: ElevatedButton.styleFrom(backgroundColor: BrandColor.main, ),
                         onPressed: () {
-                          Get.to(() => const RegisterEmailScreen());
+                          Get.to(() => RegisterEmailScreen(playerName));
                         },
                         child: CustomTextView(LocaleKeys.confirm.tr, color: BrandColor.content,),
 

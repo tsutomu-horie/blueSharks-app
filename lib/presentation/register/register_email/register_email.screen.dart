@@ -16,7 +16,9 @@ import 'package:lottie/lottie.dart';
 import 'controllers/register_email.controller.dart';
 
 class RegisterEmailScreen extends GetView<RegisterEmailController> {
-  const RegisterEmailScreen({super.key});
+  const RegisterEmailScreen(this.selectedPlayer, {super.key});
+
+  final String selectedPlayer;
 
   @override
   Widget build(BuildContext context) {
@@ -85,7 +87,10 @@ class RegisterEmailScreen extends GetView<RegisterEmailController> {
                         backgroundColor: BrandColor.main),
                     onPressed: () {
                       if (globalKey.currentState!.validate()) {
-                        showEmailDialog(registerEmailController, context);
+                        registerEmailController.sendOtp((id){
+                        showEmailDialog(registerEmailController, context, "$id");
+                        });
+
                       }
                     },
                     child: CustomTextView(
@@ -226,7 +231,7 @@ class RegisterEmailScreen extends GetView<RegisterEmailController> {
                         width: double.infinity,
                         child: TextButton(
                           onPressed: () {
-                            Get.to(() => const LoginScreen());
+                            Get.to(() => LoginScreen(selectedPlayer));
                           },
                           child: CustomTextView(
                             LocaleKeys.login_now.tr,
@@ -247,7 +252,7 @@ class RegisterEmailScreen extends GetView<RegisterEmailController> {
   }
 
   void showEmailDialog(
-      RegisterEmailController registerEmailController, BuildContext context) {
+      RegisterEmailController registerEmailController, BuildContext context, String? otpId) {
     showDialog(
       context: context,
       barrierDismissible: true, // Dismiss when tapped outside
@@ -290,7 +295,8 @@ class RegisterEmailScreen extends GetView<RegisterEmailController> {
                             email: registerEmailController
                                 .textFieldController.text,
                         fromScreen: "register",
-                        otpId: null,
+                        otpId: otpId,
+                        selectedPlayer: selectedPlayer,
                           ));
                     },
                     child: CustomTextView(

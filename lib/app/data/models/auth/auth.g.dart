@@ -11,7 +11,7 @@ _$AuthImpl _$$AuthImplFromJson(Map<String, dynamic> json) => _$AuthImpl(
       name: json['name'] as String,
       email: json['email'] as String,
       email_verified_at: json['email_verified_at'] as String?,
-      type: json['type'] as String,
+      type: json['type'] as String?,
       userable_type: json['userable_type'] as String,
       userable_id: (json['userable_id'] as num).toInt(),
       created_at: json['created_at'] as String,
