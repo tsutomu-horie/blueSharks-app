@@ -164,8 +164,18 @@ class Nav {
     ),
     GetPage(
       name: Routes.FAN_CLUB_CONFIRMATION,
-      page: () => const FanClubConfirmationScreen(email: "", id: "", isNotification: true, playerSelected: "",),
+      page: () => const FanClubConfirmationScreen(
+        email: "",
+        id: "",
+        isNotification: true,
+        playerSelected: "",
+      ),
       binding: FanClubConfirmationControllerBinding(),
+    ),
+    GetPage(
+      name: Routes.GALLERY,
+      page: () => const GalleryScreen(),
+      binding: GalleryControllerBinding(),
     ),
   ];
 }

@@ -81,3 +81,28 @@ class Full with _$Full {
 
   factory Full.fromJson(Map<String, dynamic> json) => _$FullFromJson(json);
 }
+
+@freezed
+class WallpaperCategory with _$WallpaperCategory {
+  const factory WallpaperCategory({
+    required int id,
+    required String name,
+    required List<Wallpaper> wallpapers,
+  }) = _WallpaperCategory;
+
+  factory WallpaperCategory.fromJson(Map<String, dynamic> json) =>
+      _$WallpaperCategoryFromJson(json);
+}
+
+@freezed
+class Wallpaper with _$Wallpaper {
+  const factory Wallpaper({
+    required int id,
+    required String name,
+    required String photo,
+  }) = _Wallpaper;
+
+  factory Wallpaper.fromJson(Map<String, dynamic> json) =>
+      _$WallpaperFromJson(json);
+}
+

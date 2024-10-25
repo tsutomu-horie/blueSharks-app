@@ -3,12 +3,15 @@ import 'dart:ffi';
 import 'package:get/get.dart';
 import 'package:hive/hive.dart';
 import 'package:intl/intl.dart';
+import 'package:koto_blue_sharks/app/data/api/auth/AuthToken.dart';
 import 'package:koto_blue_sharks/app/data/api/info/info_provider.dart';
 import 'package:koto_blue_sharks/app/data/api/match/match_provider.dart';
 import 'package:koto_blue_sharks/app/data/api/media/media_provider.dart';
 import 'package:koto_blue_sharks/app/data/api/member/member_provider.dart';
+import 'package:koto_blue_sharks/app/data/api/userPreferences/wallpaper_preference.dart';
 import 'package:koto_blue_sharks/app/data/models/info/post.dart';
 import 'package:koto_blue_sharks/app/data/models/match/match_result.dart';
+import 'package:koto_blue_sharks/app/data/models/media/media.dart';
 import 'package:koto_blue_sharks/app/data/models/member/member.dart';
 import 'package:koto_blue_sharks/utils/Constant.dart';
 
@@ -20,6 +23,8 @@ class HomeController extends GetxController {
       Rx<List<MatchResultBySeason>>([]);
   final text = "".obs;
   final Rx<List<Post>> topicsData = Rx([]);
+  final selectedWallpaper = "".obs;
+
 
   @override
   void onInit() async {
@@ -29,6 +34,43 @@ class HomeController extends GetxController {
     infoProvider.onInit();
     fetchMatchResult();
     getTopics();
+    getWallpaper();
+    print("getwallpaper 1");
+  }
+
+  void getWallpaper() async {
+    mediaProvider.onInit();
+
+    print("getwallpaper 2");
+    final data = await mediaProvider.fetchWallpaper((error){
+      print("error $error");
+    });
+
+    final wallpaper = WallpaperPreferences();
+    final wallpaperName = await wallpaper.getWallpaper();
+
+    if (wallpaperName != null) {
+      selectedWallpaper.value = filterWallpaper(wallpaperName, data) ?? "";
+    }
+
+    print("selectedWall ${wallpaperName}");
+  }
+
+  String? filterWallpaper(String wallpaperName, List<WallpaperCategory> wallpaperList) {
+    // Loop through all categories
+    for (var category in wallpaperList) {
+      // Search within the wallpapers of each category
+      for (var wallpaper in category.wallpapers) {
+        print("selectedWall 2 ${wallpaper.name}");
+        if (wallpaper.name == wallpaperName) {
+          print("selectedWall 2 ${wallpaper.name}");
+          // Return the photo URL when the name matches
+          return wallpaper.photo;
+        }
+      }
+    }
+    // Return null if no matching wallpaper is found
+    return null;
   }
 
   void getTopics() async {

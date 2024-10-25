@@ -244,7 +244,7 @@ class LoginScreen extends GetView<LoginController> {
             ),
             onPressed: () {
               if (globalKey.currentState!.validate()) {
-                loginController.login(context);
+                loginController.login(context, selectedPlayer);
               }
             },
             child: loginController.isLoadingLogin.value

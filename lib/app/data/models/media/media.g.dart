@@ -129,3 +129,35 @@ Map<String, dynamic> _$$FullImplToJson(_$FullImpl instance) =>
       'height': instance.height,
       'source_url': instance.source_url,
     };
+
+_$WallpaperCategoryImpl _$$WallpaperCategoryImplFromJson(
+        Map<String, dynamic> json) =>
+    _$WallpaperCategoryImpl(
+      id: (json['id'] as num).toInt(),
+      name: json['name'] as String,
+      wallpapers: (json['wallpapers'] as List<dynamic>)
+          .map((e) => Wallpaper.fromJson(e as Map<String, dynamic>))
+          .toList(),
+    );
+
+Map<String, dynamic> _$$WallpaperCategoryImplToJson(
+        _$WallpaperCategoryImpl instance) =>
+    <String, dynamic>{
+      'id': instance.id,
+      'name': instance.name,
+      'wallpapers': instance.wallpapers,
+    };
+
+_$WallpaperImpl _$$WallpaperImplFromJson(Map<String, dynamic> json) =>
+    _$WallpaperImpl(
+      id: (json['id'] as num).toInt(),
+      name: json['name'] as String,
+      photo: json['photo'] as String,
+    );
+
+Map<String, dynamic> _$$WallpaperImplToJson(_$WallpaperImpl instance) =>
+    <String, dynamic>{
+      'id': instance.id,
+      'name': instance.name,
+      'photo': instance.photo,
+    };

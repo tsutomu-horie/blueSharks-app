@@ -7,7 +7,9 @@ class Routes {
   static const CALENDAR = '/calendar';
   static const DETAIL_INFO = '/detail-info';
   static const FANCLUB = '/fanclub';
+  static const FAN_CLUB_CONFIRMATION = '/fan-club-confirmation';
   static const FORGOT_PASSWORD = '/forgot-password';
+  static const GALLERY = '/gallery';
   static const GAME_INFO = '/game-info';
   static const HOME = '/home';
   static const INFO = '/info';
@@ -29,5 +31,5 @@ class Routes {
   static const WALLPAPER_SET_PLAYER = '/wallpaper-set-player';
   static const WARNING_DIALOG = '/warning-dialog';
   static const WEBVIEW = '/webview';
-  static const FAN_CLUB_CONFIRMATION = '/fan-club-confirmation';
+  static const YEAR_FILTER_CONTROLLER = '/year-filter-controller';
 }
