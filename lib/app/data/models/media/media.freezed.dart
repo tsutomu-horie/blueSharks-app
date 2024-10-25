@@ -1189,3 +1189,357 @@ abstract class _Full implements Full {
   _$$FullImplCopyWith<_$FullImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }
+
+WallpaperCategory _$WallpaperCategoryFromJson(Map<String, dynamic> json) {
+  return _WallpaperCategory.fromJson(json);
+}
+
+/// @nodoc
+mixin _$WallpaperCategory {
+  int get id => throw _privateConstructorUsedError;
+  String get name => throw _privateConstructorUsedError;
+  List<Wallpaper> get wallpapers => throw _privateConstructorUsedError;
+
+  Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
+  @JsonKey(ignore: true)
+  $WallpaperCategoryCopyWith<WallpaperCategory> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class $WallpaperCategoryCopyWith<$Res> {
+  factory $WallpaperCategoryCopyWith(
+          WallpaperCategory value, $Res Function(WallpaperCategory) then) =
+      _$WallpaperCategoryCopyWithImpl<$Res, WallpaperCategory>;
+  @useResult
+  $Res call({int id, String name, List<Wallpaper> wallpapers});
+}
+
+/// @nodoc
+class _$WallpaperCategoryCopyWithImpl<$Res, $Val extends WallpaperCategory>
+    implements $WallpaperCategoryCopyWith<$Res> {
+  _$WallpaperCategoryCopyWithImpl(this._value, this._then);
+
+  // ignore: unused_field
+  final $Val _value;
+  // ignore: unused_field
+  final $Res Function($Val) _then;
+
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? id = null,
+    Object? name = null,
+    Object? wallpapers = null,
+  }) {
+    return _then(_value.copyWith(
+      id: null == id
+          ? _value.id
+          : id // ignore: cast_nullable_to_non_nullable
+              as int,
+      name: null == name
+          ? _value.name
+          : name // ignore: cast_nullable_to_non_nullable
+              as String,
+      wallpapers: null == wallpapers
+          ? _value.wallpapers
+          : wallpapers // ignore: cast_nullable_to_non_nullable
+              as List<Wallpaper>,
+    ) as $Val);
+  }
+}
+
+/// @nodoc
+abstract class _$$WallpaperCategoryImplCopyWith<$Res>
+    implements $WallpaperCategoryCopyWith<$Res> {
+  factory _$$WallpaperCategoryImplCopyWith(_$WallpaperCategoryImpl value,
+          $Res Function(_$WallpaperCategoryImpl) then) =
+      __$$WallpaperCategoryImplCopyWithImpl<$Res>;
+  @override
+  @useResult
+  $Res call({int id, String name, List<Wallpaper> wallpapers});
+}
+
+/// @nodoc
+class __$$WallpaperCategoryImplCopyWithImpl<$Res>
+    extends _$WallpaperCategoryCopyWithImpl<$Res, _$WallpaperCategoryImpl>
+    implements _$$WallpaperCategoryImplCopyWith<$Res> {
+  __$$WallpaperCategoryImplCopyWithImpl(_$WallpaperCategoryImpl _value,
+      $Res Function(_$WallpaperCategoryImpl) _then)
+      : super(_value, _then);
+
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? id = null,
+    Object? name = null,
+    Object? wallpapers = null,
+  }) {
+    return _then(_$WallpaperCategoryImpl(
+      id: null == id
+          ? _value.id
+          : id // ignore: cast_nullable_to_non_nullable
+              as int,
+      name: null == name
+          ? _value.name
+          : name // ignore: cast_nullable_to_non_nullable
+              as String,
+      wallpapers: null == wallpapers
+          ? _value._wallpapers
+          : wallpapers // ignore: cast_nullable_to_non_nullable
+              as List<Wallpaper>,
+    ));
+  }
+}
+
+/// @nodoc
+@JsonSerializable()
+class _$WallpaperCategoryImpl implements _WallpaperCategory {
+  const _$WallpaperCategoryImpl(
+      {required this.id,
+      required this.name,
+      required final List<Wallpaper> wallpapers})
+      : _wallpapers = wallpapers;
+
+  factory _$WallpaperCategoryImpl.fromJson(Map<String, dynamic> json) =>
+      _$$WallpaperCategoryImplFromJson(json);
+
+  @override
+  final int id;
+  @override
+  final String name;
+  final List<Wallpaper> _wallpapers;
+  @override
+  List<Wallpaper> get wallpapers {
+    if (_wallpapers is EqualUnmodifiableListView) return _wallpapers;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_wallpapers);
+  }
+
+  @override
+  String toString() {
+    return 'WallpaperCategory(id: $id, name: $name, wallpapers: $wallpapers)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$WallpaperCategoryImpl &&
+            (identical(other.id, id) || other.id == id) &&
+            (identical(other.name, name) || other.name == name) &&
+            const DeepCollectionEquality()
+                .equals(other._wallpapers, _wallpapers));
+  }
+
+  @JsonKey(ignore: true)
+  @override
+  int get hashCode => Object.hash(
+      runtimeType, id, name, const DeepCollectionEquality().hash(_wallpapers));
+
+  @JsonKey(ignore: true)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$WallpaperCategoryImplCopyWith<_$WallpaperCategoryImpl> get copyWith =>
+      __$$WallpaperCategoryImplCopyWithImpl<_$WallpaperCategoryImpl>(
+          this, _$identity);
+
+  @override
+  Map<String, dynamic> toJson() {
+    return _$$WallpaperCategoryImplToJson(
+      this,
+    );
+  }
+}
+
+abstract class _WallpaperCategory implements WallpaperCategory {
+  const factory _WallpaperCategory(
+      {required final int id,
+      required final String name,
+      required final List<Wallpaper> wallpapers}) = _$WallpaperCategoryImpl;
+
+  factory _WallpaperCategory.fromJson(Map<String, dynamic> json) =
+      _$WallpaperCategoryImpl.fromJson;
+
+  @override
+  int get id;
+  @override
+  String get name;
+  @override
+  List<Wallpaper> get wallpapers;
+  @override
+  @JsonKey(ignore: true)
+  _$$WallpaperCategoryImplCopyWith<_$WallpaperCategoryImpl> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+Wallpaper _$WallpaperFromJson(Map<String, dynamic> json) {
+  return _Wallpaper.fromJson(json);
+}
+
+/// @nodoc
+mixin _$Wallpaper {
+  int get id => throw _privateConstructorUsedError;
+  String get name => throw _privateConstructorUsedError;
+  String get photo => throw _privateConstructorUsedError;
+
+  Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
+  @JsonKey(ignore: true)
+  $WallpaperCopyWith<Wallpaper> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class $WallpaperCopyWith<$Res> {
+  factory $WallpaperCopyWith(Wallpaper value, $Res Function(Wallpaper) then) =
+      _$WallpaperCopyWithImpl<$Res, Wallpaper>;
+  @useResult
+  $Res call({int id, String name, String photo});
+}
+
+/// @nodoc
+class _$WallpaperCopyWithImpl<$Res, $Val extends Wallpaper>
+    implements $WallpaperCopyWith<$Res> {
+  _$WallpaperCopyWithImpl(this._value, this._then);
+
+  // ignore: unused_field
+  final $Val _value;
+  // ignore: unused_field
+  final $Res Function($Val) _then;
+
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? id = null,
+    Object? name = null,
+    Object? photo = null,
+  }) {
+    return _then(_value.copyWith(
+      id: null == id
+          ? _value.id
+          : id // ignore: cast_nullable_to_non_nullable
+              as int,
+      name: null == name
+          ? _value.name
+          : name // ignore: cast_nullable_to_non_nullable
+              as String,
+      photo: null == photo
+          ? _value.photo
+          : photo // ignore: cast_nullable_to_non_nullable
+              as String,
+    ) as $Val);
+  }
+}
+
+/// @nodoc
+abstract class _$$WallpaperImplCopyWith<$Res>
+    implements $WallpaperCopyWith<$Res> {
+  factory _$$WallpaperImplCopyWith(
+          _$WallpaperImpl value, $Res Function(_$WallpaperImpl) then) =
+      __$$WallpaperImplCopyWithImpl<$Res>;
+  @override
+  @useResult
+  $Res call({int id, String name, String photo});
+}
+
+/// @nodoc
+class __$$WallpaperImplCopyWithImpl<$Res>
+    extends _$WallpaperCopyWithImpl<$Res, _$WallpaperImpl>
+    implements _$$WallpaperImplCopyWith<$Res> {
+  __$$WallpaperImplCopyWithImpl(
+      _$WallpaperImpl _value, $Res Function(_$WallpaperImpl) _then)
+      : super(_value, _then);
+
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? id = null,
+    Object? name = null,
+    Object? photo = null,
+  }) {
+    return _then(_$WallpaperImpl(
+      id: null == id
+          ? _value.id
+          : id // ignore: cast_nullable_to_non_nullable
+              as int,
+      name: null == name
+          ? _value.name
+          : name // ignore: cast_nullable_to_non_nullable
+              as String,
+      photo: null == photo
+          ? _value.photo
+          : photo // ignore: cast_nullable_to_non_nullable
+              as String,
+    ));
+  }
+}
+
+/// @nodoc
+@JsonSerializable()
+class _$WallpaperImpl implements _Wallpaper {
+  const _$WallpaperImpl(
+      {required this.id, required this.name, required this.photo});
+
+  factory _$WallpaperImpl.fromJson(Map<String, dynamic> json) =>
+      _$$WallpaperImplFromJson(json);
+
+  @override
+  final int id;
+  @override
+  final String name;
+  @override
+  final String photo;
+
+  @override
+  String toString() {
+    return 'Wallpaper(id: $id, name: $name, photo: $photo)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$WallpaperImpl &&
+            (identical(other.id, id) || other.id == id) &&
+            (identical(other.name, name) || other.name == name) &&
+            (identical(other.photo, photo) || other.photo == photo));
+  }
+
+  @JsonKey(ignore: true)
+  @override
+  int get hashCode => Object.hash(runtimeType, id, name, photo);
+
+  @JsonKey(ignore: true)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$WallpaperImplCopyWith<_$WallpaperImpl> get copyWith =>
+      __$$WallpaperImplCopyWithImpl<_$WallpaperImpl>(this, _$identity);
+
+  @override
+  Map<String, dynamic> toJson() {
+    return _$$WallpaperImplToJson(
+      this,
+    );
+  }
+}
+
+abstract class _Wallpaper implements Wallpaper {
+  const factory _Wallpaper(
+      {required final int id,
+      required final String name,
+      required final String photo}) = _$WallpaperImpl;
+
+  factory _Wallpaper.fromJson(Map<String, dynamic> json) =
+      _$WallpaperImpl.fromJson;
+
+  @override
+  int get id;
+  @override
+  String get name;
+  @override
+  String get photo;
+  @override
+  @JsonKey(ignore: true)
+  _$$WallpaperImplCopyWith<_$WallpaperImpl> get copyWith =>
+      throw _privateConstructorUsedError;
+}
