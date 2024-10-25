@@ -13,7 +13,9 @@ import 'package:koto_blue_sharks/utils/app_color.dart';
 import 'controllers/login.controller.dart';
 
 class LoginScreen extends GetView<LoginController> {
-  const LoginScreen({super.key});
+  const LoginScreen(this.selectedPlayer, {super.key});
+
+  final String selectedPlayer;
 
   @override
   Widget build(BuildContext context) {
@@ -213,7 +215,7 @@ class LoginScreen extends GetView<LoginController> {
                         text: LocaleKeys.forgot_password_navigation.tr,
                         recognizer: TapGestureRecognizer()
                           ..onTap = () {
-                            Get.to(() => const ForgotPasswordScreen());
+                            Get.to(() => ForgotPasswordScreen(selectedPlayer));
                           },
                       ),
                       TextSpan(

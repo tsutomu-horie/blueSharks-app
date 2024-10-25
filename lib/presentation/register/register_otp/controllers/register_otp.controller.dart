@@ -18,17 +18,27 @@ class RegisterOtpController extends GetxController {
     otpProvider.onInit();
   }
   
-  void onSubmitOtp(String email, BuildContext context, String fromScreen, String? otpId) async {
+  void onSubmitOtp(String email, BuildContext context, String fromScreen, String? otpId, String selectedPlayer) async {
     print(otp.value);
     if (otp.isNotEmpty && otp.value.length > 4) {
       print("isfrom ${fromScreen}");
       if (fromScreen == "register") {
-        Get.to(() => RegisterMemberFanclubScreen(email: email,));
+        final response = await otpProvider.verifyOtp(otp.value, otp_id.value, (){
+          //todo::display error
+          print("error on submit otp ");
+        });
+
+
+
+        if (response != null) {
+          Get.to(() => RegisterMemberFanclubScreen(email: email, otpId: otp_id.value, selectedPlayer: selectedPlayer,));
+        }
+
       } else if (fromScreen == "forgotPassword" ) {
 
         final response = await otpProvider.verifyOtp(otp.value, otp_id.value, (){
           //todo::display error
-          print("error on submit otp");
+          print("error on submit otp ");
         });
 
 

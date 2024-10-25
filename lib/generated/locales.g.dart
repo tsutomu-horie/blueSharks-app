@@ -12,7 +12,7 @@ class LocaleKeys {
   LocaleKeys._();
   static const ok = 'ok';
   static const wallpaper_information = 'wallpaper_information';
-  static const wallpaper_setting = 'wallpaper_setting';
+  static const wallpaper_setting_en = 'wallpaper_setting_en';
   static const wallpaper_setting_title = 'wallpaper_setting_title';
   static const wallpaper_setting_desc = 'wallpaper_setting_desc';
   static const register_user_information = 'register_user_information';
@@ -174,13 +174,33 @@ class LocaleKeys {
   static const forgot_password_title = 'forgot_password_title';
   static const forgot_password_page_desc = 'forgot_password_page_desc';
   static const email_title = 'email_title';
+  static const fanclub_title = 'fanclub_title';
+  static const membership_card_display = 'membership_card_display';
+  static const membership_card_display_desc = 'membership_card_display_desc';
+  static const membership_information = 'membership_information';
+  static const membership_information_desc = 'membership_information_desc';
+  static const fan_club_site = 'fan_club_site';
+  static const your_register_information = 'your_register_information';
+  static const email_address = 'email_address';
+  static const fan_club_id = 'fan_club_id';
+  static const wallpaper_setting = 'wallpaper_setting';
+  static const notice = 'notice';
+  static const edit_information = 'edit_information';
+  static const privacy_policy_desc = 'privacy_policy_desc';
+  static const privacy_policy = 'privacy_policy';
+  static const and = 'and';
+  static const term_of_use = 'term_of_use';
+  static const privacy_policy_desc2 = 'privacy_policy_desc2';
+  static const edit_information_title = 'edit_information_title';
+  static const edit_information_email_warning =
+      'edit_information_email_warning';
 }
 
 class Locales {
   static const ja_JP = {
     'ok': '次',
     'wallpaper_information': '壁紙情報',
-    'wallpaper_setting': 'Wallpaper Settings',
+    'wallpaper_setting_en': 'Wallpaper Settings',
     'wallpaper_setting_title': 'お気に入りの選手を選択してください',
     'wallpaper_setting_desc': '江東ブルーシャークスアプリで好きな選手を1名選択し、ホームページの壁紙に設定できます。',
     'register_user_information': 'ユーザー登録情報',
@@ -354,5 +374,25 @@ class Locales {
     'forgot_password_page_desc':
         'ご登録済みのメールアドレスを入力してください。メールアドレス認証のため、ワンタイムパスワードを送信いたします。\n認証後にパスワード再設定用のリンクを送信いたします。',
     'email_title': '電子メール',
+    'fanclub_title': 'ファンクラブ会員認証',
+    'membership_card_display': '会員カードの表示',
+    'membership_card_display_desc':
+        'ファンクラブ会員証を表示するには、ファンクラブIDとメールアドレスの認証が必要です。下のボタンより認証を行ってください。',
+    'membership_information': '会員情報の認証',
+    'membership_information_desc': 'ファンクラブ会員情報の確認・入会はファンクラブホームページよりお願いいたします。',
+    'fan_club_site': 'ファンクラブサイト',
+    'your_register_information': 'あなたの登録情報',
+    'email_address': '電子メールアドレス',
+    'fan_club_id': 'ファンクラブID',
+    'wallpaper_setting': '壁紙設定',
+    'notice': '通知',
+    'edit_information': '情報を編集する',
+    'privacy_policy_desc': 'ご登録いただいたお客様情報の取り扱いについては、当社',
+    'privacy_policy': 'プライバシーポリシー',
+    'and': 'と',
+    'term_of_use': '利用規約',
+    'privacy_policy_desc2': 'をご確認ください。',
+    'edit_information_title': '登録情報の編集。',
+    'edit_information_email_warning': 'メールアドレスを変更した場合は、新しいメールアドレスの認証が必要です。',
   };
 }

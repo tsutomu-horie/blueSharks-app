@@ -10,7 +10,9 @@ import 'package:koto_blue_sharks/utils/app_color.dart';
 import 'controllers/forgot_password.controller.dart';
 
 class ForgotPasswordScreen extends GetView<ForgotPasswordController> {
-  const ForgotPasswordScreen({super.key});
+  const ForgotPasswordScreen(this.selectedPlayer, {super.key});
+
+  final String selectedPlayer;
 
   @override
   Widget build(BuildContext context) {
@@ -94,7 +96,7 @@ class ForgotPasswordScreen extends GetView<ForgotPasswordController> {
             ),
             onPressed: () {
               if (globalKey.currentState!.validate()) {
-                controller.sendOtp(context);
+                controller.sendOtp(context, selectedPlayer);
               }
             },
             child: controller.isLoadingLogin.value

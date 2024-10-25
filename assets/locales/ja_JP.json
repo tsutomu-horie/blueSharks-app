@@ -1,7 +1,7 @@
 {
   "ok": "次",
   "wallpaper_information": "壁紙情報",
-  "wallpaper_setting": "Wallpaper Settings",
+  "wallpaper_setting_en": "Wallpaper Settings",
   "wallpaper_setting_title": "お気に入りの選手を選択してください",
   "wallpaper_setting_desc": "江東ブルーシャークスアプリで好きな選手を1名選択し、ホームページの壁紙に設定できます。",
   "register_user_information": "ユーザー登録情報",
@@ -161,5 +161,25 @@
   "close_dialog": "近い",
   "forgot_password_title": "パスワードをお忘れですか？",
   "forgot_password_page_desc": "ご登録済みのメールアドレスを入力してください。メールアドレス認証のため、ワンタイムパスワードを送信いたします。\n認証後にパスワード再設定用のリンクを送信いたします。",
-  "email_title": "電子メール"
+  "email_title": "電子メール",
+  "fanclub_title": "ファンクラブ会員認証",
+  "membership_card_display": "会員カードの表示",
+  "membership_card_display_desc": "ファンクラブ会員証を表示するには、ファンクラブIDとメールアドレスの認証が必要です。下のボタンより認証を行ってください。",
+  "membership_information": "会員情報の認証",
+  "membership_information_desc": "ファンクラブ会員情報の確認・入会はファンクラブホームページよりお願いいたします。",
+  "fan_club_site": "ファンクラブサイト",
+  "your_register_information": "あなたの登録情報",
+  "email_address": "電子メールアドレス",
+  "fan_club_id": "ファンクラブID",
+  "wallpaper_setting": "壁紙設定",
+  "notice": "通知",
+  "edit_information": "情報を編集する",
+  "privacy_policy_desc": "ご登録いただいたお客様情報の取り扱いについては、当社",
+  "privacy_policy": "プライバシーポリシー",
+  "and": "と",
+  "term_of_use": "利用規約",
+  "privacy_policy_desc2": "をご確認ください。",
+  "edit_information_title": "登録情報の編集。",
+  "edit_information_email_warning": "メールアドレスを変更した場合は、新しいメールアドレスの認証が必要です。"
+
 }

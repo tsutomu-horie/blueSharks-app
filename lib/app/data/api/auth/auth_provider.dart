@@ -8,7 +8,7 @@ class AuthProvider extends GetConnect {
     httpClient.baseUrl = Constants.baseUrlAuthApi;
   }
 
-  Future<Auth> login(String username, String password, Function onError) async {
+  Future<Auth> login(String username, String password, Function() onError) async {
     final url = Uri.parse('login');
     print("load ${httpClient.baseUrl}${url.toString()}");
 
@@ -25,6 +25,33 @@ class AuthProvider extends GetConnect {
 
     if (response.hasError) {
       onError();
+      throw Exception('Failed to login: ${response.statusText}');
+    }
+
+    print("Login successful, received data: ${response.body}");
+
+    return Auth.fromJson(response.body["data"]);
+  }
+
+  Future<Auth> register(String acountId, String email, String otpId, String password, Function(String) onError) async {
+    final url = Uri.parse('register');
+    print("load ${httpClient.baseUrl}${url.toString()}");
+
+    final Map<String, dynamic> body = {
+      "account_id": acountId,
+      "email": email,
+      "otp_id": otpId,
+      "password": password,
+    };
+
+    final response = await post(
+      url.toString(), body, // Send the body in the request
+    );
+
+    print("Login successful2 , ${response.body}");
+
+    if (response.hasError) {
+      onError("${response.statusText}");
       throw Exception('Failed to login: ${response.statusText}');
     }
 
