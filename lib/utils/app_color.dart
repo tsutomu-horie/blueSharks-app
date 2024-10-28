@@ -34,6 +34,7 @@ abstract class BackgroundColor {
   static final muted = RGBA.rgba(224, 224, 224, 1);
   static final disabled = RGBA.rgba(224, 224, 224, 1);
   static final tertiary = RGBA.rgba(224, 224, 224, 1);
+  static final fafafa = RGBA.rgba(250, 250, 250, 1);
 }
 
 abstract class TextColor {

@@ -149,7 +149,7 @@ class Nav {
     ),
     GetPage(
       name: Routes.LOGIN,
-      page: () => const LoginScreen(""),
+      page: () => const LoginScreen("", false),
       binding: LoginControllerBinding(),
     ),
     GetPage(
@@ -176,6 +176,11 @@ class Nav {
       name: Routes.GALLERY,
       page: () => const GalleryScreen(),
       binding: GalleryControllerBinding(),
+    ),
+    GetPage(
+      name: Routes.REGISTER_EMAIL_FROM_HOME,
+      page: () => const RegisterEmailFromHomeScreen(""),
+      binding: RegisterEmailFromHomeControllerBinding(),
     ),
   ];
 }

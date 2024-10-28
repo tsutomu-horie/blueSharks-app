@@ -10,13 +10,31 @@ class Auth with _$Auth {
     required String name,
     required String email,
     String? email_verified_at,
-    required String? type,
-    required String userable_type,
-    required int userable_id,
-    required String created_at,
-    required String updated_at,
+    String? type,
+    String? userable_type,
+    int? userable_id,
+    String? created_at,
+    String? updated_at,
     required String access_token,
   }) = _Auth;
 
   factory Auth.fromJson(Map<String, dynamic> json) => _$AuthFromJson(json);
+}
+
+@freezed
+class UserData with _$UserData {
+  const factory UserData({
+    @JsonKey(name: 'account_id') required String accountId,
+    @JsonKey(name: 'created_at') required String createdAt,
+    required String email,
+    String? gender,
+    required int id,
+    @JsonKey(name: 'is_verified') required int isVerified,
+    @JsonKey(name: 'kan_first_name') String? kanFirstName,
+    @JsonKey(name: 'kan_last_name') String? kanLastName,
+    @JsonKey(name: 'kat_first_name') String? katFirstName,
+    @JsonKey(name: 'kat_last_name') String? katLastName,
+  }) = _UserData;
+
+  factory UserData.fromJson(Map<String, dynamic> json) => _$UserDataFromJson(json);
 }

@@ -32,4 +32,5 @@ class Routes {
   static const WARNING_DIALOG = '/warning-dialog';
   static const WEBVIEW = '/webview';
   static const YEAR_FILTER_CONTROLLER = '/year-filter-controller';
+  static const REGISTER_EMAIL_FROM_HOME = '/register-email-from-home';
 }
