@@ -1,6 +1,7 @@
 export 'package:koto_blue_sharks/presentation/FanClubConfirmation/fan_club_confirmation.screen.dart';
 export 'package:koto_blue_sharks/presentation/ListTopics/list_topics.screen.dart';
 export 'package:koto_blue_sharks/presentation/MatchDetail/match_detail.screen.dart';
+export 'package:koto_blue_sharks/presentation/RegisterEmailFromHome/register_email_from_home.screen.dart';
 export 'package:koto_blue_sharks/presentation/calendar/calendar.screen.dart';
 export 'package:koto_blue_sharks/presentation/detailInfo/detail_info.screen.dart';
 export 'package:koto_blue_sharks/presentation/fanclub/fanclub.screen.dart';

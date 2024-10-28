@@ -231,7 +231,7 @@ class RegisterEmailScreen extends GetView<RegisterEmailController> {
                         width: double.infinity,
                         child: TextButton(
                           onPressed: () {
-                            Get.to(() => LoginScreen(selectedPlayer));
+                            Get.to(() => LoginScreen(selectedPlayer, false));
                           },
                           child: CustomTextView(
                             LocaleKeys.login_now.tr,

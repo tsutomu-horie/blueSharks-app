@@ -13,9 +13,10 @@ import 'package:koto_blue_sharks/utils/app_color.dart';
 import 'controllers/login.controller.dart';
 
 class LoginScreen extends GetView<LoginController> {
-  const LoginScreen(this.selectedPlayer, {super.key});
+  const LoginScreen(this.selectedPlayer, this.isFromHome, {super.key});
 
   final String selectedPlayer;
+  final bool isFromHome;
 
   @override
   Widget build(BuildContext context) {
@@ -24,16 +25,17 @@ class LoginScreen extends GetView<LoginController> {
 
     return Scaffold(
       appBar: AppBar(
-        title: SvgPicture.asset(
+        backgroundColor: isFromHome ? BrandColor.main : Colors.white,
+        title: isFromHome ? CustomTextView(LocaleKeys.login.tr, color: Colors.white, type: TDSFontType.titleMedium,) :SvgPicture.asset(
           "assets/vectors/app_logo.svg",
           width: 56.w,
           height: 56.h,
         ),
         centerTitle: true,
         leading: IconButton(
-          icon: Icon(
+          icon: const Icon(
             Icons.arrow_back,
-            color: IconColor.primary,
+            color: Colors.white,
           ),
           // Change this to your desired icon
           onPressed: () {

@@ -22,9 +22,9 @@ class RegisterMemberFanclubController extends GetxController {
 
   void onRegister(String otpId, String email, Function showError, Function showSuccess, String playerName) async {
     print("onRrror");
-    // await apiProvider.register(idTextFieldController.text, email, otpId, passwordTextFieldController.text, (String errorText){
-    //   showError();
-    // });
+    await apiProvider.register(idTextFieldController.text, email, otpId, passwordTextFieldController.text, (String errorText){
+      showError();
+    });
     Get.offAll(() => FanClubConfirmationScreen(email: email, id: idTextFieldController.text, isNotification: true, playerSelected: playerName,));
     // showSuccess();
   }
