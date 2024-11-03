@@ -16,13 +16,11 @@ class AnalyticsService {
   }
 
   static void logPageView(String pageName) async {
+
+    await _analytics.logScreenView(screenName: pageName);
     if (kDebugMode) {
       print("log page ${pageName}");
     }
-    return _analytics.logEvent(
-      name: 'page_view',
-      parameters: {'page': pageName},
-    );
   }
 }
 
