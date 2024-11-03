@@ -194,6 +194,17 @@ class LocaleKeys {
   static const edit_information_title = 'edit_information_title';
   static const edit_information_email_warning =
       'edit_information_email_warning';
+  static const user_id_placeholder = 'user_id_placeholder';
+  static const change_password = 'change_password';
+  static const membership_renewal = 'membership_renewal';
+  static const your_not_login = 'your_not_login';
+  static const not_login_desc = 'not_login_desc';
+  static const menu = 'menu';
+  static const register = 'register';
+  static const email_field_desc = 'email_field_desc';
+  static const certification = 'certification';
+  static const membership_dialog_title = 'membership_dialog_title';
+  static const membership_dialog_message = 'membership_dialog_message';
 }
 
 class Locales {
@@ -394,5 +405,17 @@ class Locales {
     'privacy_policy_desc2': 'をご確認ください。',
     'edit_information_title': '登録情報の編集。',
     'edit_information_email_warning': 'メールアドレスを変更した場合は、新しいメールアドレスの認証が必要です。',
+    'user_id_placeholder': 'ここにIDを入力してください',
+    'change_password': 'パスワードを変更する',
+    'membership_renewal': '会員カードの更新',
+    'your_not_login': 'アカウントにログインしていません',
+    'not_login_desc': 'アプリへの登録が完了すると、ここに会員カードが表示されます。',
+    'menu': 'メニュー',
+    'register': '登録する',
+    'email_field_desc': '登録済みのメールアドレスを入力してください。その後、メールを確認するためのOTPコードを送信します。',
+    'certification': '認証',
+    'membership_dialog_title': '会員情報を確認中です',
+    'membership_dialog_message':
+        '最新のファンクラブ会員情報の確認には数時間から24時間程度かかります. 認証が完了すると、マイページに会員証が表示されます.',
   };
 }

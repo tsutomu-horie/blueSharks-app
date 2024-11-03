@@ -5,6 +5,28 @@ part 'media.freezed.dart';
 part 'media.g.dart';
 
 @freezed
+class Album with _$Album {
+  factory Album({
+    required int id, // Add media_details field
+    String? name, // Add media_details field
+    String? photo, // Add media_details field
+    String? date, // Add media_details field
+  }) = _Album;
+
+  factory Album.fromJson(Map<String, dynamic> json) => _$AlbumFromJson(json);
+}
+
+@freezed
+class AlbumDetail with _$AlbumDetail {
+  factory AlbumDetail({
+    required Album album, // Add media_details field
+    required Album galleries, // Add media_details field
+  }) = _AlbumDetail;
+
+  factory AlbumDetail.fromJson(Map<String, dynamic> json) => _$AlbumDetailFromJson(json);
+}
+
+@freezed
 class Media with _$Media {
   factory Media({
     required MediaDetails media_details, // Add media_details field

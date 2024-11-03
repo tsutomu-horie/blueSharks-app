@@ -6,13 +6,17 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:koto_blue_sharks/app/data/models/match/match_result.dart';
 import 'package:koto_blue_sharks/app/data/models/media/media.dart';
 import 'package:koto_blue_sharks/app/data/models/member/member.dart';
+import 'package:koto_blue_sharks/app/services/AnalyticsService.dart';
+import 'package:koto_blue_sharks/firebase_options.dart';
 
 import 'generated/locales.g.dart';
 import 'infrastructure/navigation/navigation.dart';
 import 'infrastructure/navigation/routes.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:firebase_analytics/firebase_analytics.dart';
+import 'package:firebase_core/firebase_core.dart';
 
-void main() async {
+Future<void> main() async {
   var initialRoute = await Routes.initialRoute;
 
   // Initialize Hive
@@ -25,12 +29,17 @@ void main() async {
   Hive.registerAdapter(TitleAdapter());
   Hive.registerAdapter(CustomFieldAdapter());
 
+  WidgetsFlutterBinding.ensureInitialized();
+
+  await AnalyticsService.init();
+
   runApp(Main(initialRoute));
 }
 
 class Main extends StatelessWidget {
   final String initialRoute;
   Main(this.initialRoute);
+
 
   @override
   Widget build(BuildContext context) {

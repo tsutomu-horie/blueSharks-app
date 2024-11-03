@@ -14,6 +14,376 @@ T _$identity<T>(T value) => value;
 final _privateConstructorUsedError = UnsupportedError(
     'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models');
 
+Album _$AlbumFromJson(Map<String, dynamic> json) {
+  return _Album.fromJson(json);
+}
+
+/// @nodoc
+mixin _$Album {
+  int get id => throw _privateConstructorUsedError; // Add media_details field
+  String? get name =>
+      throw _privateConstructorUsedError; // Add media_details field
+  String? get photo =>
+      throw _privateConstructorUsedError; // Add media_details field
+  String? get date => throw _privateConstructorUsedError;
+
+  Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
+  @JsonKey(ignore: true)
+  $AlbumCopyWith<Album> get copyWith => throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class $AlbumCopyWith<$Res> {
+  factory $AlbumCopyWith(Album value, $Res Function(Album) then) =
+      _$AlbumCopyWithImpl<$Res, Album>;
+  @useResult
+  $Res call({int id, String? name, String? photo, String? date});
+}
+
+/// @nodoc
+class _$AlbumCopyWithImpl<$Res, $Val extends Album>
+    implements $AlbumCopyWith<$Res> {
+  _$AlbumCopyWithImpl(this._value, this._then);
+
+  // ignore: unused_field
+  final $Val _value;
+  // ignore: unused_field
+  final $Res Function($Val) _then;
+
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? id = null,
+    Object? name = freezed,
+    Object? photo = freezed,
+    Object? date = freezed,
+  }) {
+    return _then(_value.copyWith(
+      id: null == id
+          ? _value.id
+          : id // ignore: cast_nullable_to_non_nullable
+              as int,
+      name: freezed == name
+          ? _value.name
+          : name // ignore: cast_nullable_to_non_nullable
+              as String?,
+      photo: freezed == photo
+          ? _value.photo
+          : photo // ignore: cast_nullable_to_non_nullable
+              as String?,
+      date: freezed == date
+          ? _value.date
+          : date // ignore: cast_nullable_to_non_nullable
+              as String?,
+    ) as $Val);
+  }
+}
+
+/// @nodoc
+abstract class _$$AlbumImplCopyWith<$Res> implements $AlbumCopyWith<$Res> {
+  factory _$$AlbumImplCopyWith(
+          _$AlbumImpl value, $Res Function(_$AlbumImpl) then) =
+      __$$AlbumImplCopyWithImpl<$Res>;
+  @override
+  @useResult
+  $Res call({int id, String? name, String? photo, String? date});
+}
+
+/// @nodoc
+class __$$AlbumImplCopyWithImpl<$Res>
+    extends _$AlbumCopyWithImpl<$Res, _$AlbumImpl>
+    implements _$$AlbumImplCopyWith<$Res> {
+  __$$AlbumImplCopyWithImpl(
+      _$AlbumImpl _value, $Res Function(_$AlbumImpl) _then)
+      : super(_value, _then);
+
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? id = null,
+    Object? name = freezed,
+    Object? photo = freezed,
+    Object? date = freezed,
+  }) {
+    return _then(_$AlbumImpl(
+      id: null == id
+          ? _value.id
+          : id // ignore: cast_nullable_to_non_nullable
+              as int,
+      name: freezed == name
+          ? _value.name
+          : name // ignore: cast_nullable_to_non_nullable
+              as String?,
+      photo: freezed == photo
+          ? _value.photo
+          : photo // ignore: cast_nullable_to_non_nullable
+              as String?,
+      date: freezed == date
+          ? _value.date
+          : date // ignore: cast_nullable_to_non_nullable
+              as String?,
+    ));
+  }
+}
+
+/// @nodoc
+@JsonSerializable()
+class _$AlbumImpl implements _Album {
+  _$AlbumImpl({required this.id, this.name, this.photo, this.date});
+
+  factory _$AlbumImpl.fromJson(Map<String, dynamic> json) =>
+      _$$AlbumImplFromJson(json);
+
+  @override
+  final int id;
+// Add media_details field
+  @override
+  final String? name;
+// Add media_details field
+  @override
+  final String? photo;
+// Add media_details field
+  @override
+  final String? date;
+
+  @override
+  String toString() {
+    return 'Album(id: $id, name: $name, photo: $photo, date: $date)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$AlbumImpl &&
+            (identical(other.id, id) || other.id == id) &&
+            (identical(other.name, name) || other.name == name) &&
+            (identical(other.photo, photo) || other.photo == photo) &&
+            (identical(other.date, date) || other.date == date));
+  }
+
+  @JsonKey(ignore: true)
+  @override
+  int get hashCode => Object.hash(runtimeType, id, name, photo, date);
+
+  @JsonKey(ignore: true)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$AlbumImplCopyWith<_$AlbumImpl> get copyWith =>
+      __$$AlbumImplCopyWithImpl<_$AlbumImpl>(this, _$identity);
+
+  @override
+  Map<String, dynamic> toJson() {
+    return _$$AlbumImplToJson(
+      this,
+    );
+  }
+}
+
+abstract class _Album implements Album {
+  factory _Album(
+      {required final int id,
+      final String? name,
+      final String? photo,
+      final String? date}) = _$AlbumImpl;
+
+  factory _Album.fromJson(Map<String, dynamic> json) = _$AlbumImpl.fromJson;
+
+  @override
+  int get id;
+  @override // Add media_details field
+  String? get name;
+  @override // Add media_details field
+  String? get photo;
+  @override // Add media_details field
+  String? get date;
+  @override
+  @JsonKey(ignore: true)
+  _$$AlbumImplCopyWith<_$AlbumImpl> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+AlbumDetail _$AlbumDetailFromJson(Map<String, dynamic> json) {
+  return _AlbumDetail.fromJson(json);
+}
+
+/// @nodoc
+mixin _$AlbumDetail {
+  Album get album =>
+      throw _privateConstructorUsedError; // Add media_details field
+  Album get galleries => throw _privateConstructorUsedError;
+
+  Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
+  @JsonKey(ignore: true)
+  $AlbumDetailCopyWith<AlbumDetail> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class $AlbumDetailCopyWith<$Res> {
+  factory $AlbumDetailCopyWith(
+          AlbumDetail value, $Res Function(AlbumDetail) then) =
+      _$AlbumDetailCopyWithImpl<$Res, AlbumDetail>;
+  @useResult
+  $Res call({Album album, Album galleries});
+
+  $AlbumCopyWith<$Res> get album;
+  $AlbumCopyWith<$Res> get galleries;
+}
+
+/// @nodoc
+class _$AlbumDetailCopyWithImpl<$Res, $Val extends AlbumDetail>
+    implements $AlbumDetailCopyWith<$Res> {
+  _$AlbumDetailCopyWithImpl(this._value, this._then);
+
+  // ignore: unused_field
+  final $Val _value;
+  // ignore: unused_field
+  final $Res Function($Val) _then;
+
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? album = null,
+    Object? galleries = null,
+  }) {
+    return _then(_value.copyWith(
+      album: null == album
+          ? _value.album
+          : album // ignore: cast_nullable_to_non_nullable
+              as Album,
+      galleries: null == galleries
+          ? _value.galleries
+          : galleries // ignore: cast_nullable_to_non_nullable
+              as Album,
+    ) as $Val);
+  }
+
+  @override
+  @pragma('vm:prefer-inline')
+  $AlbumCopyWith<$Res> get album {
+    return $AlbumCopyWith<$Res>(_value.album, (value) {
+      return _then(_value.copyWith(album: value) as $Val);
+    });
+  }
+
+  @override
+  @pragma('vm:prefer-inline')
+  $AlbumCopyWith<$Res> get galleries {
+    return $AlbumCopyWith<$Res>(_value.galleries, (value) {
+      return _then(_value.copyWith(galleries: value) as $Val);
+    });
+  }
+}
+
+/// @nodoc
+abstract class _$$AlbumDetailImplCopyWith<$Res>
+    implements $AlbumDetailCopyWith<$Res> {
+  factory _$$AlbumDetailImplCopyWith(
+          _$AlbumDetailImpl value, $Res Function(_$AlbumDetailImpl) then) =
+      __$$AlbumDetailImplCopyWithImpl<$Res>;
+  @override
+  @useResult
+  $Res call({Album album, Album galleries});
+
+  @override
+  $AlbumCopyWith<$Res> get album;
+  @override
+  $AlbumCopyWith<$Res> get galleries;
+}
+
+/// @nodoc
+class __$$AlbumDetailImplCopyWithImpl<$Res>
+    extends _$AlbumDetailCopyWithImpl<$Res, _$AlbumDetailImpl>
+    implements _$$AlbumDetailImplCopyWith<$Res> {
+  __$$AlbumDetailImplCopyWithImpl(
+      _$AlbumDetailImpl _value, $Res Function(_$AlbumDetailImpl) _then)
+      : super(_value, _then);
+
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? album = null,
+    Object? galleries = null,
+  }) {
+    return _then(_$AlbumDetailImpl(
+      album: null == album
+          ? _value.album
+          : album // ignore: cast_nullable_to_non_nullable
+              as Album,
+      galleries: null == galleries
+          ? _value.galleries
+          : galleries // ignore: cast_nullable_to_non_nullable
+              as Album,
+    ));
+  }
+}
+
+/// @nodoc
+@JsonSerializable()
+class _$AlbumDetailImpl implements _AlbumDetail {
+  _$AlbumDetailImpl({required this.album, required this.galleries});
+
+  factory _$AlbumDetailImpl.fromJson(Map<String, dynamic> json) =>
+      _$$AlbumDetailImplFromJson(json);
+
+  @override
+  final Album album;
+// Add media_details field
+  @override
+  final Album galleries;
+
+  @override
+  String toString() {
+    return 'AlbumDetail(album: $album, galleries: $galleries)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$AlbumDetailImpl &&
+            (identical(other.album, album) || other.album == album) &&
+            (identical(other.galleries, galleries) ||
+                other.galleries == galleries));
+  }
+
+  @JsonKey(ignore: true)
+  @override
+  int get hashCode => Object.hash(runtimeType, album, galleries);
+
+  @JsonKey(ignore: true)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$AlbumDetailImplCopyWith<_$AlbumDetailImpl> get copyWith =>
+      __$$AlbumDetailImplCopyWithImpl<_$AlbumDetailImpl>(this, _$identity);
+
+  @override
+  Map<String, dynamic> toJson() {
+    return _$$AlbumDetailImplToJson(
+      this,
+    );
+  }
+}
+
+abstract class _AlbumDetail implements AlbumDetail {
+  factory _AlbumDetail(
+      {required final Album album,
+      required final Album galleries}) = _$AlbumDetailImpl;
+
+  factory _AlbumDetail.fromJson(Map<String, dynamic> json) =
+      _$AlbumDetailImpl.fromJson;
+
+  @override
+  Album get album;
+  @override // Add media_details field
+  Album get galleries;
+  @override
+  @JsonKey(ignore: true)
+  _$$AlbumDetailImplCopyWith<_$AlbumDetailImpl> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
 Media _$MediaFromJson(Map<String, dynamic> json) {
   return _Media.fromJson(json);
 }

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import 'package:get/get.dart';
+import 'package:koto_blue_sharks/app/data/models/media/media.dart';
+import 'package:koto_blue_sharks/app/services/AnalyticsService.dart';
 
 import 'package:koto_blue_sharks/presentation/register/register_member_fanclub/register_member_fanclub.screen.dart';
 
@@ -56,12 +58,17 @@ class Nav {
     GetPage(
       name: Routes.MYPAGE,
       page: () => const MypageScreen(),
-      binding: MypageControllerBinding(),
+      binding: BindingsBuilder(() {
+        print("log page my");
+        // AnalyticsService.logPageView(Routes.MYPAGE);
+      }),
     ),
     GetPage(
       name: Routes.STADIUM,
       page: () => const StadiumScreen(),
-      binding: StadiumControllerBinding(),
+      binding: BindingsBuilder(() {
+        // AnalyticsService.logPageView(Routes.STADIUM);
+      }),
     ),
     GetPage(
       name: Routes.CALENDAR,
@@ -95,7 +102,7 @@ class Nav {
     ),
     GetPage(
       name: Routes.MEMBER,
-      page: () => const MemberScreen(),
+      page: () => const MemberScreen(null),
       binding: MemberControllerBinding(),
     ),
     GetPage(
@@ -120,7 +127,7 @@ class Nav {
     ),
     GetPage(
       name: Routes.WALLPAPER_SET_PLAYER,
-      page: () => const WallpaperSetPlayerScreen(),
+      page: () => const WallpaperSetPlayerScreen(null),
       binding: WallpaperSetPlayerControllerBinding(),
     ),
     GetPage(
@@ -181,6 +188,16 @@ class Nav {
       name: Routes.REGISTER_EMAIL_FROM_HOME,
       page: () => const RegisterEmailFromHomeScreen(""),
       binding: RegisterEmailFromHomeControllerBinding(),
+    ),
+    GetPage(
+      name: Routes.EDIT_PASSWORD,
+      page: () => const EditPasswordScreen(),
+      binding: EditPasswordControllerBinding(),
+    ),
+    GetPage(
+      name: Routes.GALLERY_SCREEN_DETAIL,
+      page: () => const GalleryScreenDetailScreen(null, ""),
+      binding: GalleryScreenDetailControllerBinding(),
     ),
   ];
 }

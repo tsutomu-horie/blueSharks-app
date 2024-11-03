@@ -1,9 +1,39 @@
+import 'package:flutter/cupertino.dart';
 import 'package:get/get.dart';
+import 'package:koto_blue_sharks/app/data/api/gallery/gallery_provider.dart';
+import 'package:koto_blue_sharks/app/data/models/media/media.dart';
+import 'package:koto_blue_sharks/generated/locales.g.dart';
+import 'package:koto_blue_sharks/utils/utils.dart';
 
 class GalleryController extends GetxController {
-  var selectedIndex = 0.obs;
+  var selectedIndex = 1.obs;
+  var selectedName = "Game".obs;
+  var selectedYear = "2024".obs;
+  final GalleryProvider apiProvider = GalleryProvider();
+  final RxList<Album> album = <Album>[].obs;
 
-  void onSwitch(int index) {
+  @override
+  void onInit() async {
+    super.onInit();
+    apiProvider.onInit();
+    getGalleryList();
+  }
+
+  void onSwitch(int index, String name) {
     selectedIndex.value = index;
+    selectedName.value =  name;
+  }
+
+  void getGalleryList() async {
+    final response = await apiProvider.fetchGalleryList(
+      selectedIndex.value,
+      selectedYear.value,
+          (){
+        // Utils.showError(context, LocaleKeys.error_login_message.tr, null );
+      },
+    );
+
+    album.value = response;
+    print("index == ${album.length}");
   }
 }

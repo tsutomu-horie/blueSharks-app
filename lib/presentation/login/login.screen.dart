@@ -33,9 +33,9 @@ class LoginScreen extends GetView<LoginController> {
         ),
         centerTitle: true,
         leading: IconButton(
-          icon: const Icon(
+          icon: Icon(
             Icons.arrow_back,
-            color: Colors.white,
+            color: isFromHome ? Colors.white : null,
           ),
           // Change this to your desired icon
           onPressed: () {

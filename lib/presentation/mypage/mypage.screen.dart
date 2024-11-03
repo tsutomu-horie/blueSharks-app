@@ -7,13 +7,20 @@ import 'package:get/get.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 import 'package:koto_blue_sharks/app/views/views/custom_text_view.dart';
 import 'package:koto_blue_sharks/app/views/views/edit_profile_bottom_sheet_view.dart';
+import 'package:koto_blue_sharks/app/views/views/member_card_view.dart';
 import 'package:koto_blue_sharks/generated/locales.g.dart';
+import 'package:koto_blue_sharks/presentation/EditPassword/edit_password.screen.dart';
 import 'package:koto_blue_sharks/presentation/RegisterEmailFromHome/register_email_from_home.screen.dart';
+import 'package:koto_blue_sharks/presentation/forgotPassword/forgot_password.screen.dart';
 import 'package:koto_blue_sharks/presentation/login/login.screen.dart';
 import 'package:koto_blue_sharks/presentation/register/register_email/register_email.screen.dart';
+import 'package:koto_blue_sharks/presentation/reset_password/reset_password.screen.dart';
 import 'package:koto_blue_sharks/utils/app_color.dart';
+import 'package:qr_flutter/qr_flutter.dart';
+import 'package:shimmer/shimmer.dart';
 
 import 'controllers/mypage.controller.dart';
+
 
 class MypageScreen extends GetView<MypageController> {
   const MypageScreen({super.key});
@@ -28,17 +35,22 @@ class MypageScreen extends GetView<MypageController> {
           child: Obx(() {
             return Column(
               children: [
+                // QrImageView(
+                //   data: '1234567890',
+                //   version: QrVersions.auto,
+                //   size: 200.0,
+                // ),
                 Container(
                     padding:
                         EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
-                    child: (controller.isLogin.value && controller.profileData.value?.isVerified != 0
+                    child: (controller.isLogin.value &&
+                            controller.profileData.value?.isVerified == 0
                         ? Column(
                             children: [
                               AspectRatio(
                                 aspectRatio: 16 / 10,
-                                child: Container(
-                                  color: Colors.red,
-                                  width: double.infinity,
+                                child: !controller.isLoading.value ? const MemberCardView("beginner") : Container(
+                                  child: shimmer(),
                                 ),
                               ),
                               Row(
@@ -68,7 +80,7 @@ class MypageScreen extends GetView<MypageController> {
                                                 width: 8.w,
                                               ),
                                               CustomTextView(
-                                                "**会員カードの更新",
+                                                LocaleKeys.membership_renewal.tr,
                                                 type: TDSFontType.labelLarge,
                                                 color: Colors.white,
                                               ),
@@ -104,7 +116,7 @@ class MypageScreen extends GetView<MypageController> {
                                     height: 16.h,
                                   ),
                                   CustomTextView(
-                                    "**アカウントにログインしていません",
+                                    LocaleKeys.your_not_login.tr,
                                     style:
                                         TextStyle(fontWeight: FontWeight.w700),
                                   ),
@@ -112,7 +124,7 @@ class MypageScreen extends GetView<MypageController> {
                                     height: 4.h,
                                   ),
                                   CustomTextView(
-                                    "**アプリへの登録が完了すると、ここに会員カードが表示されます。",
+                                    LocaleKeys.not_login_desc.tr,
                                     type: TDSFontType.bodyTextMedium,
                                     color: TextColor.secondary,
                                     align: TextAlign.center,
@@ -130,7 +142,7 @@ class MypageScreen extends GetView<MypageController> {
                         width: double.infinity,
                         color: BrandColor.main,
                         child: CustomTextView(
-                          "**あなたの登録情報",
+                         LocaleKeys.your_register_information.tr,
                           type: TDSFontType.titleSmall,
                           color: Colors.white,
                         ),
@@ -161,12 +173,15 @@ class MypageScreen extends GetView<MypageController> {
                                   padding: EdgeInsets.symmetric(
                                       vertical: 22.h, horizontal: 16.w),
                                   child: Flexible(
-                                    child: CustomTextView(
-                                      controller.profileData.value?.email ?? "",
-                                      align: TextAlign.start,
-                                      color: TextColor.primary,
-                                      type: TDSFontType.bodyTextMedium,
-                                    ),
+                                    child: Obx(() {
+                                      return CustomTextView(
+                                        controller.profileData.value?.email ??
+                                            "",
+                                        align: TextAlign.start,
+                                        color: TextColor.primary,
+                                        type: TDSFontType.bodyTextMedium,
+                                      );
+                                    }),
                                   )),
                             ),
                           ]),
@@ -199,13 +214,16 @@ class MypageScreen extends GetView<MypageController> {
                                   padding: EdgeInsets.symmetric(
                                       vertical: 12.h, horizontal: 16.w),
                                   child: Flexible(
-                                    child: CustomTextView(
-                                      controller.profileData.value?.accountId ??
-                                          "",
-                                      align: TextAlign.start,
-                                      color: TextColor.primary,
-                                      type: TDSFontType.bodyTextMedium,
-                                    ),
+                                    child: Obx(() {
+                                      return CustomTextView(
+                                        controller
+                                                .profileData.value?.accountId ??
+                                            "",
+                                        align: TextAlign.start,
+                                        color: TextColor.primary,
+                                        type: TDSFontType.bodyTextMedium,
+                                      );
+                                    }),
                                   )),
                             ),
                           ]),
@@ -238,25 +256,15 @@ class MypageScreen extends GetView<MypageController> {
                                 padding: EdgeInsets.symmetric(
                                     vertical: 12.h, horizontal: 16.w),
                                 child: Flexible(
-                                  child: FutureBuilder<String>(
-                                    future: controller.getWallpaper(),
-                                    // Your Future<String>
-                                    builder: (context, snapshot) {
-                                      if (snapshot.connectionState ==
-                                          ConnectionState.waiting) {
-                                        return const CircularProgressIndicator(); // Loading indicator
-                                      } else if (snapshot.hasError) {
-                                        return Text('Error: ${snapshot.error}');
-                                      } else {
-                                        return CustomTextView(
-                                          snapshot.data ?? "",
-                                          align: TextAlign.start,
-                                          color: TextColor.primary,
-                                          type: TDSFontType.bodyTextMedium,
-                                        );
-                                      }
-                                    },
-                                  ),
+                                  child: Obx(() {
+                                    return CustomTextView(
+                                      controller.playerNameController.value ??
+                                          "",
+                                      align: TextAlign.start,
+                                      color: TextColor.primary,
+                                      type: TDSFontType.bodyTextMedium,
+                                    );
+                                  }),
                                 ),
                               ),
                             ),
@@ -284,32 +292,23 @@ class MypageScreen extends GetView<MypageController> {
                                   ),
                                 )),
                             Flexible(
-                              child: FutureBuilder<String>(
-                                future: controller.getNotificationSetting(),
-                                // Your Future<String>
-                                builder: (context, snapshot) {
-                                  if (snapshot.connectionState ==
-                                      ConnectionState.waiting) {
-                                    return const CircularProgressIndicator(); // Loading indicator
-                                  } else if (snapshot.hasError) {
-                                    return Text('Error: ${snapshot.error}');
-                                  } else {
-                                    return Container(
-                                        width: double.infinity,
-                                        height: 44.h,
-                                        padding: EdgeInsets.symmetric(
-                                            vertical: 12.h, horizontal: 16.w),
-                                        child: Flexible(
-                                          child: CustomTextView(
-                                            snapshot.data ?? "active",
-                                            align: TextAlign.start,
-                                            color: TextColor.primary,
-                                            type: TDSFontType.bodyTextMedium,
-                                          ),
-                                        ));
-                                  }
-                                },
-                              ),
+                              child: Container(
+                                  width: double.infinity,
+                                  height: 44.h,
+                                  padding: EdgeInsets.symmetric(
+                                      vertical: 12.h, horizontal: 16.w),
+                                  child: Flexible(
+                                    child: Obx(() {
+                                      return CustomTextView(
+                                        controller.isSelectNotificaiton.value
+                                            ? "active"
+                                            : "nonactive",
+                                        align: TextAlign.start,
+                                        color: TextColor.primary,
+                                        type: TDSFontType.bodyTextMedium,
+                                      );
+                                    }),
+                                  )),
                             ),
                             SizedBox(
                               height: 16.h,
@@ -329,8 +328,28 @@ class MypageScreen extends GetView<MypageController> {
                             height: 48.h,
                             child: OutlinedButton(
                               onPressed: () async {
-                                controller.playerNameController.text = await controller.getWallpaper();
-                                editProfileBottomSheet(controller, context);
+                                controller.emailController.text =
+                                    await controller.profileData.value?.email ??
+                                        "";
+
+                                controller.idController.text = await controller
+                                        .profileData.value?.accountId ??
+                                    "";
+                                editProfileBottomSheet(controller, context,
+                                    (email, id, wallpaper,
+                                        isNotifActive) async {
+                                  print("get id ${id}");
+                                  controller.playerNameController.value =
+                                      wallpaper;
+                                  controller.emailController.text = email;
+                                  controller.idController.text = id;
+                                  controller.isSelectNotificaiton.value =
+                                      isNotifActive;
+
+                                  await Future.delayed(
+                                      const Duration(seconds: 1));
+                                  controller.getToken();
+                                }, controller.profileData.value?.email ?? "");
                               },
                               child: Row(
                                 mainAxisSize: MainAxisSize.max,
@@ -385,7 +404,7 @@ class MypageScreen extends GetView<MypageController> {
                           //todo:: custom font
                           Flexible(
                             child: Text(
-                              "**メニュー",
+                              LocaleKeys.menu.tr,
                               style: TextStyle(
                                   fontSize: 20.sp,
                                   color: BrandColor.main,
@@ -452,7 +471,7 @@ class MypageScreen extends GetView<MypageController> {
                                   child: OutlinedButton(
                                     onPressed: () async {
                                       Get.to(LoginScreen(
-                                          await controller.getWallpaper(),
+                                          controller.playerNameController.value,
                                           true));
                                     },
                                     style: ButtonStyle(
@@ -479,8 +498,7 @@ class MypageScreen extends GetView<MypageController> {
                                   height: 48.h,
                                   child: OutlinedButton(
                                     onPressed: () {
-                                      editProfileBottomSheet(
-                                          controller, context);
+                                      Get.to(() => EditPasswordScreen());
                                     },
                                     style: ButtonStyle(
                                       side: WidgetStateProperty.all(BorderSide(
@@ -516,7 +534,8 @@ class MypageScreen extends GetView<MypageController> {
                                   child: OutlinedButton(
                                     onPressed: () async {
                                       Get.to(RegisterEmailFromHomeScreen(
-                                          await controller.getWallpaper()));
+                                          controller
+                                              .playerNameController.value));
                                     },
                                     style: ButtonStyle(
                                       side: WidgetStateProperty.all(BorderSide(
@@ -524,7 +543,7 @@ class MypageScreen extends GetView<MypageController> {
                                                   .main) // Set your desired color here
                                           ),
                                     ),
-                                    child: CustomTextView("**登録する",
+                                    child: CustomTextView(LocaleKeys.register.tr,
                                         type: TDSFontType.titleSmall,
                                         color: BrandColor.main),
                                   ),
@@ -603,4 +622,19 @@ class MypageScreen extends GetView<MypageController> {
           }),
         ));
   }
+}
+
+Widget shimmer() {
+  return Shimmer.fromColors(
+    baseColor: BorderColor.disabled,
+    highlightColor: BorderColor.subtle,
+    child: Container(
+      width: double.infinity,
+      height: 200.h,
+      decoration: BoxDecoration(
+        color: BorderColor.disabled,
+        borderRadius: BorderRadius.all(Radius.circular(4.r)),
+      ),
+    ),
+  );
 }

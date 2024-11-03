@@ -1,4 +1,5 @@
 import 'package:get/get.dart';
+import 'package:koto_blue_sharks/app/data/api/auth/AuthToken.dart';
 import 'package:koto_blue_sharks/app/data/models/auth/auth.dart';
 import 'package:koto_blue_sharks/utils/Constant.dart';
 
@@ -86,6 +87,40 @@ class AuthProvider extends GetConnect {
     return response;
   }
 
+  Future<Response> updateProfile(String email, String accountId, String gender,Function onError) async {
+    final url = Uri.parse('profile');
+    print("load ${httpClient.baseUrl}${url.toString()}");
+
+    final auth = AuthToken();
+    final token = await auth.getAccessToken();
+
+    final headers = {
+      'Authorization': 'Bearer $token',
+      'Content-Type': 'application/json', // Optional, depending on the API
+    };
+
+    final Map<String, dynamic> body = {
+      "email": email,
+      "account_id": accountId,
+      "gender": "male",
+    };
+
+    final response = await patch(
+      url.toString(), body, headers: headers // Send the body in the request
+    );
+
+    print("Login successful2 , ${response.body}");
+
+    if (response.hasError) {
+      onError();
+      throw Exception('Failed to login: ${response.statusText}');
+    }
+
+    print("Login successful, received data: ${response.body}");
+
+    return response;
+  }
+
   Future<UserData> getProfile(String token, Function onError) async {
     final url = Uri.parse('profile');
     print("load ${httpClient.baseUrl}${url.toString()}");
@@ -108,7 +143,6 @@ class AuthProvider extends GetConnect {
 
     print("Login successful, received data: ${response.body}");
 
-    return UserData.fromJson(response.body["data"]);
     return UserData.fromJson(response.body["data"]);
   }
 

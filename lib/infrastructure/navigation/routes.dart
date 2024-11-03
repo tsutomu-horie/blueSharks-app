@@ -6,6 +6,7 @@ class Routes {
 
   static const CALENDAR = '/calendar';
   static const DETAIL_INFO = '/detail-info';
+  static const EDIT_PASSWORD = '/edit-password';
   static const FANCLUB = '/fanclub';
   static const FAN_CLUB_CONFIRMATION = '/fan-club-confirmation';
   static const FORGOT_PASSWORD = '/forgot-password';
@@ -21,6 +22,7 @@ class Routes {
   static const MYPAGE = '/mypage';
   static const PLAYER_DETAIL = '/player-detail';
   static const REGISTER_EMAIL = '/register-email';
+  static const REGISTER_EMAIL_FROM_HOME = '/register-email-from-home';
   static const REGISTER_MEMBER_FANCLUB = '/register-member-fanclub';
   static const REGISTER_OTP = '/register-otp';
   static const RESET_PASSWORD = '/forgot-password';
@@ -32,5 +34,5 @@ class Routes {
   static const WARNING_DIALOG = '/warning-dialog';
   static const WEBVIEW = '/webview';
   static const YEAR_FILTER_CONTROLLER = '/year-filter-controller';
-  static const REGISTER_EMAIL_FROM_HOME = '/register-email-from-home';
+  static const GALLERY_SCREEN_DETAIL = '/gallery-screen-detail';
 }

@@ -18,7 +18,7 @@ class RegisterOtpController extends GetxController {
     otpProvider.onInit();
   }
   
-  void onSubmitOtp(String email, BuildContext context, String fromScreen, String? otpId, String selectedPlayer) async {
+  void onSubmitOtp(String email, BuildContext context, String fromScreen, String? otpId, String selectedPlayer, Function? onSuccess) async {
     print(otp.value);
     if (otp.isNotEmpty && otp.value.length > 4) {
       print("isfrom ${fromScreen}");
@@ -34,7 +34,7 @@ class RegisterOtpController extends GetxController {
           Get.to(() => RegisterMemberFanclubScreen(email: email, otpId: otp_id.value, selectedPlayer: selectedPlayer,));
         }
 
-      } else if (fromScreen == "forgotPassword" ) {
+      } else if (fromScreen == "forgotPassword" || fromScreen == "home" ) {
 
         final response = await otpProvider.verifyOtp(otp.value, otp_id.value, (){
           //todo::display error
@@ -46,6 +46,14 @@ class RegisterOtpController extends GetxController {
         if (response != null) {
           Get.to(() => ResetPasswordScreen(otp_id.value));
         }
+
+
+      } else if (fromScreen == "editProfile") {
+        Get.back();
+      }
+
+      if (onSuccess != null) {
+        onSuccess();
       }
     } else {
       WarningDialogView.showWarningDialog(
