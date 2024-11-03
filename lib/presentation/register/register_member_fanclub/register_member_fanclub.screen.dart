@@ -223,7 +223,7 @@ class RegisterMemberFanclubScreen
                           ),
                         ),
                   ),
-                  CustomTextView("*パスワードは半角英数8〜12文字以内を入力してください。", type: TDSFontType.bodyTextMedium, color: TextColor.tertiary,)
+                  CustomTextView(LocaleKeys.password_desc.tr, type: TDSFontType.bodyTextMedium, color: TextColor.tertiary,)
                 ],
               ),
             ),
@@ -242,14 +242,14 @@ class RegisterMemberFanclubScreen
                 print(globalKey.currentState!.validate());
                 if (globalKey.currentState!.validate()) {
                   registerMemberFanclubController.onRegister(otpId, email, (){
-                    Utils.showError(context, "**会員情報を確認中です", "最新のファンクラブ会員情報の確認には数時間から24時間程度かかります. 認証が完了すると、マイページに会員証が表示されます.");
+                    Utils.showError(context, LocaleKeys.membership_dialog_title, LocaleKeys.membership_dialog_message);
                   }, (){
                     // Get.offAll(() => FanClubConfirmationScreen(email: email, id: ,));
                   }, selectedPlayer);
                 }
               },
               child: CustomTextView(
-                "**認証",
+                LocaleKeys.certification.tr,
                 color: BrandColor.content,
               ),
             ),

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "853500340974",
+    "project_id": "koto-blue-sharks",
+    "storage_bucket": "koto-blue-sharks.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:853500340974:android:fb311e833b0b7831f5a1ff",
+        "android_client_info": {
+          "package_name": "jp.bluesharks.koto_blue_sharks"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD1hV92AxkKP1pReZEXzffUlP8NjunJep4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

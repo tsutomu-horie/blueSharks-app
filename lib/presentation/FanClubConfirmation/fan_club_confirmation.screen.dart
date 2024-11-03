@@ -32,7 +32,7 @@ class FanClubConfirmationScreen extends GetView<FanClubConfirmationController> {
     controller.isSelectNotificaiton.value = isNotification;
     controller.emailController.text = email;
     controller.idController.text = id;
-    controller.playerNameController.text = playerSelected;
+    controller.playerNameController.value = playerSelected;
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -315,7 +315,9 @@ class FanClubConfirmationScreen extends GetView<FanClubConfirmationController> {
                 width: double.infinity,
                 child: OutlinedButton(
                   onPressed: () {
-                    editProfileBottomSheet(controller, context);
+                    editProfileBottomSheet(controller, context, (email, id, wallpaper, isNotifActive){
+
+                    }, email);
                   },
                   child: Row(
                     mainAxisSize: MainAxisSize.max,

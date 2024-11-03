@@ -22,6 +22,10 @@ class SplashController extends GetxController {
   void onInit() async {
     super.onInit();
     getAppVersion();
+    PackageInfo packageInfo = await PackageInfo.fromPlatform();
+    String bundleID = packageInfo.packageName;
+    print("Bundle ID: $bundleID"); // This will print in the console on app start
+
 
     memberProvider.onInit();
 
@@ -66,7 +70,7 @@ class SplashController extends GetxController {
     } finally {
       final auth = AuthToken();
       final token = await auth.getAccessToken();
-
+      print("token get ${token}");
       isLoading.value = false;
 
       if (token != null) {

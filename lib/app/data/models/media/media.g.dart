@@ -44,6 +44,33 @@ class TitleAdapter extends TypeAdapter<Title> {
 // JsonSerializableGenerator
 // **************************************************************************
 
+_$AlbumImpl _$$AlbumImplFromJson(Map<String, dynamic> json) => _$AlbumImpl(
+      id: (json['id'] as num).toInt(),
+      name: json['name'] as String?,
+      photo: json['photo'] as String?,
+      date: json['date'] as String?,
+    );
+
+Map<String, dynamic> _$$AlbumImplToJson(_$AlbumImpl instance) =>
+    <String, dynamic>{
+      'id': instance.id,
+      'name': instance.name,
+      'photo': instance.photo,
+      'date': instance.date,
+    };
+
+_$AlbumDetailImpl _$$AlbumDetailImplFromJson(Map<String, dynamic> json) =>
+    _$AlbumDetailImpl(
+      album: Album.fromJson(json['album'] as Map<String, dynamic>),
+      galleries: Album.fromJson(json['galleries'] as Map<String, dynamic>),
+    );
+
+Map<String, dynamic> _$$AlbumDetailImplToJson(_$AlbumDetailImpl instance) =>
+    <String, dynamic>{
+      'album': instance.album,
+      'galleries': instance.galleries,
+    };
+
 _$MediaImpl _$$MediaImplFromJson(Map<String, dynamic> json) => _$MediaImpl(
       media_details:
           MediaDetails.fromJson(json['media_details'] as Map<String, dynamic>),

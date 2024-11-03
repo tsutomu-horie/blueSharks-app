@@ -5,7 +5,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'package:hive/hive.dart';
 import 'package:koto_blue_sharks/app/data/models/member/member.dart';
-import 'package:koto_blue_sharks/app/data/models/member/views/memberlist_view.dart';
+import 'package:koto_blue_sharks/app/views/views/member/views/memberlist_view.dart';
 import 'package:koto_blue_sharks/app/views/views/custom_image_view.dart';
 import 'package:koto_blue_sharks/app/views/views/custom_text_view.dart';
 import 'package:koto_blue_sharks/app/views/views/default_header_title_view.dart';
@@ -16,7 +16,8 @@ import 'package:koto_blue_sharks/utils/match+extensions.dart';
 import 'controllers/member.controller.dart';
 
 class MemberScreen extends GetView<MemberController> {
-  const MemberScreen({super.key});
+  const MemberScreen(this.onSet, {super.key});
+  final Function(String)? onSet;
 
   @override
   Widget build(BuildContext context) {
@@ -38,7 +39,7 @@ class MemberScreen extends GetView<MemberController> {
             height: 1.h,
             color: BorderColor.primary,
           ),
-          MemberlistView(memberController, isSetWallpaper: false,),
+          MemberlistView(memberController, isSetWallpaper: false, onSet: onSet),
 
         ],
       ),

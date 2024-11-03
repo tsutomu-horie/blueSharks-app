@@ -4,7 +4,8 @@ class WallpaperPreferences {
   final _storage = const FlutterSecureStorage();
 
   Future<void> saveWallpaper(String wallpaper) async {
-    await _storage.write(key: 'userWallpaper', value: wallpaper.replaceAll('"', ''));
+    print("userWallpaper is ${wallpaper}");
+    await _storage.write(key: 'userWallpaper', value: wallpaper);
   }
 
   Future<String?> getWallpaper() async {

@@ -2,66 +2,189 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import 'package:get/get.dart';
+import 'package:hive/hive.dart';
+import 'package:koto_blue_sharks/app/views/views/custom_image_view.dart';
+import 'package:koto_blue_sharks/app/views/views/custom_text_view.dart';
 import 'package:koto_blue_sharks/app/views/views/default_header_title_view.dart';
 import 'package:koto_blue_sharks/app/views/views/year_filter_controller_view.dart';
+import 'package:koto_blue_sharks/generated/locales.g.dart';
+import 'package:koto_blue_sharks/presentation/GalleryScreenDetail/gallery_screen_detail.screen.dart';
+import 'package:koto_blue_sharks/utils/app_color.dart';
+import 'package:koto_blue_sharks/utils/date_formatter.dart';
 
 import 'controllers/gallery.controller.dart';
 
 class GalleryScreen extends GetView<GalleryController> {
   const GalleryScreen({super.key});
+
   @override
   Widget build(BuildContext context) {
     final GalleryController controller = Get.put(GalleryController());
 
     return Scaffold(
-      backgroundColor: Colors.white,
-      body: Column(
-        children: [
-          DefaultHeaderTitleView("**ギャラリー", "Gallery".toUpperCase()),
-          Padding(padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
-            child: Container(
-              padding: EdgeInsets.all(4),
-              decoration: BoxDecoration(
-                color: Colors.white, // Background color
-                borderRadius: BorderRadius.circular(30), // Rounded container
-                border: Border.all(color: Colors.grey.shade300), // Outer border
+        backgroundColor: Colors.white,
+        body: SingleChildScrollView(
+          child: Column(
+            children: [
+              DefaultHeaderTitleView(LocaleKeys.gallery.tr, LocaleKeys.gallery_en.tr.toUpperCase()),
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
+                child: Container(
+                  padding: EdgeInsets.all(4.w),
+                  decoration: BoxDecoration(
+                    color: Colors.white, // Background color
+                    borderRadius: BorderRadius.circular(30), // Rounded container
+                    border:
+                        Border.all(color: Colors.grey.shade300), // Outer border
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      buildToggleOption("GAME", 1),
+                      SizedBox(
+                        width: 8.w,
+                      ),
+                      Container(
+                        width: 1.w,
+                        height: 16.h,
+                        color: Colors.grey,
+                      ),
+                      SizedBox(
+                        width: 8.w,
+                      ),
+                      buildToggleOption("EVENT", 2),
+                      SizedBox(
+                        width: 8.w,
+                      ),
+                      Container(
+                        width: 1.w,
+                        height: 16.h,
+                        color: Colors.grey,
+                      ),
+                      SizedBox(
+                        width: 8.w,
+                      ),
+                      buildToggleOption("OTHER", 3),
+                    ],
+                  ),
+                ),
               ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  buildToggleOption("GAME", 0),
-                  SizedBox(width: 8.w,),
-                  Container(width: 1.w, height: 16.h, color: Colors.grey,),
-                  SizedBox(width: 8.w,),
-                  buildToggleOption("EVENT", 1),
-                  SizedBox(width: 8.w,),
-                  Container(width: 1.w, height: 16.h, color: Colors.grey,),
-                  SizedBox(width: 8.w,),
-                  buildToggleOption("OTHER", 2),
-                ],
+              YearFilter(
+                years: List.generate(DateTime.now().year - 2019 + 1,
+                    (index) => DateTime.now().year - index),
+                // Generate year list dynamically
+                initialSelectedYear: 2024,
+                selectedColor: Colors.blue,
+                unselectedColor: Colors.grey.shade200,
+                selectedTextColor: Colors.white,
+                unselectedTextColor: Colors.black,
+                onYearSelected: (selectedYear) {
+                  // Handle year selection
+                  print("Selected Year: $selectedYear");
+                },
               ),
-            ),
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 16.w),
+                child: Obx(() {
+                  return ListView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: controller.album.length,
+                      itemBuilder: (BuildContext context, int index) => Column(
+                            children: [
+                              SizedBox(
+                                height: 16.h,
+                              ),
+                              InkWell(
+                                onTap: (){
+                                  Get.to(() => GalleryScreenDetailScreen(controller.album[index], controller.selectedName.value));
+                                },
+                                child: Stack(
+                                  children: [
+                                    AspectRatio(
+                                      aspectRatio: 16 / 9,
+                                      child: CustomImageView(
+                                          customFit: BoxFit.fitWidth,
+                                          radius: 12.r,
+                                          image: controller.album[index].photo ?? ""),
+                                    ),
+                                    Positioned(
+                                      bottom: 16.w,
+                                      left: 16.w,
+                                      right: 16.w,
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Row(
+                                            children: [
+                                              Container(
+                                                padding: EdgeInsets.symmetric(
+                                                    horizontal: 8.w, vertical: 4.h),
+                                                decoration: BoxDecoration(
+                                                  color: BrandColor.main,
+                                                  borderRadius:
+                                                      BorderRadius.circular(24.r),
+                                                ),
+                                                child: CustomTextView(
+                                                  controller.selectedName.value,
+                                                  color: Colors.white,
+                                                  type: TDSFontType.labelMedium,
+                                                ),
+                                              ),
+                                              SizedBox(width: 8.w,),
+                                              Container(
+                                                decoration: BoxDecoration(
+                                                  borderRadius:
+                                                      BorderRadius.circular(8.r),
+                                                  color: Colors.white
+                                                ),
+                                                width: 4.w,
+                                                height: 4.w,
+                                              ),
+                                              SizedBox(width: 8.w,),
+                                              FutureBuilder<String>(
+                                                future: convertToJapaneseFormat(controller.album[index].date ?? ""),
+                                                builder: (BuildContext context,
+                                                    AsyncSnapshot<String> snapshot) {
+                                                  if (snapshot.connectionState ==
+                                                      ConnectionState.waiting ||
+                                                      snapshot.hasError) {
+                                                    return const SizedBox();
+                                                  } else {
+                                                    return Row(
+                                                      children: [
+                                                        CustomTextView(snapshot.data!, color: Colors.white, type: TDSFontType.bodyTextMedium,),
+                                                      ],
+                                                    ); // Display the formatted date
+                                                  }
+                                                },
+                                              ),
+                                            ],
+                                          ),
+                                          SizedBox(height: 6.h,),
+                                          CustomTextView(controller.album[index].name ?? "",type: TDSFontType.titleLarge, color: Colors.white,)
+                                        ],
+                                      ),
+                                    )
+                                  ],
+                                ),
+                              ),
+                              SizedBox(
+                                height: 16.h,
+                              ),
+                            ],
+                          ));
+                }),
+              ),
+            ],
           ),
-          YearFilter(
-            years: List.generate(DateTime.now().year - 2019 + 1, (index) => DateTime.now().year - index), // Generate year list dynamically
-            initialSelectedYear: 2024,
-            selectedColor: Colors.blue,
-            unselectedColor: Colors.grey.shade200,
-            selectedTextColor: Colors.white,
-            unselectedTextColor: Colors.black,
-            onYearSelected: (selectedYear) {
-              // Handle year selection
-              print("Selected Year: $selectedYear");
-            },
-          ),
-        ],
-      )
-    );
+        ));
   }
 
   Widget buildToggleOption(String text, int index) {
     return GestureDetector(
-      onTap: () => controller.onSwitch(index),
+      onTap: () => controller.onSwitch(index, text),
       child: Obx(() {
         bool isSelected = controller.selectedIndex.value == index;
         return Container(

@@ -3,7 +3,8 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 import 'package:get/get.dart';
-import 'package:koto_blue_sharks/app/data/models/member/views/memberlist_view.dart';
+import 'package:koto_blue_sharks/app/data/models/member/views/set_walpaper_list_view.dart';
+import 'package:koto_blue_sharks/app/views/views/member/views/memberlist_view.dart';
 import 'package:koto_blue_sharks/app/views/views/custom_text_view.dart';
 import 'package:koto_blue_sharks/generated/locales.g.dart';
 import 'package:koto_blue_sharks/presentation/main/main.screen.dart';
@@ -14,8 +15,9 @@ import 'package:koto_blue_sharks/utils/app_color.dart';
 import 'controllers/wallpaper_set_player.controller.dart';
 
 class WallpaperSetPlayerScreen extends GetView<WallpaperSetPlayerController> {
-  const WallpaperSetPlayerScreen({super.key});
+  const WallpaperSetPlayerScreen(this.onSet, {super.key});
 
+  final Function(String)? onSet;
   @override
   Widget build(BuildContext context) {
     final WallpaperSetPlayerController memberController = Get.put(WallpaperSetPlayerController());
@@ -29,6 +31,7 @@ class WallpaperSetPlayerScreen extends GetView<WallpaperSetPlayerController> {
         ),
         centerTitle: true,
         actions: [
+          if (onSet == null)
           Row(
             children: [
               CustomTextView(
@@ -74,7 +77,7 @@ class WallpaperSetPlayerScreen extends GetView<WallpaperSetPlayerController> {
                   ],
                 ),
                 SizedBox(height: 30.w,),
-                MemberlistView(memberController, isSetWallpaper: true,),
+                SetWalpaperListView(memberController, isSetWallpaper: true, onSet:onSet ,),
                 Container(
                   padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
                   width: double.infinity,

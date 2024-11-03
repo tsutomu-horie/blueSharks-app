@@ -83,7 +83,7 @@ class InfoScreen extends GetView<InfoController> {
             },
           ),
           const GameInfoScreen(),
-          const MemberScreen(),
+          const MemberScreen(null),
           const WebviewScreen(WebviewType.team),
          const GalleryScreen(),
           const WebviewScreen(WebviewType.partner),

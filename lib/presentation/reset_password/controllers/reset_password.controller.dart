@@ -8,7 +8,8 @@ class ResetPasswordController extends GetxController {
   final oldPasswordController = TextEditingController();
   final newPasswordController = TextEditingController();
 
-  var isPasswordHidden = true.obs;
+  var isOldPasswordHidden = true.obs;
+  var isNewPasswordHidden = true.obs;
 
   final AuthProvider apiProvider = AuthProvider();
 
@@ -19,9 +20,9 @@ class ResetPasswordController extends GetxController {
     apiProvider.onInit();
   }
 
-  void togglePasswordVisibility() {
-    isPasswordHidden.value = !isPasswordHidden.value;
-  }
+  // void togglePasswordVisibility() {
+  //   isPasswordHidden.value = !isPasswordHidden.value;
+  // }
 
   void resetPassword(BuildContext context,String otpId) async {
     apiProvider.onInit();

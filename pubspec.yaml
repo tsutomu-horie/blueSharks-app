@@ -65,6 +65,9 @@ dependencies:
   pinput: ^5.0.0
   flutter_secure_storage: ^9.2.2
   dotted_border: ^2.1.0
+  qr_flutter: ^4.1.0
+  firebase_core: ^3.6.0
+  firebase_analytics: ^11.3.3
 
 dev_dependencies:
   flutter_test:
@@ -98,6 +101,7 @@ flutter:
     - assets/images/image_stadium_bus/
     - assets/images/home_stadium/
     - assets/vectors/
+    - assets/vectors/member_card/
     - assets/lottie/
 
   # To add assets to your application, add an assets section, like this:

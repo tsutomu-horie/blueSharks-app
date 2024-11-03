@@ -6,10 +6,15 @@ import 'package:koto_blue_sharks/app/views/views/custom_switch_view.dart';
 import 'package:koto_blue_sharks/app/views/views/custom_text_view.dart';
 import 'package:koto_blue_sharks/generated/locales.g.dart';
 import 'package:koto_blue_sharks/presentation/FanClubConfirmation/controllers/fan_club_confirmation.controller.dart';
+import 'package:koto_blue_sharks/presentation/screens.dart';
 import 'package:koto_blue_sharks/utils/app_color.dart';
+import 'package:lottie/lottie.dart';
 
 void editProfileBottomSheet(
-    FanClubConfirmationController fanclubController, BuildContext context) {
+    FanClubConfirmationController fanclubController,
+    BuildContext context,
+    Function(String, String, String, bool) onSuccess,
+    String oldEmail) {
   showModalBottomSheet(
     context: context,
     shape: RoundedRectangleBorder(
@@ -132,7 +137,7 @@ void editProfileBottomSheet(
                   color: TextColor.placeholder, // Custom hint color
                 ),
                 contentPadding: EdgeInsets.only(top: 2.h, left: 16.w),
-                hintText: "**ここにIDを入力してください",
+                hintText: LocaleKeys.user_id_placeholder.tr,
               ),
             ),
             SizedBox(
@@ -153,7 +158,14 @@ void editProfileBottomSheet(
               ],
             ),
             OutlinedButton(
-              onPressed: () {},
+              onPressed: () {
+                print("button set wallpaper");
+                Get.to(() => WallpaperSetPlayerScreen((value) {
+                      Get.back();
+                      print("valuenya ${value}");
+                      fanclubController.playerNameController.value = value;
+                    }));
+              },
               style: ButtonStyle(
                 padding: WidgetStateProperty.all(EdgeInsets.zero),
                 shape: MaterialStateProperty.all(
@@ -170,11 +182,13 @@ void editProfileBottomSheet(
                   Flexible(
                     child: SizedBox(
                       width: double.infinity,
-                      child: CustomTextView(
-                        fanclubController.playerNameController.text,
-                        type: TDSFontType.bodyTextMedium,
-                        color: TextColor.primary,
-                      ),
+                      child: Obx(() {
+                        return CustomTextView(
+                          fanclubController.playerNameController.value,
+                          type: TDSFontType.bodyTextMedium,
+                          color: TextColor.primary,
+                        );
+                      }),
                     ),
                   ),
                   SizedBox(
@@ -226,7 +240,18 @@ void editProfileBottomSheet(
                 style:
                     ElevatedButton.styleFrom(backgroundColor: BrandColor.main),
                 onPressed: () {
-                  fanclubController.updateProfile();
+                  if (fanclubController.emailController.text == oldEmail) {
+                    fanclubController.updateProfile(onSuccess);
+                  } else {
+                    fanclubController.sendOtp((id) {
+                      showEmailDialog(fanclubController, context, "$id", (){
+                        fanclubController.updateProfile((email, id, playername, notification){
+                          onSuccess(email, id,playername,notification);
+                        });
+
+                      });
+                    });
+                  }
                 },
                 child: CustomTextView(
                   LocaleKeys.next.tr,
@@ -238,6 +263,69 @@ void editProfileBottomSheet(
               height: 16.h,
             ),
           ],
+        ),
+      );
+    },
+  );
+}
+
+void showEmailDialog(FanClubConfirmationController registerEmailController,
+    BuildContext context, String? otpId, Function onSuccess) {
+  showDialog(
+    context: context,
+    barrierDismissible: true, // Dismiss when tapped outside
+    builder: (BuildContext context) {
+      return Dialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20.r),
+        ),
+        child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Lottie.asset(
+                'assets/lottie/mail_animation.json',
+                // Path to your Lottie animation
+                width: 180.w,
+                height: 180.h,
+                fit: BoxFit.fill,
+              ),
+              CustomTextView(
+                LocaleKeys.email_sent_dialog_title.tr,
+                type: TDSFontType.titleMedium,
+                color: TextColor.primary,
+              ),
+              CustomTextView(
+                LocaleKeys.email_sent_dialog_message.tr,
+                type: TDSFontType.bodyTextMedium,
+                color: TextColor.primary,
+              ),
+              // SizedBox(height: 24.h),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: BrandColor.main,
+                  ),
+                  onPressed: () {
+                    Get.back();
+                    Get.to(() => RegisterOtpScreen(
+                        email: registerEmailController.emailController.text,
+                        fromScreen: "editProfile",
+                        otpId: otpId,
+                        selectedPlayer:
+                            registerEmailController.playerNameController.value,
+                        onSuccess: onSuccess));
+                  },
+                  child: CustomTextView(
+                    LocaleKeys.close.tr,
+                    color: BrandColor.content,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       );
     },

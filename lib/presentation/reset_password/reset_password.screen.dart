@@ -61,7 +61,7 @@ class ResetPasswordScreen extends GetView<ResetPasswordController> {
 
                   Obx(
                         () => TextFormField(
-                      obscureText: forgotPasswordController.isPasswordHidden.value,
+                      obscureText: forgotPasswordController.isOldPasswordHidden.value,
                       validator: (value) {
                         // Ensure password is not empty
                         if (value!.isEmpty) {
@@ -105,12 +105,14 @@ class ResetPasswordScreen extends GetView<ResetPasswordController> {
                         hintText: LocaleKeys.new_password_placeholder.trParams({"example": "Your password"}), // Adjust hint text
                         suffixIcon: IconButton(
                           icon: Icon(
-                            forgotPasswordController.isPasswordHidden.value
+                            forgotPasswordController.isOldPasswordHidden.value
                                 ? Icons.visibility_off
                                 : Icons.visibility,
                             color: TextColor.placeholder, // Customize the color
                           ),
-                          onPressed: forgotPasswordController.togglePasswordVisibility,
+                          onPressed: (){
+                            forgotPasswordController.isOldPasswordHidden.value = !forgotPasswordController.isOldPasswordHidden.value;
+                          },
                         ),
                       ),
                     ),
@@ -129,7 +131,7 @@ class ResetPasswordScreen extends GetView<ResetPasswordController> {
 
                   Obx(
                         () => TextFormField(
-                      obscureText: forgotPasswordController.isPasswordHidden.value,
+                      obscureText: forgotPasswordController.isNewPasswordHidden.value,
                       validator: (value) {
                         // Ensure password is not empty
                         if (value!.isEmpty) {
@@ -173,12 +175,14 @@ class ResetPasswordScreen extends GetView<ResetPasswordController> {
                         hintText: LocaleKeys.confirm_new_password_placeholder.trParams({"example": "Your password"}), // Adjust hint text
                         suffixIcon: IconButton(
                           icon: Icon(
-                            forgotPasswordController.isPasswordHidden.value
+                            forgotPasswordController.isNewPasswordHidden.value
                                 ? Icons.visibility_off
                                 : Icons.visibility,
                             color: TextColor.placeholder, // Customize the color
                           ),
-                          onPressed: forgotPasswordController.togglePasswordVisibility,
+                          onPressed: (){
+                            forgotPasswordController.isNewPasswordHidden.value = !forgotPasswordController.isOldPasswordHidden.value;
+                          },
                         ),
                       ),
                     ),

@@ -27,6 +27,29 @@ class OtpProvider extends GetConnect {
     return Otp.fromJson(response.body["data"]);
   }
 
+  Future<Otp> forgotPasswordOtp(String address, String? otpId,  Function onError) async {
+    final url = Uri.parse('forgot-password');
+    print("load ${httpClient.baseUrl}${url.toString()}");
+
+    final Map<String, dynamic> body = {
+      "address": address,
+      "otp_id": otpId,
+    };
+
+    final response = await post(
+        url.toString(),body
+    );
+
+    if (response.hasError) {
+      onError();
+      throw Exception('Failed to login: ${response.statusText}');
+    }
+
+    print("Login successful, received data: ${response.body}");
+
+    return Otp.fromJson(response.body["data"]);
+  }
+
   Future<Response<dynamic>> verifyOtp(String code, String? otpId,  Function onError) async {
     final url = Uri.parse('otp/verify');
     print("load ${httpClient.baseUrl}${url.toString()}");

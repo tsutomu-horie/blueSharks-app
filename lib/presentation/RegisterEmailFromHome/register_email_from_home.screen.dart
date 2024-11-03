@@ -23,7 +23,7 @@ class RegisterEmailFromHomeScreen
     return Scaffold(
       appBar: AppBar(
         backgroundColor:  BrandColor.main,
-        title: CustomTextView("**パスワードをお忘れですか", color: Colors.white, type: TDSFontType.titleMedium,),
+        title: CustomTextView(LocaleKeys.forgot_password_title.tr, color: Colors.white, type: TDSFontType.titleMedium,),
         centerTitle: true,
         leading: IconButton(
           icon: const Icon(
@@ -43,7 +43,7 @@ class RegisterEmailFromHomeScreen
           key: globalKey,
           child: Column(
             children: [
-              CustomTextView("**登録済みのメールアドレスを入力してください。その後、メールを確認するためのOTPコードを送信します。", type: TDSFontType.bodyTextMedium, color: TextColor.secondary,),
+              CustomTextView(LocaleKeys.email_field_desc.tr, type: TDSFontType.bodyTextMedium, color: TextColor.secondary,),
               SizedBox(height: 24.h,),
               TextFormField(
                 validator: (value) {
