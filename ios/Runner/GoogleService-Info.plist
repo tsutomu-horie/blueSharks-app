@@ -3,17 +3,17 @@
 <plist version="1.0">
 <dict>
 	<key>API_KEY</key>
-	<string>AIzaSyAKmI8E8eFmDxjbq99cAqEcvm52EDmUL9s</string>
+	<string>AIzaSyAEUZQ3bkIeHaXeg3APfLLixuQF7rxzfm8</string>
 	<key>GCM_SENDER_ID</key>
-	<string>853500340974</string>
+	<string>604708242587</string>
 	<key>PLIST_VERSION</key>
 	<string>1</string>
 	<key>BUNDLE_ID</key>
 	<string>jp.bluesharks.koto-blue-sharks</string>
 	<key>PROJECT_ID</key>
-	<string>koto-blue-sharks</string>
+	<string>blueshark-test</string>
 	<key>STORAGE_BUCKET</key>
-	<string>koto-blue-sharks.firebasestorage.app</string>
+	<string>blueshark-test.firebasestorage.app</string>
 	<key>IS_ADS_ENABLED</key>
 	<false></false>
 	<key>IS_ANALYTICS_ENABLED</key>
@@ -25,6 +25,6 @@
 	<key>IS_SIGNIN_ENABLED</key>
 	<true></true>
 	<key>GOOGLE_APP_ID</key>
-	<string>1:853500340974:ios:959047751d95f36ff5a1ff</string>
+	<string>1:604708242587:ios:95a2fda0ecf86c522f723e</string>
 </dict>
 </plist>
