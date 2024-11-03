@@ -22,4 +22,5 @@ class GalleryScreenDetailController extends GetxController {
     print("getvalue ${albumId} ${response}");
     print("index == ${album.length}");
   }
+
 }
