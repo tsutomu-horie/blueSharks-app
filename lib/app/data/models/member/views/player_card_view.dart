@@ -2,29 +2,32 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import 'package:get/get.dart';
+import 'package:koto_blue_sharks/app/data/api/media/media_provider.dart';
 import 'package:koto_blue_sharks/app/views/views/custom_image_view.dart';
 import 'package:koto_blue_sharks/app/views/views/custom_text_view.dart';
 import 'package:koto_blue_sharks/generated/locales.g.dart';
 import 'package:koto_blue_sharks/presentation/member/controllers/member.controller.dart';
 import 'package:koto_blue_sharks/presentation/register/register_email/register_email.screen.dart';
+import 'package:koto_blue_sharks/presentation/wallpaper_set_player/controllers/wallpaper_set_player.controller.dart';
 import 'package:koto_blue_sharks/utils/app_color.dart';
 import 'package:koto_blue_sharks/utils/match+extensions.dart';
 
 import '../member.dart';
 
 class PlayerCardView extends GetView {
-  const PlayerCardView(this.player, this.position, this.onSet, this.memberController, this.isSetWallpaper, {super.key});
+  const PlayerCardView(this.player, this.position, this.onSet, this.mediaProvider, this.isSetWallpaper, this.onTap, {super.key});
 
   final Member player;
   final String position;
   final Function(String)? onSet;
-  final MemberController memberController;
+  final MediaProvider mediaProvider;
   final bool isSetWallpaper;
+  final Function(String, String) onTap;
 
   @override
   Widget build(BuildContext context) {
     return FutureBuilder<String>(
-      future: getImage(memberController.mediaProvider,
+      future: getImage(mediaProvider,
           "${player.custom_field?.profile_image_1?.first}"),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
@@ -33,17 +36,24 @@ class PlayerCardView extends GetView {
         } else if (snapshot.hasError) {
           return const Center(child: Text('Error loading data'));
         } else {
-          final postImage = snapshot.data ?? ''; // Fallback in case of null
+          String postImage = "";
+          if (isSetWallpaper) {
+            postImage = player.link;
+          } else {
+            postImage = snapshot.data ?? ''; // Fallback in case of null
+          }
 
           // Use your CustomImageView with the fetched image URL
           return InkWell(
             onTap: () {
-              if (isSetWallpaper) {
-                showSetWallpaper(memberController, context, postImage,
-                    player.title.rendered, position, onSet);
-              } else {
-                memberController.navigateToMemberDetail(player);
-              }
+              onTap(postImage,  position);
+              // if (isSetWallpaper) {
+              //   showSetWallpaper(memberController, context, postImage,
+              //       player.title.rendered, position, onSet);
+              // }
+              // else {
+              //   memberController.navigateToMemberDetail(player);
+              // }
             },
             child: Stack(
               children: [
@@ -96,7 +106,7 @@ class PlayerCardView extends GetView {
     );
   }
 
-  void showSetWallpaper(MemberController memberController, BuildContext context,
+  void showSetWallpaper(WallpaperSetPlayerController memberController, BuildContext context,
       String image, String playerName, String playerPosition, Function(String)? onSet) {
     showModalBottomSheet(
       context: context,

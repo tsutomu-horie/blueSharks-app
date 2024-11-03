@@ -153,7 +153,9 @@ class MemberlistView extends GetView {
                               itemCount: playerGroup.players.length,
                               itemBuilder: (context, playerIndex) {
                                 final player = playerGroup.players[playerIndex];
-                                return PlayerCardView(player, playerGroup.title, onSet, memberController, false);
+                                return PlayerCardView(player, playerGroup.title, onSet, memberController.mediaProvider, false, (postImage, position){
+                                  memberController.navigateToMemberDetail(player);
+                                });
                               },
                             ),
                           ),

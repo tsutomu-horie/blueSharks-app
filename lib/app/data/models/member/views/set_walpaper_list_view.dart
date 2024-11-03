@@ -3,7 +3,12 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 import 'package:get/get.dart';
+import 'package:koto_blue_sharks/app/data/models/member/member.dart';
+import 'package:koto_blue_sharks/app/data/models/member/views/player_card_view.dart';
+import 'package:koto_blue_sharks/app/views/views/custom_image_view.dart';
 import 'package:koto_blue_sharks/app/views/views/custom_text_view.dart';
+import 'package:koto_blue_sharks/generated/locales.g.dart';
+import 'package:koto_blue_sharks/presentation/register/register_email/register_email.screen.dart';
 import 'package:koto_blue_sharks/presentation/wallpaper_set_player/controllers/wallpaper_set_player.controller.dart';
 import 'package:koto_blue_sharks/utils/app_color.dart';
 
@@ -15,6 +20,7 @@ class SetWalpaperListView extends GetView {
 
   @override
   Widget build(BuildContext context) {
+
     return Column(
       children: [
         Container(
@@ -71,91 +77,94 @@ class SetWalpaperListView extends GetView {
             ),
           ),
         ),
-        // Obx(() {
-        //   List<CategorizedPlayerGroup> groupedPlayers = memberController
-        //       .groupPlayersByCategory(memberController.categoryPlayers);
-        //
-        //     groupedPlayers = groupedPlayers
-        //         .where((group) => group.categoryTitle != LocaleKeys.staff.tr)
-        //         .toList();
-        //
-        //   return Column(
-        //     crossAxisAlignment: CrossAxisAlignment.start,
-        //     children: groupedPlayers.map((group) {
-        //       return Column(
-        //         crossAxisAlignment: CrossAxisAlignment.start,
-        //         children: [
-        //           Container(
-        //             width: double.infinity,
-        //             color: BrandColor.background,
-        //             padding:
-        //             EdgeInsets.symmetric(vertical: 12.h, horizontal: 16.w),
-        //             child: CustomTextView(
-        //               group.categoryTitle,
-        //               style: TextStyle(
-        //                   fontSize: 18.sp,
-        //                   fontWeight: FontWeight.w600,
-        //                   color: TextColor.inverse),
-        //               align: TextAlign.center,
-        //             ),
-        //           ),
-        //           ListView.builder(
-        //             shrinkWrap: true,
-        //             physics: const NeverScrollableScrollPhysics(),
-        //             itemCount: group.playerGroups.length,
-        //             itemBuilder: (context, index) {
-        //               final MemberGroup playerGroup = group.playerGroups[index];
-        //
-        //               // Show the position title (e.g. Prop, Scrumhalf, etc.)
-        //               return Column(
-        //                 crossAxisAlignment: CrossAxisAlignment.start,
-        //                 children: [
-        //                   Container(
-        //                     width: double.infinity,
-        //                     color: BrandColor.main,
-        //                     padding: EdgeInsets.symmetric(
-        //                         vertical: 12.h, horizontal: 16.w),
-        //                     child: Text(
-        //                       playerGroup.title,
-        //                       style: TextStyle(
-        //                         fontSize: 16.sp,
-        //                         fontWeight: FontWeight.bold,
-        //                         color: Colors.white,
-        //                       ),
-        //                     ),
-        //                   ),
-        //                   // Grid to show players of the current position group
-        //                   Padding(
-        //                     padding: EdgeInsets.symmetric(
-        //                         horizontal: 12.w, vertical: 16.h),
-        //                     child: GridView.builder(
-        //                       shrinkWrap: true,
-        //                       physics: const NeverScrollableScrollPhysics(),
-        //                       gridDelegate:
-        //                       SliverGridDelegateWithFixedCrossAxisCount(
-        //                         crossAxisCount: 3,
-        //                         // Number of columns in the grid
-        //                         childAspectRatio: 0.75,
-        //                         // Adjust the aspect ratio of the grid items
-        //                         mainAxisSpacing: 12.w,
-        //                         crossAxisSpacing: 12.w,
-        //                       ),
-        //                       itemCount: playerGroup.players.length,
-        //                       itemBuilder: (context, playerIndex) {
-        //                         final player = playerGroup.players[playerIndex];
-        //                         return PlayerCardView(player, playerGroup.title, onSet, memberController,true);
-        //                       },
-        //                     ),
-        //                   ),
-        //                 ],
-        //               );
-        //             },
-        //           ),
-        //         ],
-        //       );
-        //     }).toList(),
-        //   );
-        // }),
+        //todo::tampilin data player disini
+        Obx(() {
+          List<CategorizedPlayerGroup> groupedPlayers = memberController.wallpaperList;
+
+            groupedPlayers = groupedPlayers
+                .where((group) => group.categoryTitle != LocaleKeys.staff.tr)
+                .toList();
+
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: groupedPlayers.map((group) {
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    width: double.infinity,
+                    color: BrandColor.background,
+                    padding:
+                    EdgeInsets.symmetric(vertical: 12.h, horizontal: 16.w),
+                    child: CustomTextView(
+                      group.categoryTitle,
+                      style: TextStyle(
+                          fontSize: 18.sp,
+                          fontWeight: FontWeight.w600,
+                          color: TextColor.inverse),
+                      align: TextAlign.center,
+                    ),
+                  ),
+                  ListView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: group.playerGroups.length,
+                    itemBuilder: (context, index) {
+                      final MemberGroup playerGroup = group.playerGroups[index];
+
+                      // Show the position title (e.g. Prop, Scrumhalf, etc.)
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            width: double.infinity,
+                            color: BrandColor.main,
+                            padding: EdgeInsets.symmetric(
+                                vertical: 12.h, horizontal: 16.w),
+                            child: Text(
+                              playerGroup.title,
+                              style: TextStyle(
+                                fontSize: 16.sp,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                          // Grid to show players of the current position group
+                          Padding(
+                            padding: EdgeInsets.symmetric(
+                                horizontal: 12.w, vertical: 16.h),
+                            child: GridView.builder(
+                              shrinkWrap: true,
+                              physics: const NeverScrollableScrollPhysics(),
+                              gridDelegate:
+                              SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: 3,
+                                // Number of columns in the grid
+                                childAspectRatio: 0.75,
+                                // Adjust the aspect ratio of the grid items
+                                mainAxisSpacing: 12.w,
+                                crossAxisSpacing: 12.w,
+                              ),
+                              itemCount: playerGroup.players.length,
+                              itemBuilder: (context, playerIndex) {
+                                final player = playerGroup.players[playerIndex];
+                                return PlayerCardView(player, playerGroup.title, onSet, memberController.mediaProvider,true, (postImage, position){
+                                    showSetWallpaper(memberController, context, postImage,
+                                        player.title.rendered, position, onSet);
+                                });
+                              },
+                            ),
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+                ],
+              );
+            }).toList(),
+          );
+        }),
       ],
     );
   }
@@ -223,6 +232,131 @@ class SetWalpaperListView extends GetView {
               //     },
               //   ),
               // ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void showSetWallpaper(WallpaperSetPlayerController memberController, BuildContext context,
+      String image, String playerName, String playerPosition, Function(String)? onSet) {
+    showModalBottomSheet(
+      context: context,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
+      ),
+      backgroundColor: Colors.white,
+      builder: (context) {
+        return Container(
+          padding: EdgeInsets.symmetric(horizontal: 16.w),
+          height: 292.h, // Fixed height for the bottom sheet
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.start,
+            children: [
+              SizedBox(
+                height: 44.h,
+                child: Row(
+                  children: [
+                    Flexible(
+                        child: SizedBox(
+                            width: double.infinity,
+                            child: CustomTextView(
+                              LocaleKeys.set_wallpaper_title3.tr,
+                              type: TDSFontType.titleMedium,
+                            ))),
+                  ],
+                ),
+              ),
+              SizedBox(
+                height: 20.h,
+              ),
+              Container(
+                padding: EdgeInsets.symmetric(vertical: 12.h, horizontal: 16.w),
+                decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(16.r),
+                    border: Border.all(color: BorderColor.subtle, width: 1)),
+                child: Row(
+                  children: [
+                    image != ''
+                        ? SizedBox(
+                        width: 81.w,
+                        child: AspectRatio(
+                          aspectRatio: 3/4,
+                          child: CustomImageView(
+                            image: image,
+                            radius: 4.r,
+                            customFit: BoxFit.fitHeight,
+                          ),
+                        ))
+                        : Container(
+                      decoration: BoxDecoration(
+                        color: Colors.grey,
+                        borderRadius: BorderRadius.circular(4.r),
+                      ),
+                    ),
+                    SizedBox(
+                      width: 12.w,
+                    ),
+                    Column(
+                      children: [
+                        CustomTextView(playerName, type: TDSFontType.titleSmall, color: TextColor.secondary,),
+                        SizedBox(height: 12.h,),
+                        Container(
+                            padding: EdgeInsets.symmetric(vertical: 4.h, horizontal: 8.w),
+                            decoration: BoxDecoration(color: BrandColor.surface, borderRadius: BorderRadius.circular(24.r),),
+                            child: CustomTextView(playerPosition, type: TDSFontType.titleSmall, color: TextColor.secondary)),
+
+                      ],
+                    )
+                  ],
+                ),
+              ),
+              SizedBox(height: 28.h,),
+              Row(
+                children: [
+                  Flexible(
+                    child: SizedBox(
+                      height: 48.h,
+                      width: double.infinity,
+                      child: OutlinedButton(
+                        style: ButtonStyle(
+                          side: WidgetStateProperty.all(BorderSide(
+                              color: BrandColor
+                                  .main) // Set your desired color here
+                          ),
+                        ),
+                        onPressed: () {
+                          Get.back();
+                        },
+                        child: CustomTextView(LocaleKeys.cancel.tr, color: BrandColor.main,),
+
+                      ),
+                    ),
+                  ),
+                  SizedBox(width: 16.w,),
+                  Flexible(
+                    child: SizedBox(
+                      height: 48.h,
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(backgroundColor: BrandColor.main, ),
+                        onPressed: () {
+                          if (onSet != null) {
+                            onSet(playerName);
+                            Get.back();
+                          } else {
+                            Get.to(() => RegisterEmailScreen(playerName));
+                          }
+                        },
+                        child: CustomTextView(LocaleKeys.confirm.tr, color: BrandColor.content,),
+
+                      ),
+                    ),
+                  ),
+                ],
+              )
             ],
           ),
         );

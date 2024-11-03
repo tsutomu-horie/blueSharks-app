@@ -38,4 +38,19 @@ class GalleryProvider extends GetConnect {
         .map((json) => AlbumDetail.fromJson(json as Map<String, dynamic>))
         .toList();;
   }
+
+  Future<List<WallpaperCategory>> fetchGalleryPlayer(Function onError) async {
+    final response = await get('wallpapers');
+    print('fetch ${httpClient.baseUrl}wallpapers');
+
+    if (response.hasError) {
+      throw Exception('Failed to load media with ${response.hasError}');
+    }
+
+    print("finish with ${response.body}");
+
+    return (response.body['data'] as List)
+        .map((json) => WallpaperCategory.fromJson(json as Map<String, dynamic>))
+        .toList();;
+  }
 }
