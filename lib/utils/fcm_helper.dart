@@ -115,7 +115,7 @@ class FcmHelper {
     final auth = AuthProvider();
 
     if (token != null && token != null) {
-      final authToken = await auth.updateNotificationToke(token);
+      final authToken = await auth.updateNotificationToken(token);
       print("find toke $authToken");
 
     }

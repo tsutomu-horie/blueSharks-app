@@ -15,6 +15,7 @@ export 'package:koto_blue_sharks/infrastructure/navigation/bindings/controllers/
 export 'package:koto_blue_sharks/infrastructure/navigation/bindings/controllers/match_detail.controller.binding.dart'; 
 export 'package:koto_blue_sharks/infrastructure/navigation/bindings/controllers/member.controller.binding.dart'; 
 export 'package:koto_blue_sharks/infrastructure/navigation/bindings/controllers/mypage.controller.binding.dart'; 
+export 'package:koto_blue_sharks/infrastructure/navigation/bindings/controllers/notification_list.controller.binding.dart'; 
 export 'package:koto_blue_sharks/infrastructure/navigation/bindings/controllers/player_detail.controller.binding.dart'; 
 export 'package:koto_blue_sharks/infrastructure/navigation/bindings/controllers/register_email.controller.binding.dart'; 
 export 'package:koto_blue_sharks/infrastructure/navigation/bindings/controllers/register_email_from_home.controller.binding.dart'; 

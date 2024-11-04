@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
 import 'package:get/get.dart';
+
 import 'package:koto_blue_sharks/app/data/models/media/media.dart';
 import 'package:koto_blue_sharks/app/services/AnalyticsService.dart';
-
 import 'package:koto_blue_sharks/presentation/register/register_member_fanclub/register_member_fanclub.screen.dart';
 
 import '../../config.dart';
@@ -198,6 +198,11 @@ class Nav {
       name: Routes.GALLERY_SCREEN_DETAIL,
       page: () => const GalleryScreenDetailScreen(null, ""),
       binding: GalleryScreenDetailControllerBinding(),
+    ),
+    GetPage(
+      name: Routes.NOTIFICATION_LIST,
+      page: () => const NotificationListScreen(),
+      binding: NotificationListControllerBinding(),
     ),
   ];
 }

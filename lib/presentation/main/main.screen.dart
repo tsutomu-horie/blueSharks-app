@@ -115,7 +115,9 @@ class _MainScreenState extends State<MainScreen> {
                               width: 24.w,
                               height: 24.h,
                             ),
-                            LocaleKeys.new_title.tr),
+                            LocaleKeys.new_title.tr, (){
+                              Get.to(() => const NotificationListScreen());
+                        }),
                       ],
                     ),
                   ),
@@ -128,7 +130,9 @@ class _MainScreenState extends State<MainScreen> {
                             width: 24.w,
                             height: 24.h,
                           ),
-                          LocaleKeys.fan_club.tr),
+                          LocaleKeys.fan_club.tr, (){
+                        Get.to(() => const FanclubScreen());
+                      }),
                       SizedBox(
                         width: 8.w,
                       ),
@@ -138,7 +142,9 @@ class _MainScreenState extends State<MainScreen> {
                             width: 24.w,
                             height: 24.h,
                           ),
-                          LocaleKeys.ticket.tr),
+                          LocaleKeys.ticket.tr, (){
+
+                      }),
                       SizedBox(
                         width: 8.w,
                       ),
@@ -148,7 +154,9 @@ class _MainScreenState extends State<MainScreen> {
                             width: 24.w,
                             height: 24.h,
                           ),
-                          LocaleKeys.goods.tr),
+                          LocaleKeys.goods.tr, (){
+
+                      }),
                     ],
                   )
                 ],
@@ -210,7 +218,7 @@ class _MainScreenState extends State<MainScreen> {
     });
   }
 
-  Widget toolbarButton(SvgPicture icon, String text) {
+  Widget toolbarButton(SvgPicture icon, String text, Function onPress) {
     return ElevatedButton(
       style: ElevatedButton.styleFrom(
         shadowColor: Colors.transparent,
@@ -218,11 +226,13 @@ class _MainScreenState extends State<MainScreen> {
         minimumSize: Size(40.w, 48.h),
         padding: EdgeInsets.zero,
       ),
-      onPressed: () {
-        if (text == LocaleKeys.fan_club.tr) {
-          Get.to(FanclubScreen());
-        }
-      },
+      onPressed: (){onPress();},
+      //     () {
+      //   if (text == LocaleKeys.fan_club.tr) {
+      //     Get.to(FanclubScreen());
+      //   }
+      //
+      // },
       child: Column(
         children: [
           icon,
