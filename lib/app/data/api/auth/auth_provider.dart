@@ -1,6 +1,7 @@
 import 'package:get/get.dart';
 import 'package:koto_blue_sharks/app/data/api/auth/AuthToken.dart';
 import 'package:koto_blue_sharks/app/data/models/auth/auth.dart';
+import 'package:koto_blue_sharks/app/data/models/info/notification.dart';
 import 'package:koto_blue_sharks/utils/Constant.dart';
 
 class AuthProvider extends GetConnect {
@@ -146,7 +147,7 @@ class AuthProvider extends GetConnect {
     return UserData.fromJson(response.body["data"]);
   }
 
-  Future<Response> updateNotificationToke(String fcm) async {
+  Future<Response> updateNotificationToken(String fcm) async {
     httpClient.baseUrl = Constants.baseUrlAuthApi;
 
     final url = Uri.parse('notifications/${fcm}');
@@ -173,6 +174,37 @@ class AuthProvider extends GetConnect {
     print("Login successful, received data: ${response.body}");
 
     return response;
+  }
+
+  Future<List<Notification>> getNotificationList() async {
+    httpClient.baseUrl = Constants.baseUrlAuthApi;
+
+    final url = Uri.parse('notifications');
+    print("load ${httpClient.baseUrl}${url.toString()}");
+
+    final auth = AuthToken();
+    final token = await auth.getAccessToken();
+
+    final headers = {
+      'Authorization': 'Bearer $token',
+      'Content-Type': 'application/json', // Optional, depending on the API
+    };
+
+    final response = await get(
+        url.toString(), headers: headers // Send the body in the request
+    );
+
+    print("Login successful2 , ${response.body}");
+
+    if (response.hasError) {
+      throw Exception('Failed to send fcm token: ${response.statusText}');
+    }
+
+    print("Login successful, received data: ${response.body}");
+
+    return (response.body['data'] as List)
+        .map((json) => Notification.fromJson(json as Map<String, dynamic>))
+        .toList();
   }
 
 }
