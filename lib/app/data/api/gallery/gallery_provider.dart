@@ -51,6 +51,6 @@ class GalleryProvider extends GetConnect {
 
     return (response.body['data'] as List)
         .map((json) => WallpaperCategory.fromJson(json as Map<String, dynamic>))
-        .toList();;
+        .toList();
   }
 }

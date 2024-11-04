@@ -8,6 +8,7 @@ import 'package:koto_blue_sharks/app/data/models/media/media.dart';
 import 'package:koto_blue_sharks/app/data/models/member/member.dart';
 import 'package:koto_blue_sharks/app/services/AnalyticsService.dart';
 import 'package:koto_blue_sharks/firebase_options.dart';
+import 'package:koto_blue_sharks/utils/fcm_helper.dart';
 
 import 'generated/locales.g.dart';
 import 'infrastructure/navigation/navigation.dart';
@@ -32,6 +33,8 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   await AnalyticsService.init();
+
+  await FcmHelper.initFcm();
 
   runApp(Main(initialRoute));
 }
