@@ -150,19 +150,23 @@ class AuthProvider extends GetConnect {
   Future<Response> updateNotificationToken(String fcm) async {
     httpClient.baseUrl = Constants.baseUrlAuthApi;
 
-    final url = Uri.parse('notifications/${fcm}');
+    final url = Uri.parse('notifications/create-fcm');
     print("load ${httpClient.baseUrl}${url.toString()}");
 
     final auth = AuthToken();
     final token = await auth.getAccessToken();
+
+    final Map<String, dynamic> body = {
+      "fcm_token": fcm,
+    };
 
     final headers = {
       'Authorization': 'Bearer $token',
       'Content-Type': 'application/json', // Optional, depending on the API
     };
 
-    final response = await patch(
-        url.toString(), null, headers: headers // Send the body in the request
+    final response = await post(
+        url.toString(), body, headers: headers // Send the body in the request
     );
 
     print("Login successful2 , ${response.body}");
@@ -171,7 +175,7 @@ class AuthProvider extends GetConnect {
       throw Exception('Failed to send fcm token: ${response.statusText}');
     }
 
-    print("Login successful, received data: ${response.body}");
+    print("Login successful, received data: ${response}");
 
     return response;
   }

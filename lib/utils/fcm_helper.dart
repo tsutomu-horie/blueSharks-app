@@ -113,8 +113,8 @@ class FcmHelper {
     var token = MySharedPref.getFcmToken();
 
     final auth = AuthProvider();
-
-    if (token != null && token != null) {
+    print("find toke 2 $token");
+    if (token != null) {
       final authToken = await auth.updateNotificationToken(token);
       print("find toke $authToken");
 
@@ -126,7 +126,7 @@ class FcmHelper {
   /// https://stackoverflow.com/a/67083337
   @pragma('vm:entry-point')
   static Future<void> _fcmBackgroundHandler(RemoteMessage message) async {
-    print('Handling FCM Notification in Background: ${message.notification?.title}');
+    print('Handling FCM Notification in Background: ${message}');
 
     // AwesomeNotificationsHelper.showNotification(
     //   id: 1,
@@ -138,7 +138,7 @@ class FcmHelper {
 
   //handle fcm notification when app is open
   static Future<void> _fcmForegroundHandler(RemoteMessage message) async {
-    print('Handling FCM Notification in Foreground: ${message.notification?.title}');
+    print('Handling FCM Notification in Foreground: ${message}');
 
     if (Platform.isAndroid) {
       AwesomeNotificationsHelper.showNotification(

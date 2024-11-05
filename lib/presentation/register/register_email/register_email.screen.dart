@@ -27,7 +27,9 @@ class RegisterEmailScreen extends GetView<RegisterEmailController> {
         Get.put(RegisterEmailController());
 
     return Scaffold(
+        backgroundColor: BackgroundColor.primary,
         appBar: AppBar(
+          backgroundColor: BackgroundColor.primary,
           title: SvgPicture.asset(
             "assets/vectors/app_logo.svg",
             width: 56.w,
@@ -258,6 +260,7 @@ class RegisterEmailScreen extends GetView<RegisterEmailController> {
       barrierDismissible: true, // Dismiss when tapped outside
       builder: (BuildContext context) {
         return Dialog(
+          backgroundColor: BackgroundColor.primary,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20.r),
           ),
