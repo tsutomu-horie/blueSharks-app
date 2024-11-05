@@ -192,46 +192,46 @@ class SetWalpaperListView extends GetView {
                     color: BorderColor.primary,
                   )),
               SizedBox(height: 16.h),
-              // Expanded(
-              //   child: ListView.builder(
-              //     shrinkWrap: true,
-              //     physics: const NeverScrollableScrollPhysics(),
-              //     itemCount: memberController.playerCategory.length,
-              //     itemBuilder: (context, index) {
-              //       final item = memberController.playerCategory[index];
-              //       return InkWell(
-              //         onTap: () {
-              //           memberController.selectedPosition(item);
-              //           Get.back();
-              //         },
-              //         child: Column(
-              //           children: [
-              //             SizedBox(
-              //               height: 44.h,
-              //               child: Row(
-              //                 children: [
-              //                   Flexible(
-              //                       child: SizedBox(
-              //                           width: double.infinity,
-              //                           child: CustomTextView(
-              //                             item,
-              //                             type: TDSFontType.labelLarge,
-              //                           ))),
-              //                 ],
-              //               ),
-              //             ),
-              //             if (index !=
-              //                 memberController.playerCategory.length - 1)
-              //               Container(
-              //                 height: 1.h,
-              //                 color: BorderColor.primary,
-              //               ),
-              //           ],
-              //         ),
-              //       );
-              //     },
-              //   ),
-              // ),
+              Expanded(
+                child: ListView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: memberController.playerCategory.length,
+                  itemBuilder: (context, index) {
+                    final item = memberController.playerCategory[index];
+                    return InkWell(
+                      onTap: () {
+                        memberController.onSelectPosition(item);
+                        Get.back();
+                      },
+                      child: Column(
+                        children: [
+                          SizedBox(
+                            height: 44.h,
+                            child: Row(
+                              children: [
+                                Flexible(
+                                    child: SizedBox(
+                                        width: double.infinity,
+                                        child: CustomTextView(
+                                          item,
+                                          type: TDSFontType.labelLarge,
+                                        ))),
+                              ],
+                            ),
+                          ),
+                          if (index !=
+                              memberController.playerCategory.length - 1)
+                            Container(
+                              height: 1.h,
+                              color: BorderColor.primary,
+                            ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+              ),
             ],
           ),
         );

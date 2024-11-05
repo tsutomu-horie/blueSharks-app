@@ -92,7 +92,7 @@ class WallpaperScreen extends GetView<WallpaperController> {
                         ),
                         Flexible(
                             child: Image.asset(
-                          "assets/images/wellcome_image.png",
+                          "assets/images/image_wallpaper_1.png",
                           width: double.infinity,
                           height: 240.h,
                         )),
@@ -173,7 +173,7 @@ class WallpaperScreen extends GetView<WallpaperController> {
                         ),
                         Flexible(
                             child: Image.asset(
-                          "assets/images/wellcome_image.png",
+                          "assets/images/image_wallpaper2.png",
                           width: double.infinity,
                           height: 240.h,
                         )),
