@@ -9,6 +9,7 @@ import 'package:koto_blue_sharks/app/data/models/member/member.dart';
 import 'package:koto_blue_sharks/app/services/AnalyticsService.dart';
 import 'package:koto_blue_sharks/firebase_options.dart';
 import 'package:koto_blue_sharks/utils/fcm_helper.dart';
+import 'package:koto_blue_sharks/utils/my_shared_pref.dart';
 
 import 'generated/locales.g.dart';
 import 'infrastructure/navigation/navigation.dart';
@@ -34,6 +35,8 @@ Future<void> main() async {
 
   await AnalyticsService.init();
 
+  await MySharedPref.init();
+
   await FcmHelper.initFcm();
 
   runApp(Main(initialRoute));
@@ -54,6 +57,7 @@ class Main extends StatelessWidget {
         localizationsDelegates: const [
           GlobalMaterialLocalizations.delegate,
           GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
         ],
         supportedLocales: const [
           Locale('ja', 'JP'),

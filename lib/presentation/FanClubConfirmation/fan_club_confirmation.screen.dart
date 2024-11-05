@@ -13,6 +13,7 @@ import 'package:koto_blue_sharks/generated/locales.g.dart';
 import 'package:koto_blue_sharks/presentation/forgotPassword/forgot_password.screen.dart';
 import 'package:koto_blue_sharks/presentation/main/main.screen.dart';
 import 'package:koto_blue_sharks/utils/app_color.dart';
+import 'package:koto_blue_sharks/utils/fcm_helper.dart';
 
 import 'controllers/fan_club_confirmation.controller.dart';
 
@@ -165,13 +166,11 @@ class FanClubConfirmationScreen extends GetView<FanClubConfirmationController> {
                       ),
                       padding: EdgeInsets.symmetric(
                           vertical: 12.h, horizontal: 16.w),
-                      child: Flexible(
-                        child: CustomTextView(
-                          LocaleKeys.email_address.tr,
-                          align: TextAlign.start,
-                          color: TextColor.secondary,
-                          type: TDSFontType.bodyTextMedium,
-                        ),
+                      child: CustomTextView(
+                        LocaleKeys.email_address.tr,
+                        align: TextAlign.start,
+                        color: TextColor.secondary,
+                        type: TDSFontType.bodyTextMedium,
                       )),
 
                   Flexible(
@@ -180,13 +179,11 @@ class FanClubConfirmationScreen extends GetView<FanClubConfirmationController> {
                         height: 64.h,
                         padding: EdgeInsets.symmetric(
                             vertical: 22.h, horizontal: 16.w),
-                        child: Flexible(
-                          child: CustomTextView(
-                            email,
-                            align: TextAlign.start,
-                            color: TextColor.primary,
-                            type: TDSFontType.bodyTextMedium,
-                          ),
+                        child: CustomTextView(
+                          email,
+                          align: TextAlign.start,
+                          color: TextColor.primary,
+                          type: TDSFontType.bodyTextMedium,
                         )),
                   ),
                 ]),
@@ -202,13 +199,11 @@ class FanClubConfirmationScreen extends GetView<FanClubConfirmationController> {
                       ),
                       padding: EdgeInsets.symmetric(
                           vertical: 12.h, horizontal: 16.w),
-                      child: Flexible(
-                        child: CustomTextView(
-                          LocaleKeys.fan_club_id.tr,
-                          align: TextAlign.start,
-                          color: TextColor.secondary,
-                          type: TDSFontType.bodyTextMedium,
-                        ),
+                      child: CustomTextView(
+                        LocaleKeys.fan_club_id.tr,
+                        align: TextAlign.start,
+                        color: TextColor.secondary,
+                        type: TDSFontType.bodyTextMedium,
                       )),
 
                   Flexible(
@@ -217,13 +212,11 @@ class FanClubConfirmationScreen extends GetView<FanClubConfirmationController> {
                         height: 44.h,
                         padding: EdgeInsets.symmetric(
                             vertical: 12.h, horizontal: 16.w),
-                        child: Flexible(
-                          child: CustomTextView(
-                            id,
-                            align: TextAlign.start,
-                            color: TextColor.primary,
-                            type: TDSFontType.bodyTextMedium,
-                          ),
+                        child: CustomTextView(
+                          id,
+                          align: TextAlign.start,
+                          color: TextColor.primary,
+                          type: TDSFontType.bodyTextMedium,
                         )),
                   ),
                 ]),
@@ -239,13 +232,11 @@ class FanClubConfirmationScreen extends GetView<FanClubConfirmationController> {
                       ),
                       padding: EdgeInsets.symmetric(
                           vertical: 12.h, horizontal: 16.w),
-                      child: Flexible(
-                        child: CustomTextView(
-                          LocaleKeys.wallpaper_setting.tr,
-                          align: TextAlign.start,
-                          color: TextColor.secondary,
-                          type: TDSFontType.bodyTextMedium,
-                        ),
+                      child: CustomTextView(
+                        LocaleKeys.wallpaper_setting.tr,
+                        align: TextAlign.start,
+                        color: TextColor.secondary,
+                        type: TDSFontType.bodyTextMedium,
                       )),
 
                   Flexible(
@@ -254,13 +245,11 @@ class FanClubConfirmationScreen extends GetView<FanClubConfirmationController> {
                         height: 44.h,
                         padding: EdgeInsets.symmetric(
                             vertical: 12.h, horizontal: 16.w),
-                        child: Flexible(
-                          child: CustomTextView(
-                            playerSelected,
-                            align: TextAlign.start,
-                            color: TextColor.primary,
-                            type: TDSFontType.bodyTextMedium,
-                          ),
+                        child: CustomTextView(
+                          playerSelected,
+                          align: TextAlign.start,
+                          color: TextColor.primary,
+                          type: TDSFontType.bodyTextMedium,
                         )),
                   ),
                 ]),
@@ -276,13 +265,11 @@ class FanClubConfirmationScreen extends GetView<FanClubConfirmationController> {
                       ),
                       padding: EdgeInsets.symmetric(
                           vertical: 12.h, horizontal: 16.w),
-                      child: Flexible(
-                        child: CustomTextView(
-                          LocaleKeys.notice.tr,
-                          align: TextAlign.start,
-                          color: TextColor.secondary,
-                          type: TDSFontType.bodyTextMedium,
-                        ),
+                      child: CustomTextView(
+                        LocaleKeys.notice.tr,
+                        align: TextAlign.start,
+                        color: TextColor.secondary,
+                        type: TDSFontType.bodyTextMedium,
                       )),
 
                   Flexible(
@@ -291,13 +278,11 @@ class FanClubConfirmationScreen extends GetView<FanClubConfirmationController> {
                         height: 44.h,
                         padding: EdgeInsets.symmetric(
                             vertical: 12.h, horizontal: 16.w),
-                        child: Flexible(
-                          child: CustomTextView(
-                            isNotification ? "アクティブ" : "inactive",
-                            align: TextAlign.start,
-                            color: TextColor.primary,
-                            type: TDSFontType.bodyTextMedium,
-                          ),
+                        child: CustomTextView(
+                          isNotification ? "アクティブ" : "inactive",
+                          align: TextAlign.start,
+                          color: TextColor.primary,
+                          type: TDSFontType.bodyTextMedium,
                         )),
                   ),
 
@@ -414,7 +399,8 @@ class FanClubConfirmationScreen extends GetView<FanClubConfirmationController> {
         padding: EdgeInsets.all(16.w),
         child: ElevatedButton(
           style: ElevatedButton.styleFrom(backgroundColor: BrandColor.main),
-          onPressed: () {
+          onPressed: () async {
+            await FcmHelper.initFcm();
             Get.offAll(() => const MainScreen());
           },
           child: CustomTextView(

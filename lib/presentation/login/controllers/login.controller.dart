@@ -6,6 +6,7 @@ import 'package:koto_blue_sharks/app/data/api/userPreferences/wallpaper_preferen
 import 'package:koto_blue_sharks/app/data/models/auth/auth.dart';
 import 'package:koto_blue_sharks/generated/locales.g.dart';
 import 'package:koto_blue_sharks/presentation/main/main.screen.dart';
+import 'package:koto_blue_sharks/utils/fcm_helper.dart';
 import 'package:koto_blue_sharks/utils/utils.dart';
 
 class LoginController extends GetxController {
@@ -52,6 +53,7 @@ class LoginController extends GetxController {
         await wallpaper.saveWallpaper(selectedPlayer);
 
         print("get data ${selectedPlayer})");
+        await FcmHelper.initFcm();
         Get.offAll(() => const MainScreen());
       }
     } catch (e) {
