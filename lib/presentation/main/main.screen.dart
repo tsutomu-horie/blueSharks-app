@@ -172,6 +172,7 @@ class _MainScreenState extends State<MainScreen> {
         // Display the selected page
         bottomNavigationBar: Obx(() {
           return BottomNavigationBar(
+            backgroundColor: BackgroundColor.primary,
             type: BottomNavigationBarType.fixed,
             items: <BottomNavigationBarItem>[
               BottomNavigationBarItem(

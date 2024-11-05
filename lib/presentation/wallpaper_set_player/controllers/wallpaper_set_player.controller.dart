@@ -11,7 +11,13 @@ class WallpaperSetPlayerController extends GetxController {
   final GalleryProvider apiProvider = GalleryProvider();
   final RxList<CategorizedPlayerGroup> wallpaperList = RxList([]);
   final MediaProvider mediaProvider = MediaProvider();
+  final isLoading = true.obs;
 
+  // Store both original categories and processed player groups
+  List<WallpaperCategory> _originalCategories = [];
+  List<CategorizedPlayerGroup> _allPlayerGroups = [];
+
+  final List<String> playerCategory = [LocaleKeys.forward_short.tr, LocaleKeys.back_short.tr, LocaleKeys.staff.tr];
 
   @override
   void onInit() {
@@ -24,58 +30,97 @@ class WallpaperSetPlayerController extends GetxController {
     apiProvider.onInit();
 
     final response = await apiProvider.fetchGalleryPlayer((){
-
+      getWallpaper();
     });
 
-    wallpaperList.value = convertToCategorizedPlayerGroups(response);
+    // Store the original response
+    _originalCategories = response;
+    // Process and store all player groups
+    _allPlayerGroups = processWallpaperCategories(_originalCategories);
+    // Set initial wallpaper list
+    wallpaperList.value = filterPlayerGroups(_allPlayerGroups);
+    isLoading.value = false;
 
   }
+  void onSelectPosition(String selectedPos) {
+    selectedPosition.value = selectedPos;
+    // Filter existing processed data without fetching or reprocessing
+    wallpaperList.value = filterPlayerGroups(_allPlayerGroups);
+    print("filter wallpaper ${filterPlayerGroups(_allPlayerGroups)}");
+  }
 
-
-  List<CategorizedPlayerGroup> convertToCategorizedPlayerGroups(List<WallpaperCategory> categories) {
-    // Define the roles under Forward and Back
+  List<CategorizedPlayerGroup> processWallpaperCategories(List<WallpaperCategory> categories) {
+    print("processWallpaperCategories ${categories}");
     const forwardRoles = ["prop", "hooker", "lock", "flanker", "no8"];
     const backRoles = ["scrumhalf", "standoff", "center", "wing", "fullback"];
+    const staffRoles = ["staff"];
 
-    // Initialize lists for Forward and Back groups
     List<MemberGroup> forwardGroups = [];
     List<MemberGroup> backGroups = [];
+    List<MemberGroup> staffGroups = [];
 
     // Process each category
     for (var category in categories) {
-      // Convert wallpapers to Member objects
       List<Member> members = category.wallpapers.map((wallpaper) {
         return Member(
           id: wallpaper.id,
-          date: '', // Placeholder, as date is not provided
-          modified: '', // Placeholder
+          date: '',
+          modified: '',
           slug: wallpaper.name.toLowerCase(),
-          status: 'active', // Assuming status as active
-          type: 'player', // Assuming type as player
+          status: 'active',
+          type: 'player',
           link: wallpaper.photo,
           title: Title(rendered: wallpaper.name),
           categoryId: category.id,
           categorySlug: category.name.toLowerCase(),
           categoryName: category.name,
-          custom_field: null, // Placeholder, as custom fields are not provided
+          custom_field: null,
         );
       }).toList();
 
-      // Create MemberGroup based on category name
       MemberGroup memberGroup = MemberGroup(title: category.name, players: members);
 
-      // Add to Forward or Back group based on category name
       if (forwardRoles.contains(category.name.toLowerCase())) {
         forwardGroups.add(memberGroup);
+        print("processWallpaperCategories 2 ${forwardGroups}");
       } else if (backRoles.contains(category.name.toLowerCase())) {
         backGroups.add(memberGroup);
+      } else if (staffRoles.contains(category.name.toLowerCase())) {
+        staffGroups.add(memberGroup);
       }
     }
 
-    // Return a list of CategorizedPlayerGroups
     return [
-      CategorizedPlayerGroup(categoryTitle: "Forward", playerGroups: forwardGroups),
-      CategorizedPlayerGroup(categoryTitle: "Back", playerGroups: backGroups),
+      if (forwardGroups.isNotEmpty)
+        CategorizedPlayerGroup(
+          categoryTitle: LocaleKeys.forward.tr,
+          playerGroups: forwardGroups,
+        ),
+      if (backGroups.isNotEmpty)
+        CategorizedPlayerGroup(
+          categoryTitle: LocaleKeys.back.tr,
+          playerGroups: backGroups,
+        ),
+      if (staffGroups.isNotEmpty)
+        CategorizedPlayerGroup(
+          categoryTitle: LocaleKeys.staff.tr,
+          playerGroups: staffGroups,
+        ),
     ];
+  }
+
+  List<CategorizedPlayerGroup> filterPlayerGroups(List<CategorizedPlayerGroup> allGroups) {
+    // Filter based on selected position
+    print("selectedPos ${selectedPosition.value}");
+    if (selectedPosition.value == "FW") {
+      return allGroups.where((group) => group.categoryTitle == LocaleKeys.forward.tr).toList();
+    } else if (selectedPosition.value == "BK") {
+      return allGroups.where((group) => group.categoryTitle == LocaleKeys.back.tr).toList();
+    } else if (selectedPosition.value == LocaleKeys.staff.tr) {
+      return allGroups.where((group) => group.categoryTitle == LocaleKeys.staff.tr).toList();
+    }
+
+    // Return all groups if no specific position is selected
+    return allGroups;
   }
 }

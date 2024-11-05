@@ -13,6 +13,8 @@ class SplashScreen extends GetView<SplashController> {
 
   @override
   Widget build(BuildContext context) {
+    final SplashController controller = Get.put(SplashController());
+
     return Scaffold(
       body: Stack(
         children: [
@@ -20,7 +22,7 @@ class SplashScreen extends GetView<SplashController> {
             width: double.infinity,
             height: double.infinity,
             'assets/vectors/bg_splash.svg', // Replace with your SVG file path
-            fit: BoxFit.contain, // Adjust fit as needed
+            fit: BoxFit.cover, // Adjust fit as needed
           ),
           SafeArea(
             child: Center(

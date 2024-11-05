@@ -40,7 +40,7 @@ Map<String, String> convertJapaneseDate(String japaneseDate) {
       // Return a map with separate variables
       return {
         'formattedDate': formattedDate,
-        'dayOfWeek': '($englishDayOfWeek)'
+        'dayOfWeek': '$englishDayOfWeek'
       };
     } else {
       throw FormatException('Invalid Japanese date format');
