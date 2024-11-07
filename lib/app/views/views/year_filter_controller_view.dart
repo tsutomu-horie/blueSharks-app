@@ -5,7 +5,7 @@ import 'package:koto_blue_sharks/app/views/views/custom_text_view.dart';
 
 class YearFilterController extends GetxController {
   // Observable to keep track of the selected year
-  var selectedYear = 2024.obs;
+  var selectedYear = 0.obs;
 
   // Update the selected year
   void selectYear(int year) {
@@ -25,7 +25,7 @@ class YearFilter extends StatelessWidget {
   final Color unselectedTextColor;
 
   YearFilter({
-    Key? key,
+    super.key,
     required this.years,
     required this.initialSelectedYear,
     this.onYearSelected,
@@ -33,41 +33,45 @@ class YearFilter extends StatelessWidget {
     this.unselectedColor = Colors.grey,
     this.selectedTextColor = Colors.white,
     this.unselectedTextColor = Colors.black,
-  }) : super(key: key) {
+  }) {
     controller.selectedYear.value = initialSelectedYear;
   }
 
   @override
+  @override
   Widget build(BuildContext context) {
-    return Container(
+    return SizedBox(
       height: 32.h,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         itemCount: years.length,
         itemBuilder: (context, index) {
           final year = years[index];
-          final bool isSelected = controller.selectedYear.value == year;
-
           return Padding(
-            padding: EdgeInsets.symmetric(horizontal: 8),
+            padding: EdgeInsets.symmetric(horizontal: 8.h),
             child: GestureDetector(
               onTap: () {
                 controller.selectYear(year);
                 if (onYearSelected != null) {
-                  onYearSelected!(year); // Trigger the callback
+                  onYearSelected!(year);
                 }
               },
-              child: Container(
+              child: Obx(() => Container(  // Wrap Container with Obx
                 padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 6.h),
                 decoration: BoxDecoration(
-                  color: isSelected ? selectedColor : unselectedColor,
+                  color: controller.selectedYear.value == year && controller.selectedYear.value != 0
+                      ? selectedColor
+                      : unselectedColor,
                   borderRadius: BorderRadius.circular(30),
                 ),
                 child: CustomTextView(
                   "$year年",
                   type: TDSFontType.labelLarge,
+                  color: controller.selectedYear.value == year && controller.selectedYear.value != 0
+                      ? selectedTextColor
+                      : unselectedTextColor,
                 ),
-              ),
+              )),
             ),
           );
         },

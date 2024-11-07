@@ -147,7 +147,7 @@ class AuthProvider extends GetConnect {
     return UserData.fromJson(response.body["data"]);
   }
 
-  Future<Response> updateNotificationToken(String fcm) async {
+  Future<Response?> updateNotificationToken(String fcm) async {
     httpClient.baseUrl = Constants.baseUrlAuthApi;
 
     final url = Uri.parse('notifications/create-fcm');
@@ -156,28 +156,32 @@ class AuthProvider extends GetConnect {
     final auth = AuthToken();
     final token = await auth.getAccessToken();
 
-    final Map<String, dynamic> body = {
-      "fcm_token": fcm,
-    };
+    if (token != null) {
+      final Map<String, dynamic> body = {
+        "fcm_token": fcm,
+      };
 
-    final headers = {
-      'Authorization': 'Bearer $token',
-      'Content-Type': 'application/json', // Optional, depending on the API
-    };
+      final headers = {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json', // Optional, depending on the API
+      };
 
-    final response = await post(
-        url.toString(), body, headers: headers // Send the body in the request
-    );
+      final response = await post(
+          url.toString(), body, headers: headers // Send the body in the request
+      );
 
-    print("Login successful2 , ${response.body}");
+      print("Login successful2 , ${response.body}");
 
-    if (response.hasError) {
-      throw Exception('Failed to send fcm token: ${response.statusText}');
+      if (response.hasError) {
+        throw Exception('Failed to send fcm token: ${response.statusText}');
+      }
+
+      print("Login successful, received data: ${response}");
+
+      return response;
+    } else {
+      return null;
     }
-
-    print("Login successful, received data: ${response}");
-
-    return response;
   }
 
   Future<List<Notification>> getNotificationList() async {

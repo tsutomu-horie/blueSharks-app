@@ -179,6 +179,9 @@ _$WallpaperImpl _$$WallpaperImplFromJson(Map<String, dynamic> json) =>
     _$WallpaperImpl(
       id: (json['id'] as num).toInt(),
       name: json['name'] as String,
+      kat_name: json['kat_name'] as String,
+      kan_name: json['kan_name'] as String,
+      category_name: json['category_name'] as String,
       photo: json['photo'] as String,
     );
 
@@ -186,5 +189,8 @@ Map<String, dynamic> _$$WallpaperImplToJson(_$WallpaperImpl instance) =>
     <String, dynamic>{
       'id': instance.id,
       'name': instance.name,
+      'kat_name': instance.kat_name,
+      'kan_name': instance.kan_name,
+      'category_name': instance.category_name,
       'photo': instance.photo,
     };

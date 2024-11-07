@@ -16,11 +16,13 @@ class RegisterMemberFanclubScreen
     required this.email,
     required this.otpId,
     required this.selectedPlayer,
+    required this.selectedPlayerName,
   });
 
   final String email;
   final String otpId;
   final String selectedPlayer;
+  final String selectedPlayerName;
 
   @override
   Widget build(BuildContext context) {
@@ -252,6 +254,7 @@ class RegisterMemberFanclubScreen
                   // Get.offAll(() => FanClubConfirmationScreen(email: email, id: "", selectedPlayer: selectedPlayer));
                 },
                 selectedPlayer,
+                selectedPlayerName
               );
             }
           },

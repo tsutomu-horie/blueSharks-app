@@ -118,7 +118,6 @@ class TDSTypography {
 
   static TextStyle _getTextStyle(TDSFontType type) {
     return TextStyle(
-      fontFamily: 'GeneralSans',
       fontWeight: _fontWeight[type]!,
       fontSize: fontSize[type]!,
       height: _lineHeight[type]! / fontSize[type]!,

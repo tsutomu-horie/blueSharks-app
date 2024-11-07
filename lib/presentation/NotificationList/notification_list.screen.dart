@@ -36,12 +36,10 @@ class NotificationListScreen extends GetView<NotificationListController> {
           },
         ),
       ),
-      body:             Expanded(
-        child: ListView.builder(
-          itemCount: controller.notificationList.length,
-          itemBuilder: (BuildContext context, int index) => 
-              Text(controller.notificationList[index].data.title)
-        ),
+      body:             ListView.builder(
+        itemCount: controller.notificationList.length,
+        itemBuilder: (BuildContext context, int index) =>
+            Text(controller.notificationList[index].data.title)
       ),
 
     );

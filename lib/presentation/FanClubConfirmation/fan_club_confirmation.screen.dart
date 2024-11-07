@@ -1,3 +1,5 @@
+import 'dart:ffi';
+
 import 'package:dotted_border/dotted_border.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
@@ -18,11 +20,13 @@ import 'package:koto_blue_sharks/utils/fcm_helper.dart';
 import 'controllers/fan_club_confirmation.controller.dart';
 
 class FanClubConfirmationScreen extends GetView<FanClubConfirmationController> {
-  const FanClubConfirmationScreen({super.key, required this.email, required this.id,required this.playerSelected,required this.isNotification, });
+  const FanClubConfirmationScreen(
+      {super.key, required this.email, required this.id, required this.playerSelected, required this.isNotification, required this.playerSelectedName,});
 
   final String email;
   final String id;
   final String playerSelected;
+  final String playerSelectedName;
   final bool isNotification;
 
   @override
@@ -33,7 +37,8 @@ class FanClubConfirmationScreen extends GetView<FanClubConfirmationController> {
     controller.isSelectNotificaiton.value = isNotification;
     controller.emailController.text = email;
     controller.idController.text = id;
-    controller.playerNameController.value = playerSelected;
+    controller.playerNameController.value = playerSelectedName;
+    controller.playerLinkController.value = playerSelected;
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -245,12 +250,14 @@ class FanClubConfirmationScreen extends GetView<FanClubConfirmationController> {
                         height: 44.h,
                         padding: EdgeInsets.symmetric(
                             vertical: 12.h, horizontal: 16.w),
-                        child: CustomTextView(
-                          playerSelected,
-                          align: TextAlign.start,
-                          color: TextColor.primary,
-                          type: TDSFontType.bodyTextMedium,
-                        )),
+                        child: Obx(() {
+                          return CustomTextView(
+                            controller.playerNameController.value,
+                            align: TextAlign.start,
+                            color: TextColor.primary,
+                            type: TDSFontType.bodyTextMedium,
+                          );
+                        })),
                   ),
                 ]),
             Container(
@@ -279,7 +286,7 @@ class FanClubConfirmationScreen extends GetView<FanClubConfirmationController> {
                         padding: EdgeInsets.symmetric(
                             vertical: 12.h, horizontal: 16.w),
                         child: CustomTextView(
-                          isNotification ? "アクティブ" : "inactive",
+                          isNotification ? LocaleKeys.active.tr : LocaleKeys.inactive.tr,
                           align: TextAlign.start,
                           color: TextColor.primary,
                           type: TDSFontType.bodyTextMedium,
@@ -300,8 +307,11 @@ class FanClubConfirmationScreen extends GetView<FanClubConfirmationController> {
                 width: double.infinity,
                 child: OutlinedButton(
                   onPressed: () {
-                    editProfileBottomSheet(controller, context, (email, id, wallpaper, isNotifActive){
-
+                    editProfileBottomSheet(
+                        controller, context, (email, id, wallpaper,
+                        wallpaperName, isNotifActive) {
+                      Get.back();
+                      controller.playerNameController.value = wallpaperName;
                     }, email);
                   },
                   child: Row(
@@ -343,14 +353,14 @@ class FanClubConfirmationScreen extends GetView<FanClubConfirmationController> {
                             style: TextStyle(
                                 color: TextColor.secondary,
                                 fontSize: 14.sp,
-                                fontFamily: "GeneralSans-Regular"),
+                            ),
                             text: "${LocaleKeys.privacy_policy_desc.tr} "),
                         TextSpan(
                           style: TextStyle(
                               color: BrandColor.main,
                               fontSize: 14.sp,
                               decoration: TextDecoration.underline,
-                              fontFamily: "GeneralSans-Regular"),
+                          ),
                           text: LocaleKeys.privacy_policy.tr,
                           recognizer: TapGestureRecognizer()
                             ..onTap = () {
@@ -361,7 +371,7 @@ class FanClubConfirmationScreen extends GetView<FanClubConfirmationController> {
                           style: TextStyle(
                               color: TextColor.secondary,
                               fontSize: 14.sp,
-                              fontFamily: "GeneralSans-Regular"),
+                          ),
                           text: " ${LocaleKeys.and.tr}",
                         ),
                         TextSpan(
@@ -369,18 +379,20 @@ class FanClubConfirmationScreen extends GetView<FanClubConfirmationController> {
                               color: BrandColor.main,
                               fontSize: 14.sp,
                               decoration: TextDecoration.underline,
-                              fontFamily: "GeneralSans-Regular"),
+                          ),
                           text: LocaleKeys.term_of_use.tr,
                           recognizer: TapGestureRecognizer()
                             ..onTap = () {
-                              Get.to(() => ForgotPasswordScreen(playerSelected));
+                              Get.to(() =>
+                                  ForgotPasswordScreen(
+                                      playerSelected, playerSelectedName));
                             },
                         ),
                         TextSpan(
                           style: TextStyle(
                               color: TextColor.secondary,
                               fontSize: 14.sp,
-                              fontFamily: "GeneralSans-Regular"),
+                          ),
                           text: " ${LocaleKeys.privacy_policy_desc2.tr}",
                         ),
                       ],

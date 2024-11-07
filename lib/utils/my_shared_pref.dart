@@ -11,8 +11,9 @@ class MySharedPref {
 
   // STORING KEYS
   static const String _fcmTokenKey = 'fcm_token';
-  // static const String _currentLocalKey = 'current_local';
-  // static const String _lightThemeKey = 'is_theme_light';
+  static const String _currentWallpaper = 'wallpaperPreferences';
+  static const String _currentWallpaperName = 'wallpaperName';
+  static const String _notificationKey = 'notification';
 
   /// init get storage services
   static Future<void> init() async {
@@ -23,28 +24,6 @@ class MySharedPref {
     _sharedPreferences = sharedPreferences;
   }
 
-  // /// set theme current type as light theme
-  // static Future<void> setThemeIsLight(bool lightTheme) =>
-  //     _sharedPreferences.setBool(_lightThemeKey, lightTheme);
-  //
-  // /// get if the current theme type is light
-  // static bool getThemeIsLight() =>
-  //     _sharedPreferences.getBool(_lightThemeKey) ?? true; // todo set the default theme (true for light, false for dark)
-  //
-  // /// save current locale
-  // static Future<void> setCurrentLanguage(String languageCode) =>
-  //     _sharedPreferences.setString(_currentLocalKey, languageCode);
-  //
-  // /// get current locale
-  // static Locale getCurrentLocal(){
-  //     String? langCode = _sharedPreferences.getString(_currentLocalKey);
-  //     // default language is english
-  //     if(langCode == null){
-  //       return LocalizationService.defaultLanguage;
-  //     }
-  //     return LocalizationService.supportedLanguages[langCode]!;
-  // }
-
   /// save generated fcm token
   static Future<void> setFcmToken(String token) =>
       _sharedPreferences.setString(_fcmTokenKey, token);
@@ -52,6 +31,31 @@ class MySharedPref {
   /// get authorization token
   static String? getFcmToken() =>
       _sharedPreferences.getString(_fcmTokenKey);
+
+  /// save generated fcm token
+  static Future<void> setWallpaper(String wallpaperLink) =>
+      _sharedPreferences.setString(_currentWallpaper, wallpaperLink);
+
+  /// get authorization token
+  static String? getWallpaper() =>
+      _sharedPreferences.getString(_currentWallpaper);
+
+  /// save generated fcm token
+  static Future<void> setWallpaperName(String wallapaperName) =>
+      _sharedPreferences.setString(_currentWallpaperName, wallapaperName);
+
+  /// get authorization token
+  static String? getWallpaperName() =>
+      _sharedPreferences.getString(_currentWallpaperName);
+
+
+  /// save generated fcm token
+  static Future<void> setNotification(String status) =>
+      _sharedPreferences.setString(_notificationKey, status);
+
+  /// get authorization token
+  static String? getNotification() =>
+      _sharedPreferences.getString(_notificationKey);
 
   /// clear all data from shared pref
   static Future<void> clear() async => await _sharedPreferences.clear();

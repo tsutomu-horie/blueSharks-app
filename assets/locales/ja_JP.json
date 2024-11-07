@@ -191,7 +191,11 @@
   "email_field_desc": "登録済みのメールアドレスを入力してください。その後、メールを確認するためのOTPコードを送信します。",
   "certification": "認証",
   "membership_dialog_title": "会員情報を確認中です",
-  "membership_dialog_message": "最新のファンクラブ会員情報の確認には数時間から24時間程度かかります. 認証が完了すると、マイページに会員証が表示されます."
-
+  "membership_dialog_message": "最新のファンクラブ会員情報の確認には数時間から24時間程度かかります. 認証が完了すると、マイページに会員証が表示されます.",
+  "game": "Game",
+  "event_en": "Event",
+  "other": "Other",
+  "active": "アクティブ",
+  "inactive": "inactive"
 
 }

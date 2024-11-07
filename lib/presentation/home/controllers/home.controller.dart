@@ -14,6 +14,7 @@ import 'package:koto_blue_sharks/app/data/models/match/match_result.dart';
 import 'package:koto_blue_sharks/app/data/models/media/media.dart';
 import 'package:koto_blue_sharks/app/data/models/member/member.dart';
 import 'package:koto_blue_sharks/utils/Constant.dart';
+import 'package:koto_blue_sharks/utils/my_shared_pref.dart';
 
 class HomeController extends GetxController {
   final MatchProvider apiProvider = MatchProvider();
@@ -24,6 +25,7 @@ class HomeController extends GetxController {
   final text = "".obs;
   final Rx<List<Post>> topicsData = Rx([]);
   final selectedWallpaper = "".obs;
+  final selectedWallpaperName = "".obs;
 
 
   @override
@@ -46,31 +48,16 @@ class HomeController extends GetxController {
       print("error $error");
     });
 
-    final wallpaper = WallpaperPreferences();
-    final wallpaperName = await wallpaper.getWallpaper();
+    // final wallpaper = WallpaperPreferences();
+    // final wallpaperName = await wallpaper.getWallpaper();
+    final wallpaperLink = MySharedPref.getWallpaper();
+    final wallpaperName = MySharedPref.getWallpaperName();
 
-    if (wallpaperName != null) {
-      selectedWallpaper.value = filterWallpaper(wallpaperName, data) ?? "";
+
+    if (wallpaperLink != null) {
+      selectedWallpaper.value = wallpaperLink;
+      selectedWallpaperName.value = wallpaperName ?? "";
     }
-
-    print("selectedWall ${wallpaperName}");
-  }
-
-  String? filterWallpaper(String wallpaperName, List<WallpaperCategory> wallpaperList) {
-    // Loop through all categories
-    for (var category in wallpaperList) {
-      // Search within the wallpapers of each category
-      for (var wallpaper in category.wallpapers) {
-        print("selectedWall 2 ${wallpaper.name}");
-        if (wallpaper.name == wallpaperName) {
-          print("selectedWall 2 ${wallpaper.name}");
-          // Return the photo URL when the name matches
-          return wallpaper.photo;
-        }
-      }
-    }
-    // Return null if no matching wallpaper is found
-    return null;
   }
 
   void getTopics() async {

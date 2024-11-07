@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:koto_blue_sharks/app/data/api/otp/otp_provider.dart';
+import 'package:koto_blue_sharks/presentation/main/main.screen.dart';
+import 'package:koto_blue_sharks/utils/my_shared_pref.dart';
 
 class RegisterEmailController extends GetxController {
   final textFieldController = TextEditingController();
@@ -21,7 +23,11 @@ class RegisterEmailController extends GetxController {
       });
 
       onSuccess(response.id);
+  }
 
-
+  void setWallpaper(String selectedPlayer, String playerName){
+    MySharedPref.setWallpaper(selectedPlayer);
+    MySharedPref.setWallpaperName(playerName);
+    Get.offAll(() => const MainScreen());
   }
 }

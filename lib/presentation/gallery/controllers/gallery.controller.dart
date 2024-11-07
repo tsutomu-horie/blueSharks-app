@@ -7,8 +7,8 @@ import 'package:koto_blue_sharks/utils/utils.dart';
 
 class GalleryController extends GetxController {
   var selectedIndex = 1.obs;
-  var selectedName = "Game".obs;
-  var selectedYear = "2024".obs;
+  var selectedName = LocaleKeys.game.tr.obs;
+  var selectedYear = "".obs;
   final GalleryProvider apiProvider = GalleryProvider();
   final RxList<Album> album = <Album>[].obs;
 
@@ -22,9 +22,11 @@ class GalleryController extends GetxController {
   void onSwitch(int index, String name) {
     selectedIndex.value = index;
     selectedName.value =  name;
+    getGalleryList();
   }
 
   void getGalleryList() async {
+    print("get year data ${selectedYear.value}");
     final response = await apiProvider.fetchGalleryList(
       selectedIndex.value,
       selectedYear.value,

@@ -13,7 +13,7 @@ import 'package:lottie/lottie.dart';
 void editProfileBottomSheet(
     FanClubConfirmationController fanclubController,
     BuildContext context,
-    Function(String, String, String, bool) onSuccess,
+    Function(String, String, String, String, bool) onSuccess,
     String oldEmail) {
   showModalBottomSheet(
     context: context,
@@ -160,10 +160,11 @@ void editProfileBottomSheet(
             OutlinedButton(
               onPressed: () {
                 print("button set wallpaper");
-                Get.to(() => WallpaperSetPlayerScreen((value) {
+                Get.to(() => WallpaperSetPlayerScreen((value, link) {
                       Get.back();
                       print("valuenya ${value}");
                       fanclubController.playerNameController.value = value;
+                      fanclubController.playerLinkController.value = link;
                     }));
               },
               style: ButtonStyle(
@@ -244,11 +245,11 @@ void editProfileBottomSheet(
                     fanclubController.updateProfile(onSuccess);
                   } else {
                     fanclubController.sendOtp((id) {
-                      showEmailDialog(fanclubController, context, "$id", (){
-                        fanclubController.updateProfile((email, id, playername, notification){
-                          onSuccess(email, id,playername,notification);
+                      showEmailDialog(fanclubController, context, "$id", () {
+                        fanclubController.updateProfile(
+                            (email, id, playerlink, playername, notification) {
+                          onSuccess(email, id, playerlink, playername, notification);
                         });
-
                       });
                     });
                   }
@@ -316,6 +317,7 @@ void showEmailDialog(FanClubConfirmationController registerEmailController,
                         otpId: otpId,
                         selectedPlayer:
                             registerEmailController.playerNameController.value,
+                        selectedPlayerName: registerEmailController.playerLinkController.value,
                         onSuccess: onSuccess));
                   },
                   child: CustomTextView(

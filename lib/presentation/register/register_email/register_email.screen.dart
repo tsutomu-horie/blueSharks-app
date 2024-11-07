@@ -1,14 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_html/flutter_html.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 import 'package:get/get.dart';
 import 'package:koto_blue_sharks/app/views/views/custom_text_view.dart';
 import 'package:koto_blue_sharks/generated/locales.g.dart';
-import 'package:koto_blue_sharks/presentation/home/home.screen.dart';
 import 'package:koto_blue_sharks/presentation/login/login.screen.dart';
-import 'package:koto_blue_sharks/presentation/main/main.screen.dart';
 import 'package:koto_blue_sharks/presentation/register/register_otp/register_otp.screen.dart';
 import 'package:koto_blue_sharks/utils/app_color.dart';
 import 'package:lottie/lottie.dart';
@@ -16,9 +13,11 @@ import 'package:lottie/lottie.dart';
 import 'controllers/register_email.controller.dart';
 
 class RegisterEmailScreen extends GetView<RegisterEmailController> {
-  const RegisterEmailScreen(this.selectedPlayer, {super.key});
+  const RegisterEmailScreen(this.selectedPlayer, this.selectedPlayerName,
+      {super.key});
 
   final String selectedPlayer;
+  final String selectedPlayerName;
 
   @override
   Widget build(BuildContext context) {
@@ -89,10 +88,10 @@ class RegisterEmailScreen extends GetView<RegisterEmailController> {
                         backgroundColor: BrandColor.main),
                     onPressed: () {
                       if (globalKey.currentState!.validate()) {
-                        registerEmailController.sendOtp((id){
-                        showEmailDialog(registerEmailController, context, "$id");
+                        registerEmailController.sendOtp((id) {
+                          showEmailDialog(
+                              registerEmailController, context, "$id");
                         });
-
                       }
                     },
                     child: CustomTextView(
@@ -106,7 +105,7 @@ class RegisterEmailScreen extends GetView<RegisterEmailController> {
                 height: 12.h,
               ),
               Flexible(
-                child: Container(
+                child: SizedBox(
                   width: double.infinity,
                   child: OutlinedButton(
                     style: ButtonStyle(
@@ -116,7 +115,7 @@ class RegisterEmailScreen extends GetView<RegisterEmailController> {
                           ),
                     ),
                     onPressed: () {
-                      Get.offAll(() => const MainScreen());
+                      registerEmailController.setWallpaper(selectedPlayer, selectedPlayerName);
                     },
                     child: CustomTextView(
                       LocaleKeys.jump_to.tr,
@@ -182,7 +181,8 @@ class RegisterEmailScreen extends GetView<RegisterEmailController> {
                             }
                             return null;
                           },
-                          controller: registerEmailController.textFieldController,
+                          controller:
+                              registerEmailController.textFieldController,
                           decoration: InputDecoration(
                             errorMaxLines: 1,
                             border: OutlineInputBorder(
@@ -196,7 +196,8 @@ class RegisterEmailScreen extends GetView<RegisterEmailController> {
                             hintStyle: TextStyle(
                               color: TextColor.placeholder, // Custom hint color
                             ),
-                            contentPadding: EdgeInsets.only(top: 2.h, left: 16.w),
+                            contentPadding:
+                                EdgeInsets.only(top: 2.h, left: 16.w),
                             hintText: LocaleKeys.email_placeholder
                                 .trParams({"example": "jack@email.com"}),
                           ),
@@ -233,7 +234,8 @@ class RegisterEmailScreen extends GetView<RegisterEmailController> {
                         width: double.infinity,
                         child: TextButton(
                           onPressed: () {
-                            Get.to(() => LoginScreen(selectedPlayer, false));
+                            Get.to(() => LoginScreen(
+                                selectedPlayer, false, selectedPlayerName));
                           },
                           child: CustomTextView(
                             LocaleKeys.login_now.tr,
@@ -253,8 +255,8 @@ class RegisterEmailScreen extends GetView<RegisterEmailController> {
         ));
   }
 
-  void showEmailDialog(
-      RegisterEmailController registerEmailController, BuildContext context, String? otpId) {
+  void showEmailDialog(RegisterEmailController registerEmailController,
+      BuildContext context, String? otpId) {
     showDialog(
       context: context,
       barrierDismissible: true, // Dismiss when tapped outside
@@ -270,7 +272,8 @@ class RegisterEmailScreen extends GetView<RegisterEmailController> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Lottie.asset(
-                  'assets/lottie/mail_animation.json', // Path to your Lottie animation
+                  'assets/lottie/mail_animation.json',
+                  // Path to your Lottie animation
                   width: 180.w,
                   height: 180.h,
                   fit: BoxFit.fill,
@@ -295,11 +298,12 @@ class RegisterEmailScreen extends GetView<RegisterEmailController> {
                     onPressed: () {
                       Get.back();
                       Get.to(() => RegisterOtpScreen(
+                            fromScreen: "register",
+                            otpId: otpId,
+                            selectedPlayer: selectedPlayer,
+                            selectedPlayerName: selectedPlayerName,
                             email: registerEmailController
                                 .textFieldController.text,
-                        fromScreen: "register",
-                        otpId: otpId,
-                        selectedPlayer: selectedPlayer,
                           ));
                     },
                     child: CustomTextView(

@@ -25,6 +25,7 @@ class MemberAdapter extends TypeAdapter<Member> {
       type: fields[5] as String,
       link: fields[6] as String,
       title: fields[7] as Title,
+      playerNameKatakana: fields[12] as String?,
       categoryId: fields[8] as int?,
       categorySlug: fields[9] as String?,
       categoryName: fields[10] as String?,
@@ -35,7 +36,7 @@ class MemberAdapter extends TypeAdapter<Member> {
   @override
   void write(BinaryWriter writer, Member obj) {
     writer
-      ..writeByte(12)
+      ..writeByte(13)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -52,6 +53,8 @@ class MemberAdapter extends TypeAdapter<Member> {
       ..write(obj.link)
       ..writeByte(7)
       ..write(obj.title)
+      ..writeByte(12)
+      ..write(obj.playerNameKatakana)
       ..writeByte(8)
       ..write(obj.categoryId)
       ..writeByte(9)
@@ -129,6 +132,7 @@ _$MemberImpl _$$MemberImplFromJson(Map<String, dynamic> json) => _$MemberImpl(
       type: json['type'] as String,
       link: json['link'] as String,
       title: Title.fromJson(json['title'] as Map<String, dynamic>),
+      playerNameKatakana: json['playerNameKatakana'] as String?,
       categoryId: (json['categoryId'] as num?)?.toInt(),
       categorySlug: json['categorySlug'] as String?,
       categoryName: json['categoryName'] as String?,
@@ -147,6 +151,7 @@ Map<String, dynamic> _$$MemberImplToJson(_$MemberImpl instance) =>
       'type': instance.type,
       'link': instance.link,
       'title': instance.title,
+      'playerNameKatakana': instance.playerNameKatakana,
       'categoryId': instance.categoryId,
       'categorySlug': instance.categorySlug,
       'categoryName': instance.categoryName,

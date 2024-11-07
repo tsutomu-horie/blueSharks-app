@@ -132,7 +132,7 @@ class Nav {
     ),
     GetPage(
       name: Routes.REGISTER_EMAIL,
-      page: () => const RegisterEmailScreen(""),
+      page: () => const RegisterEmailScreen("", ""),
       binding: RegisterEmailControllerBinding(),
     ),
     GetPage(
@@ -142,6 +142,7 @@ class Nav {
         fromScreen: "",
         otpId: "",
         selectedPlayer: "",
+        selectedPlayerName: "",
       ),
       binding: RegisterOtpControllerBinding(),
     ),
@@ -150,13 +151,13 @@ class Nav {
       page: () => const RegisterMemberFanclubScreen(
         email: "",
         otpId: "",
-        selectedPlayer: "",
+        selectedPlayer: "", selectedPlayerName: '',
       ),
       binding: RegisterMemberFanclubControllerBinding(),
     ),
     GetPage(
       name: Routes.LOGIN,
-      page: () => const LoginScreen("", false),
+      page: () => const LoginScreen("", false, ""),
       binding: LoginControllerBinding(),
     ),
     GetPage(
@@ -166,7 +167,7 @@ class Nav {
     ),
     GetPage(
       name: Routes.FORGOT_PASSWORD,
-      page: () => const ForgotPasswordScreen(""),
+      page: () => const ForgotPasswordScreen("", ""),
       binding: ForgotPasswordControllerBinding(),
     ),
     GetPage(
@@ -176,6 +177,7 @@ class Nav {
         id: "",
         isNotification: true,
         playerSelected: "",
+        playerSelectedName: "",
       ),
       binding: FanClubConfirmationControllerBinding(),
     ),
@@ -186,7 +188,7 @@ class Nav {
     ),
     GetPage(
       name: Routes.REGISTER_EMAIL_FROM_HOME,
-      page: () => const RegisterEmailFromHomeScreen(""),
+      page: () => const RegisterEmailFromHomeScreen("", ""),
       binding: RegisterEmailFromHomeControllerBinding(),
     ),
     GetPage(

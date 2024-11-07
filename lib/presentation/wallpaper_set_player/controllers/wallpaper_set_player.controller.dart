@@ -5,6 +5,7 @@ import 'package:koto_blue_sharks/app/data/models/media/media.dart';
 import 'package:koto_blue_sharks/app/data/models/member/member.dart';
 import 'package:koto_blue_sharks/generated/locales.g.dart';
 import 'package:koto_blue_sharks/presentation/member/controllers/member.controller.dart';
+import 'package:koto_blue_sharks/utils/String+extensions.dart';
 
 class WallpaperSetPlayerController extends GetxController {
   final selectedPosition = LocaleKeys.all_position.tr.obs;
@@ -69,8 +70,9 @@ class WallpaperSetPlayerController extends GetxController {
           slug: wallpaper.name.toLowerCase(),
           status: 'active',
           type: 'player',
+          playerNameKatakana: wallpaper.kat_name,
           link: wallpaper.photo,
-          title: Title(rendered: wallpaper.name),
+          title: Title(rendered: wallpaper.kan_name),
           categoryId: category.id,
           categorySlug: category.name.toLowerCase(),
           categoryName: category.name,
@@ -78,7 +80,7 @@ class WallpaperSetPlayerController extends GetxController {
         );
       }).toList();
 
-      MemberGroup memberGroup = MemberGroup(title: category.name, players: members);
+      MemberGroup memberGroup = MemberGroup(title: category.name.capitalizeText(), players: members);
 
       if (forwardRoles.contains(category.name.toLowerCase())) {
         forwardGroups.add(memberGroup);

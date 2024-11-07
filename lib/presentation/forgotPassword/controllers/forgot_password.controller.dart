@@ -19,7 +19,7 @@ class ForgotPasswordController extends GetxController {
     otpProvider.onInit();
   }
 
-  void sendOtp(BuildContext context, String selectedPlayer) async {
+  void sendOtp(BuildContext context, String selectedPlayer, String selectedPlayerName) async {
     final email = emailTextFieldController.text;
 
     print("send ${email}");
@@ -28,6 +28,6 @@ class ForgotPasswordController extends GetxController {
       Utils.showError(context, LocaleKeys.error_login_message.tr, null );
     });
 
-    Get.to(() => RegisterOtpScreen(email: email, fromScreen: "forgotPassword", otpId: "${response.id}", selectedPlayer: selectedPlayer,));
+    Get.to(() => RegisterOtpScreen(email: email, fromScreen: "forgotPassword", otpId: "${response.id}", selectedPlayer: selectedPlayer, selectedPlayerName: selectedPlayerName,));
   }
 }

@@ -13,14 +13,15 @@ import 'package:koto_blue_sharks/presentation/wallpaper_set_player/controllers/w
 import 'package:koto_blue_sharks/utils/app_color.dart';
 
 class SetWalpaperListView extends GetView {
-  const SetWalpaperListView(this.memberController, {super.key, required this.isSetWallpaper, this.onSet});
+  const SetWalpaperListView(this.memberController,
+      {super.key, required this.isSetWallpaper, this.onSet});
+
   final WallpaperSetPlayerController memberController;
   final bool isSetWallpaper;
-  final Function(String)? onSet;
+  final Function(String, String)? onSet;
 
   @override
   Widget build(BuildContext context) {
-
     return Column(
       children: [
         Container(
@@ -77,13 +78,13 @@ class SetWalpaperListView extends GetView {
             ),
           ),
         ),
-        //todo::tampilin data player disini
         Obx(() {
-          List<CategorizedPlayerGroup> groupedPlayers = memberController.wallpaperList;
+          List<CategorizedPlayerGroup> groupedPlayers =
+              memberController.wallpaperList;
 
-            groupedPlayers = groupedPlayers
-                .where((group) => group.categoryTitle != LocaleKeys.staff.tr)
-                .toList();
+          groupedPlayers = groupedPlayers
+              .where((group) => group.categoryTitle != LocaleKeys.staff.tr)
+              .toList();
 
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -95,7 +96,7 @@ class SetWalpaperListView extends GetView {
                     width: double.infinity,
                     color: BrandColor.background,
                     padding:
-                    EdgeInsets.symmetric(vertical: 12.h, horizontal: 16.w),
+                        EdgeInsets.symmetric(vertical: 12.h, horizontal: 16.w),
                     child: CustomTextView(
                       group.categoryTitle,
                       style: TextStyle(
@@ -138,7 +139,7 @@ class SetWalpaperListView extends GetView {
                               shrinkWrap: true,
                               physics: const NeverScrollableScrollPhysics(),
                               gridDelegate:
-                              SliverGridDelegateWithFixedCrossAxisCount(
+                                  SliverGridDelegateWithFixedCrossAxisCount(
                                 crossAxisCount: 3,
                                 // Number of columns in the grid
                                 childAspectRatio: 0.75,
@@ -149,9 +150,22 @@ class SetWalpaperListView extends GetView {
                               itemCount: playerGroup.players.length,
                               itemBuilder: (context, playerIndex) {
                                 final player = playerGroup.players[playerIndex];
-                                return PlayerCardView(player, playerGroup.title, onSet, memberController.mediaProvider,true, (postImage, position){
-                                    showSetWallpaper(memberController, context, postImage,
-                                        player.title.rendered, position, onSet);
+                                return PlayerCardView(
+                                    player,
+                                    playerGroup.title,
+                                    onSet,
+                                    memberController.mediaProvider,
+                                    true, (postImage, position) {
+                                  showSetWallpaper(
+                                    memberController,
+                                    context,
+                                    postImage,
+                                    player.playerNameKatakana ?? "",
+                                    player.title.rendered,
+                                    position,
+                                    player.link,
+                                    onSet,
+                                  );
                                 });
                               },
                             ),
@@ -187,10 +201,10 @@ class SetWalpaperListView extends GetView {
               SizedBox(height: 8.h),
               Center(
                   child: Container(
-                    width: 48.w,
-                    height: 4.w,
-                    color: BorderColor.primary,
-                  )),
+                width: 48.w,
+                height: 4.w,
+                color: BorderColor.primary,
+              )),
               SizedBox(height: 16.h),
               Expanded(
                 child: ListView.builder(
@@ -239,8 +253,15 @@ class SetWalpaperListView extends GetView {
     );
   }
 
-  void showSetWallpaper(WallpaperSetPlayerController memberController, BuildContext context,
-      String image, String playerName, String playerPosition, Function(String)? onSet) {
+  void showSetWallpaper(
+      WallpaperSetPlayerController memberController,
+      BuildContext context,
+      String image,
+      String playerNameKatana,
+      String playerNameKanji,
+      String playerPosition,
+      String playerUrl,
+      Function(String, String)? onSet) {
     showModalBottomSheet(
       context: context,
       shape: RoundedRectangleBorder(
@@ -281,39 +302,62 @@ class SetWalpaperListView extends GetView {
                   children: [
                     image != ''
                         ? SizedBox(
-                        width: 81.w,
-                        child: AspectRatio(
-                          aspectRatio: 3/4,
-                          child: CustomImageView(
-                            image: image,
-                            radius: 4.r,
-                            customFit: BoxFit.fitHeight,
-                          ),
-                        ))
+                            width: 81.w,
+                            child: AspectRatio(
+                              aspectRatio: 3 / 4,
+                              child: CustomImageView(
+                                image: image,
+                                radius: 4.r,
+                                customFit: BoxFit.fitHeight,
+                              ),
+                            ))
                         : Container(
-                      decoration: BoxDecoration(
-                        color: Colors.grey,
-                        borderRadius: BorderRadius.circular(4.r),
-                      ),
-                    ),
+                            decoration: BoxDecoration(
+                              color: Colors.grey,
+                              borderRadius: BorderRadius.circular(4.r),
+                            ),
+                          ),
                     SizedBox(
                       width: 12.w,
                     ),
                     Column(
                       children: [
-                        CustomTextView(playerName, type: TDSFontType.titleSmall, color: TextColor.secondary,),
-                        SizedBox(height: 12.h,),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            CustomTextView(
+                              playerNameKatana,
+                              type: TDSFontType.labelMedium,
+                              color: TextColor.secondary,
+                            ),
+                            CustomTextView(
+                              playerNameKanji,
+                              type: TDSFontType.titleSmall,
+                              color: TextColor.secondary,
+                            ),
+                          ],
+                        ),
+                        SizedBox(
+                          height: 12.h,
+                        ),
                         Container(
-                            padding: EdgeInsets.symmetric(vertical: 4.h, horizontal: 8.w),
-                            decoration: BoxDecoration(color: BrandColor.surface, borderRadius: BorderRadius.circular(24.r),),
-                            child: CustomTextView(playerPosition, type: TDSFontType.titleSmall, color: TextColor.secondary)),
-
+                            padding: EdgeInsets.symmetric(
+                                vertical: 4.h, horizontal: 8.w),
+                            decoration: BoxDecoration(
+                              color: BrandColor.surface,
+                              borderRadius: BorderRadius.circular(24.r),
+                            ),
+                            child: CustomTextView(playerPosition,
+                                type: TDSFontType.titleSmall,
+                                color: TextColor.secondary)),
                       ],
                     )
                   ],
                 ),
               ),
-              SizedBox(height: 28.h,),
+              SizedBox(
+                height: 28.h,
+              ),
               Row(
                 children: [
                   Flexible(
@@ -323,35 +367,43 @@ class SetWalpaperListView extends GetView {
                       child: OutlinedButton(
                         style: ButtonStyle(
                           side: WidgetStateProperty.all(BorderSide(
-                              color: BrandColor
-                                  .main) // Set your desired color here
-                          ),
+                                  color: BrandColor
+                                      .main) // Set your desired color here
+                              ),
                         ),
                         onPressed: () {
                           Get.back();
                         },
-                        child: CustomTextView(LocaleKeys.cancel.tr, color: BrandColor.main,),
-
+                        child: CustomTextView(
+                          LocaleKeys.cancel.tr,
+                          color: BrandColor.main,
+                        ),
                       ),
                     ),
                   ),
-                  SizedBox(width: 16.w,),
+                  SizedBox(
+                    width: 16.w,
+                  ),
                   Flexible(
                     child: SizedBox(
                       height: 48.h,
                       width: double.infinity,
                       child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(backgroundColor: BrandColor.main, ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: BrandColor.main,
+                        ),
                         onPressed: () {
                           if (onSet != null) {
-                            onSet(playerName);
+                            onSet("$playerNameKatana $playerNameKanji", playerUrl);
                             Get.back();
                           } else {
-                            Get.to(() => RegisterEmailScreen(playerName));
+                            Get.to(() => RegisterEmailScreen(playerUrl, "$playerNameKatana $playerNameKanji"));
                           }
                         },
-                        child: CustomTextView(LocaleKeys.confirm.tr, color: BrandColor.content,),
-
+                        child: CustomTextView(
+                          LocaleKeys.confirm.tr,
+                          color: BrandColor.content,
+                        ),
                       ),
                     ),
                   ),

@@ -44,7 +44,7 @@ class MypageScreen extends GetView<MypageController> {
                     padding:
                         EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
                     child: (controller.isLogin.value &&
-                            controller.profileData.value?.isVerified == 0
+                            controller.profileData.value?.isVerified != 0
                         ? Column(
                             children: [
                               AspectRatio(
@@ -336,11 +336,12 @@ class MypageScreen extends GetView<MypageController> {
                                         .profileData.value?.accountId ??
                                     "";
                                 editProfileBottomSheet(controller, context,
-                                    (email, id, wallpaper,
+                                    (email, id, wallpaper, wallpaperName,
                                         isNotifActive) async {
                                   print("get id ${id}");
                                   controller.playerNameController.value =
-                                      wallpaper;
+                                      wallpaperName;
+                                  controller.playerLinkController.value = wallpaper;
                                   controller.emailController.text = email;
                                   controller.idController.text = id;
                                   controller.isSelectNotificaiton.value =
@@ -471,8 +472,8 @@ class MypageScreen extends GetView<MypageController> {
                                   child: OutlinedButton(
                                     onPressed: () async {
                                       Get.to(LoginScreen(
-                                          controller.playerNameController.value,
-                                          true));
+                                          controller.playerLinkController.value,
+                                          true,  controller.playerNameController.value ));
                                     },
                                     style: ButtonStyle(
                                       side: WidgetStateProperty.all(BorderSide(
@@ -535,7 +536,7 @@ class MypageScreen extends GetView<MypageController> {
                                     onPressed: () async {
                                       Get.to(RegisterEmailFromHomeScreen(
                                           controller
-                                              .playerNameController.value));
+                                              .playerNameController.value, controller.playerLinkController.value));
                                     },
                                     style: ButtonStyle(
                                       side: WidgetStateProperty.all(BorderSide(
@@ -574,14 +575,14 @@ class MypageScreen extends GetView<MypageController> {
                                 style: TextStyle(
                                     color: TextColor.secondary,
                                     fontSize: 14.sp,
-                                    fontFamily: "GeneralSans-Regular"),
+                                ),
                                 text: "${LocaleKeys.privacy_policy_desc.tr} "),
                             TextSpan(
                               style: TextStyle(
                                   color: BrandColor.main,
                                   fontSize: 14.sp,
                                   decoration: TextDecoration.underline,
-                                  fontFamily: "GeneralSans-Regular"),
+                              ),
                               text: LocaleKeys.privacy_policy.tr,
                               recognizer: TapGestureRecognizer()..onTap = () {},
                             ),
@@ -589,7 +590,7 @@ class MypageScreen extends GetView<MypageController> {
                               style: TextStyle(
                                   color: TextColor.secondary,
                                   fontSize: 14.sp,
-                                  fontFamily: "GeneralSans-Regular"),
+                              ),
                               text: " ${LocaleKeys.and.tr}",
                             ),
                             TextSpan(
@@ -597,7 +598,7 @@ class MypageScreen extends GetView<MypageController> {
                                   color: BrandColor.main,
                                   fontSize: 14.sp,
                                   decoration: TextDecoration.underline,
-                                  fontFamily: "GeneralSans-Regular"),
+                              ),
                               text: LocaleKeys.term_of_use.tr,
                               recognizer: TapGestureRecognizer()..onTap = () {},
                             ),
@@ -605,7 +606,7 @@ class MypageScreen extends GetView<MypageController> {
                               style: TextStyle(
                                   color: TextColor.secondary,
                                   fontSize: 14.sp,
-                                  fontFamily: "GeneralSans-Regular"),
+                              ),
                               text: " ${LocaleKeys.privacy_policy_desc2.tr}",
                             ),
                           ],
