@@ -1751,6 +1751,9 @@ Wallpaper _$WallpaperFromJson(Map<String, dynamic> json) {
 mixin _$Wallpaper {
   int get id => throw _privateConstructorUsedError;
   String get name => throw _privateConstructorUsedError;
+  String get kat_name => throw _privateConstructorUsedError;
+  String get kan_name => throw _privateConstructorUsedError;
+  String get category_name => throw _privateConstructorUsedError;
   String get photo => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -1764,7 +1767,13 @@ abstract class $WallpaperCopyWith<$Res> {
   factory $WallpaperCopyWith(Wallpaper value, $Res Function(Wallpaper) then) =
       _$WallpaperCopyWithImpl<$Res, Wallpaper>;
   @useResult
-  $Res call({int id, String name, String photo});
+  $Res call(
+      {int id,
+      String name,
+      String kat_name,
+      String kan_name,
+      String category_name,
+      String photo});
 }
 
 /// @nodoc
@@ -1782,6 +1791,9 @@ class _$WallpaperCopyWithImpl<$Res, $Val extends Wallpaper>
   $Res call({
     Object? id = null,
     Object? name = null,
+    Object? kat_name = null,
+    Object? kan_name = null,
+    Object? category_name = null,
     Object? photo = null,
   }) {
     return _then(_value.copyWith(
@@ -1792,6 +1804,18 @@ class _$WallpaperCopyWithImpl<$Res, $Val extends Wallpaper>
       name: null == name
           ? _value.name
           : name // ignore: cast_nullable_to_non_nullable
+              as String,
+      kat_name: null == kat_name
+          ? _value.kat_name
+          : kat_name // ignore: cast_nullable_to_non_nullable
+              as String,
+      kan_name: null == kan_name
+          ? _value.kan_name
+          : kan_name // ignore: cast_nullable_to_non_nullable
+              as String,
+      category_name: null == category_name
+          ? _value.category_name
+          : category_name // ignore: cast_nullable_to_non_nullable
               as String,
       photo: null == photo
           ? _value.photo
@@ -1809,7 +1833,13 @@ abstract class _$$WallpaperImplCopyWith<$Res>
       __$$WallpaperImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({int id, String name, String photo});
+  $Res call(
+      {int id,
+      String name,
+      String kat_name,
+      String kan_name,
+      String category_name,
+      String photo});
 }
 
 /// @nodoc
@@ -1825,6 +1855,9 @@ class __$$WallpaperImplCopyWithImpl<$Res>
   $Res call({
     Object? id = null,
     Object? name = null,
+    Object? kat_name = null,
+    Object? kan_name = null,
+    Object? category_name = null,
     Object? photo = null,
   }) {
     return _then(_$WallpaperImpl(
@@ -1835,6 +1868,18 @@ class __$$WallpaperImplCopyWithImpl<$Res>
       name: null == name
           ? _value.name
           : name // ignore: cast_nullable_to_non_nullable
+              as String,
+      kat_name: null == kat_name
+          ? _value.kat_name
+          : kat_name // ignore: cast_nullable_to_non_nullable
+              as String,
+      kan_name: null == kan_name
+          ? _value.kan_name
+          : kan_name // ignore: cast_nullable_to_non_nullable
+              as String,
+      category_name: null == category_name
+          ? _value.category_name
+          : category_name // ignore: cast_nullable_to_non_nullable
               as String,
       photo: null == photo
           ? _value.photo
@@ -1848,7 +1893,12 @@ class __$$WallpaperImplCopyWithImpl<$Res>
 @JsonSerializable()
 class _$WallpaperImpl implements _Wallpaper {
   const _$WallpaperImpl(
-      {required this.id, required this.name, required this.photo});
+      {required this.id,
+      required this.name,
+      required this.kat_name,
+      required this.kan_name,
+      required this.category_name,
+      required this.photo});
 
   factory _$WallpaperImpl.fromJson(Map<String, dynamic> json) =>
       _$$WallpaperImplFromJson(json);
@@ -1858,11 +1908,17 @@ class _$WallpaperImpl implements _Wallpaper {
   @override
   final String name;
   @override
+  final String kat_name;
+  @override
+  final String kan_name;
+  @override
+  final String category_name;
+  @override
   final String photo;
 
   @override
   String toString() {
-    return 'Wallpaper(id: $id, name: $name, photo: $photo)';
+    return 'Wallpaper(id: $id, name: $name, kat_name: $kat_name, kan_name: $kan_name, category_name: $category_name, photo: $photo)';
   }
 
   @override
@@ -1872,12 +1928,19 @@ class _$WallpaperImpl implements _Wallpaper {
             other is _$WallpaperImpl &&
             (identical(other.id, id) || other.id == id) &&
             (identical(other.name, name) || other.name == name) &&
+            (identical(other.kat_name, kat_name) ||
+                other.kat_name == kat_name) &&
+            (identical(other.kan_name, kan_name) ||
+                other.kan_name == kan_name) &&
+            (identical(other.category_name, category_name) ||
+                other.category_name == category_name) &&
             (identical(other.photo, photo) || other.photo == photo));
   }
 
   @JsonKey(ignore: true)
   @override
-  int get hashCode => Object.hash(runtimeType, id, name, photo);
+  int get hashCode => Object.hash(
+      runtimeType, id, name, kat_name, kan_name, category_name, photo);
 
   @JsonKey(ignore: true)
   @override
@@ -1897,6 +1960,9 @@ abstract class _Wallpaper implements Wallpaper {
   const factory _Wallpaper(
       {required final int id,
       required final String name,
+      required final String kat_name,
+      required final String kan_name,
+      required final String category_name,
       required final String photo}) = _$WallpaperImpl;
 
   factory _Wallpaper.fromJson(Map<String, dynamic> json) =
@@ -1906,6 +1972,12 @@ abstract class _Wallpaper implements Wallpaper {
   int get id;
   @override
   String get name;
+  @override
+  String get kat_name;
+  @override
+  String get kan_name;
+  @override
+  String get category_name;
   @override
   String get photo;
   @override

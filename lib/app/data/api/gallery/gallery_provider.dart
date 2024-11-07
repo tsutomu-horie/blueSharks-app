@@ -13,8 +13,9 @@ class GalleryProvider extends GetConnect {
   Future<List<Album>> fetchGalleryList(int categoryId, String year, Function onError) async {
     final response = await get('galleries/albums?category_id=$categoryId&year=${year}');
 
+    print('${httpClient.baseUrl}galleries/albums?category_id=$categoryId&year=${year}');
     if (response.hasError) {
-      throw Exception('Failed to load media with I');
+      throw Exception('Failed to load media with ${response.statusText}');
     }
 
     print("finish with ${response.body}");

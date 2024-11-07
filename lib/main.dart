@@ -54,6 +54,9 @@ class Main extends StatelessWidget {
       minTextAdapt: true,
       splitScreenMode: false,
       child: GetMaterialApp(
+        theme: ThemeData(
+          fontFamily: 'Inter', // Specify the custom font family name here
+        ),
         localizationsDelegates: const [
           GlobalMaterialLocalizations.delegate,
           GlobalWidgetsLocalizations.delegate,

@@ -7,6 +7,7 @@ import 'package:koto_blue_sharks/app/data/models/auth/auth.dart';
 import 'package:koto_blue_sharks/generated/locales.g.dart';
 import 'package:koto_blue_sharks/presentation/main/main.screen.dart';
 import 'package:koto_blue_sharks/utils/fcm_helper.dart';
+import 'package:koto_blue_sharks/utils/my_shared_pref.dart';
 import 'package:koto_blue_sharks/utils/utils.dart';
 
 class LoginController extends GetxController {
@@ -30,7 +31,7 @@ class LoginController extends GetxController {
     isPasswordHidden.value = !isPasswordHidden.value;
   }
 
-  void login(BuildContext context, String selectedPlayer) async {
+  void login(BuildContext context, String selectedPlayer, String selectedPlayerName) async {
     isLoadingLogin.value = true; // Start loading
 
     try {
@@ -49,8 +50,11 @@ class LoginController extends GetxController {
         AuthToken storage = AuthToken();
         await storage.saveAccessToken(response.access_token);
 
-        WallpaperPreferences wallpaper = WallpaperPreferences();
-        await wallpaper.saveWallpaper(selectedPlayer);
+        // WallpaperPreferences wallpaper = WallpaperPreferences();
+        // await wallpaper.saveWallpaper(selectedPlayer);
+        MySharedPref.setWallpaper(selectedPlayer);
+        MySharedPref.setWallpaperName(selectedPlayerName);
+
 
         print("get data ${selectedPlayer})");
         await FcmHelper.initFcm();

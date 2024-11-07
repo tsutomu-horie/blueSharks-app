@@ -26,6 +26,8 @@ class Member with _$Member {
     required String link,
     @HiveField(7)
     required Title title,
+    @HiveField(12)
+    String? playerNameKatakana,
     @HiveField(8)
     required int? categoryId,
     @HiveField(9)

@@ -30,7 +30,8 @@ class GalleryScreen extends GetView<GalleryController> {
               Padding(
                 padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
                 child: Container(
-                  padding: EdgeInsets.all(4.w),
+                  padding: EdgeInsets.all(3.w),
+                  width: 343.w,
                   decoration: BoxDecoration(
                     color: Colors.white, // Background color
                     borderRadius: BorderRadius.circular(30), // Rounded container
@@ -40,31 +41,31 @@ class GalleryScreen extends GetView<GalleryController> {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      buildToggleOption("GAME", 1),
+                      buildToggleOption(LocaleKeys.game.tr.toUpperCase(), 1),
                       SizedBox(
                         width: 8.w,
                       ),
                       Container(
                         width: 1.w,
                         height: 16.h,
-                        color: Colors.grey,
+                        color: BorderColor.primary,
                       ),
                       SizedBox(
                         width: 8.w,
                       ),
-                      buildToggleOption("EVENT", 2),
+                      buildToggleOption(LocaleKeys.event_en.tr.toUpperCase(), 2),
                       SizedBox(
                         width: 8.w,
                       ),
                       Container(
                         width: 1.w,
                         height: 16.h,
-                        color: Colors.grey,
+                        color: BorderColor.primary,
                       ),
                       SizedBox(
                         width: 8.w,
                       ),
-                      buildToggleOption("OTHER", 3),
+                      buildToggleOption(LocaleKeys.other.tr.toUpperCase(), 3),
                     ],
                   ),
                 ),
@@ -73,13 +74,14 @@ class GalleryScreen extends GetView<GalleryController> {
                 years: List.generate(DateTime.now().year - 2019 + 1,
                     (index) => DateTime.now().year - index),
                 // Generate year list dynamically
-                initialSelectedYear: 2024,
-                selectedColor: Colors.blue,
+                initialSelectedYear: 0,
+                selectedColor: BrandColor.main,
                 unselectedColor: Colors.grey.shade200,
                 selectedTextColor: Colors.white,
-                unselectedTextColor: Colors.black,
+                unselectedTextColor: TextColor.secondary,
                 onYearSelected: (selectedYear) {
                   // Handle year selection
+                  controller.getGalleryList();
                   print("Selected Year: $selectedYear");
                 },
               ),
@@ -188,19 +190,28 @@ class GalleryScreen extends GetView<GalleryController> {
       child: Obx(() {
         bool isSelected = controller.selectedIndex.value == index;
         return Container(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+          width: 99.67.w,
+          height: 28.h,
           decoration: BoxDecoration(
-            color: isSelected ? Colors.blue.shade900 : Colors.transparent,
+            color: isSelected ? BrandColor.main : Colors.transparent,
             borderRadius: BorderRadius.circular(30),
           ),
-          child: Text(
-            text,
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: isSelected ? Colors.white : Colors.grey.shade700,
+          child: Center(
+            child: CustomTextView(
+              text, style: TextStyle(
+              fontWeight: FontWeight.w700,
+              color: isSelected ? TextColor.inverse : TextColor.secondary
+            ),
             ),
           ),
+          // child: Text(
+          //   text,
+          //   style: TextStyle(
+          //     fontSize: 16,
+          //     fontWeight: FontWeight.bold,
+          //     color: isSelected ? Colors.white : Colors.grey.shade700,
+          //   ),
+          // ),
         );
       }),
     );

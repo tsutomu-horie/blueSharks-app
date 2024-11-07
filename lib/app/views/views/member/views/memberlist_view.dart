@@ -19,7 +19,7 @@ class MemberlistView extends GetView {
 
   final MemberController memberController;
   final bool isSetWallpaper;
-  final Function(String)? onSet;
+  final Function(String, String)? onSet;
 
   @override
   Widget build(BuildContext context) {

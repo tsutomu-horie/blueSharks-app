@@ -11,19 +11,26 @@ import 'controllers/register_email_from_home.controller.dart';
 
 class RegisterEmailFromHomeScreen
     extends GetView<RegisterEmailFromHomeController> {
-  const RegisterEmailFromHomeScreen(this.selectedPlayer, {super.key});
+  const RegisterEmailFromHomeScreen(this.selectedPlayer, this.selectedPlayerName, {super.key});
+
   final String selectedPlayer;
+  final String selectedPlayerName;
 
   @override
   Widget build(BuildContext context) {
     final globalKey = GlobalKey<FormState>();
     final RegisterEmailFromHomeController registerEmailController =
-    Get.put(RegisterEmailFromHomeController());
+        Get.put(RegisterEmailFromHomeController());
 
     return Scaffold(
+      backgroundColor: BackgroundColor.primary,
       appBar: AppBar(
-        backgroundColor:  BrandColor.main,
-        title: CustomTextView(LocaleKeys.forgot_password_title.tr, color: Colors.white, type: TDSFontType.titleMedium,),
+        backgroundColor: BrandColor.main,
+        title: CustomTextView(
+          LocaleKeys.forgot_password_title.tr,
+          color: Colors.white,
+          type: TDSFontType.titleMedium,
+        ),
         centerTitle: true,
         leading: IconButton(
           icon: const Icon(
@@ -36,15 +43,20 @@ class RegisterEmailFromHomeScreen
           },
         ),
       ),
-
       body: Padding(
         padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 20.h),
         child: Form(
           key: globalKey,
           child: Column(
             children: [
-              CustomTextView(LocaleKeys.email_field_desc.tr, type: TDSFontType.bodyTextMedium, color: TextColor.secondary,),
-              SizedBox(height: 24.h,),
+              CustomTextView(
+                LocaleKeys.email_field_desc.tr,
+                type: TDSFontType.bodyTextMedium,
+                color: TextColor.secondary,
+              ),
+              SizedBox(
+                height: 24.h,
+              ),
               TextFormField(
                 validator: (value) {
                   if (value!.isEmpty ||
@@ -77,7 +89,6 @@ class RegisterEmailFromHomeScreen
           ),
         ),
       ),
-
       bottomNavigationBar: Container(
         height: 102.h,
         padding: EdgeInsets.all(16.w),
@@ -91,10 +102,13 @@ class RegisterEmailFromHomeScreen
                       backgroundColor: BrandColor.main),
                   onPressed: () {
                     if (globalKey.currentState!.validate()) {
-                      registerEmailController.sendOtp((id){
-                        Get.to(RegisterOtpScreen(email: controller.textFieldController.text, otpId: "$id", fromScreen: "home", selectedPlayer: selectedPlayer));
+                      registerEmailController.sendOtp((id) {
+                        Get.to(RegisterOtpScreen(
+                            email: controller.textFieldController.text,
+                            otpId: "$id",
+                            fromScreen: "register_home",
+                            selectedPlayer: selectedPlayer, selectedPlayerName: selectedPlayerName,));
                       });
-
                     }
                   },
                   child: CustomTextView(
@@ -107,7 +121,6 @@ class RegisterEmailFromHomeScreen
           ],
         ),
       ),
-
     );
   }
 }

@@ -36,6 +36,8 @@ mixin _$Member {
   String get link => throw _privateConstructorUsedError;
   @HiveField(7)
   Title get title => throw _privateConstructorUsedError;
+  @HiveField(12)
+  String? get playerNameKatakana => throw _privateConstructorUsedError;
   @HiveField(8)
   int? get categoryId => throw _privateConstructorUsedError;
   @HiveField(9)
@@ -64,6 +66,7 @@ abstract class $MemberCopyWith<$Res> {
       @HiveField(5) String type,
       @HiveField(6) String link,
       @HiveField(7) Title title,
+      @HiveField(12) String? playerNameKatakana,
       @HiveField(8) int? categoryId,
       @HiveField(9) String? categorySlug,
       @HiveField(10) String? categoryName,
@@ -94,6 +97,7 @@ class _$MemberCopyWithImpl<$Res, $Val extends Member>
     Object? type = null,
     Object? link = null,
     Object? title = null,
+    Object? playerNameKatakana = freezed,
     Object? categoryId = freezed,
     Object? categorySlug = freezed,
     Object? categoryName = freezed,
@@ -132,6 +136,10 @@ class _$MemberCopyWithImpl<$Res, $Val extends Member>
           ? _value.title
           : title // ignore: cast_nullable_to_non_nullable
               as Title,
+      playerNameKatakana: freezed == playerNameKatakana
+          ? _value.playerNameKatakana
+          : playerNameKatakana // ignore: cast_nullable_to_non_nullable
+              as String?,
       categoryId: freezed == categoryId
           ? _value.categoryId
           : categoryId // ignore: cast_nullable_to_non_nullable
@@ -188,6 +196,7 @@ abstract class _$$MemberImplCopyWith<$Res> implements $MemberCopyWith<$Res> {
       @HiveField(5) String type,
       @HiveField(6) String link,
       @HiveField(7) Title title,
+      @HiveField(12) String? playerNameKatakana,
       @HiveField(8) int? categoryId,
       @HiveField(9) String? categorySlug,
       @HiveField(10) String? categoryName,
@@ -218,6 +227,7 @@ class __$$MemberImplCopyWithImpl<$Res>
     Object? type = null,
     Object? link = null,
     Object? title = null,
+    Object? playerNameKatakana = freezed,
     Object? categoryId = freezed,
     Object? categorySlug = freezed,
     Object? categoryName = freezed,
@@ -256,6 +266,10 @@ class __$$MemberImplCopyWithImpl<$Res>
           ? _value.title
           : title // ignore: cast_nullable_to_non_nullable
               as Title,
+      playerNameKatakana: freezed == playerNameKatakana
+          ? _value.playerNameKatakana
+          : playerNameKatakana // ignore: cast_nullable_to_non_nullable
+              as String?,
       categoryId: freezed == categoryId
           ? _value.categoryId
           : categoryId // ignore: cast_nullable_to_non_nullable
@@ -288,6 +302,7 @@ class _$MemberImpl implements _Member {
       @HiveField(5) required this.type,
       @HiveField(6) required this.link,
       @HiveField(7) required this.title,
+      @HiveField(12) this.playerNameKatakana,
       @HiveField(8) required this.categoryId,
       @HiveField(9) required this.categorySlug,
       @HiveField(10) required this.categoryName,
@@ -321,6 +336,9 @@ class _$MemberImpl implements _Member {
   @HiveField(7)
   final Title title;
   @override
+  @HiveField(12)
+  final String? playerNameKatakana;
+  @override
   @HiveField(8)
   final int? categoryId;
   @override
@@ -335,7 +353,7 @@ class _$MemberImpl implements _Member {
 
   @override
   String toString() {
-    return 'Member(id: $id, date: $date, modified: $modified, slug: $slug, status: $status, type: $type, link: $link, title: $title, categoryId: $categoryId, categorySlug: $categorySlug, categoryName: $categoryName, custom_field: $custom_field)';
+    return 'Member(id: $id, date: $date, modified: $modified, slug: $slug, status: $status, type: $type, link: $link, title: $title, playerNameKatakana: $playerNameKatakana, categoryId: $categoryId, categorySlug: $categorySlug, categoryName: $categoryName, custom_field: $custom_field)';
   }
 
   @override
@@ -352,6 +370,8 @@ class _$MemberImpl implements _Member {
             (identical(other.type, type) || other.type == type) &&
             (identical(other.link, link) || other.link == link) &&
             (identical(other.title, title) || other.title == title) &&
+            (identical(other.playerNameKatakana, playerNameKatakana) ||
+                other.playerNameKatakana == playerNameKatakana) &&
             (identical(other.categoryId, categoryId) ||
                 other.categoryId == categoryId) &&
             (identical(other.categorySlug, categorySlug) ||
@@ -364,8 +384,21 @@ class _$MemberImpl implements _Member {
 
   @JsonKey(ignore: true)
   @override
-  int get hashCode => Object.hash(runtimeType, id, date, modified, slug, status,
-      type, link, title, categoryId, categorySlug, categoryName, custom_field);
+  int get hashCode => Object.hash(
+      runtimeType,
+      id,
+      date,
+      modified,
+      slug,
+      status,
+      type,
+      link,
+      title,
+      playerNameKatakana,
+      categoryId,
+      categorySlug,
+      categoryName,
+      custom_field);
 
   @JsonKey(ignore: true)
   @override
@@ -391,6 +424,7 @@ abstract class _Member implements Member {
       @HiveField(5) required final String type,
       @HiveField(6) required final String link,
       @HiveField(7) required final Title title,
+      @HiveField(12) final String? playerNameKatakana,
       @HiveField(8) required final int? categoryId,
       @HiveField(9) required final String? categorySlug,
       @HiveField(10) required final String? categoryName,
@@ -422,6 +456,9 @@ abstract class _Member implements Member {
   @override
   @HiveField(7)
   Title get title;
+  @override
+  @HiveField(12)
+  String? get playerNameKatakana;
   @override
   @HiveField(8)
   int? get categoryId;

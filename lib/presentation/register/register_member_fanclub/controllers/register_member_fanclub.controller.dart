@@ -4,6 +4,7 @@ import 'package:koto_blue_sharks/app/data/api/auth/AuthToken.dart';
 import 'package:koto_blue_sharks/app/data/api/auth/auth_provider.dart';
 import 'package:koto_blue_sharks/app/data/api/userPreferences/wallpaper_preference.dart';
 import 'package:koto_blue_sharks/presentation/FanClubConfirmation/fan_club_confirmation.screen.dart';
+import 'package:koto_blue_sharks/utils/my_shared_pref.dart';
 
 class RegisterMemberFanclubController extends GetxController {
   final idTextFieldController = TextEditingController();
@@ -22,7 +23,7 @@ class RegisterMemberFanclubController extends GetxController {
     isPasswordHidden.value = !isPasswordHidden.value;
   }
 
-  void onRegister(String otpId, String email, Function showError, Function showSuccess, String playerName) async {
+  void onRegister(String otpId, String email, Function showError, Function showSuccess, String playerLink, String playerName) async {
     print("onRrror");
     final response = await apiProvider.register(idTextFieldController.text, email, otpId, passwordTextFieldController.text, (String errorText){
       showError();
@@ -31,10 +32,13 @@ class RegisterMemberFanclubController extends GetxController {
     AuthToken storage = AuthToken();
     await storage.saveAccessToken(response.access_token);
 
-    WallpaperPreferences wallpaper = WallpaperPreferences();
-    await wallpaper.saveWallpaper(playerName);
+    // WallpaperPreferences wallpaper = WallpaperPreferences();
+    // await wallpaper.saveWallpaper(playerName);
+    MySharedPref.setWallpaper(playerLink);
+    MySharedPref.setWallpaperName(playerName);
 
-    Get.offAll(() => FanClubConfirmationScreen(email: email, id: idTextFieldController.text, isNotification: true, playerSelected: playerName,));
+
+    Get.offAll(() => FanClubConfirmationScreen(email: email, id: idTextFieldController.text, isNotification: true, playerSelected: playerLink, playerSelectedName: playerName,));
     // showSuccess();
   }
 

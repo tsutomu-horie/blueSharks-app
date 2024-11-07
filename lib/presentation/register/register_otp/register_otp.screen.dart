@@ -12,12 +12,13 @@ import 'package:pinput/pinput.dart';
 import 'controllers/register_otp.controller.dart';
 
 class RegisterOtpScreen extends GetView<RegisterOtpController> {
-  const RegisterOtpScreen({super.key, required this.email, required this.otpId, required this.fromScreen, required this.selectedPlayer, this.onSuccess});
+  const RegisterOtpScreen({super.key, required this.email, required this.otpId, required this.fromScreen, required this.selectedPlayer, this.onSuccess, required this.selectedPlayerName});
 
   final String email;
   final String? otpId;
   final String fromScreen;
   final String selectedPlayer;
+  final String selectedPlayerName;
   final Function? onSuccess;
 
   @override
@@ -172,7 +173,7 @@ class RegisterOtpScreen extends GetView<RegisterOtpController> {
         child: ElevatedButton(
           style: ElevatedButton.styleFrom(backgroundColor: BrandColor.main),
           onPressed: () {
-            controller.onSubmitOtp(email, context, fromScreen, otpId, selectedPlayer, onSuccess);
+            controller.onSubmitOtp(email, context, fromScreen, otpId, selectedPlayer, selectedPlayerName, onSuccess);
           },
           child: CustomTextView(
             LocaleKeys.send.tr,

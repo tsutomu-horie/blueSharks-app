@@ -205,6 +205,11 @@ class LocaleKeys {
   static const certification = 'certification';
   static const membership_dialog_title = 'membership_dialog_title';
   static const membership_dialog_message = 'membership_dialog_message';
+  static const game = 'game';
+  static const event_en = 'event_en';
+  static const other = 'other';
+  static const active = 'active';
+  static const inactive = 'inactive';
 }
 
 class Locales {
@@ -417,5 +422,10 @@ class Locales {
     'membership_dialog_title': '会員情報を確認中です',
     'membership_dialog_message':
         '最新のファンクラブ会員情報の確認には数時間から24時間程度かかります. 認証が完了すると、マイページに会員証が表示されます.',
+    'game': 'Game',
+    'event_en': 'Event',
+    'other': 'Other',
+    'active': 'アクティブ',
+    'inactive': 'inactive',
   };
 }

@@ -6,9 +6,6 @@ import 'package:get/get.dart';
 import 'package:koto_blue_sharks/app/data/models/info/post.dart';
 import 'package:koto_blue_sharks/app/views/views/custom_text_view.dart';
 import 'package:koto_blue_sharks/generated/locales.g.dart';
-import 'package:koto_blue_sharks/presentation/home/home.screen.dart';
-import 'package:koto_blue_sharks/presentation/info/info.screen.dart';
-import 'package:koto_blue_sharks/presentation/mypage/mypage.screen.dart';
 import 'package:koto_blue_sharks/presentation/screens.dart';
 import 'package:koto_blue_sharks/utils/app_color.dart';
 
@@ -116,7 +113,7 @@ class _MainScreenState extends State<MainScreen> {
                               height: 24.h,
                             ),
                             LocaleKeys.new_title.tr, (){
-                              Get.to(() => const NotificationListScreen());
+                              controller.navigateToNotification();
                         }),
                       ],
                     ),

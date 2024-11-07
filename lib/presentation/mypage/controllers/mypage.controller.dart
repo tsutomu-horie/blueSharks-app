@@ -6,9 +6,11 @@ import 'package:koto_blue_sharks/app/data/api/userPreferences/notification_prefe
 import 'package:koto_blue_sharks/app/data/api/userPreferences/wallpaper_preference.dart';
 import 'package:koto_blue_sharks/app/data/models/auth/auth.dart';
 import 'package:koto_blue_sharks/app/services/AnalyticsService.dart';
+import 'package:koto_blue_sharks/generated/locales.g.dart';
 import 'package:koto_blue_sharks/infrastructure/navigation/routes.dart';
 import 'package:koto_blue_sharks/presentation/FanClubConfirmation/controllers/fan_club_confirmation.controller.dart';
 import 'package:koto_blue_sharks/presentation/screens.dart';
+import 'package:koto_blue_sharks/utils/my_shared_pref.dart';
 import 'package:koto_blue_sharks/utils/utils.dart';
 
 class MypageController extends FanClubConfirmationController {
@@ -64,16 +66,20 @@ class MypageController extends FanClubConfirmationController {
   }
 
   Future<void> getWallpaper() async {
-    final wallpaper = WallpaperPreferences();
-    final wallpaperName = await wallpaper.getWallpaper();
+    // final wallpaper = WallpaperPreferences();
+    // final wallpaperName = await wallpaper.getWallpaper();
+    final wallpaperLink = MySharedPref.getWallpaper();
+    final wallpaperName = MySharedPref.getWallpaperName();
 
+   playerLinkController.value = wallpaperLink ?? "";
    playerNameController.value = wallpaperName ?? "";
   }
 
   Future<void> getNotificationSetting() async {
     final wallpaper = NotificationPreference();
-    final notificationSetting = await wallpaper.getNotificationSetting();
+    // final notificationSetting = await wallpaper.getNotificationSetting();
+    final notificationSetting = MySharedPref.getNotification();
 
-    isSelectNotificaiton.value = notificationSetting == "active";
+    isSelectNotificaiton.value = notificationSetting == LocaleKeys.active.tr;
   }
 }

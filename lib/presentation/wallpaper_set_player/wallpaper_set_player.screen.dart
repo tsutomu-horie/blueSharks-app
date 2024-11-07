@@ -14,7 +14,7 @@ import 'controllers/wallpaper_set_player.controller.dart';
 class WallpaperSetPlayerScreen extends GetView<WallpaperSetPlayerController> {
   const WallpaperSetPlayerScreen(this.onSet, {super.key});
 
-  final Function(String)? onSet;
+  final Function(String, String)? onSet;
 
   @override
   Widget build(BuildContext context) {
@@ -116,30 +116,32 @@ class WallpaperSetPlayerScreen extends GetView<WallpaperSetPlayerController> {
                     isSetWallpaper: true,
                     onSet: onSet,
                   ),
-                  Container(
-                    padding:
-                        EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
-                    width: double.infinity,
-                    child: OutlinedButton(
-                      style: ButtonStyle(
-                        side: WidgetStateProperty.all(BorderSide(
-                                color: BrandColor
-                                    .main) // Set your desired color here
-                            ),
-                      ),
-                      onPressed: () {
-                        Get.offAll(() => const MainScreen());
-                      },
-                      child: CustomTextView(
-                        LocaleKeys.jump_to.tr,
-                        color: BrandColor.main,
-                      ),
-                    ),
-                  ),
                 ],
               ),
             ),
           ),
-        ));
+        ),
+      bottomNavigationBar:
+      Container(
+        padding:
+        EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
+        width: double.infinity,
+        child: OutlinedButton(
+          style: ButtonStyle(
+            side: WidgetStateProperty.all(BorderSide(
+                color: BrandColor
+                    .main) // Set your desired color here
+            ),
+          ),
+          onPressed: () {
+            Get.offAll(() => const MainScreen());
+          },
+          child: CustomTextView(
+            LocaleKeys.jump_to.tr,
+            color: BrandColor.main,
+          ),
+        ),
+      ),
+    );
   }
 }

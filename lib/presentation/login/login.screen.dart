@@ -13,9 +13,10 @@ import 'package:koto_blue_sharks/utils/app_color.dart';
 import 'controllers/login.controller.dart';
 
 class LoginScreen extends GetView<LoginController> {
-  const LoginScreen(this.selectedPlayer, this.isFromHome, {super.key});
+  const LoginScreen(this.selectedPlayer, this.isFromHome, this.selectedPlayerName, {super.key});
 
   final String selectedPlayer;
+  final String selectedPlayerName;
   final bool isFromHome;
 
   @override
@@ -206,25 +207,25 @@ class LoginScreen extends GetView<LoginController> {
                           style: TextStyle(
                               color: TextColor.secondary,
                               fontSize: 14.sp,
-                              fontFamily: "GeneralSans-Regular"),
+                          ),
                           text: "${LocaleKeys.forgot_password_desc.tr} "),
                       TextSpan(
                         style: TextStyle(
                             color: BrandColor.main,
                             fontSize: 14.sp,
                             decoration: TextDecoration.underline,
-                            fontFamily: "GeneralSans-Regular"),
+                        ),
                         text: LocaleKeys.forgot_password_navigation.tr,
                         recognizer: TapGestureRecognizer()
                           ..onTap = () {
-                            Get.to(() => ForgotPasswordScreen(selectedPlayer));
+                            Get.to(() => ForgotPasswordScreen(selectedPlayer, selectedPlayerName));
                           },
                       ),
                       TextSpan(
                         style: TextStyle(
                             color: TextColor.secondary,
                             fontSize: 14.sp,
-                            fontFamily: "GeneralSans-Regular"),
+                        ),
                         text: " ${LocaleKeys.forgot_password_desc2.tr}",
                       ),
 
@@ -246,7 +247,7 @@ class LoginScreen extends GetView<LoginController> {
             ),
             onPressed: () {
               if (globalKey.currentState!.validate()) {
-                loginController.login(context, selectedPlayer);
+                loginController.login(context, selectedPlayer, selectedPlayerName);
               }
             },
             child: loginController.isLoadingLogin.value

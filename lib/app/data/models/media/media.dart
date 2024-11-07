@@ -121,6 +121,9 @@ class Wallpaper with _$Wallpaper {
   const factory Wallpaper({
     required int id,
     required String name,
+    required String kat_name,
+    required String kan_name,
+    required String category_name,
     required String photo,
   }) = _Wallpaper;
 

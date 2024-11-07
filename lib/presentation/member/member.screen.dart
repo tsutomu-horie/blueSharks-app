@@ -17,7 +17,7 @@ import 'controllers/member.controller.dart';
 
 class MemberScreen extends GetView<MemberController> {
   const MemberScreen(this.onSet, {super.key});
-  final Function(String)? onSet;
+  final Function(String, String)? onSet;
 
   @override
   Widget build(BuildContext context) {
