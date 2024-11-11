@@ -13,13 +13,19 @@ import 'package:koto_blue_sharks/presentation/register/register_email/register_e
 import 'package:koto_blue_sharks/utils/app_color.dart';
 import 'package:koto_blue_sharks/utils/match+extensions.dart';
 
-class MemberlistView extends GetView {
-  const MemberlistView(this.memberController,
-      {super.key, required this.isSetWallpaper, this.onSet});
-
+class MemberListView extends StatelessWidget {
   final MemberController memberController;
   final bool isSetWallpaper;
   final Function(String, String)? onSet;
+  final ScrollController scrollController;
+
+  const MemberListView(
+      this.memberController, {
+        Key? key,
+        required this.isSetWallpaper,
+        this.onSet,
+        required this.scrollController,
+      }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -79,9 +85,11 @@ class MemberlistView extends GetView {
             ),
           ),
         ),
+
         Obx(() {
-          List<CategorizedPlayerGroup> groupedPlayers = memberController
-              .groupPlayersByCategory(memberController.categoryPlayers);
+          List<CategorizedPlayerGroup> groupedPlayers =
+          memberController.groupPlayersByCategory(
+              memberController.categoryPlayers);
 
           if (isSetWallpaper) {
             groupedPlayers = groupedPlayers
@@ -93,19 +101,20 @@ class MemberlistView extends GetView {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: groupedPlayers.map((group) {
               return Column(
+                key: memberController.groupKeys[group.categoryTitle],
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Container(
                     width: double.infinity,
                     color: BrandColor.background,
-                    padding:
-                        EdgeInsets.symmetric(vertical: 12.h, horizontal: 16.w),
+                    padding: EdgeInsets.symmetric(vertical: 12.h, horizontal: 16.w),
                     child: CustomTextView(
                       group.categoryTitle,
                       style: TextStyle(
-                          fontSize: 18.sp,
-                          fontWeight: FontWeight.w600,
-                          color: TextColor.inverse),
+                        fontSize: 18.sp,
+                        fontWeight: FontWeight.w600,
+                        color: TextColor.inverse,
+                      ),
                       align: TextAlign.center,
                     ),
                   ),
@@ -115,8 +124,6 @@ class MemberlistView extends GetView {
                     itemCount: group.playerGroups.length,
                     itemBuilder: (context, index) {
                       final MemberGroup playerGroup = group.playerGroups[index];
-
-                      // Show the position title (e.g. Prop, Scrumhalf, etc.)
                       return Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -134,28 +141,31 @@ class MemberlistView extends GetView {
                               ),
                             ),
                           ),
-                          // Grid to show players of the current position group
                           Padding(
                             padding: EdgeInsets.symmetric(
                                 horizontal: 12.w, vertical: 16.h),
                             child: GridView.builder(
                               shrinkWrap: true,
                               physics: const NeverScrollableScrollPhysics(),
-                              gridDelegate:
-                                  SliverGridDelegateWithFixedCrossAxisCount(
+                              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                                 crossAxisCount: 3,
-                                // Number of columns in the grid
                                 childAspectRatio: 0.75,
-                                // Adjust the aspect ratio of the grid items
                                 mainAxisSpacing: 12.w,
                                 crossAxisSpacing: 12.w,
                               ),
                               itemCount: playerGroup.players.length,
                               itemBuilder: (context, playerIndex) {
                                 final player = playerGroup.players[playerIndex];
-                                return PlayerCardView(player, playerGroup.title, onSet, memberController.mediaProvider, false, (postImage, position){
-                                  memberController.navigateToMemberDetail(player);
-                                });
+                                return PlayerCardView(
+                                  player,
+                                  playerGroup.title,
+                                  onSet,
+                                  memberController.mediaProvider,
+                                  false,
+                                      (postImage, position) {
+                                    memberController.navigateToMemberDetail(player);
+                                  },
+                                );
                               },
                             ),
                           ),
@@ -186,17 +196,17 @@ class MemberlistView extends GetView {
         return Container(
           padding: EdgeInsets.all(16.w),
           height: isSetWallpaper ? 132.h : 190.h,
-          // Fixed height for the bottom sheet
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               SizedBox(height: 8.h),
               Center(
-                  child: Container(
-                width: 48.w,
-                height: 4.w,
-                color: BorderColor.primary,
-              )),
+                child: Container(
+                  width: 48.w,
+                  height: 4.w,
+                  color: BorderColor.primary,
+                ),
+              ),
               SizedBox(height: 16.h),
               Expanded(
                 child: ListView.builder(
@@ -207,8 +217,8 @@ class MemberlistView extends GetView {
                     final item = memberController.playerCategory[index];
                     return InkWell(
                       onTap: () {
-                        memberController.selectedPosition(item);
                         Get.back();
+                        memberController.scrollToGroup(memberController.playerCategoryFull[index]);
                       },
                       child: Column(
                         children: [
@@ -217,17 +227,15 @@ class MemberlistView extends GetView {
                             child: Row(
                               children: [
                                 Flexible(
-                                    child: SizedBox(
-                                        width: double.infinity,
-                                        child: CustomTextView(
-                                          item,
-                                          type: TDSFontType.labelLarge,
-                                        ))),
+                                  child: CustomTextView(
+                                    item,
+                                    type: TDSFontType.labelLarge,
+                                  ),
+                                ),
                               ],
                             ),
                           ),
-                          if (index !=
-                              memberController.playerCategory.length - 1)
+                          if (index != memberController.playerCategory.length - 1)
                             Container(
                               height: 1.h,
                               color: BorderColor.primary,
@@ -244,5 +252,4 @@ class MemberlistView extends GetView {
       },
     );
   }
-
 }
