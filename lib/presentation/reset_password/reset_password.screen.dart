@@ -181,7 +181,8 @@ class ResetPasswordScreen extends GetView<ResetPasswordController> {
                             color: TextColor.placeholder, // Customize the color
                           ),
                           onPressed: (){
-                            forgotPasswordController.isNewPasswordHidden.value = !forgotPasswordController.isOldPasswordHidden.value;
+                            print("change isnew password");
+                            forgotPasswordController.isNewPasswordHidden.value = !forgotPasswordController.isNewPasswordHidden.value;
                           },
                         ),
                       ),

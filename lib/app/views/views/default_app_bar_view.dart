@@ -11,6 +11,7 @@ class DefaultAppBarView extends StatelessWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context) {
     return AppBar(
+        backgroundColor: Colors.white,
         title: SvgPicture.asset(
           "assets/vectors/app_logo.svg",
           width: 56.w,

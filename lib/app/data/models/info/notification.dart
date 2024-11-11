@@ -4,19 +4,19 @@ part 'notification.freezed.dart';
 part 'notification.g.dart';
 
 @freezed
-class Notification with _$Notification {
-  const factory Notification({
+class NotificationItem with _$NotificationItem {
+  const factory NotificationItem({
     required String id,
     required int notifiable_id,
     required String notifiable_type,
-    required DateTime created_at,
-    required DateTime updated_at,
+    required String created_at,
+    required String updated_at,
     required NotificationData data,
     DateTime? read_at,
   }) = _Notification;
 
-  factory Notification.fromJson(Map<String, dynamic> json) =>
-      _$NotificationFromJson(json);
+  factory NotificationItem.fromJson(Map<String, dynamic> json) =>
+      _$NotificationItemFromJson(json);
 }
 
 @freezed

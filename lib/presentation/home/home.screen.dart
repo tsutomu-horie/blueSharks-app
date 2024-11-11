@@ -124,6 +124,7 @@ class HomeScreen extends GetView<MainController> {
                                     child: const Icon(Icons.warning)),
                               );
                             } else {
+                              print("data ${snapshot.data?['image']}");
                               // Use the actual image URL returned from the Future
                               final opponentLogo = snapshot.data?['image'] ??
                                   'https://example.com/placeholder.png'; // Fallback in case of null
