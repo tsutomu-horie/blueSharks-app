@@ -11,6 +11,7 @@ class MediaProvider extends GetConnect {
   }
 
   Future<Media> fetchMedia(String mediaId) async {
+    httpClient.baseUrl = Constants.baseUrl;
     final response = await get('media/$mediaId');
 
     print("fetch ${httpClient.baseUrl}/media/${mediaId}?_fields={id,media_details,content,custom_field}");
@@ -25,6 +26,7 @@ class MediaProvider extends GetConnect {
 
   //fetch image with end point : /wp-json/wp/v2/media?parent=19702
   Future<Media> fetchParentMedia(String mediaId) async {
+    httpClient.baseUrl = Constants.baseUrl;
     final response = await get('media?parent=$mediaId');
 
     print("fetch image parent ${httpClient.baseUrl}media?parent=$mediaId");

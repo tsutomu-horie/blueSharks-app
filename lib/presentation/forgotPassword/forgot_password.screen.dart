@@ -23,6 +23,7 @@ class ForgotPasswordScreen extends GetView<ForgotPasswordController> {
 
     return Scaffold(
       appBar: DefaultAppBarView(),
+      backgroundColor: Colors.white,
       body: SingleChildScrollView(
         child: Container(
           padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),

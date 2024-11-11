@@ -219,7 +219,6 @@ class MatchDetailScreen extends GetView<MatchDetailController> {
                               height: 4.h,
                             ),
                             SizedBox(
-                                height: 40.h,
                                 width: 104.w,
                                 child: HtmlTextView(
                                   matchStatus?["teamName"],
@@ -339,7 +338,6 @@ class MatchDetailScreen extends GetView<MatchDetailController> {
                               height: 4.h,
                             ),
                             SizedBox(
-                                height: 40.h,
                                 width: 104.w,
                                 child: HtmlTextView(
                                   matchStatus?["teamName"],

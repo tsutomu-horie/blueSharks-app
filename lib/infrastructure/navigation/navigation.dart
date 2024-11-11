@@ -151,7 +151,8 @@ class Nav {
       page: () => const RegisterMemberFanclubScreen(
         email: "",
         otpId: "",
-        selectedPlayer: "", selectedPlayerName: '',
+        selectedPlayer: "",
+        selectedPlayerName: '',
       ),
       binding: RegisterMemberFanclubControllerBinding(),
     ),
@@ -205,6 +206,11 @@ class Nav {
       name: Routes.NOTIFICATION_LIST,
       page: () => const NotificationListScreen(),
       binding: NotificationListControllerBinding(),
+    ),
+    GetPage(
+      name: Routes.NOTIFICATION_DETAIL,
+      page: () => const NotificationDetailScreen(null),
+      binding: NotificationDetailControllerBinding(),
     ),
   ];
 }

@@ -25,6 +25,7 @@ class LoginScreen extends GetView<LoginController> {
     final LoginController loginController = Get.put(LoginController());
 
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: isFromHome ? BrandColor.main : Colors.white,
         title: isFromHome ? CustomTextView(LocaleKeys.login.tr, color: Colors.white, type: TDSFontType.titleMedium,) :SvgPicture.asset(

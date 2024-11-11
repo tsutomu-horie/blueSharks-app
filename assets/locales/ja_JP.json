@@ -196,6 +196,7 @@
   "event_en": "Event",
   "other": "Other",
   "active": "アクティブ",
-  "inactive": "inactive"
+  "inactive": "inactive",
+  "detailled_notification": "詳細通知"
 
 }

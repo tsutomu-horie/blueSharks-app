@@ -80,7 +80,7 @@ class WallpaperSetPlayerController extends GetxController {
         );
       }).toList();
 
-      MemberGroup memberGroup = MemberGroup(title: category.name.capitalizeText(), players: members);
+      MemberGroup memberGroup = MemberGroup(title: category.name.toUpperCase(), players: members);
 
       if (forwardRoles.contains(category.name.toLowerCase())) {
         forwardGroups.add(memberGroup);

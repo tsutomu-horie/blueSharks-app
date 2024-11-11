@@ -184,7 +184,7 @@ class AuthProvider extends GetConnect {
     }
   }
 
-  Future<List<Notification>> getNotificationList() async {
+  Future<List<NotificationItem>> getNotificationList() async {
     httpClient.baseUrl = Constants.baseUrlAuthApi;
 
     final url = Uri.parse('notifications');
@@ -211,7 +211,7 @@ class AuthProvider extends GetConnect {
     print("Login successful, received data: ${response.body}");
 
     return (response.body['data'] as List)
-        .map((json) => Notification.fromJson(json as Map<String, dynamic>))
+        .map((json) => NotificationItem.fromJson(json as Map<String, dynamic>))
         .toList();
   }
 

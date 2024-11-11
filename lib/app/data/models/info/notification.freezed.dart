@@ -14,38 +14,38 @@ T _$identity<T>(T value) => value;
 final _privateConstructorUsedError = UnsupportedError(
     'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models');
 
-Notification _$NotificationFromJson(Map<String, dynamic> json) {
+NotificationItem _$NotificationItemFromJson(Map<String, dynamic> json) {
   return _Notification.fromJson(json);
 }
 
 /// @nodoc
-mixin _$Notification {
+mixin _$NotificationItem {
   String get id => throw _privateConstructorUsedError;
   int get notifiable_id => throw _privateConstructorUsedError;
   String get notifiable_type => throw _privateConstructorUsedError;
-  DateTime get created_at => throw _privateConstructorUsedError;
-  DateTime get updated_at => throw _privateConstructorUsedError;
+  String get created_at => throw _privateConstructorUsedError;
+  String get updated_at => throw _privateConstructorUsedError;
   NotificationData get data => throw _privateConstructorUsedError;
   DateTime? get read_at => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
   @JsonKey(ignore: true)
-  $NotificationCopyWith<Notification> get copyWith =>
+  $NotificationItemCopyWith<NotificationItem> get copyWith =>
       throw _privateConstructorUsedError;
 }
 
 /// @nodoc
-abstract class $NotificationCopyWith<$Res> {
-  factory $NotificationCopyWith(
-          Notification value, $Res Function(Notification) then) =
-      _$NotificationCopyWithImpl<$Res, Notification>;
+abstract class $NotificationItemCopyWith<$Res> {
+  factory $NotificationItemCopyWith(
+          NotificationItem value, $Res Function(NotificationItem) then) =
+      _$NotificationItemCopyWithImpl<$Res, NotificationItem>;
   @useResult
   $Res call(
       {String id,
       int notifiable_id,
       String notifiable_type,
-      DateTime created_at,
-      DateTime updated_at,
+      String created_at,
+      String updated_at,
       NotificationData data,
       DateTime? read_at});
 
@@ -53,9 +53,9 @@ abstract class $NotificationCopyWith<$Res> {
 }
 
 /// @nodoc
-class _$NotificationCopyWithImpl<$Res, $Val extends Notification>
-    implements $NotificationCopyWith<$Res> {
-  _$NotificationCopyWithImpl(this._value, this._then);
+class _$NotificationItemCopyWithImpl<$Res, $Val extends NotificationItem>
+    implements $NotificationItemCopyWith<$Res> {
+  _$NotificationItemCopyWithImpl(this._value, this._then);
 
   // ignore: unused_field
   final $Val _value;
@@ -89,11 +89,11 @@ class _$NotificationCopyWithImpl<$Res, $Val extends Notification>
       created_at: null == created_at
           ? _value.created_at
           : created_at // ignore: cast_nullable_to_non_nullable
-              as DateTime,
+              as String,
       updated_at: null == updated_at
           ? _value.updated_at
           : updated_at // ignore: cast_nullable_to_non_nullable
-              as DateTime,
+              as String,
       data: null == data
           ? _value.data
           : data // ignore: cast_nullable_to_non_nullable
@@ -116,7 +116,7 @@ class _$NotificationCopyWithImpl<$Res, $Val extends Notification>
 
 /// @nodoc
 abstract class _$$NotificationImplCopyWith<$Res>
-    implements $NotificationCopyWith<$Res> {
+    implements $NotificationItemCopyWith<$Res> {
   factory _$$NotificationImplCopyWith(
           _$NotificationImpl value, $Res Function(_$NotificationImpl) then) =
       __$$NotificationImplCopyWithImpl<$Res>;
@@ -126,8 +126,8 @@ abstract class _$$NotificationImplCopyWith<$Res>
       {String id,
       int notifiable_id,
       String notifiable_type,
-      DateTime created_at,
-      DateTime updated_at,
+      String created_at,
+      String updated_at,
       NotificationData data,
       DateTime? read_at});
 
@@ -137,7 +137,7 @@ abstract class _$$NotificationImplCopyWith<$Res>
 
 /// @nodoc
 class __$$NotificationImplCopyWithImpl<$Res>
-    extends _$NotificationCopyWithImpl<$Res, _$NotificationImpl>
+    extends _$NotificationItemCopyWithImpl<$Res, _$NotificationImpl>
     implements _$$NotificationImplCopyWith<$Res> {
   __$$NotificationImplCopyWithImpl(
       _$NotificationImpl _value, $Res Function(_$NotificationImpl) _then)
@@ -170,11 +170,11 @@ class __$$NotificationImplCopyWithImpl<$Res>
       created_at: null == created_at
           ? _value.created_at
           : created_at // ignore: cast_nullable_to_non_nullable
-              as DateTime,
+              as String,
       updated_at: null == updated_at
           ? _value.updated_at
           : updated_at // ignore: cast_nullable_to_non_nullable
-              as DateTime,
+              as String,
       data: null == data
           ? _value.data
           : data // ignore: cast_nullable_to_non_nullable
@@ -209,9 +209,9 @@ class _$NotificationImpl implements _Notification {
   @override
   final String notifiable_type;
   @override
-  final DateTime created_at;
+  final String created_at;
   @override
-  final DateTime updated_at;
+  final String updated_at;
   @override
   final NotificationData data;
   @override
@@ -219,7 +219,7 @@ class _$NotificationImpl implements _Notification {
 
   @override
   String toString() {
-    return 'Notification(id: $id, notifiable_id: $notifiable_id, notifiable_type: $notifiable_type, created_at: $created_at, updated_at: $updated_at, data: $data, read_at: $read_at)';
+    return 'NotificationItem(id: $id, notifiable_id: $notifiable_id, notifiable_type: $notifiable_type, created_at: $created_at, updated_at: $updated_at, data: $data, read_at: $read_at)';
   }
 
   @override
@@ -259,13 +259,13 @@ class _$NotificationImpl implements _Notification {
   }
 }
 
-abstract class _Notification implements Notification {
+abstract class _Notification implements NotificationItem {
   const factory _Notification(
       {required final String id,
       required final int notifiable_id,
       required final String notifiable_type,
-      required final DateTime created_at,
-      required final DateTime updated_at,
+      required final String created_at,
+      required final String updated_at,
       required final NotificationData data,
       final DateTime? read_at}) = _$NotificationImpl;
 
@@ -279,9 +279,9 @@ abstract class _Notification implements Notification {
   @override
   String get notifiable_type;
   @override
-  DateTime get created_at;
+  String get created_at;
   @override
-  DateTime get updated_at;
+  String get updated_at;
   @override
   NotificationData get data;
   @override

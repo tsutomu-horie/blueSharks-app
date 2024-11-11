@@ -11,7 +11,7 @@ class CalendarScreenController extends GetxController {
   final String publicCalendarIdOpenPractice = '49d1fb0089629f5d035c69511fcd066cca299e022b41cc6ba43ed818090d6631@group.calendar.google.com'; // Replace with your public calendar ID
   final String publicCalendarIdEvent = '49d1fb0089629f5d035c69511fcd066cca299e022b41cc6ba43ed818090d6631@group.calendar.google.com'; // Replace with your public calendar ID
   final String publicCalendarIdPlayerBirthday = '49d1fb0089629f5d035c69511fcd066cca299e022b41cc6ba43ed818090d6631@group.calendar.google.com'; // Replace with your public calendar ID
-  final String apiKey = 'AIzaSyCIN9CO85UzNBszPiUSXhsUGiJZyLfxoCc'; // Replace with your Google API Key
+  final String apiKey = 'AIzaSyAJMnARaJbvTrp5s9opMyyjFbZVVj0d0xY'; // Replace with your Google API Key
   RxList<CalendarEvent> publicEvents = <CalendarEvent>[].obs;
   final selectedYear = LocaleKeys.game_schedule.tr.obs;
 

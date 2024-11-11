@@ -210,6 +210,7 @@ class LocaleKeys {
   static const other = 'other';
   static const active = 'active';
   static const inactive = 'inactive';
+  static const detailled_notification = 'detailled_notification';
 }
 
 class Locales {
@@ -427,5 +428,6 @@ class Locales {
     'other': 'Other',
     'active': 'アクティブ',
     'inactive': 'inactive',
+    'detailled_notification': '詳細通知',
   };
 }
