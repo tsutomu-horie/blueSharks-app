@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:hive/hive.dart';
 import 'package:koto_blue_sharks/app/data/api/media/media_provider.dart';
@@ -12,11 +13,29 @@ class MemberController extends GetxController {
   Box<Category>? categoryBox;
   Box<Member>? playerBox;
   final MediaProvider mediaProvider = MediaProvider();
+  final Map<String, GlobalKey> groupKeys = <String, GlobalKey>{}.obs;
 
   final RxList<Category> categories = <Category>[].obs;
   final RxMap<int, List<Member>> categoryPlayers = <int, List<Member>>{}.obs;
 
   final List<String> playerCategory = [LocaleKeys.forward_short.tr, LocaleKeys.back_short.tr, LocaleKeys.staff.tr];
+  final List<String> playerCategoryFull = [LocaleKeys.forward.tr, LocaleKeys.back.tr, LocaleKeys.staff.tr];
+
+  void addGroupKey(String identifier) {
+    groupKeys[identifier] = GlobalKey();
+  }
+
+  void scrollToGroup(String groupIdentifier) {
+    final groupKey = groupKeys[groupIdentifier];
+    print("groupKey is ${groupKeys} & ${groupIdentifier}");
+    if (groupKey != null && groupKey.currentContext != null) {
+      Scrollable.ensureVisible(
+        groupKey.currentContext!,
+        duration: Duration(seconds: 1),
+        curve: Curves.easeInOut,
+      );
+    }
+  }
 
   @override
   void onInit() async {

@@ -21,28 +21,34 @@ class MemberScreen extends GetView<MemberController> {
 
   @override
   Widget build(BuildContext context) {
-    final MemberController memberController = Get.put(MemberController());
+    final ScrollController scrollController = ScrollController();
 
     return Scaffold(
-        backgroundColor: BackgroundColor.primary,
-        body: SingleChildScrollView(
-      child: Column(
-        children: [
-          Container(
-            color: const Color(0xfffafafa),
-            child: DefaultHeaderTitleView(
-              LocaleKeys.member.tr,
-              LocaleKeys.member_en.tr.toUpperCase(),
+      backgroundColor: BackgroundColor.primary,
+      body: SingleChildScrollView(
+        controller: scrollController,
+        child: Column(
+          children: [
+            Container(
+              color: const Color(0xfffafafa),
+              child: DefaultHeaderTitleView(
+                LocaleKeys.member.tr,
+                LocaleKeys.member_en.tr.toUpperCase(),
+              ),
             ),
-          ),
-          Container(
-            height: 1.h,
-            color: BorderColor.primary,
-          ),
-          MemberlistView(memberController, isSetWallpaper: false, onSet: onSet),
-
-        ],
+            Container(
+              height: 1.h,
+              color: BorderColor.primary,
+            ),
+            MemberListView(
+              controller,
+              isSetWallpaper: false,
+              onSet: onSet,
+              scrollController: scrollController, // Pass the scroll controller
+            ),
+          ],
+        ),
       ),
-    ));
+    );
   }
 }
