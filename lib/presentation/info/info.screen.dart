@@ -20,6 +20,8 @@ class InfoScreen extends GetView<InfoController> {
   Widget build(BuildContext context) {
     final InfoController controller = Get.put(InfoController());
 
+    controller.selectedIndex.value = 0;
+
     final List<String> tabs = [
       'Topics',
       'Game Info',

@@ -67,11 +67,18 @@ class GameInfoScreen extends GetView<GameInfoController> {
                         child: SizedBox(
                           width: double.infinity,
                           child: Obx(() {
-                            return CustomTextView(
-                              gameInfoController.selectedYear.value,
-                              type: TDSFontType.bodyTextMedium,
-                              color: TextColor.primary,
-                            );
+                            if (gameInfoController.isLoading.value) {
+                              return SizedBox(
+                                height: 20.h,
+                                child: shimmer(),
+                              );
+                            } else {
+                              return CustomTextView(
+                                gameInfoController.selectedYear.value,
+                                type: TDSFontType.bodyTextMedium,
+                                color: TextColor.primary,
+                              );
+                            }
                           }),
                         ),
                       ),
@@ -93,97 +100,138 @@ class GameInfoScreen extends GetView<GameInfoController> {
                 height: 20.h,
               ),
               Obx(() {
-                return ListView.builder(
-                    shrinkWrap: true,
-                    reverse: true,
-                    // Use shrinkWrap for smooth scrolling
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: controller.listMatch.value.length,
-                    itemBuilder: (context, index) {
-                      final data = controller.listMatch.value[index];
-                      final gameDate = data.custom_field.gameDate ?? [];
-                      final gameTime = data.custom_field.gameTime ?? [];
-                      final location = data.custom_field.location ?? [];
-                      final gameSerial = data.custom_field.game_serial ?? [""];
+                if (gameInfoController.isLoading.value) {
+                  return Column(
+                    children: [
+                      Shimmer.fromColors(
+                        baseColor: BorderColor.disabled,
+                        highlightColor: BorderColor.subtle,
+                        child: Container(
+                          width: 350.w,
+                          height: 200.h,
+                          decoration: BoxDecoration(
+                            color: BorderColor.disabled,
+                            borderRadius:
+                                BorderRadius.all(Radius.circular(4.r)),
+                          ),
+                        ),
+                      ),
+                      SizedBox(
+                        height: 16.h,
+                      ),
+                      Shimmer.fromColors(
+                        baseColor: BorderColor.disabled,
+                        highlightColor: BorderColor.subtle,
+                        child: Container(
+                          width: 350.w,
+                          height: 200.h,
+                          decoration: BoxDecoration(
+                            color: BorderColor.disabled,
+                            borderRadius:
+                                BorderRadius.all(Radius.circular(4.r)),
+                          ),
+                        ),
+                      ),
+                      SizedBox(
+                        height: 16.h,
+                      ),
+                    ],
+                  );
+                } else {
+                  return ListView.builder(
+                      shrinkWrap: true,
+                      reverse: true,
+                      // Use shrinkWrap for smooth scrolling
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: controller.listMatch.value.length,
+                      itemBuilder: (context, index) {
+                        final data = controller.listMatch.value[index];
+                        final gameDate = data.custom_field.gameDate ?? [];
+                        final gameTime = data.custom_field.gameTime ?? [];
+                        final location = data.custom_field.location ?? [];
+                        final gameSerial =
+                            data.custom_field.game_serial ?? [""];
 
-                      final matchStatus = getStatusMatch(data.custom_field);
-                      final date = gameDate.isNotEmpty
-                          ? convertJapaneseDate(gameDate.first)
-                          : {'formattedDate': "", "dayOfWeek": ""};
+                        final matchStatus = getStatusMatch(data.custom_field);
+                        final date = gameDate.isNotEmpty
+                            ? convertJapaneseDate(gameDate.first)
+                            : {'formattedDate': "", "dayOfWeek": ""};
 
-                      print("load success ${date['formattedDate']}");
+                        print("load success ${date['formattedDate']}");
 
-                      if (gameDate.isNotEmpty &&
-                          gameTime.isNotEmpty &&
-                          location.isNotEmpty) {
-                        return FutureBuilder<Map<String, String>>(
-                          future: getAdditionalInfo(
-                              gameInfoController.mediaProvider,
-                              gameInfoController.apiProvider,
-                              matchStatus["opponentLogo"],
-                              gameSerial.first),
-                          // Wait for the image URL to resolve
-                          builder: (context, snapshot) {
-                            if (snapshot.connectionState ==
-                                ConnectionState.waiting) {
-                              return Padding(
-                                padding: EdgeInsets.only(right: 12.w),
-                                child: shimmer(),
-                              );
-                            } else if (snapshot.hasError) {
-                              return Padding(
-                                padding: EdgeInsets.only(right: 12.w),
-                                child: Container(
-                                    decoration: BoxDecoration(
-                                        borderRadius:
-                                            BorderRadius.circular(2.r),
-                                        color: BorderColor.primary),
-                                    width: 320.w,
-                                    height: 200.h,
-                                    child: const Icon(Icons.warning)),
-                              );
-                            } else {
-                              // Use the actual image URL returned from the Future
-                              final opponentLogo = snapshot.data?['image'] ??
-                                  'https://example.com/placeholder.png'; // Fallback in case of null
+                        if (gameDate.isNotEmpty &&
+                            gameTime.isNotEmpty &&
+                            location.isNotEmpty) {
+                          return FutureBuilder<Map<String, String>>(
+                            future: getAdditionalInfo(
+                                gameInfoController.mediaProvider,
+                                gameInfoController.apiProvider,
+                                matchStatus["opponentLogo"],
+                                gameSerial.first),
+                            // Wait for the image URL to resolve
+                            builder: (context, snapshot) {
+                              if (snapshot.connectionState ==
+                                  ConnectionState.waiting) {
+                                return Padding(
+                                  padding:
+                                      EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
+                                  child: shimmer(),
+                                );
+                              } else if (snapshot.hasError) {
+                                return Padding(
+                                  padding: EdgeInsets.only(right: 12.w),
+                                  child: Container(
+                                      decoration: BoxDecoration(
+                                          borderRadius:
+                                              BorderRadius.circular(2.r),
+                                          color: BorderColor.primary),
+                                      width: 320.w,
+                                      height: 200.h,
+                                      child: const Icon(Icons.warning)),
+                                );
+                              } else {
+                                // Use the actual image URL returned from the Future
+                                final opponentLogo = snapshot.data?['image'] ??
+                                    'https://example.com/placeholder.png'; // Fallback in case of null
 
-                              return MatchItemView(
-                                matchStatus:
-                                    snapshot.data?['matchStatus'] ?? "",
-                                title: data.title.rendered,
-                                location: location.first,
-                                // Ensure location is a valid list and access its first item
-                                date: date['formattedDate'] ?? "",
-                                // Format the date
-                                day: date['dayOfWeek'] ?? "",
-                                // Get the day of the week
-                                time: gameTime.first,
-                                // Access the first time element
-                                opponentLogo: opponentLogo,
-                                // Use the resolved image URL
-                                opponentName: matchStatus["opponentName"],
-                                gameResult:
-                                    data.custom_field.game_result?.first,
-                                team1Score:
-                                    data.custom_field.team_score_1?.first,
-                                team2Score:
-                                    data.custom_field.team_score_2?.first,
-                                onTap: () {
-                                  Get.to(MatchDetailScreen(
-                                    data,
-                                    homeStatus:
-                                        snapshot.data?['matchStatus'] ?? "",
-                                  ));
-                                },
-                              );
-                            }
-                          },
-                        );
-                      } else {
-                        return Text(
-                            'Missing match data'); // Handle cases where fields are missing
-                      }
-                    });
+                                return MatchItemView(
+                                  matchStatus:
+                                      snapshot.data?['matchStatus'] ?? "",
+                                  title: data.title.rendered,
+                                  location: location.first,
+                                  // Ensure location is a valid list and access its first item
+                                  date: date['formattedDate'] ?? "",
+                                  // Format the date
+                                  day: date['dayOfWeek'] ?? "",
+                                  // Get the day of the week
+                                  time: gameTime.first,
+                                  // Access the first time element
+                                  opponentLogo: opponentLogo,
+                                  // Use the resolved image URL
+                                  opponentName: matchStatus["opponentName"],
+                                  gameResult:
+                                      data.custom_field.game_result?.first,
+                                  team1Score:
+                                      data.custom_field.team_score_1?.first,
+                                  team2Score:
+                                      data.custom_field.team_score_2?.first,
+                                  onTap: () {
+                                    Get.to(MatchDetailScreen(
+                                      data,
+                                      homeStatus:
+                                          snapshot.data?['matchStatus'] ?? "",
+                                    ));
+                                  },
+                                );
+                              }
+                            },
+                          );
+                        } else {
+                          return Text(
+                              'Missing match data'); // Handle cases where fields are missing
+                        }
+                      });
+                }
               })
             ],
           ),
