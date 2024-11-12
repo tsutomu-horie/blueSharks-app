@@ -98,73 +98,75 @@ class RegisterOtpScreen extends GetView<RegisterOtpController> {
           ),
         ],
       ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: 16.w),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              SizedBox(
-                height: 20.h,
-              ),
-              CustomTextView(
-                LocaleKeys.otp_title.tr,
-                type: TDSFontType.headlineSmall,
-                color: BrandColor.main,
-              ),
-              SizedBox(
-                height: 8.h,
-              ),
-              CustomTextView(
-                LocaleKeys.otp_message.tr,
-                type: TDSFontType.bodyTextMedium,
-                color: TextColor.secondary,
-              ),
-              SizedBox(
-                height: 8.h,
-              ),
-              Container(
-                padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 4.h),
-                decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(20.r),
-                    border: Border.all(color: BorderColor.primary, width: 1.w)),
-                child: CustomTextView(
-                  LocaleKeys.registered_email.trParams({"email": email}),
-                  type: TDSFontType.bodyTextSmall,
+      body: SafeArea(
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16.w),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SizedBox(
+                  height: 20.h,
+                ),
+                CustomTextView(
+                  LocaleKeys.otp_title.tr,
+                  type: TDSFontType.headlineSmall,
+                  color: BrandColor.main,
+                ),
+                SizedBox(
+                  height: 8.h,
+                ),
+                CustomTextView(
+                  LocaleKeys.otp_message.tr,
+                  type: TDSFontType.bodyTextMedium,
                   color: TextColor.secondary,
                 ),
-              ),
-              SizedBox(
-                height: 44.h,
-              ),
-              Pinput(
-                length: 5,
-                defaultPinTheme: defaultPinTheme,
-                focusedPinTheme: focusedPinTheme,
-                submittedPinTheme: submittedPinTheme,
-                errorPinTheme: submittedPinTheme,
-                onChanged: (data) {
-                  controller.otp.value = data;
-                },
-                pinputAutovalidateMode: PinputAutovalidateMode.onSubmit,
-                pinAnimationType: PinAnimationType.none,
-                showCursor: true,
-                onCompleted: (pin) => print(pin),
-              ),
-              SizedBox(
-                height: 20.h,
-              ),
-              InkWell(
-                onTap: (){
-                  print("resend");
-                  controller.resendOtp(email, context, otpId);
-                },
+                SizedBox(
+                  height: 8.h,
+                ),
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 4.h),
+                  decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(20.r),
+                      border: Border.all(color: BorderColor.primary, width: 1.w)),
                   child: CustomTextView(
-                LocaleKeys.resend_otp_email.tr,
-                color: BrandColor.main,
-                style: const TextStyle(decoration: TextDecoration.underline),
-              ))
-            ],
+                    LocaleKeys.registered_email.trParams({"email": email}),
+                    type: TDSFontType.bodyTextSmall,
+                    color: TextColor.secondary,
+                  ),
+                ),
+                SizedBox(
+                  height: 44.h,
+                ),
+                Pinput(
+                  length: 5,
+                  defaultPinTheme: defaultPinTheme,
+                  focusedPinTheme: focusedPinTheme,
+                  submittedPinTheme: submittedPinTheme,
+                  errorPinTheme: submittedPinTheme,
+                  onChanged: (data) {
+                    controller.otp.value = data;
+                  },
+                  pinputAutovalidateMode: PinputAutovalidateMode.onSubmit,
+                  pinAnimationType: PinAnimationType.none,
+                  showCursor: true,
+                  onCompleted: (pin) => print(pin),
+                ),
+                SizedBox(
+                  height: 20.h,
+                ),
+                InkWell(
+                  onTap: (){
+                    print("resend");
+                    controller.resendOtp(email, context, otpId);
+                  },
+                    child: CustomTextView(
+                  LocaleKeys.resend_otp_email.tr,
+                  color: BrandColor.main,
+                  style: const TextStyle(decoration: TextDecoration.underline),
+                ))
+              ],
+            ),
           ),
         ),
       ),

@@ -34,12 +34,16 @@ class RegisterMemberFanclubScreen
       appBar: _buildAppBar(),
       body: Padding(
         padding: EdgeInsets.symmetric(horizontal: 16.w),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildTitleSection(),
-            _buildForm(globalKey, registerController),
-          ],
+        child: SafeArea(
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildTitleSection(),
+                _buildForm(globalKey, registerController),
+              ],
+            ),
+          ),
         ),
       ),
       bottomNavigationBar:
