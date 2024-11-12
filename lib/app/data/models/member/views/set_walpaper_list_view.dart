@@ -199,7 +199,7 @@ class SetWalpaperListView extends GetView {
       builder: (context) {
         return Container(
           padding: EdgeInsets.all(16.w),
-          height: isSetWallpaper ? 132.h : 190.h,
+          height: 142.h,
           // Fixed height for the bottom sheet
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,

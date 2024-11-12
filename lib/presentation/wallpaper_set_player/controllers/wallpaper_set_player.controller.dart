@@ -20,8 +20,8 @@ class WallpaperSetPlayerController extends GetxController {
   List<WallpaperCategory> _originalCategories = [];
   List<CategorizedPlayerGroup> _allPlayerGroups = [];
 
-  final List<String> playerCategory = [LocaleKeys.forward_short.tr, LocaleKeys.back_short.tr, LocaleKeys.staff.tr];
-  final List<String> playerCategoryFull = [LocaleKeys.forward.tr, LocaleKeys.back.tr, LocaleKeys.staff.tr];
+  final List<String> playerCategory = [LocaleKeys.forward_short.tr, LocaleKeys.back_short.tr];
+  final List<String> playerCategoryFull = [LocaleKeys.forward.tr, LocaleKeys.back.tr];
 
   void addGroupKey(String identifier) {
     groupKeys[identifier] = materialGlobal.GlobalKey();
