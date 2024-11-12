@@ -91,6 +91,11 @@ class MemberListView extends StatelessWidget {
           memberController.groupPlayersByCategory(
               memberController.categoryPlayers);
 
+          for (var group in groupedPlayers) {
+            print("loog group ${group.categoryTitle}");
+            memberController.addGroupKey(group.categoryTitle);
+          }
+
           if (isSetWallpaper) {
             groupedPlayers = groupedPlayers
                 .where((group) => group.categoryTitle != LocaleKeys.staff.tr)
