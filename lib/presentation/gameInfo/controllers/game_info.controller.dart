@@ -9,7 +9,9 @@ class GameInfoController extends GetxController {
   final MediaProvider mediaProvider = MediaProvider();
   final Rx<List<Category>> matchCategory =
   Rx<List<Category>>([]);
-  final seasonSlug = ''.obs;  final selectedYear = "".obs;
+  final seasonSlug = ''.obs;
+  final selectedYear = "".obs;
+  final isLoading = true.obs;
 
   final Rx<List<MatchResultBySeason>> listMatch =
   Rx<List<MatchResultBySeason>>([]);
@@ -44,6 +46,7 @@ class GameInfoController extends GetxController {
       await getLatestPosts(data['id'], data['count']);
 
       listMatch.value = latestMatches;
+      isLoading.value = false;
     } else {
       print("No data found for the current season.");
     }

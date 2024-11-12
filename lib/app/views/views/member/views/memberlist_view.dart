@@ -87,8 +87,7 @@ class MemberListView extends StatelessWidget {
         ),
 
         Obx(() {
-          List<CategorizedPlayerGroup> groupedPlayers =
-          memberController.groupPlayersByCategory(
+          List<CategorizedPlayerGroup> groupedPlayers = memberController.groupPlayersByCategory(
               memberController.categoryPlayers);
 
           for (var group in groupedPlayers) {

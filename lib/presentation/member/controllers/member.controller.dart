@@ -112,6 +112,10 @@ class MemberController extends GetxController {
     // Combine all players into one list
     List<Member> allPlayers = combineAllPlayersFromCategories(categoryPlayers);
 
+    if (allPlayers.isEmpty) {
+      return []; // Return empty list if no players
+    }
+
     List<Member> propPlayers = [];
     List<Member> hookerPlayers = [];
     List<Member> lockPlayers = [];

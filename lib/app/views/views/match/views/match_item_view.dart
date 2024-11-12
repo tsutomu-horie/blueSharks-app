@@ -50,7 +50,7 @@ class MatchItemView extends GetView {
         onTap();
       },
       child: Padding(
-        padding: EdgeInsets.symmetric(horizontal: 6.w),
+        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
         child: Container(
           decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(12.r),

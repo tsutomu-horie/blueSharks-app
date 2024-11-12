@@ -11,6 +11,7 @@ class GalleryController extends GetxController {
   var selectedYear = "".obs;
   final GalleryProvider apiProvider = GalleryProvider();
   final RxList<Album> album = <Album>[].obs;
+  final isLoading = false.obs;
 
   @override
   void onInit() async {
@@ -26,6 +27,8 @@ class GalleryController extends GetxController {
   }
 
   void getGalleryList() async {
+    isLoading.value = true;
+
     print("get year data ${selectedYear.value}");
     final response = await apiProvider.fetchGalleryList(
       selectedIndex.value,
@@ -37,5 +40,6 @@ class GalleryController extends GetxController {
 
     album.value = response;
     print("index == ${album.length}");
+    isLoading.value = false;
   }
 }
