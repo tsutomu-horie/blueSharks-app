@@ -21,6 +21,8 @@ class MemberScreen extends GetView<MemberController> {
 
   @override
   Widget build(BuildContext context) {
+    final MemberController controller =
+    Get.put(MemberController());
     final ScrollController scrollController = ScrollController();
 
     return Scaffold(

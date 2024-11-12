@@ -82,6 +82,11 @@ class SetWalpaperListView extends GetView {
           List<CategorizedPlayerGroup> groupedPlayers =
               memberController.wallpaperList;
 
+          for (var group in groupedPlayers) {
+            print("loog group ${group.categoryTitle}");
+            memberController.addGroupKey(group.categoryTitle);
+          }
+
           groupedPlayers = groupedPlayers
               .where((group) => group.categoryTitle != LocaleKeys.staff.tr)
               .toList();
@@ -90,6 +95,7 @@ class SetWalpaperListView extends GetView {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: groupedPlayers.map((group) {
               return Column(
+                key: memberController.groupKeys[group.categoryTitle],
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Container(
@@ -215,8 +221,9 @@ class SetWalpaperListView extends GetView {
                     final item = memberController.playerCategory[index];
                     return InkWell(
                       onTap: () {
-                        memberController.onSelectPosition(item);
+                        // memberController.onSelectPosition(item);
                         Get.back();
+                        memberController.scrollToGroup(memberController.playerCategoryFull[index]);
                       },
                       child: Column(
                         children: [

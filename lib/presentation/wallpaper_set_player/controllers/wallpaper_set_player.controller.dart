@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart' as materialGlobal;
 import 'package:get/get.dart';
 import 'package:koto_blue_sharks/app/data/api/gallery/gallery_provider.dart';
 import 'package:koto_blue_sharks/app/data/api/media/media_provider.dart';
@@ -13,12 +14,30 @@ class WallpaperSetPlayerController extends GetxController {
   final RxList<CategorizedPlayerGroup> wallpaperList = RxList([]);
   final MediaProvider mediaProvider = MediaProvider();
   final isLoading = true.obs;
+  final Map<String, materialGlobal.GlobalKey> groupKeys = <String, materialGlobal.GlobalKey>{}.obs;
 
   // Store both original categories and processed player groups
   List<WallpaperCategory> _originalCategories = [];
   List<CategorizedPlayerGroup> _allPlayerGroups = [];
 
   final List<String> playerCategory = [LocaleKeys.forward_short.tr, LocaleKeys.back_short.tr, LocaleKeys.staff.tr];
+  final List<String> playerCategoryFull = [LocaleKeys.forward.tr, LocaleKeys.back.tr, LocaleKeys.staff.tr];
+
+  void addGroupKey(String identifier) {
+    groupKeys[identifier] = materialGlobal.GlobalKey();
+  }
+
+  void scrollToGroup(String groupIdentifier) {
+    final groupKey = groupKeys[groupIdentifier];
+    print("groupKey is ${groupKeys} & ${groupIdentifier}");
+    if (groupKey != null && groupKey.currentContext != null) {
+      materialGlobal.Scrollable.ensureVisible(
+        groupKey.currentContext!,
+        duration: Duration(seconds: 1),
+        curve: materialGlobal.Curves.easeInOut,
+      );
+    }
+  }
 
   @override
   void onInit() {
