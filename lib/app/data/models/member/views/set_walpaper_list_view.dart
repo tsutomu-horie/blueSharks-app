@@ -10,6 +10,7 @@ import 'package:koto_blue_sharks/app/views/views/custom_text_view.dart';
 import 'package:koto_blue_sharks/generated/locales.g.dart';
 import 'package:koto_blue_sharks/presentation/register/register_email/register_email.screen.dart';
 import 'package:koto_blue_sharks/presentation/wallpaper_set_player/controllers/wallpaper_set_player.controller.dart';
+import 'package:koto_blue_sharks/utils/String+extensions.dart';
 import 'package:koto_blue_sharks/utils/app_color.dart';
 
 class SetWalpaperListView extends GetView {
@@ -328,6 +329,7 @@ class SetWalpaperListView extends GetView {
                       width: 12.w,
                     ),
                     Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -354,9 +356,10 @@ class SetWalpaperListView extends GetView {
                               color: BrandColor.surface,
                               borderRadius: BorderRadius.circular(24.r),
                             ),
-                            child: CustomTextView(playerPosition,
-                                type: TDSFontType.titleSmall,
-                                color: TextColor.secondary)),
+                            child: CustomTextView(playerPosition.capitalizeText(),
+                                type: TDSFontType.labelMedium,
+                                color: BrandColor.main),
+                        ),
                       ],
                     )
                   ],
