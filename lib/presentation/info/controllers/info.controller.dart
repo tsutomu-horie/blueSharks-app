@@ -2,11 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:koto_blue_sharks/app/data/api/info/info_provider.dart';
 import 'package:koto_blue_sharks/app/data/models/info/post.dart';
+import 'package:koto_blue_sharks/app/services/AnalyticsService.dart';
+import 'package:koto_blue_sharks/infrastructure/navigation/routes.dart';
 
 class InfoController extends GetxController {
   PageController pageController = PageController();
   var selectedIndex = 0.obs; // Observable to track the selected tab index
 
+  @override
+  void onInit() {
+    super.onInit();
+    AnalyticsService.logPageView(Routes.INFO);
+
+  }
   void changeTab(int index) async {
     pageController.animateToPage(
       index,

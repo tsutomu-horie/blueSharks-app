@@ -21,10 +21,12 @@ class WebviewScreen extends GetView<WebviewController> {
   const WebviewScreen(this.type, {super.key});
 
   final WebviewType type;
+
   @override
   Widget build(BuildContext context) {
     final WebviewController webViewCtrl = Get.put(WebviewController());
 
+    webViewCtrl.sendAnalytics("$type");
     if (type == WebviewType.team) {
       return SingleChildScrollView(
         child: Column(

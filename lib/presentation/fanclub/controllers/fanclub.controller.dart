@@ -1,4 +1,6 @@
 import 'package:get/get.dart';
+import 'package:koto_blue_sharks/app/services/AnalyticsService.dart';
+import 'package:koto_blue_sharks/infrastructure/navigation/routes.dart';
 import 'package:koto_blue_sharks/utils/Constant.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
@@ -14,6 +16,9 @@ class FanclubController extends GetxController {
   void onInit() {
     super.onInit();
     setupWebViewController();
+    AnalyticsService.logPageView(Routes.FANCLUB);
+
+
   }
 
   void setupWebViewController() {

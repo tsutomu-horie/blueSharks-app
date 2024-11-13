@@ -1,7 +1,9 @@
 import 'package:flutter/cupertino.dart';
 import 'package:get/get.dart';
 import 'package:koto_blue_sharks/app/data/api/otp/otp_provider.dart';
+import 'package:koto_blue_sharks/app/services/AnalyticsService.dart';
 import 'package:koto_blue_sharks/app/views/views/warning_dialog_view.dart';
+import 'package:koto_blue_sharks/infrastructure/navigation/routes.dart';
 import 'package:koto_blue_sharks/presentation/forgotPassword/forgot_password.screen.dart';
 import 'package:koto_blue_sharks/presentation/register/register_member_fanclub/register_member_fanclub.screen.dart';
 import 'package:koto_blue_sharks/presentation/reset_password/reset_password.screen.dart';
@@ -16,6 +18,9 @@ class RegisterOtpController extends GetxController {
   void onInit() async {
     super.onInit();
     otpProvider.onInit();
+
+    AnalyticsService.logPageView(Routes.REGISTER_OTP);
+
   }
   
   void onSubmitOtp(String email, BuildContext context, String fromScreen, String? otpId, String selectedPlayer, String selectedPlayerName, Function? onSuccess) async {

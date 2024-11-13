@@ -5,7 +5,9 @@ import 'package:koto_blue_sharks/app/data/api/media/media_provider.dart';
 import 'package:koto_blue_sharks/app/data/api/member/member_provider.dart';
 import 'package:koto_blue_sharks/app/data/models/match/match_result.dart';
 import 'package:koto_blue_sharks/app/data/models/member/member.dart';
+import 'package:koto_blue_sharks/app/services/AnalyticsService.dart';
 import 'package:koto_blue_sharks/generated/locales.g.dart';
+import 'package:koto_blue_sharks/infrastructure/navigation/routes.dart';
 import 'package:koto_blue_sharks/presentation/playerDetail/player_detail.screen.dart';
 
 class MemberController extends GetxController {
@@ -44,6 +46,9 @@ class MemberController extends GetxController {
     categoryBox = await Hive.openBox<Category>('categoriesBox');
     playerBox = await Hive.openBox<Member>('playersBox');
     loadCategoriesFromLocal();
+
+    AnalyticsService.logPageView(Routes.MEMBER);
+
   }
 
   void onSelectPosition(String selectedPos){

@@ -2,6 +2,8 @@ import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:koto_blue_sharks/app/data/api/auth/auth_provider.dart';
 import 'package:koto_blue_sharks/app/data/models/info/notification.dart';
+import 'package:koto_blue_sharks/app/services/AnalyticsService.dart';
+import 'package:koto_blue_sharks/infrastructure/navigation/routes.dart';
 
 class NotificationListController extends GetxController {
   final AuthProvider apiProvider = AuthProvider();
@@ -11,6 +13,9 @@ class NotificationListController extends GetxController {
   void onInit() {
     super.onInit();
     getNotification();
+
+    AnalyticsService.logPageView(Routes.NOTIFICATION_LIST);
+
   }
 
   void getNotification() async {

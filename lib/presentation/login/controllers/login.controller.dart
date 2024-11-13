@@ -4,7 +4,9 @@ import 'package:koto_blue_sharks/app/data/api/auth/AuthToken.dart';
 import 'package:koto_blue_sharks/app/data/api/auth/auth_provider.dart';
 import 'package:koto_blue_sharks/app/data/api/userPreferences/wallpaper_preference.dart';
 import 'package:koto_blue_sharks/app/data/models/auth/auth.dart';
+import 'package:koto_blue_sharks/app/services/AnalyticsService.dart';
 import 'package:koto_blue_sharks/generated/locales.g.dart';
+import 'package:koto_blue_sharks/infrastructure/navigation/routes.dart';
 import 'package:koto_blue_sharks/presentation/main/main.screen.dart';
 import 'package:koto_blue_sharks/utils/fcm_helper.dart';
 import 'package:koto_blue_sharks/utils/my_shared_pref.dart';
@@ -25,6 +27,9 @@ class LoginController extends GetxController {
   void onInit() async {
     super.onInit();
     apiProvider.onInit();
+
+    AnalyticsService.logPageView(Routes.LOGIN);
+
   }
 
   void togglePasswordVisibility() {
