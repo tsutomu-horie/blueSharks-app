@@ -1,5 +1,7 @@
 import 'package:get/get.dart';
 import 'package:koto_blue_sharks/app/data/api/media/media_provider.dart';
+import 'package:koto_blue_sharks/app/services/AnalyticsService.dart';
+import 'package:koto_blue_sharks/infrastructure/navigation/routes.dart';
 
 class DetailInfoController extends GetxController {
   final MediaProvider mediaProvider = MediaProvider();
@@ -8,6 +10,9 @@ class DetailInfoController extends GetxController {
   void onInit() {
     super.onInit();
     mediaProvider.onInit();
+
+    AnalyticsService.logPageView(Routes.DETAIL_INFO);
+
   }
 
   Future<String> getNewsImage(String mediaId) async {

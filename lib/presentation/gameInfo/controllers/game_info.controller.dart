@@ -2,6 +2,8 @@ import 'package:get/get.dart';
 import 'package:koto_blue_sharks/app/data/api/match/match_provider.dart';
 import 'package:koto_blue_sharks/app/data/api/media/media_provider.dart';
 import 'package:koto_blue_sharks/app/data/models/match/match_result.dart';
+import 'package:koto_blue_sharks/app/services/AnalyticsService.dart';
+import 'package:koto_blue_sharks/infrastructure/navigation/routes.dart';
 import 'package:koto_blue_sharks/utils/Constant.dart';
 
 class GameInfoController extends GetxController {
@@ -26,6 +28,9 @@ class GameInfoController extends GetxController {
     apiProvider.onInit();
     mediaProvider.onInit();
     fetchMatchResult();
+
+    AnalyticsService.logPageView(Routes.GAME_INFO);
+
   }
 
   void selectYear(Category selectedDate) async {

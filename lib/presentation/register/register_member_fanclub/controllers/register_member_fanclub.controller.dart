@@ -3,6 +3,8 @@ import 'package:get/get.dart';
 import 'package:koto_blue_sharks/app/data/api/auth/AuthToken.dart';
 import 'package:koto_blue_sharks/app/data/api/auth/auth_provider.dart';
 import 'package:koto_blue_sharks/app/data/api/userPreferences/wallpaper_preference.dart';
+import 'package:koto_blue_sharks/app/services/AnalyticsService.dart';
+import 'package:koto_blue_sharks/infrastructure/navigation/routes.dart';
 import 'package:koto_blue_sharks/presentation/FanClubConfirmation/fan_club_confirmation.screen.dart';
 import 'package:koto_blue_sharks/utils/my_shared_pref.dart';
 
@@ -17,6 +19,9 @@ class RegisterMemberFanclubController extends GetxController {
   void onInit() async {
     super.onInit();
     apiProvider.onInit();
+
+    AnalyticsService.logPageView(Routes.REGISTER_MEMBER_FANCLUB);
+
   }
 
   void togglePasswordVisibility() {

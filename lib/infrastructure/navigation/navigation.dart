@@ -47,7 +47,7 @@ class Nav {
     ),
     GetPage(
       name: Routes.MAIN,
-      page: () => MainScreen(),
+      page: () => const MainScreen(),
       binding: MainControllerBinding(),
     ),
     GetPage(
@@ -58,17 +58,12 @@ class Nav {
     GetPage(
       name: Routes.MYPAGE,
       page: () => const MypageScreen(),
-      binding: BindingsBuilder(() {
-        print("log page my");
-        // AnalyticsService.logPageView(Routes.MYPAGE);
-      }),
+      binding: MypageControllerBinding(),
     ),
     GetPage(
       name: Routes.STADIUM,
       page: () => const StadiumScreen(),
-      binding: BindingsBuilder(() {
-        // AnalyticsService.logPageView(Routes.STADIUM);
-      }),
+      binding: StadiumControllerBinding(),
     ),
     GetPage(
       name: Routes.CALENDAR,
@@ -107,7 +102,7 @@ class Nav {
     ),
     GetPage(
       name: Routes.PLAYER_DETAIL,
-      page: () => MemberDetailScreen(null),
+      page: () => const MemberDetailScreen(null),
       binding: PlayerDetailControllerBinding(),
     ),
     GetPage(

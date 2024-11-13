@@ -1,6 +1,8 @@
 import 'package:get/get.dart';
 import 'package:koto_blue_sharks/app/data/api/gallery/gallery_provider.dart';
 import 'package:koto_blue_sharks/app/data/models/media/media.dart';
+import 'package:koto_blue_sharks/app/services/AnalyticsService.dart';
+import 'package:koto_blue_sharks/infrastructure/navigation/routes.dart';
 
 class GalleryScreenDetailController extends GetxController {
   final GalleryProvider apiProvider = GalleryProvider();
@@ -11,6 +13,8 @@ class GalleryScreenDetailController extends GetxController {
     super.onInit();
     apiProvider.onInit();
     // getGalleryList();
+    AnalyticsService.logPageView(Routes.GALLERY_SCREEN_DETAIL);
+
   }
 
   void getGalleryList(int albumId) async {

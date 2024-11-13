@@ -3,7 +3,9 @@ import 'package:get/get.dart';
 import 'package:googleapis/driveactivity/v2.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
+import 'package:koto_blue_sharks/app/services/AnalyticsService.dart';
 import 'package:koto_blue_sharks/generated/locales.g.dart';
+import 'package:koto_blue_sharks/infrastructure/navigation/routes.dart';
 import 'package:syncfusion_flutter_calendar/calendar.dart';
 
 class CalendarScreenController extends GetxController {
@@ -15,7 +17,6 @@ class CalendarScreenController extends GetxController {
   RxList<CalendarEvent> publicEvents = <CalendarEvent>[].obs;
   final selectedYear = LocaleKeys.game_schedule.tr.obs;
 
-
   final Rx<DateTime> minDate = DateTime.now().obs;
   final Rx<DateTime> maxDate = DateTime.now().obs;
 
@@ -23,6 +24,13 @@ class CalendarScreenController extends GetxController {
 
   var calendarView = CalendarView.month.obs;
 
+  @override
+  void onInit() {
+
+    super.onInit();
+    AnalyticsService.logPageView(Routes.CALENDAR);
+
+  }
   void onChangeCalendar(CalendarView value) {
     calendarView.value = value;
   }

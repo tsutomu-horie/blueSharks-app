@@ -3,6 +3,8 @@ import 'package:get/get.dart';
 import 'package:koto_blue_sharks/app/data/api/info/info_provider.dart';
 import 'package:koto_blue_sharks/app/data/api/media/media_provider.dart';
 import 'package:koto_blue_sharks/app/data/models/info/post.dart';
+import 'package:koto_blue_sharks/app/services/AnalyticsService.dart';
+import 'package:koto_blue_sharks/infrastructure/navigation/routes.dart';
 
 class ListTopicsController extends GetxController {
   final InfoProvider apiProvider = InfoProvider();
@@ -41,6 +43,9 @@ class ListTopicsController extends GetxController {
     eventScrollController.addListener(() => onScroll(2, eventScrollController));
     activitiesScrollController.addListener(() => onScroll(3, activitiesScrollController));
     interviewScrollController.addListener(() => onScroll(4, interviewScrollController));
+
+    AnalyticsService.logPageView(Routes.LIST_TOPICS);
+
   }
 
   void getInfo(int tabIndex) async {

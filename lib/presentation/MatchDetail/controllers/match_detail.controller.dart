@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:koto_blue_sharks/app/data/api/media/media_provider.dart';
+import 'package:koto_blue_sharks/app/services/AnalyticsService.dart';
+import 'package:koto_blue_sharks/infrastructure/navigation/routes.dart';
 
 class MatchDetailController extends GetxController {
   var selectedIndex = 0.obs; // Observable to track the selected tab index
@@ -11,6 +13,8 @@ class MatchDetailController extends GetxController {
     super.onInit();
 
     mediaProvider.onInit();
+    AnalyticsService.logPageView(Routes.MATCH_DETAIL);
+
   }
 
   void changeTab(int index) async {

@@ -307,7 +307,7 @@ class Locales {
     'stadium_map': 'スタジアムマップ',
     'access': 'アクセス',
     'access_en': 'access',
-    'ground': '地面',
+    'ground': 'グラウンド',
     'spectator_rules': '観客のルール',
     'access_to_the_ground': 'グランドへのアクセス',
     'access_to_the_ground_desc':
@@ -336,7 +336,7 @@ class Locales {
     'step_en': 'step @step',
     'set_wallpaper_title': 'お気に入り選手を壁紙に設定',
     'set_wallpaper_desc':
-        'アプリホーム画面の壁紙にお気に入り選手を設定することができます。次の画面でお気に入りの選手を選択選択してください。',
+        'アプリホーム画面の壁紙にお気に入り選手を設定することができます。次の画面でお気に入りの選手を選択してください。',
     'set_wallpaper_title2': 'ファンクラブ会員証を表示',
     'set_wallpaper_desc2':
         'ファンクラブ会員情報を認証することで、QRコード付きの会員証を表示することができます。\nファンクラブIDとメールアドレスをアプリに登録して会員認証を行ってください。\n',

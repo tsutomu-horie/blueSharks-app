@@ -259,7 +259,7 @@ class HomeScreen extends GetView<MainController> {
             ],
           ),
           DefaultHeaderTitleView(
-              LocaleKeys.featured_topics.tr, LocaleKeys.featured_topics_en.tr),
+              LocaleKeys.featured_topics.tr, LocaleKeys.featured_topics_en.tr, showDivider: false,),
           Obx(() {
             final data = homeController.topicsData.value;
             return Column(
