@@ -215,6 +215,14 @@ class LocaleKeys {
   static const active = 'active';
   static const inactive = 'inactive';
   static const detailled_notification = 'detailled_notification';
+  static const delete_account_title = 'delete_account_title';
+  static const delete_account_desc1 = 'delete_account_desc1';
+  static const delete_account_desc2 = 'delete_account_desc2';
+  static const delete_account_confirmation_title =
+      'delete_account_confirmation_title';
+  static const delete_account_confirmation_message =
+      'delete_account_confirmation_message';
+  static const delete_account_button = 'delete_account_button';
 }
 
 class Locales {
@@ -437,5 +445,12 @@ class Locales {
     'active': 'アクティブ',
     'inactive': 'inactive',
     'detailled_notification': '詳細通知',
+    'delete_account_title': 'アカウントを削除',
+    'delete_account_desc1':
+        '残念ですが、アカウントが削除されると、プロフィールやメンバーデータを含むすべてのコンテンツが永久に削除されます。',
+    'delete_account_desc2': '削除を確認するには、以下に「削除」と入力してください。',
+    'delete_account_confirmation_title': 'アカウントを削除しますか',
+    'delete_account_confirmation_message': 'Blue Sharkアカウントを削除してもよろしいですか？',
+    'delete_account_button': 'アカウントを削除',
   };
 }

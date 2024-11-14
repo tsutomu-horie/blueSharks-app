@@ -1,4 +1,5 @@
 export 'package:koto_blue_sharks/infrastructure/navigation/bindings/controllers/calendar.controller.binding.dart'; 
+export 'package:koto_blue_sharks/infrastructure/navigation/bindings/controllers/delete_account_confirmation.controller.binding.dart'; 
 export 'package:koto_blue_sharks/infrastructure/navigation/bindings/controllers/detail_info.controller.binding.dart'; 
 export 'package:koto_blue_sharks/infrastructure/navigation/bindings/controllers/edit_password.controller.binding.dart'; 
 export 'package:koto_blue_sharks/infrastructure/navigation/bindings/controllers/fan_club_confirmation.controller.binding.dart'; 
