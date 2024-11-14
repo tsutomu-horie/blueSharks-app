@@ -207,5 +207,10 @@ class Nav {
       page: () => const NotificationDetailScreen(null),
       binding: NotificationDetailControllerBinding(),
     ),
+    GetPage(
+      name: Routes.DELETE_ACCOUNT_CONFIRMATION,
+      page: () => const DeleteAccountConfirmationScreen(),
+      binding: DeleteAccountConfirmationControllerBinding(),
+    ),
   ];
 }

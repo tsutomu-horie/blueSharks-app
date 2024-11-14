@@ -21,6 +21,7 @@ class Routes {
   static const MATCH_DETAIL = '/match-detail';
   static const MEMBER = '/member';
   static const MYPAGE = '/mypage';
+  static const NOTIFICATION_DETAIL = '/notification-detail';
   static const NOTIFICATION_LIST = '/notification-list';
   static const PLAYER_DETAIL = '/player-detail';
   static const REGISTER_EMAIL = '/register-email';
@@ -36,5 +37,5 @@ class Routes {
   static const WARNING_DIALOG = '/warning-dialog';
   static const WEBVIEW = '/webview';
   static const YEAR_FILTER_CONTROLLER = '/year-filter-controller';
-  static const NOTIFICATION_DETAIL = '/notification-detail';
+  static const DELETE_ACCOUNT_CONFIRMATION = '/delete-account-confirmation';
 }

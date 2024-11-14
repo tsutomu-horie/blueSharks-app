@@ -46,6 +46,8 @@ class AuthProvider extends GetConnect {
       "password": password,
     };
 
+    print("data send ${body}");
+
     final response = await post(
       url.toString(), body, // Send the body in the request
     );
@@ -122,7 +124,7 @@ class AuthProvider extends GetConnect {
     return response;
   }
 
-  Future<Response> updatePassword(String confirmPassword, String newPassword,Function onError) async {
+  Future<Response> updatePassword(String currentPassword, String confirmPassword, String newPassword,Function onError) async {
     httpClient.baseUrl = Constants.baseUrlAuthApi;
 
     final url = Uri.parse('new-password');
@@ -139,6 +141,7 @@ class AuthProvider extends GetConnect {
     final Map<String, dynamic> body = {
       "confirm_password": confirmPassword,
       "new_password": newPassword,
+      "old_password": currentPassword,
     };
 
     final response = await patch(
@@ -180,6 +183,31 @@ class AuthProvider extends GetConnect {
     print("Login successful, received data: ${response.body}");
 
     return UserData.fromJson(response.body["data"]);
+  }
+
+  Future<Response> deleteProfile(String token, Function onError) async {
+    final url = Uri.parse('profile');
+    print("load ${httpClient.baseUrl}${url.toString()}");
+
+    final headers = {
+      'Authorization': 'Bearer $token',
+      'Content-Type': 'application/json', // Optional, depending on the API
+    };
+
+    final response = await delete(
+      url.toString(), headers: headers // Send the body in the request
+    );
+
+    print("Login successful2 , ${response.body}");
+
+    if (response.hasError) {
+      onError();
+      throw Exception('Failed to login: ${response.statusText}');
+    }
+
+    print("Login successful, received data: ${response.body}");
+
+    return response;
   }
 
   Future<Response?> updateNotificationToken(String fcm) async {

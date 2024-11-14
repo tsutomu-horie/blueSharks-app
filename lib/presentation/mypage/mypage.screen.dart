@@ -8,6 +8,7 @@ import 'package:koto_blue_sharks/app/views/views/custom_text_view.dart';
 import 'package:koto_blue_sharks/app/views/views/edit_profile_bottom_sheet_view.dart';
 import 'package:koto_blue_sharks/app/views/views/member_card_view.dart';
 import 'package:koto_blue_sharks/generated/locales.g.dart';
+import 'package:koto_blue_sharks/presentation/DeleteAccountConfirmation/delete_account_confirmation.screen.dart';
 import 'package:koto_blue_sharks/presentation/EditPassword/edit_password.screen.dart';
 import 'package:koto_blue_sharks/presentation/RegisterEmailFromHome/register_email_from_home.screen.dart';
 import 'package:koto_blue_sharks/presentation/login/login.screen.dart';
@@ -483,7 +484,7 @@ class MypageScreen extends GetView<MypageController> {
                                     height: 48.h,
                                     child: OutlinedButton(
                                       onPressed: () {
-
+                                        Get.to(() => const DeleteAccountConfirmationScreen());
                                       },
                                       style: ButtonStyle(
                                         side: WidgetStateProperty.all(BorderSide(
