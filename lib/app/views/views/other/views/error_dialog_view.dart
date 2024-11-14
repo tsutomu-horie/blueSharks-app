@@ -34,14 +34,11 @@ void errorDialogView(BuildContext context, String title, String? message) {
                 Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Container(
-                      color: Colors.red,
-                      child: CustomTextView(
-                        message,
-                        type: TDSFontType.titleMedium,
-                        color: TextColor.primary,
-                        align: TextAlign.center,
-                      ),
+                    CustomTextView(
+                      message,
+                      type: TDSFontType.titleMedium,
+                      color: TextColor.primary,
+                      align: TextAlign.center,
                     ),
                     SizedBox(height: 8.h,)
                   ],

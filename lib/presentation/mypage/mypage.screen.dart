@@ -16,7 +16,6 @@ import 'package:shimmer/shimmer.dart';
 
 import 'controllers/mypage.controller.dart';
 
-
 class MypageScreen extends GetView<MypageController> {
   const MypageScreen({super.key});
 
@@ -42,9 +41,17 @@ class MypageScreen extends GetView<MypageController> {
                             controller.profileData.value?.isVerified != 0
                         ? Column(
                             children: [
-                              !controller.isLoading.value ? MemberCardView("beginner", controller.profileData.value?.accountId ?? "") : Container(
-                                child: SizedBox(width: 343.w, height:218.h, child: shimmer()),
-                              ),
+                              !controller.isLoading.value
+                                  ? MemberCardView(
+                                      "beginner",
+                                      controller.profileData.value?.accountId ??
+                                          "")
+                                  : Container(
+                                      child: SizedBox(
+                                          width: 343.w,
+                                          height: 218.h,
+                                          child: shimmer()),
+                                    ),
                               Row(
                                 children: [
                                   SizedBox(
@@ -72,7 +79,8 @@ class MypageScreen extends GetView<MypageController> {
                                                 width: 8.w,
                                               ),
                                               CustomTextView(
-                                                LocaleKeys.membership_renewal.tr,
+                                                LocaleKeys
+                                                    .membership_renewal.tr,
                                                 type: TDSFontType.labelLarge,
                                                 color: Colors.white,
                                               ),
@@ -134,7 +142,7 @@ class MypageScreen extends GetView<MypageController> {
                         width: double.infinity,
                         color: BrandColor.main,
                         child: CustomTextView(
-                         LocaleKeys.your_register_information.tr,
+                          LocaleKeys.your_register_information.tr,
                           type: TDSFontType.titleSmall,
                           color: Colors.white,
                         ),
@@ -164,8 +172,7 @@ class MypageScreen extends GetView<MypageController> {
                                       vertical: 22.h, horizontal: 16.w),
                                   child: Obx(() {
                                     return CustomTextView(
-                                      controller.profileData.value?.email ??
-                                          "",
+                                      controller.profileData.value?.email ?? "",
                                       align: TextAlign.start,
                                       color: TextColor.primary,
                                       type: TDSFontType.bodyTextMedium,
@@ -201,8 +208,7 @@ class MypageScreen extends GetView<MypageController> {
                                       vertical: 12.h, horizontal: 16.w),
                                   child: Obx(() {
                                     return CustomTextView(
-                                      controller
-                                              .profileData.value?.accountId ??
+                                      controller.profileData.value?.accountId ??
                                           "",
                                       align: TextAlign.start,
                                       color: TextColor.primary,
@@ -304,8 +310,7 @@ class MypageScreen extends GetView<MypageController> {
                             child: OutlinedButton(
                               onPressed: () async {
                                 controller.emailController.text =
-                                    controller.profileData.value?.email ??
-                                        "";
+                                    controller.profileData.value?.email ?? "";
 
                                 controller.idController.text = await controller
                                         .profileData.value?.accountId ??
@@ -316,7 +321,8 @@ class MypageScreen extends GetView<MypageController> {
                                   print("get id ${id}");
                                   controller.playerNameController.value =
                                       wallpaperName;
-                                  controller.playerLinkController.value = wallpaper;
+                                  controller.playerLinkController.value =
+                                      wallpaper;
                                   controller.emailController.text = email;
                                   controller.idController.text = id;
                                   controller.isSelectNotificaiton.value =
@@ -339,7 +345,7 @@ class MypageScreen extends GetView<MypageController> {
                                   SizedBox(
                                     width: 8.w,
                                   ),
-                                  CustomTextView(LocaleKeys.edit_information.tr,
+                                  CustomTextView(LocaleKeys.edit.tr,
                                       type: TDSFontType.titleSmall,
                                       color: BrandColor.main)
                                 ],
@@ -377,7 +383,6 @@ class MypageScreen extends GetView<MypageController> {
                           SizedBox(
                             width: 16.w,
                           ),
-                          //todo:: custom font
                           Flexible(
                             child: Text(
                               LocaleKeys.menu.tr,
@@ -411,70 +416,7 @@ class MypageScreen extends GetView<MypageController> {
                                   height: 48.h,
                                   child: OutlinedButton(
                                     onPressed: () {
-                                      controller.logout();
-                                    },
-                                    style: ButtonStyle(
-                                      side: WidgetStateProperty.all(BorderSide(
-                                              color: DangerColor
-                                                  .main) // Set your desired color here
-                                          ),
-                                    ),
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.max,
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.center,
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      children: [
-                                        Icon(
-                                          IconsaxPlusLinear.logout,
-                                          color: DangerColor.main,
-                                        ),
-                                        SizedBox(
-                                          width: 8.w,
-                                        ),
-                                        CustomTextView(
-                                            LocaleKeys.edit_information.tr,
-                                            type: TDSFontType.titleSmall,
-                                            color: DangerColor.main)
-                                      ],
-                                    ),
-                                  ),
-                                )
-                              : SizedBox(
-                                  width: double.infinity,
-                                  height: 48.h,
-                                  child: OutlinedButton(
-                                    onPressed: () async {
-                                      Get.to(LoginScreen(
-                                          controller.playerLinkController.value,
-                                          true,  controller.playerNameController.value ));
-                                    },
-                                    style: ButtonStyle(
-                                      side: WidgetStateProperty.all(BorderSide(
-                                              color: BrandColor
-                                                  .main) // Set your desired color here
-                                          ),
-                                    ),
-                                    child: CustomTextView(LocaleKeys.login.tr,
-                                        type: TDSFontType.titleSmall,
-                                        color: BrandColor.main),
-                                  ),
-                                )
-                        ],
-                      ),
-                      SizedBox(
-                        height: 19.h,
-                      ),
-                      Column(
-                        children: [
-                          controller.isLogin.value
-                              ? SizedBox(
-                                  width: double.infinity,
-                                  height: 48.h,
-                                  child: OutlinedButton(
-                                    onPressed: () {
-                                      Get.to(() => EditPasswordScreen());
+                                      Get.to(() => const EditPasswordScreen());
                                     },
                                     style: ButtonStyle(
                                       side: WidgetStateProperty.all(BorderSide(
@@ -509,9 +451,11 @@ class MypageScreen extends GetView<MypageController> {
                                   height: 48.h,
                                   child: OutlinedButton(
                                     onPressed: () async {
-                                      Get.to(RegisterEmailFromHomeScreen(
+                                      Get.to(LoginScreen(
+                                          controller.playerLinkController.value,
+                                          true,
                                           controller
-                                              .playerNameController.value, controller.playerLinkController.value));
+                                              .playerNameController.value));
                                     },
                                     style: ButtonStyle(
                                       side: WidgetStateProperty.all(BorderSide(
@@ -519,7 +463,112 @@ class MypageScreen extends GetView<MypageController> {
                                                   .main) // Set your desired color here
                                           ),
                                     ),
-                                    child: CustomTextView(LocaleKeys.register.tr,
+                                    child: CustomTextView(LocaleKeys.login.tr,
+                                        type: TDSFontType.titleSmall,
+                                        color: BrandColor.main),
+                                  ),
+                                )
+                        ],
+                      ),
+                      SizedBox(
+                        height: 19.h,
+                      ),
+                      Column(
+                        children: [
+                          controller.isLogin.value
+                              ? Column(
+                                children: [
+                                  SizedBox(
+                                    width: double.infinity,
+                                    height: 48.h,
+                                    child: OutlinedButton(
+                                      onPressed: () {
+
+                                      },
+                                      style: ButtonStyle(
+                                        side: WidgetStateProperty.all(BorderSide(
+                                            color: DangerColor
+                                                .main) // Set your desired color here
+                                        ),
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.max,
+                                        crossAxisAlignment:
+                                        CrossAxisAlignment.center,
+                                        mainAxisAlignment:
+                                        MainAxisAlignment.center,
+                                        children: [
+                                          Icon(
+                                            IconsaxPlusLinear.profile_delete,
+                                            color: DangerColor.main,
+                                          ),
+                                          SizedBox(
+                                            width: 8.w,
+                                          ),
+                                          CustomTextView(
+                                              LocaleKeys.delete_account.tr,
+                                              type: TDSFontType.titleSmall,
+                                              color: DangerColor.main)
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                  SizedBox(height: 19.h,),
+                                  SizedBox(
+                                      width: double.infinity,
+                                      height: 48.h,
+                                      child: OutlinedButton(
+                                        onPressed: () {
+                                          controller.logout();
+                                        },
+                                        style: ButtonStyle(
+                                          side: WidgetStateProperty.all(BorderSide(
+                                                  color: DangerColor
+                                                      .main) // Set your desired color here
+                                              ),
+                                        ),
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.max,
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.center,
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          children: [
+                                            Icon(
+                                              IconsaxPlusLinear.logout,
+                                              color: DangerColor.main,
+                                            ),
+                                            SizedBox(
+                                              width: 8.w,
+                                            ),
+                                            CustomTextView(
+                                                LocaleKeys.logout.tr,
+                                                type: TDSFontType.titleSmall,
+                                                color: DangerColor.main)
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                ],
+                              )
+                              : SizedBox(
+                                  width: double.infinity,
+                                  height: 48.h,
+                                  child: OutlinedButton(
+                                    onPressed: () async {
+                                      Get.to(RegisterEmailFromHomeScreen(
+                                          controller.playerNameController.value,
+                                          controller
+                                              .playerLinkController.value));
+                                    },
+                                    style: ButtonStyle(
+                                      side: WidgetStateProperty.all(BorderSide(
+                                              color: BrandColor
+                                                  .main) // Set your desired color here
+                                          ),
+                                    ),
+                                    child: CustomTextView(
+                                        LocaleKeys.register.tr,
                                         type: TDSFontType.titleSmall,
                                         color: BrandColor.main),
                                   ),
@@ -548,39 +597,39 @@ class MypageScreen extends GetView<MypageController> {
                           children: [
                             TextSpan(
                                 style: TextStyle(
-                                    color: TextColor.secondary,
-                                    fontSize: 14.sp,
+                                  color: TextColor.secondary,
+                                  fontSize: 14.sp,
                                 ),
                                 text: "${LocaleKeys.privacy_policy_desc.tr} "),
                             TextSpan(
                               style: TextStyle(
-                                  color: BrandColor.main,
-                                  fontSize: 14.sp,
-                                  decoration: TextDecoration.underline,
+                                color: BrandColor.main,
+                                fontSize: 14.sp,
+                                decoration: TextDecoration.underline,
                               ),
                               text: LocaleKeys.privacy_policy.tr,
                               recognizer: TapGestureRecognizer()..onTap = () {},
                             ),
                             TextSpan(
                               style: TextStyle(
-                                  color: TextColor.secondary,
-                                  fontSize: 14.sp,
+                                color: TextColor.secondary,
+                                fontSize: 14.sp,
                               ),
                               text: " ${LocaleKeys.and.tr}",
                             ),
                             TextSpan(
                               style: TextStyle(
-                                  color: BrandColor.main,
-                                  fontSize: 14.sp,
-                                  decoration: TextDecoration.underline,
+                                color: BrandColor.main,
+                                fontSize: 14.sp,
+                                decoration: TextDecoration.underline,
                               ),
                               text: LocaleKeys.term_of_use.tr,
                               recognizer: TapGestureRecognizer()..onTap = () {},
                             ),
                             TextSpan(
                               style: TextStyle(
-                                  color: TextColor.secondary,
-                                  fontSize: 14.sp,
+                                color: TextColor.secondary,
+                                fontSize: 14.sp,
                               ),
                               text: " ${LocaleKeys.privacy_policy_desc2.tr}",
                             ),

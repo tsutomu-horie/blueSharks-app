@@ -152,6 +152,7 @@
   "password_placeholder": "パスワードを入力してください",
   "set_a_new_password": "新しいパスワードを設定してください",
   "new_password": "新しいパスワード",
+  "old_password": "以前のパスワード",
   "new_password_placeholder": "新しいパスワードを入力してください",
   "confirm_new_password": "新しいパスワードの確認",
   "confirm_new_password_placeholder": "新しいパスワードでも同様",
@@ -174,6 +175,9 @@
   "wallpaper_setting": "壁紙設定",
   "notice": "通知",
   "edit_information": "情報を編集する",
+  "delete_account": "アカウントを削除",
+  "logout": "ログアウト",
+  "edit": "編集",
   "privacy_policy_desc": "ご登録いただいたお客様情報の取り扱いについては、当社",
   "privacy_policy": "プライバシーポリシー",
   "and": "と",
@@ -197,6 +201,7 @@
   "other": "Other",
   "active": "アクティブ",
   "inactive": "inactive",
-  "detailled_notification": "詳細通知"
+  "detailled_notification": "詳細通知",
+  "": "パスワードが必要"
 
 }

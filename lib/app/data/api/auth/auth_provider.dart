@@ -122,6 +122,41 @@ class AuthProvider extends GetConnect {
     return response;
   }
 
+  Future<Response> updatePassword(String confirmPassword, String newPassword,Function onError) async {
+    httpClient.baseUrl = Constants.baseUrlAuthApi;
+
+    final url = Uri.parse('new-password');
+    print("load ${httpClient.baseUrl}${url.toString()}");
+
+    final auth = AuthToken();
+    final token = await auth.getAccessToken();
+
+    final headers = {
+      'Authorization': 'Bearer $token',
+      'Content-Type': 'application/json', // Optional, depending on the API
+    };
+
+    final Map<String, dynamic> body = {
+      "confirm_password": confirmPassword,
+      "new_password": newPassword,
+    };
+
+    final response = await patch(
+      url.toString(), body, headers: headers // Send the body in the request
+    );
+
+    print("Login successful2 , ${response.body}");
+
+    if (response.hasError) {
+      onError();
+      throw Exception('Failed to login: ${response.statusText}');
+    }
+
+    print("Login successful, received data: ${response.body}");
+
+    return response;
+  }
+
   Future<UserData> getProfile(String token, Function onError) async {
     final url = Uri.parse('profile');
     print("load ${httpClient.baseUrl}${url.toString()}");

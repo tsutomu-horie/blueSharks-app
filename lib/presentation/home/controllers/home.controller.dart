@@ -36,7 +36,6 @@ class HomeController extends GetxController {
     infoProvider.onInit();
     fetchMatchResult();
     getTopics();
-    getWallpaper();
     print("getwallpaper 1");
   }
 
