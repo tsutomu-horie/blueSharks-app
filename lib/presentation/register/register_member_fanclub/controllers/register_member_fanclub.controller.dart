@@ -7,6 +7,7 @@ import 'package:koto_blue_sharks/app/services/AnalyticsService.dart';
 import 'package:koto_blue_sharks/infrastructure/navigation/routes.dart';
 import 'package:koto_blue_sharks/presentation/FanClubConfirmation/fan_club_confirmation.screen.dart';
 import 'package:koto_blue_sharks/utils/my_shared_pref.dart';
+import 'package:koto_blue_sharks/utils/utils.dart';
 
 class RegisterMemberFanclubController extends GetxController {
   final idTextFieldController = TextEditingController();
@@ -28,10 +29,10 @@ class RegisterMemberFanclubController extends GetxController {
     isPasswordHidden.value = !isPasswordHidden.value;
   }
 
-  void onRegister(String otpId, String email, Function showError, Function showSuccess, String playerLink, String playerName) async {
+  void onRegister(String otpId, String email, Function showError, Function showSuccess, String playerLink, String playerName, BuildContext context) async {
     print("onRrror");
     final response = await apiProvider.register(idTextFieldController.text, email, otpId, passwordTextFieldController.text, (String errorText){
-      showError();
+      Utils.showError(context, "Something wrong", errorText);
     });
 
     AuthToken storage = AuthToken();

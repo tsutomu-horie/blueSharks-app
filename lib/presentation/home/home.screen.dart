@@ -32,6 +32,7 @@ class HomeScreen extends GetView<MainController> {
   Widget build(BuildContext context) {
     final HomeController homeController = Get.put(HomeController());
 
+    homeController.getWallpaper();
     return Scaffold(
       backgroundColor: Colors.white,
       body: SingleChildScrollView(

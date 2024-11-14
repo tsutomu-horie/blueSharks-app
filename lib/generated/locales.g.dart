@@ -163,6 +163,7 @@ class LocaleKeys {
   static const password_placeholder = 'password_placeholder';
   static const set_a_new_password = 'set_a_new_password';
   static const new_password = 'new_password';
+  static const old_password = 'old_password';
   static const new_password_placeholder = 'new_password_placeholder';
   static const confirm_new_password = 'confirm_new_password';
   static const confirm_new_password_placeholder =
@@ -186,6 +187,9 @@ class LocaleKeys {
   static const wallpaper_setting = 'wallpaper_setting';
   static const notice = 'notice';
   static const edit_information = 'edit_information';
+  static const delete_account = 'delete_account';
+  static const logout = 'logout';
+  static const edit = 'edit';
   static const privacy_policy_desc = 'privacy_policy_desc';
   static const privacy_policy = 'privacy_policy';
   static const and = 'and';
@@ -379,6 +383,7 @@ class Locales {
     'password_placeholder': 'パスワードを入力してください',
     'set_a_new_password': '新しいパスワードを設定してください',
     'new_password': '新しいパスワード',
+    'old_password': '以前のパスワード',
     'new_password_placeholder': '新しいパスワードを入力してください',
     'confirm_new_password': '新しいパスワードの確認',
     'confirm_new_password_placeholder': '新しいパスワードでも同様',
@@ -404,6 +409,9 @@ class Locales {
     'wallpaper_setting': '壁紙設定',
     'notice': '通知',
     'edit_information': '情報を編集する',
+    'delete_account': 'アカウントを削除',
+    'logout': 'ログアウト',
+    'edit': '編集',
     'privacy_policy_desc': 'ご登録いただいたお客様情報の取り扱いについては、当社',
     'privacy_policy': 'プライバシーポリシー',
     'and': 'と',

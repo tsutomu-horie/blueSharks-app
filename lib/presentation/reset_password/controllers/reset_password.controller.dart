@@ -7,8 +7,8 @@ import 'package:koto_blue_sharks/infrastructure/navigation/routes.dart';
 import 'package:koto_blue_sharks/utils/utils.dart';
 
 class ResetPasswordController extends GetxController {
-  final oldPasswordController = TextEditingController();
   final newPasswordController = TextEditingController();
+  final confirmNewPasswordController = TextEditingController();
 
   var isOldPasswordHidden = true.obs;
   var isNewPasswordHidden = true.obs;
@@ -34,7 +34,7 @@ class ResetPasswordController extends GetxController {
 
     try {
       print("before get data");
-      final response = await apiProvider.resetPassword(otpId, oldPasswordController.text, newPasswordController.text, (){
+      final response = await apiProvider.resetPassword(otpId, newPasswordController.text, confirmNewPasswordController.text, (){
         //todo:: change error message
         Utils.showError(context, LocaleKeys.error_login_message.tr, null );
       });

@@ -89,7 +89,7 @@ class ResetPasswordScreen extends GetView<ResetPasswordController> {
                         // }
                         return null;
                       },
-                      controller: forgotPasswordController.oldPasswordController,
+                      controller: forgotPasswordController.newPasswordController,
                       decoration: InputDecoration(
                         errorMaxLines: 1,
                         border: OutlineInputBorder(
@@ -159,7 +159,7 @@ class ResetPasswordScreen extends GetView<ResetPasswordController> {
                         // }
                         return null;
                       },
-                      controller: forgotPasswordController.newPasswordController,
+                      controller: forgotPasswordController.confirmNewPasswordController,
                       decoration: InputDecoration(
                         errorMaxLines: 1,
                         border: OutlineInputBorder(

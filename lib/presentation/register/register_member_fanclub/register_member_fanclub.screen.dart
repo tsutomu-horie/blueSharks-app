@@ -258,7 +258,8 @@ class RegisterMemberFanclubScreen
                   // Get.offAll(() => FanClubConfirmationScreen(email: email, id: "", selectedPlayer: selectedPlayer));
                 },
                 selectedPlayer,
-                selectedPlayerName
+                selectedPlayerName,
+                context
               );
             }
           },
