@@ -91,7 +91,7 @@ class RegisterEmailScreen extends GetView<RegisterEmailController> {
                         registerEmailController.sendOtp((id) {
                           showEmailDialog(
                               registerEmailController, context, "$id");
-                        });
+                        }, context);
                       }
                     },
                     child: CustomTextView(
@@ -177,7 +177,7 @@ class RegisterEmailScreen extends GetView<RegisterEmailController> {
                             if (value!.isEmpty ||
                                 !RegExp(r'\b[\w.-]+@[\w.-]+\.\w{2,4}\b')
                                     .hasMatch(value)) {
-                              return 'Invalid email';
+                              return LocaleKeys.error_email_invalid.tr;
                             }
                             return null;
                           },
@@ -259,7 +259,7 @@ class RegisterEmailScreen extends GetView<RegisterEmailController> {
       BuildContext context, String? otpId) {
     showDialog(
       context: context,
-      barrierDismissible: true, // Dismiss when tapped outside
+      barrierDismissible: false, // Dismiss when tapped outside
       builder: (BuildContext context) {
         return Dialog(
           backgroundColor: BackgroundColor.primary,
@@ -282,13 +282,15 @@ class RegisterEmailScreen extends GetView<RegisterEmailController> {
                   LocaleKeys.email_sent_dialog_title.tr,
                   type: TDSFontType.titleMedium,
                   color: TextColor.primary,
+                  align: TextAlign.center,
                 ),
                 CustomTextView(
                   LocaleKeys.email_sent_dialog_message.tr,
                   type: TDSFontType.bodyTextMedium,
                   color: TextColor.primary,
+                  align: TextAlign.center,
                 ),
-                // SizedBox(height: 24.h),
+                SizedBox(height: 24.h),
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
@@ -298,6 +300,7 @@ class RegisterEmailScreen extends GetView<RegisterEmailController> {
                     onPressed: () {
                       Get.back();
                       Get.to(() => RegisterOtpScreen(
+                        isRegister: true,
                             fromScreen: "register",
                             otpId: otpId,
                             selectedPlayer: selectedPlayer,

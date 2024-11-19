@@ -19,6 +19,7 @@ class CalendarScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.white,
         title: Row(
@@ -31,6 +32,7 @@ class CalendarScreen extends StatelessWidget {
                 child: Container(
                   padding: EdgeInsets.symmetric(vertical: 10.h),
                   decoration: BoxDecoration(
+                      color: Colors.white,
                       borderRadius: BorderRadius.circular(8.r),
                       border: Border.all(color: BorderColor.secondary)),
                   child: Row(
@@ -77,18 +79,19 @@ class CalendarScreen extends StatelessWidget {
               width: 10.w,
             ),
             PopupMenuButton<CalendarView>(
+              color: Colors.white,
               position: PopupMenuPosition.under,
               icon: SvgPicture.asset("assets/vectors/ic_calendar.svg"),
               itemBuilder: (context) => [
-                PopupMenuItem(
+                const PopupMenuItem(
                   value: CalendarView.day,
                   child: Text('Day'),
                 ),
-                PopupMenuItem(
+                const PopupMenuItem(
                   value: CalendarView.week,
                   child: Text('Week'),
                 ),
-                PopupMenuItem(
+                const PopupMenuItem(
                   value: CalendarView.month,
                   child: Text('Month'),
                 ),
@@ -125,14 +128,15 @@ class CalendarScreen extends StatelessWidget {
 
                   return Container(
                     decoration: BoxDecoration(
-                      color:  appointment.color,
-                      borderRadius: BorderRadius.circular(8),
+                      color: BrandColor.main,
+                      borderRadius: BorderRadius.circular(4.r),
                     ),
-                    padding: const EdgeInsets.all(4), // Adjust padding as needed
+                    // padding: const EdgeInsets.all(4), // Adjust padding as needed
                     child: Center(
                       child: Text(
                         appointment.subject,
                         style: TextStyle(
+                          fontSize: 10.sp,
                           color: Colors.white, // Set the text color
                           fontWeight: FontWeight.bold,
                         ),

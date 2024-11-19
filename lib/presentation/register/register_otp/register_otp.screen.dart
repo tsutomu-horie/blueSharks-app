@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_otp_text_field/flutter_otp_text_field.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -12,7 +13,8 @@ import 'package:pinput/pinput.dart';
 import 'controllers/register_otp.controller.dart';
 
 class RegisterOtpScreen extends GetView<RegisterOtpController> {
-  const RegisterOtpScreen({super.key, required this.email, required this.otpId, required this.fromScreen, required this.selectedPlayer, this.onSuccess, required this.selectedPlayerName});
+  const RegisterOtpScreen(
+      {super.key, required this.email, required this.otpId, required this.fromScreen, required this.selectedPlayer, this.onSuccess, required this.selectedPlayerName, required this.isRegister});
 
   final String email;
   final String? otpId;
@@ -20,11 +22,13 @@ class RegisterOtpScreen extends GetView<RegisterOtpController> {
   final String selectedPlayer;
   final String selectedPlayerName;
   final Function? onSuccess;
+  final bool isRegister;
+
 
   @override
   Widget build(BuildContext context) {
     final RegisterOtpController registerOtpController =
-        Get.put(RegisterOtpController());
+    Get.put(RegisterOtpController());
 
     if (otpId != null) {
       registerOtpController.otp_id.value = otpId!;
@@ -33,24 +37,46 @@ class RegisterOtpScreen extends GetView<RegisterOtpController> {
       width: 40.w,
       height: 40.h,
       textStyle: TextStyle(
-          fontSize: 20, color: TextColor.secondary, fontWeight: FontWeight.w600),
+          fontSize: 20,
+          color: TextColor.secondary,
+          fontWeight: FontWeight.w600),
       decoration: BoxDecoration(
-        border: Border.all(color: BorderColor.secondary),
-        borderRadius: BorderRadius.circular(15),
-        color: Colors.white
+          border: registerOtpController.hasError.value ? Border.all(
+              color: BorderColor.error) : Border.all(
+              color: BorderColor.secondary),
+          borderRadius: BorderRadius.circular(15),
+          color: Colors.white
       ),
     );
     final focusedPinTheme = defaultPinTheme.copyDecorationWith();
     final submittedPinTheme = defaultPinTheme.copyWith(
       decoration: defaultPinTheme.decoration!.copyWith(
-        color: Colors.white,
-        border: Border.all(color: BrandColor.main)
+          color: Colors.white,
+          border: Border.all(color: BrandColor.main)
       ),
     );
 
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: AppBar(
+      appBar: fromScreen == "forgotPasswordHome" ?
+      AppBar(
+        backgroundColor: BrandColor.main,
+        title: CustomTextView(
+          LocaleKeys.forgot_password_header.tr, color: Colors.white,
+          type: TDSFontType.titleMedium,),
+        centerTitle: true,
+        leading: IconButton(
+          icon: const Icon(
+            Icons.arrow_back,
+            color: Colors.white,
+          ),
+          // Change this to your desired icon
+          onPressed: () {
+            Get.back();
+          },
+        ),
+      )
+          : AppBar(
         backgroundColor: Colors.white,
         title: SvgPicture.asset(
           "assets/vectors/app_logo.svg",
@@ -104,31 +130,42 @@ class RegisterOtpScreen extends GetView<RegisterOtpController> {
             padding: EdgeInsets.symmetric(horizontal: 16.w),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              // Allow Column to wrap its content
               children: [
                 SizedBox(
                   height: 20.h,
                 ),
+                if (fromScreen != "forgotPasswordHome")
+                  Column(
+                    children: [
+                      CustomTextView(
+                        LocaleKeys.otp_title.tr,
+                        type: TDSFontType.headlineSmall,
+                        color: BrandColor.main,
+                      ),
+                      SizedBox(
+                        height: 8.h,
+                      ),
+                    ],
+                  ),
                 CustomTextView(
-                  LocaleKeys.otp_title.tr,
-                  type: TDSFontType.headlineSmall,
-                  color: BrandColor.main,
-                ),
-                SizedBox(
-                  height: 8.h,
-                ),
-                CustomTextView(
-                  LocaleKeys.otp_message.tr,
+                  fromScreen == "forgotPasswordHome"
+                      ? LocaleKeys.forgot_password_desc_from_home.tr
+                      : LocaleKeys.otp_message.tr,
                   type: TDSFontType.bodyTextMedium,
                   color: TextColor.secondary,
                 ),
                 SizedBox(
-                  height: 8.h,
+                  height: 16.h,
                 ),
                 Container(
-                  padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 4.h),
+                  padding: EdgeInsets.symmetric(
+                      horizontal: 12.w, vertical: 4.h),
                   decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(20.r),
-                      border: Border.all(color: BorderColor.primary, width: 1.w)),
+                    borderRadius: BorderRadius.circular(20.r),
+                    border: Border.all(color: BorderColor.primary, width: 1.w),
+                  ),
                   child: CustomTextView(
                     LocaleKeys.registered_email.trParams({"email": email}),
                     type: TDSFontType.bodyTextSmall,
@@ -138,44 +175,102 @@ class RegisterOtpScreen extends GetView<RegisterOtpController> {
                 SizedBox(
                   height: 44.h,
                 ),
-                Pinput(
-                  length: 5,
-                  defaultPinTheme: defaultPinTheme,
-                  focusedPinTheme: focusedPinTheme,
-                  submittedPinTheme: submittedPinTheme,
-                  errorPinTheme: submittedPinTheme,
-                  onChanged: (data) {
-                    controller.otp.value = data;
-                  },
-                  pinputAutovalidateMode: PinputAutovalidateMode.onSubmit,
-                  pinAnimationType: PinAnimationType.none,
-                  showCursor: true,
-                  onCompleted: (pin) => print(pin),
-                ),
+                Obx(() {
+                  return Pinput(
+                    length: 5,
+                    defaultPinTheme: defaultPinTheme,
+                    focusedPinTheme: focusedPinTheme,
+                    submittedPinTheme: submittedPinTheme,
+                    onChanged: (data) {
+                      registerOtpController.hasError.value = false;
+                      controller.otp.value = data;
+                    },
+                    pinputAutovalidateMode: PinputAutovalidateMode.onSubmit,
+                    pinAnimationType: PinAnimationType.none,
+                    showCursor: true,
+                    onCompleted: (pin) => print(pin),
+                    errorPinTheme: defaultPinTheme.copyWith(
+                      decoration: defaultPinTheme.decoration!.copyWith(
+                        border: Border.all(color: TextColor.error),
+                      ),
+                    ),
+                    forceErrorState: controller.hasError.value,
+                  );
+                }),
                 SizedBox(
                   height: 20.h,
                 ),
-                InkWell(
-                  onTap: (){
-                    print("resend");
-                    controller.resendOtp(email, context, otpId);
-                  },
+                if (fromScreen != "forgotPasswordHome")
+                  InkWell(
+                    onTap: () {
+                      print("resend");
+                      controller.resendOtp(email, context, otpId, isRegister);
+                    },
                     child: CustomTextView(
-                  LocaleKeys.resend_otp_email.tr,
-                  color: BrandColor.main,
-                  style: const TextStyle(decoration: TextDecoration.underline),
-                ))
+                      LocaleKeys.resend_otp_email.tr,
+
+                      style: TextStyle(color: BrandColor.main,
+                          decoration: TextDecoration.underline,
+                          fontWeight: FontWeight.w700),
+                    ),
+                  )
+                else
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    // Ensure wrapping of content
+                    children: [
+                      RichText(
+                        textAlign: TextAlign.start,
+                        text: TextSpan(
+                          children: [
+                            TextSpan(
+                              style: TextStyle(
+                                color: TextColor.secondary,
+                                fontSize: 14.sp,
+
+                              ),
+                              text: "${LocaleKeys.not_receive_otp.tr} ",
+                            ),
+                            TextSpan(
+                              style: TextStyle(
+                                color: BrandColor.main,
+                                fontSize: 14.sp,
+                                decoration: TextDecoration.underline,
+
+                              ),
+                              text: LocaleKeys.resend.tr,
+                              recognizer: TapGestureRecognizer()
+                                ..onTap = () {
+                                  controller.resendOtp(
+                                      email, context, otpId, isRegister);
+                                },
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  )
               ],
             ),
           ),
         ),
       ),
+
       bottomNavigationBar: Padding(
         padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
         child: ElevatedButton(
           style: ElevatedButton.styleFrom(backgroundColor: BrandColor.main),
           onPressed: () {
-            controller.onSubmitOtp(email, context, fromScreen, otpId, selectedPlayer, selectedPlayerName, onSuccess);
+            controller.onSubmitOtp(
+                email,
+                context,
+                fromScreen,
+                otpId,
+                selectedPlayer,
+                selectedPlayerName,
+                onSuccess,
+                isRegister);
           },
           child: CustomTextView(
             LocaleKeys.send.tr,

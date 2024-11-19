@@ -24,10 +24,12 @@ class EditPasswordController extends ResetPasswordController {
 
   void onUpdatePassword(BuildContext context, Function onSuccess) async {
     isLoadingUpdate.value = true;
-    final result = await apiProvider.updatePassword(currentPassword.text, confirmNewPasswordController.text, newPasswordController.text, (){
+    final result = await apiProvider.updatePassword(currentPassword.text, confirmNewPasswordController.text, newPasswordController.text, (title, message){
       print("error update password");
       isLoadingUpdate.value = false;
+      Utils.showError(context, "", message);
     });
+
 
     onSuccess();
     isLoadingUpdate.value = false;

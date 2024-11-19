@@ -28,11 +28,10 @@ class ForgotPasswordController extends GetxController {
     final email = emailTextFieldController.text;
 
     print("send ${email}");
-    final response = await otpProvider.requestOtp(email, "${otpId?.value}", (){
-      //todo: ganti error message
+    final response = await otpProvider.requestOtp(email, "${otpId?.value}", (error){
       Utils.showError(context, LocaleKeys.error_login_message.tr, null );
-    });
+    }, false);
 
-    Get.to(() => RegisterOtpScreen(email: email, fromScreen: "forgotPassword", otpId: "${response.id}", selectedPlayer: selectedPlayer, selectedPlayerName: selectedPlayerName,));
+    Get.to(() => RegisterOtpScreen(email: email, fromScreen: "forgotPasswordHome", otpId: "${response.id}", selectedPlayer: selectedPlayer, selectedPlayerName: selectedPlayerName, isRegister: false,));
   }
 }

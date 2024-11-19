@@ -7,10 +7,11 @@ import 'package:koto_blue_sharks/app/views/views/default_app_bar_view.dart';
 import 'package:koto_blue_sharks/generated/locales.g.dart';
 import 'package:koto_blue_sharks/utils/app_color.dart';
 
-import 'controllers/forgot_password.controller.dart';
+import 'controllers/forgot_password_home.controller.dart';
 
-class ForgotPasswordScreen extends GetView<ForgotPasswordController> {
-  const ForgotPasswordScreen(this.selectedPlayer, this.selectedPlayerName, {super.key});
+class ForgotPasswordHomeScreen extends GetView<ForgotPasswordHomeController> {
+  const ForgotPasswordHomeScreen(this.selectedPlayer, this.selectedPlayerName,
+      {super.key});
 
   final String selectedPlayer;
   final String selectedPlayerName;
@@ -19,10 +20,25 @@ class ForgotPasswordScreen extends GetView<ForgotPasswordController> {
   Widget build(BuildContext context) {
     final globalKey = GlobalKey<FormState>();
 
-    final ForgotPasswordController controller = Get.put(ForgotPasswordController());
+    final ForgotPasswordHomeController controller = Get.put(
+        ForgotPasswordHomeController());
 
     return Scaffold(
-      appBar: const DefaultAppBarView(),
+      appBar: AppBar(
+        backgroundColor: BrandColor.main,
+        title: CustomTextView(LocaleKeys.forgot_password_header_home.tr, color: Colors.white, type: TDSFontType.titleMedium,),
+        centerTitle: true,
+        leading: IconButton(
+          icon: const Icon(
+            Icons.arrow_back,
+            color: Colors.white,
+          ),
+          // Change this to your desired icon
+          onPressed: () {
+            Get.back();
+          },
+        ),
+      ),
       backgroundColor: Colors.white,
       body: SingleChildScrollView(
         child: Container(
@@ -31,9 +47,8 @@ class ForgotPasswordScreen extends GetView<ForgotPasswordController> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               SizedBox(height: 8.h,),
-              CustomTextView(LocaleKeys.forgot_password_title.tr, type: TDSFontType.headlineSmall, color: BrandColor.main,),
-              SizedBox(height: 8.h,),
-              CustomTextView(LocaleKeys.forgot_password_page_desc.tr, type: TDSFontType.bodyTextMedium, color: TextColor.secondary,),
+              CustomTextView(LocaleKeys.email_field_desc.tr,
+                type: TDSFontType.bodyTextMedium, color: TextColor.secondary,),
               SizedBox(
                 height: 24.h,
               ),
@@ -111,7 +126,7 @@ class ForgotPasswordScreen extends GetView<ForgotPasswordController> {
               ),
             )
                 : CustomTextView(
-              LocaleKeys.send.tr,
+              LocaleKeys.forgot_password_btn_home.tr,
               color: BrandColor.content,
             ),
           );

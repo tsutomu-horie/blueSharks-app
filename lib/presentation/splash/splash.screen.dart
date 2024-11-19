@@ -16,6 +16,7 @@ class SplashScreen extends GetView<SplashController> {
     final SplashController controller = Get.put(SplashController());
 
     return Scaffold(
+      backgroundColor: Colors.white,
       body: Stack(
         children: [
           SvgPicture.asset(
@@ -26,19 +27,7 @@ class SplashScreen extends GetView<SplashController> {
           ),
           SafeArea(
             child: Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  SvgPicture.asset('assets/vectors/app_logo.svg'),
-                  SizedBox(
-                    height: 24.h,
-                  ),
-                  SvgPicture.asset('assets/vectors/app_logo_label.svg'),
-                  SizedBox(
-                    height: 130.h,
-                  ),
-                ],
-              ),
+              child: SvgPicture.asset('assets/vectors/app_logo.svg', width: 140.w, height: 140.h,),
             ),
           ),
           Positioned(
@@ -50,17 +39,17 @@ class SplashScreen extends GetView<SplashController> {
               }),
             ),
           ),
-          Positioned(
-            right: 0,
-            left: 0,
-            bottom: -32.h,
-            child: SvgPicture.asset(
-              width: 210.w,
-              height: 300.h,
-              'assets/vectors/mascot.svg', // Replace with your SVG file path
-              fit: BoxFit.contain, // Adjust fit as needed
-            ),
-          )
+          // Positioned(
+          //   right: 0,
+          //   left: 0,
+          //   bottom: -32.h,
+          //   child: SvgPicture.asset(
+          //     width: 210.w,
+          //     height: 300.h,
+          //     'assets/vectors/mascot.svg', // Replace with your SVG file path
+          //     fit: BoxFit.contain, // Adjust fit as needed
+          //   ),
+          // )
         ],
       ),
     );

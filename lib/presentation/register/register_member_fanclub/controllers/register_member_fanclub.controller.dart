@@ -43,8 +43,10 @@ class RegisterMemberFanclubController extends GetxController {
     MySharedPref.setWallpaper(playerLink);
     MySharedPref.setWallpaperName(playerName);
 
+    Utils.showCustomSuccessRegisterDialog(context, () {
+      Get.offAll(() => FanClubConfirmationScreen(email: email, id: idTextFieldController.text, isNotification: true, playerSelected: playerLink, playerSelectedName: playerName,));
 
-    Get.offAll(() => FanClubConfirmationScreen(email: email, id: idTextFieldController.text, isNotification: true, playerSelected: playerLink, playerSelectedName: playerName,));
+    });
     // showSuccess();
   }
 

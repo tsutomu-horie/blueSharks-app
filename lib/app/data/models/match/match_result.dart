@@ -206,6 +206,8 @@ class CustomField with _$CustomField {
     List<String>? words_favoritefood,
     @HiveField(66)
     List<String>? words_localfood,
+    @HiveField(67)
+    List<String>? youtube_embed_src,
   }) = _CustomField;
 
   factory CustomField.fromJson(Map<String, dynamic> json) =>

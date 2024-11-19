@@ -133,6 +133,7 @@ class Nav {
     GetPage(
       name: Routes.REGISTER_OTP,
       page: () => const RegisterOtpScreen(
+        isRegister: false,
         email: "",
         fromScreen: "",
         otpId: "",
@@ -211,6 +212,11 @@ class Nav {
       name: Routes.DELETE_ACCOUNT_CONFIRMATION,
       page: () => const DeleteAccountConfirmationScreen(),
       binding: DeleteAccountConfirmationControllerBinding(),
+    ),
+    GetPage(
+      name: Routes.FORGOT_PASSWORD_HOME,
+      page: () => const ForgotPasswordHomeScreen("",""),
+      binding: ForgotPasswordHomeControllerBinding(),
     ),
   ];
 }

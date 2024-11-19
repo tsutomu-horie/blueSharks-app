@@ -249,6 +249,7 @@ class GalleryScreen extends GetView<GalleryController> {
                   );
                 }
               }),
+              SizedBox(height: 24.h,),
             ],
           ),
         ));

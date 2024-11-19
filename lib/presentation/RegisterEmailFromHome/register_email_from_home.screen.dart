@@ -3,9 +3,12 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import 'package:get/get.dart';
 import 'package:koto_blue_sharks/app/views/views/custom_text_view.dart';
+import 'package:koto_blue_sharks/app/views/views/edit_profile_bottom_sheet_view.dart';
 import 'package:koto_blue_sharks/generated/locales.g.dart';
+import 'package:koto_blue_sharks/presentation/register/register_email/controllers/register_email.controller.dart';
 import 'package:koto_blue_sharks/presentation/register/register_otp/register_otp.screen.dart';
 import 'package:koto_blue_sharks/utils/app_color.dart';
+import 'package:lottie/lottie.dart';
 
 import 'controllers/register_email_from_home.controller.dart';
 
@@ -27,7 +30,7 @@ class RegisterEmailFromHomeScreen
       appBar: AppBar(
         backgroundColor: BrandColor.main,
         title: CustomTextView(
-          LocaleKeys.forgot_password_title.tr,
+          LocaleKeys.forgot_password_header.tr,
           color: Colors.white,
           type: TDSFontType.titleMedium,
         ),
@@ -57,12 +60,29 @@ class RegisterEmailFromHomeScreen
               SizedBox(
                 height: 24.h,
               ),
+              Row(
+                children: [
+                  CustomTextView(
+                    LocaleKeys.email_title.tr,
+                    type: TDSFontType.bodyTextMedium,
+                    color: TextColor.secondary,
+                  ),
+                  CustomTextView(
+                    "*",
+                    type: TDSFontType.bodyTextMedium,
+                    color: DangerColor.main,
+                  ),
+                ],
+              ),
+              SizedBox(
+                height: 4.h,
+              ),
               TextFormField(
                 validator: (value) {
                   if (value!.isEmpty ||
                       !RegExp(r'\b[\w.-]+@[\w.-]+\.\w{2,4}\b')
                           .hasMatch(value)) {
-                    return 'Invalid email';
+                    return LocaleKeys.error_email_invalid.tr;
                   }
                   return null;
                 },
@@ -103,12 +123,9 @@ class RegisterEmailFromHomeScreen
                   onPressed: () {
                     if (globalKey.currentState!.validate()) {
                       registerEmailController.sendOtp((id) {
-                        Get.to(RegisterOtpScreen(
-                            email: controller.textFieldController.text,
-                            otpId: "$id",
-                            fromScreen: "register_home",
-                            selectedPlayer: selectedPlayer, selectedPlayerName: selectedPlayerName,));
-                      });
+                        showEmailDialog(
+                            registerEmailController, context, "$id");
+                      }, context);
                     }
                   },
                   child: CustomTextView(
@@ -121,6 +138,74 @@ class RegisterEmailFromHomeScreen
           ],
         ),
       ),
+    );
+  }
+
+  void showEmailDialog(RegisterEmailController registerEmailController,
+      BuildContext context, String? otpId) {
+    showDialog(
+      context: context,
+      barrierDismissible: false, // Dismiss when tapped outside
+      builder: (BuildContext context) {
+        return Dialog(
+          backgroundColor: BackgroundColor.primary,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20.r),
+          ),
+          child: Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Lottie.asset(
+                  'assets/lottie/mail_animation.json',
+                  // Path to your Lottie animation
+                  width: 180.w,
+                  height: 180.h,
+                  fit: BoxFit.fill,
+                ),
+                CustomTextView(
+                  LocaleKeys.email_sent_dialog_title.tr,
+                  type: TDSFontType.titleMedium,
+                  color: TextColor.primary,
+                  align: TextAlign.center,
+                ),
+                CustomTextView(
+                  LocaleKeys.email_sent_dialog_message.tr,
+                  type: TDSFontType.bodyTextMedium,
+                  color: TextColor.primary,
+                  align: TextAlign.center,
+                ),
+                SizedBox(height: 24.h),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: BrandColor.main,
+                    ),
+                    onPressed: () {
+                      Get.back();
+                      Get.to(() => RegisterOtpScreen(
+                        isRegister: true,
+                        fromScreen: "register_home",
+                        otpId: otpId,
+                        selectedPlayer: selectedPlayer,
+                        selectedPlayerName: selectedPlayerName,
+                        email: registerEmailController
+                            .textFieldController.text,
+                      ));
+                    },
+                    child: CustomTextView(
+                      LocaleKeys.close.tr,
+                      color: BrandColor.content,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }

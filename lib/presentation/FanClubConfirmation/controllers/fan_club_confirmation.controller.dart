@@ -8,6 +8,7 @@ import 'package:koto_blue_sharks/app/services/AnalyticsService.dart';
 import 'package:koto_blue_sharks/generated/locales.g.dart';
 import 'package:koto_blue_sharks/infrastructure/navigation/routes.dart';
 import 'package:koto_blue_sharks/utils/my_shared_pref.dart';
+import 'package:koto_blue_sharks/utils/utils.dart';
 
 class FanClubConfirmationController extends GetxController {
   final isSelectNotificaiton = true.obs;
@@ -18,6 +19,8 @@ class FanClubConfirmationController extends GetxController {
   final playerNameController = "".obs;
   final AuthProvider apiProvider = AuthProvider();
   final OtpProvider otpProvider = OtpProvider();
+
+  var isKeyboardVisible = false.obs;
 
 
   @override
@@ -51,16 +54,19 @@ class FanClubConfirmationController extends GetxController {
     }
   }
 
-  void sendOtp(Function(int) onSuccess) async {
+  void sendOtp(Function(int) onSuccess, bool isRegister, BuildContext context) async {
     otpProvider.onInit();
 
     final email = emailController.text;
 
-    final response = await otpProvider.requestOtp(email, null, (){
-      //todo::display error
-      print("error on submit otp");
-    });
+    final response = await otpProvider.requestOtp(email, null, (error){
+      Utils.handleErrorOtp(error, context);
+    }, isRegister);
 
     onSuccess(response.id);
+  }
+
+  void updateKeyboardVisibility(BuildContext context) {
+    isKeyboardVisible.value = MediaQuery.of(context).viewInsets.bottom > 0;
   }
 }

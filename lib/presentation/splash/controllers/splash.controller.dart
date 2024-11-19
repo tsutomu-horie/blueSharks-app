@@ -7,6 +7,7 @@ import 'package:koto_blue_sharks/app/data/models/member/member.dart';
 import 'package:koto_blue_sharks/app/services/AnalyticsService.dart';
 import 'package:koto_blue_sharks/infrastructure/navigation/routes.dart';
 import 'package:koto_blue_sharks/presentation/screens.dart';
+import 'package:koto_blue_sharks/utils/my_shared_pref.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
 class SplashController extends GetxController {
@@ -75,8 +76,9 @@ class SplashController extends GetxController {
       final token = await auth.getAccessToken();
       print("token get ${token}");
       isLoading.value = false;
+      final isOpen = MySharedPref.getFirstOpen();
 
-      if (token != null) {
+      if (token != null || (isOpen != null && isOpen != "")) {
         Get.offAll(() => const MainScreen());
       } else {
         // Get.offAll(() => FanClubConfirmationScreen());

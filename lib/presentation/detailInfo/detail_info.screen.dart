@@ -14,6 +14,7 @@ import 'package:koto_blue_sharks/utils/app_color.dart';
 import 'package:koto_blue_sharks/utils/date_formatter.dart';
 import 'package:koto_blue_sharks/utils/map_id_to_categories.dart';
 import 'package:shimmer/shimmer.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import 'controllers/detail_info.controller.dart';
 
@@ -39,9 +40,6 @@ class DetailInfoScreen extends GetView<DetailInfoController> {
                 child: DefaultHeaderTitleView(
                   LocaleKeys.topics.tr,
                   LocaleKeys.topics_en.tr.toUpperCase(),
-                  onBack: () {
-                    onOpenDetail();
-                  },
                 ),
               ),
               Container(
@@ -153,6 +151,19 @@ class DetailInfoScreen extends GetView<DetailInfoController> {
                       height: 24.h,
                     ),
                     HtmlWidget(
+                      onTapUrl: (url) async {  // Add this handler
+                        print("tap url ${url}");
+                        final Uri uri = Uri.parse(url);
+                        if (await canLaunchUrl(uri)) {
+                          await launchUrl(
+                            uri,
+                            mode: LaunchMode.externalApplication,  // Open in external browser
+                          );
+                        } else {
+                          print('Could not launch 22 $url');
+                        }
+                        return true;
+                      },
                       selectedPost!.content.rendered,
                       customStylesBuilder: (element) {
                         if (element.localName == 'figure' ||

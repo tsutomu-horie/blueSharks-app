@@ -43,12 +43,7 @@ class HomeController extends GetxController {
     mediaProvider.onInit();
 
     print("getwallpaper 2");
-    final data = await mediaProvider.fetchWallpaper((error){
-      print("error $error");
-    });
 
-    // final wallpaper = WallpaperPreferences();
-    // final wallpaperName = await wallpaper.getWallpaper();
     final wallpaperLink = MySharedPref.getWallpaper();
     final wallpaperName = MySharedPref.getWallpaperName();
 

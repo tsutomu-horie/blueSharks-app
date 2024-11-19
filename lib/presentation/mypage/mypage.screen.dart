@@ -47,12 +47,11 @@ class MypageScreen extends GetView<MypageController> {
                                       "beginner",
                                       controller.profileData.value?.accountId ??
                                           "")
-                                  : Container(
-                                      child: SizedBox(
-                                          width: 343.w,
-                                          height: 218.h,
-                                          child: shimmer()),
-                                    ),
+                                  : SizedBox(
+                                      width: 343.w,
+                                      height: 218.h,
+                                      child: shimmer()),
+                              SizedBox(height: 16.h,),
                               Row(
                                 children: [
                                   SizedBox(
@@ -62,7 +61,9 @@ class MypageScreen extends GetView<MypageController> {
                                     child: SizedBox(
                                       width: double.infinity,
                                       child: ElevatedButton(
-                                          onPressed: () {},
+                                          onPressed: () {
+                                            controller.getToken();
+                                          },
                                           style: ButtonStyle(
                                               backgroundColor:
                                                   WidgetStateProperty.all(
@@ -112,14 +113,14 @@ class MypageScreen extends GetView<MypageController> {
                               child: Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  Icon(IconsaxPlusLinear.info_circle),
+                                  const Icon(IconsaxPlusLinear.info_circle),
                                   SizedBox(
                                     height: 16.h,
                                   ),
                                   CustomTextView(
                                     LocaleKeys.your_not_login.tr,
                                     style:
-                                        TextStyle(fontWeight: FontWeight.w700),
+                                        const TextStyle(fontWeight: FontWeight.w700),
                                   ),
                                   SizedBox(
                                     height: 4.h,
@@ -433,6 +434,7 @@ class MypageScreen extends GetView<MypageController> {
                                           MainAxisAlignment.center,
                                       children: [
                                         Icon(
+                                          size: 18.w,
                                           IconsaxPlusLinear.security_safe,
                                           color: BrandColor.main,
                                         ),
@@ -500,6 +502,7 @@ class MypageScreen extends GetView<MypageController> {
                                         MainAxisAlignment.center,
                                         children: [
                                           Icon(
+                                            size: 18.w,
                                             IconsaxPlusLinear.profile_delete,
                                             color: DangerColor.main,
                                           ),
@@ -536,6 +539,7 @@ class MypageScreen extends GetView<MypageController> {
                                               MainAxisAlignment.center,
                                           children: [
                                             Icon(
+                                              size: 18.w,
                                               IconsaxPlusLinear.logout,
                                               color: DangerColor.main,
                                             ),
@@ -643,6 +647,7 @@ class MypageScreen extends GetView<MypageController> {
                     ),
                   ],
                 ),
+                SizedBox(height: 75.h,),
               ],
             );
           }),

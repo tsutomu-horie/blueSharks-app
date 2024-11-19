@@ -1,3 +1,5 @@
+import 'dart:ffi';
+
 import 'package:get/get.dart';
 import 'package:koto_blue_sharks/app/data/models/auth/auth.dart';
 import 'package:koto_blue_sharks/app/data/models/otp/otp.dart';
@@ -9,16 +11,20 @@ class OtpProvider extends GetConnect {
     httpClient.baseUrl = Constants.baseUrlAuthApi;
   }
 
-  Future<Otp> requestOtp(String address, String? otpId,  Function onError) async {
+  Future<Otp> requestOtp(String address, String? otpId, Function(String) onError, bool isRegister) async {
     final url = Uri.parse('otp/send?address=$address&otp_id=$otpId');
     print("load ${httpClient.baseUrl}${url.toString()}");
 
     final response = await post(
-      url.toString(),{}
+      url.toString(),{
+      "is_registered": isRegister,
+    }
     );
 
+    print("ertur ${response.body}");
+
     if (response.hasError) {
-      onError();
+      onError("${response.body["errors"]}");
       throw Exception('Failed to login: ${response.statusText}');
     }
 
@@ -50,7 +56,7 @@ class OtpProvider extends GetConnect {
     return Otp.fromJson(response.body["data"]);
   }
 
-  Future<Response<dynamic>> verifyOtp(String code, String? otpId,  Function onError) async {
+  Future<Response<dynamic>> verifyOtp(String code, String? otpId,  Function(String) onError) async {
     final url = Uri.parse('otp/verify');
     print("load ${httpClient.baseUrl}${url.toString()}");
 
@@ -64,8 +70,8 @@ class OtpProvider extends GetConnect {
     );
     print("send data ${body}");
     if (response.hasError) {
-      onError();
-      throw Exception('Failed to login: ${response.statusText}');
+      onError("${response.body}");
+      throw Exception('Failed to login: ${response.body}');
     }
 
     print("Login successful, received data: ${response.body}");

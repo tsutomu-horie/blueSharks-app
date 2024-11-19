@@ -6,6 +6,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'package:koto_blue_sharks/app/views/views/custom_text_view.dart';
 import 'package:koto_blue_sharks/generated/locales.g.dart';
+import 'package:koto_blue_sharks/presentation/ForgotPasswordHome/forgot_password_home.screen.dart';
 import 'package:koto_blue_sharks/presentation/forgotPassword/forgot_password.screen.dart';
 import 'package:koto_blue_sharks/presentation/main/main.screen.dart';
 import 'package:koto_blue_sharks/utils/app_color.dart';
@@ -93,7 +94,7 @@ class LoginScreen extends GetView<LoginController> {
                   if (value!.isEmpty ||
                       !RegExp(r'\b[\w.-]+@[\w.-]+\.\w{2,4}\b')
                           .hasMatch(value)) {
-                    return 'Invalid email';
+                    return LocaleKeys.error_email_invalid.tr;
                   }
                   return null;
                 },
@@ -143,11 +144,11 @@ class LoginScreen extends GetView<LoginController> {
                       validator: (value) {
                         // Ensure password is not empty
                         if (value!.isEmpty) {
-                          return 'Password is required';
+                          return LocaleKeys.error_password_required.tr;
                         }
                         // Ensure password has at least 8 characters
                         if (value.length < 8) {
-                          return 'Password must be at least 8 characters long';
+                          return LocaleKeys.error_password_must_8_char.tr;
                         }
                         // Ensure password contains at least one uppercase letter
                         // if (!RegExp(r'[A-Z]').hasMatch(value)) {
@@ -199,6 +200,7 @@ class LoginScreen extends GetView<LoginController> {
               SizedBox(
                 height: 16.h,
               ),
+              isFromHome ?
               Expanded(
                 child: RichText(
                   textAlign: TextAlign.start,
@@ -209,12 +211,43 @@ class LoginScreen extends GetView<LoginController> {
                               color: TextColor.secondary,
                               fontSize: 14.sp,
                           ),
+                          text: "${LocaleKeys.forgot_password_title.tr} "),
+                      TextSpan(
+                        style: TextStyle(
+                            color: BrandColor.main,
+                            fontSize: 14.sp,
+                            decoration: TextDecoration.underline,
+                        ),
+                        text: LocaleKeys.forgot_password_navigation_from_home.tr,
+                        recognizer: TapGestureRecognizer()
+                          ..onTap = () {
+                            Get.to(() => ForgotPasswordHomeScreen(selectedPlayer, selectedPlayerName));
+                          },
+                      ),
+
+                    ],
+                  ),
+                ),
+              )
+              :
+              Expanded(
+                child: RichText(
+                  textAlign: TextAlign.start,
+                  text: TextSpan(
+                    children: [
+                      TextSpan(
+                          style: TextStyle(
+                              color: TextColor.secondary,
+                              fontSize: 14.sp,
+                              fontWeight: FontWeight.w700
+                          ),
                           text: "${LocaleKeys.forgot_password_desc.tr} "),
                       TextSpan(
                         style: TextStyle(
                             color: BrandColor.main,
                             fontSize: 14.sp,
                             decoration: TextDecoration.underline,
+                          fontWeight: FontWeight.w700
                         ),
                         text: LocaleKeys.forgot_password_navigation.tr,
                         recognizer: TapGestureRecognizer()
@@ -226,6 +259,7 @@ class LoginScreen extends GetView<LoginController> {
                         style: TextStyle(
                             color: TextColor.secondary,
                             fontSize: 14.sp,
+                            fontWeight: FontWeight.w700
                         ),
                         text: " ${LocaleKeys.forgot_password_desc2.tr}",
                       ),
@@ -233,7 +267,8 @@ class LoginScreen extends GetView<LoginController> {
                     ],
                   ),
                 ),
-              ),
+              )
+
 
             ],
           ),

@@ -149,6 +149,8 @@ class GameInfoScreen extends GetView<GameInfoController> {
                         final gameDate = data.custom_field.gameDate ?? [];
                         final gameTime = data.custom_field.gameTime ?? [];
                         final location = data.custom_field.location ?? [];
+
+                        print("list ${controller.listMatch.value[index]}");
                         final gameSerial =
                             data.custom_field.game_serial ?? [""];
 
@@ -232,7 +234,8 @@ class GameInfoScreen extends GetView<GameInfoController> {
                         }
                       });
                 }
-              })
+              }),
+              SizedBox(height: 24.h,),
             ],
           ),
         ));
