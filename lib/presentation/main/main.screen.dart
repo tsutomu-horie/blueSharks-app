@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
@@ -57,163 +58,181 @@ class _MainScreenState extends State<MainScreen> {
 
     print("onOpen ${controller.selectedTopicId}");
 
-    return Obx(() {
-      return Scaffold(
-        backgroundColor: BackgroundColor.primary,
-        appBar: AppBar(
-          backgroundColor: BrandColor.hover,
-          toolbarHeight: 64.h,
-          title: Stack(
-            children: [
-              Positioned(
-                left: 0,
-                right: 30.w,
-                child: SvgPicture.asset(
-                  width: 93.w,
-                  height: 64.h,
-                  'assets/vectors/background_toolbar.svg', // Replace with your SVG file path
+    return PopScope(
+      canPop: false, // Prevent default back behavior
+      onPopInvoked: (didPop) async {
+        // If we're not on the home tab, go to home tab
+        if (controller.selectedTopicId.value != null) {
+          controller.selectedTopicId.value = null;
+          return;
+        }
+
+        if (controller.selectedIndex.value != 0) {
+          controller.selectedIndex.value = 0;
+          return;
+        }
+
+        // If we're on home tab, exit app directly
+        SystemNavigator.pop();
+      },
+      child: Obx(() {
+        return Scaffold(
+          backgroundColor: BackgroundColor.primary,
+          appBar: AppBar(
+            backgroundColor: BrandColor.hover,
+            toolbarHeight: 64.h,
+            title: Stack(
+              children: [
+                Positioned(
+                  left: 0,
+                  right: 30.w,
+                  child: SvgPicture.asset(
+                    width: 93.w,
+                    height: 64.h,
+                    'assets/vectors/background_toolbar.svg', // Replace with your SVG file path
+                  ),
                 ),
-              ),
-              Row(
-                children: [
-                  Row(
-                    children: [
-                      SizedBox(
-                        width: 9.5.w,
-                      ),
-                      Column(
+                Row(
+                  children: [
+                    Row(
+                      children: [
+                        SizedBox(
+                          width: 9.5.w,
+                        ),
+                        Column(
+                          children: [
+                            SizedBox(
+                              height: 10.h,
+                            ),
+                            SvgPicture.asset(
+                              width: 44.w,
+                              height: 44.h,
+                              fit: BoxFit.fitHeight,
+                              'assets/vectors/app_logo.svg', // Replace with your SVG file path
+                            ),
+                            SizedBox(
+                              height: 10.h,
+                            ),
+                          ],
+                        ),
+                        SizedBox(
+                          width: 9.5.w,
+                        ),
+                      ],
+                    ),
+                    Flexible(
+                      child: Row(
+                        mainAxisSize: MainAxisSize.max,
                         children: [
-                          SizedBox(
-                            height: 10.h,
-                          ),
-                          SvgPicture.asset(
-                            width: 44.w,
-                            height: 44.h,
-                            fit: BoxFit.fitHeight,
-                            'assets/vectors/app_logo.svg', // Replace with your SVG file path
-                          ),
-                          SizedBox(
-                            height: 10.h,
-                          ),
+                          toolbarButton(
+                              SvgPicture.asset(
+                                'assets/vectors/ic_notification.svg',
+                                width: 24.w,
+                                height: 24.h,
+                              ),
+                              LocaleKeys.news_title.tr, (){
+                                controller.navigateToNotification();
+                          }),
                         ],
                       ),
-                      SizedBox(
-                        width: 9.5.w,
-                      ),
-                    ],
-                  ),
-                  Flexible(
-                    child: Row(
-                      mainAxisSize: MainAxisSize.max,
+                    ),
+      
+                    Row(
                       children: [
                         toolbarButton(
                             SvgPicture.asset(
-                              'assets/vectors/ic_notification.svg',
+                              'assets/vectors/ic_fanclub.svg',
                               width: 24.w,
                               height: 24.h,
                             ),
-                            LocaleKeys.new_title.tr, (){
-                              controller.navigateToNotification();
+                            LocaleKeys.fan_club.tr, (){
+                          Get.to(() => const FanclubScreen());
+                        }),
+                        SizedBox(
+                          width: 8.w,
+                        ),
+                        toolbarButton(
+                            SvgPicture.asset(
+                              'assets/vectors/ic_ticket.svg',
+                              width: 24.w,
+                              height: 24.h,
+                            ),
+                            LocaleKeys.ticket.tr, (){
+      
+                        }),
+                        SizedBox(
+                          width: 8.w,
+                        ),
+                        toolbarButton(
+                            SvgPicture.asset(
+                              'assets/vectors/ic_goods.svg',
+                              width: 24.w,
+                              height: 24.h,
+                            ),
+                            LocaleKeys.goods.tr, (){
+      
                         }),
                       ],
-                    ),
-                  ),
-
-                  Row(
-                    children: [
-                      toolbarButton(
-                          SvgPicture.asset(
-                            'assets/vectors/ic_fanclub.svg',
-                            width: 24.w,
-                            height: 24.h,
-                          ),
-                          LocaleKeys.fan_club.tr, (){
-                        Get.to(() => const FanclubScreen());
-                      }),
-                      SizedBox(
-                        width: 8.w,
-                      ),
-                      toolbarButton(
-                          SvgPicture.asset(
-                            'assets/vectors/ic_ticket.svg',
-                            width: 24.w,
-                            height: 24.h,
-                          ),
-                          LocaleKeys.ticket.tr, (){
-
-                      }),
-                      SizedBox(
-                        width: 8.w,
-                      ),
-                      toolbarButton(
-                          SvgPicture.asset(
-                            'assets/vectors/ic_goods.svg',
-                            width: 24.w,
-                            height: 24.h,
-                          ),
-                          LocaleKeys.goods.tr, (){
-
-                      }),
-                    ],
-                  )
-                ],
-              ),
-            ],
+                    )
+                  ],
+                ),
+              ],
+            ),
           ),
-        ),
-        body: controller.selectedTopicId.value == null
-            ? _pages[controller.selectedIndex.value]
-            : DetailInfoScreen(() {
-                selectTopic(null);
-              }, controller.selectedPost.value),
-        // Display the selected page
-        bottomNavigationBar: Obx(() {
-          return BottomNavigationBar(
-            backgroundColor: BackgroundColor.primary,
-            type: BottomNavigationBarType.fixed,
-            items: <BottomNavigationBarItem>[
-              BottomNavigationBarItem(
-                icon: _customBottomNavItem(
-                    "assets/vectors/ic_home_${controller.selectedIndex.value == 0 ? "enabled" : "default"}.svg",
-                    LocaleKeys.home.tr,
-                    0),
-                label: '',
-              ),
-              BottomNavigationBarItem(
-                icon: _customBottomNavItem(
-                    "assets/vectors/ic_info_${controller.selectedIndex.value == 1 ? "enabled" : "default"}.svg",
-                    LocaleKeys.info.tr,
-                    1),
-                label: '',
-              ),
-              BottomNavigationBarItem(
-                icon: _customBottomNavItem(
-                    "assets/vectors/ic_member_${controller.selectedIndex.value == 2 ? "enabled" : "default"}.svg",
-                    LocaleKeys.my_page.tr,
-                    2),
-                label: '',
-              ),
-              BottomNavigationBarItem(
-                icon: _customBottomNavItem(
-                    "assets/vectors/ic_stadium_${controller.selectedIndex.value == 3 ? "enabled" : "default"}.svg",
-                    LocaleKeys.stadium.tr,
-                    3),
-                label: '',
-              ),
-              BottomNavigationBarItem(
-                icon: _customBottomNavItem(
-                    "assets/vectors/ic_calendar_${controller.selectedIndex.value == 4 ? "enabled" : "default"}.svg",
-                    LocaleKeys.calendar.tr,
-                    4),
-                label: '',
-              ),
-            ],
-            currentIndex: controller.selectedIndex.value,
-            onTap: _onItemTapped,
-          );
-        }),
-      );
-    });
+          body: controller.selectedTopicId.value == null
+              ? _pages[controller.selectedIndex.value]
+              : DetailInfoScreen(() {
+                  selectTopic(null);
+                }, controller.selectedPost.value),
+          // Display the selected page
+          bottomNavigationBar: Obx(() {
+            return BottomNavigationBar(
+              backgroundColor: BackgroundColor.primary,
+              type: BottomNavigationBarType.fixed,
+              items: <BottomNavigationBarItem>[
+                BottomNavigationBarItem(
+                  icon: _customBottomNavItem(
+                      "assets/vectors/ic_home_${controller.selectedIndex.value == 0 ? "enabled" : "default"}.svg",
+                      LocaleKeys.home.tr,
+                      0),
+                  label: '',
+                ),
+                BottomNavigationBarItem(
+                  icon: _customBottomNavItem(
+                      "assets/vectors/ic_info_${controller.selectedIndex.value == 1 ? "enabled" : "default"}.svg",
+                      LocaleKeys.menu_en.tr,
+                      1),
+                  label: '',
+                ),
+                BottomNavigationBarItem(
+                  icon: _customBottomNavItem(
+                      "assets/vectors/ic_member_${controller.selectedIndex.value == 2 ? "enabled" : "default"}.svg",
+                      LocaleKeys.my_page.tr,
+                      2),
+                  label: '',
+                ),
+                BottomNavigationBarItem(
+                  icon: _customBottomNavItem(
+                      "assets/vectors/ic_stadium_${controller.selectedIndex.value == 3 ? "enabled" : "default"}.svg",
+                      LocaleKeys.stadium.tr,
+                      3),
+                  label: '',
+                ),
+                BottomNavigationBarItem(
+                  icon: _customBottomNavItem(
+                      "assets/vectors/ic_calendar_${controller.selectedIndex.value == 4 ? "enabled" : "default"}.svg",
+                      LocaleKeys.calendar.tr,
+                      4),
+                  label: '',
+                ),
+              ],
+              currentIndex: controller.selectedIndex.value,
+              onTap: _onItemTapped,
+            );
+          }),
+        );
+      }),
+    );
   }
 
   Widget toolbarButton(SvgPicture icon, String text, Function onPress) {

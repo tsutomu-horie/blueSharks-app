@@ -45,7 +45,7 @@ class LoginController extends GetxController {
           emailTextFieldController.text,
           passwordTextFieldController.text,
           (){
-            Utils.showError(context, LocaleKeys.error_login_message.tr, null );
+            Utils.showError(context, "メールアドレスまたはIDが確認できませんでした。ご登録情報を再度ご確認ください", "ファンクラブ会員情報の更新には最大12時間かかります。ご登録情報が正しい場合には、しばらくしてから再度会員連携を行ってください。");
           },
       );
 
@@ -63,6 +63,7 @@ class LoginController extends GetxController {
 
         print("get data ${selectedPlayer})");
         await FcmHelper.initFcm();
+        MySharedPref.setFirstOpen("alreadyOpen");
         Get.offAll(() => const MainScreen());
       }
     } catch (e) {

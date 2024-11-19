@@ -36,8 +36,8 @@ void errorDialogView(BuildContext context, String title, String? message) {
                   children: [
                     CustomTextView(
                       message,
-                      type: TDSFontType.titleMedium,
-                      color: TextColor.primary,
+                      type: TDSFontType.bodyTextMedium,
+                      color: TextColor.tertiary,
                       align: TextAlign.center,
                     ),
                     SizedBox(height: 8.h,)

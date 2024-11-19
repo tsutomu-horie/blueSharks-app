@@ -65,11 +65,11 @@ class EditPasswordScreen extends GetView<EditPasswordController> {
                           validator: (value) {
                             // Ensure password is not empty
                             if (value!.isEmpty) {
-                              return 'Password is required';
+                              return LocaleKeys.error_password_required.tr;
                             }
                             // Ensure password has at least 8 characters
                             if (value.length < 8) {
-                              return 'Password must be at least 8 characters long';
+                              return LocaleKeys.error_password_must_8_char.tr;
                             }
                             // Ensure password contains at least one uppercase letter
                             // if (!RegExp(r'[A-Z]').hasMatch(value)) {
@@ -149,11 +149,11 @@ class EditPasswordScreen extends GetView<EditPasswordController> {
                           validator: (value) {
                             // Ensure password is not empty
                             if (value!.isEmpty) {
-                              return 'Password is required';
+                              return LocaleKeys.error_password_required.tr;
                             }
                             // Ensure password has at least 8 characters
                             if (value.length < 8) {
-                              return 'Password must be at least 8 characters long';
+                              return LocaleKeys.error_password_must_8_char.tr;
                             }
                             // Ensure password contains at least one uppercase letter
                             // if (!RegExp(r'[A-Z]').hasMatch(value)) {
@@ -237,16 +237,16 @@ class EditPasswordScreen extends GetView<EditPasswordController> {
                           validator: (value) {
                             // Ensure password is not empty
                             if (value!.isEmpty) {
-                              return 'Password is required';
+                              return LocaleKeys.error_password_required.tr;
                             }
                             // Ensure password has at least 8 characters
                             if (value.length < 8) {
-                              return 'Password must be at least 8 characters long';
+                              return LocaleKeys.error_password_must_8_char.tr;
                             }
 
                             if (value != forgotPasswordController
                                 .newPasswordController.text) {
-                              return "Confirm password must same as new password";
+                              return LocaleKeys.error_password_different_new_password.tr;
                             }
                             // Ensure password contains at least one uppercase letter
                             // if (!RegExp(r'[A-Z]').hasMatch(value)) {
@@ -319,7 +319,7 @@ class EditPasswordScreen extends GetView<EditPasswordController> {
                           if (globalKey.currentState!.validate()) {
                             forgotPasswordController.onUpdatePassword(context, (){
                             Get.back();
-                            Utils.showCustomSuccessDialog(context, "update password was successful!");
+                            Utils.showCustomSuccessDialog(context, LocaleKeys.update_password_success.tr);
                             print("backkk");
                             });
                           }

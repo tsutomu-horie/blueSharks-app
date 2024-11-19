@@ -40,6 +40,7 @@ class RegisterMemberFanclubScreen
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _buildTitleSection(),
+                SizedBox(height: 24.h,),
                 _buildForm(globalKey, registerController),
               ],
             ),
@@ -101,6 +102,7 @@ class RegisterMemberFanclubScreen
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        SizedBox(height: 16.h,),
         CustomTextView(
           LocaleKeys.register_email_title.tr,
           type: TDSFontType.headlineSmall,
@@ -108,7 +110,7 @@ class RegisterMemberFanclubScreen
         ),
         SizedBox(height: 8.h),
         CustomTextView(
-          LocaleKeys.register_email_desc.tr,
+          LocaleKeys.fanclub_register_desc.tr,
           type: TDSFontType.bodyTextMedium,
           color: TextColor.secondary,
         ),
@@ -140,7 +142,7 @@ class RegisterMemberFanclubScreen
             label: LocaleKeys.fanclub_member_id.tr,
             isRequired: true,
             controller: controller.idTextFieldController,
-            hintText: 'ID cannot be empty',
+            hintText: LocaleKeys.user_id_placeholder.tr,
           ),
           SizedBox(height: 24.h),
           _buildPasswordField(controller),
@@ -202,9 +204,10 @@ class RegisterMemberFanclubScreen
           () => TextFormField(
             obscureText: controller.isPasswordHidden.value,
             validator: (value) {
-              if (value!.isEmpty) return 'Password is required';
-              if (value.length < 8)
-                return 'Password must be at least 8 characters long';
+              if (value!.isEmpty) return LocaleKeys.error_password_required.tr;
+              if (value.length < 8) {
+                return LocaleKeys.error_password_must_8_char.tr;
+              }
               return null;
             },
             controller: controller.passwordTextFieldController,

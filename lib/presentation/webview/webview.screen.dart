@@ -45,6 +45,7 @@ class WebviewScreen extends GetView<WebviewController> {
               child: WebViewWidget(
                 controller: webViewCtrl.webViewControllerStadium,),
             ),
+            SizedBox(height: 24.h,),
           ],
         ),
       );
@@ -56,6 +57,7 @@ class WebviewScreen extends GetView<WebviewController> {
               height: 750.h,
               child: WebViewWidget(controller: webViewCtrl.webViewControllerPartner,),
             ),
+            SizedBox(height: 24.h,),
           ],
         ),
       );

@@ -1,6 +1,7 @@
 import 'package:dotted_line/dotted_line.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 import 'package:get/get.dart';
 import 'package:koto_blue_sharks/app/data/models/member/member.dart';
@@ -9,6 +10,8 @@ import 'package:koto_blue_sharks/app/views/views/custom_text_view.dart';
 import 'package:koto_blue_sharks/generated/locales.g.dart';
 import 'package:koto_blue_sharks/utils/app_color.dart';
 import 'package:koto_blue_sharks/utils/match+extensions.dart';
+import 'package:koto_blue_sharks/utils/youtube_helper.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import 'controllers/player_detail.controller.dart';
 
@@ -73,6 +76,90 @@ class MemberDetailScreen extends GetView<PlayerDetailController> {
                 }
               },
             ),
+            if (playerData?.custom_field?.youtube_embed_src?.first != null)
+              Column(
+                children: [
+                  Container(
+                    width: double.infinity,
+                    color: BrandColor.main,
+                    padding: EdgeInsets.symmetric(vertical: 16.w, horizontal: 16.w),
+                    child: CustomTextView(LocaleKeys.youtube_en.tr.toUpperCase(),
+                      style: TextStyle(fontWeight: FontWeight.w700,
+                          color: TextColor.inverse,
+                          fontSize: 18.sp),),
+                  ),
+                  InkWell(
+                    onTap: (){
+                      launchURL(context, playerData!.custom_field!.youtube_embed_src!.first);
+                    },
+                    child: Row(
+                      children: [
+                        SizedBox(width: 8.w,),
+                        Flexible(
+                          child: Stack(
+                            children: [
+                              CustomImageView(image: "${getYouTubeThumbnailUrl(playerData?.custom_field?.youtube_embed_src?.first)}", radius: 2.r,),
+                              Positioned(
+                                top: 0,
+                                bottom: 0,
+                                left: 0,
+                                right: 0,
+                                child: Container(
+                                  color: Colors.black.withOpacity(0.5),
+                                  child: Center(
+                                    child: SvgPicture.asset("assets/vectors/ic_youtube.svg", width: 152.w, height: 152.h,),
+                                  ),
+                                ),
+                              )
+                            ],
+                          ),
+                        ),
+                        SizedBox(width: 8.w,),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+
+            Container(
+              width: double.infinity,
+              color: BrandColor.main,
+              padding: EdgeInsets.symmetric(vertical: 16.w, horizontal: 16.w),
+              child: CustomTextView(LocaleKeys.graph_en.tr.toUpperCase(),
+                style: TextStyle(fontWeight: FontWeight.w700,
+                    color: TextColor.inverse,
+                    fontSize: 18.sp),),
+            ),
+            Row(
+              children: [
+                SizedBox(width: 8.w,),
+                Flexible(
+                  child: FutureBuilder<String>(
+                    future: getImage(controller.mediaProvider,
+                        "${playerData?.custom_field?.graph_image?.first}"),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const Center(
+                            child: CircularProgressIndicator()); // Loading indicator
+                      } else if (snapshot.hasError) {
+                        return const Center(child: Text('Error loading data'));
+                      } else {
+                        final postImage = snapshot.data ??
+                            'https://example.com/placeholder.png'; // Fallback in case of null
+
+                        // Use your CustomImageView with the fetched image URL
+                        return CustomImageView(
+                          image: postImage,
+                          radius: 0,
+                        );
+                      }
+                    },
+                  ),
+                ),
+                SizedBox(width: 8.w,),
+              ],
+            ),
+
             Container(
               width: double.infinity,
               color: BrandColor.main,
@@ -202,5 +289,15 @@ class MemberDetailScreen extends GetView<PlayerDetailController> {
         ],
       ),
     );
+  }
+
+  void launchURL(BuildContext context, String url) async {
+    if (await canLaunch(url)) {
+      await launch(url);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Could not launch $url')),
+      );
+    }
   }
 }

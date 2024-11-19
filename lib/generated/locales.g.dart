@@ -19,7 +19,7 @@ class LocaleKeys {
   static const user_registration = 'user_registration';
   static const register_user_title = 'register_user_title';
   static const register_user_desc = 'register_user_desc';
-  static const new_title = 'new_title';
+  static const news_title = 'news_title';
   static const fan_club = 'fan_club';
   static const ticket = 'ticket';
   static const goods = 'goods';
@@ -28,6 +28,7 @@ class LocaleKeys {
   static const home = 'home';
   static const visitor = 'visitor';
   static const info = 'info';
+  static const menu_en = 'menu_en';
   static const my_page = 'my_page';
   static const stadium = 'stadium';
   static const calendar = 'calendar';
@@ -61,6 +62,8 @@ class LocaleKeys {
   static const staff = 'staff';
   static const player_data = 'player_data';
   static const position_en = 'position_en';
+  static const youtube_en = 'youtube_en';
+  static const graph_en = 'graph_en';
   static const personal_data = 'personal_data';
   static const position = 'position';
   static const play_position = 'play_position';
@@ -123,6 +126,7 @@ class LocaleKeys {
   static const player_birthday = 'player_birthday';
   static const step = 'step';
   static const next = 'next';
+  static const save = 'save';
   static const set_wallpaper_header = 'set_wallpaper_header';
   static const step_en = 'step_en';
   static const set_wallpaper_title = 'set_wallpaper_title';
@@ -157,6 +161,8 @@ class LocaleKeys {
   static const login_to_your_account = 'login_to_your_account';
   static const login_to_your_account_desc = 'login_to_your_account_desc';
   static const forgot_password_desc = 'forgot_password_desc';
+  static const forgot_password_desc_from_home =
+      'forgot_password_desc_from_home';
   static const forgot_password_navigation = 'forgot_password_navigation';
   static const forgot_password_desc2 = 'forgot_password_desc2';
   static const login = 'login';
@@ -173,6 +179,10 @@ class LocaleKeys {
   static const error_login_message = 'error_login_message';
   static const close_dialog = 'close_dialog';
   static const forgot_password_title = 'forgot_password_title';
+  static const forgot_password_header = 'forgot_password_header';
+  static const forgot_password_header_home = 'forgot_password_header_home';
+  static const forgot_password_navigation_from_home =
+      'forgot_password_navigation_from_home';
   static const forgot_password_page_desc = 'forgot_password_page_desc';
   static const email_title = 'email_title';
   static const fanclub_title = 'fanclub_title';
@@ -206,6 +216,7 @@ class LocaleKeys {
   static const menu = 'menu';
   static const register = 'register';
   static const email_field_desc = 'email_field_desc';
+  static const forgot_password_btn_home = 'forgot_password_btn_home';
   static const certification = 'certification';
   static const membership_dialog_title = 'membership_dialog_title';
   static const membership_dialog_message = 'membership_dialog_message';
@@ -223,6 +234,19 @@ class LocaleKeys {
   static const delete_account_confirmation_message =
       'delete_account_confirmation_message';
   static const delete_account_button = 'delete_account_button';
+  static const error_password_different_new_password =
+      'error_password_different_new_password';
+  static const error_password_must_8_char = 'error_password_must_8_char';
+  static const error_password_required = 'error_password_required';
+  static const error_email_invalid = 'error_email_invalid';
+  static const error_email_duplicate = 'error_email_duplicate';
+  static const error_email_required = 'error_email_required';
+  static const error_id_required = 'error_id_required';
+  static const not_receive_otp = 'not_receive_otp';
+  static const resend = 'resend';
+  static const update_password_success = 'update_password_success';
+  static const error_wallpaper_required = 'error_wallpaper_required';
+  static const wallpaper_placeholder = 'wallpaper_placeholder';
 }
 
 class Locales {
@@ -236,7 +260,7 @@ class Locales {
     'user_registration': 'User Registration',
     'register_user_title': '江東ブルーシャークアプリに会員登録する',
     'register_user_desc': 'アプリで現在のメンバーシップを取得するには、現在のアクティブなメンバーシップを入力するだけで済みます。',
-    'new_title': 'New',
+    'news_title': 'News',
     'fan_club': 'Fan Club',
     'ticket': 'Ticket',
     'goods': 'Goods',
@@ -245,6 +269,7 @@ class Locales {
     'home': 'Home',
     'visitor': 'visitor',
     'info': 'Info',
+    'menu_en': 'Menu',
     'my_page': 'My Page',
     'stadium': 'Stadium',
     'calendar': 'Calendar',
@@ -278,6 +303,8 @@ class Locales {
     'staff': 'Staff',
     'player_data': 'Player Data',
     'position_en': 'Position',
+    'youtube_en': 'Youtube',
+    'graph_en': 'Graph',
     'personal_data': 'Personal Data',
     'position': '役職',
     'play_position': '位置',
@@ -344,6 +371,7 @@ class Locales {
     'player_birthday': '選手誕生日',
     'step': 'ステップ',
     'next': '次へ',
+    'save': '変更を保存',
     'set_wallpaper_header': 'アプリ設定ガイド',
     'step_en': 'step @step',
     'set_wallpaper_title': 'お気に入り選手を壁紙に設定',
@@ -373,7 +401,7 @@ class Locales {
     'otp_title': 'メールアドレスの認証',
     'otp_message':
         '送信済みメールに記載のワンタイムパスワードを入力してください。メールが見つからない場合には、迷惑メールフォルダをご確認ください。',
-    'registered_email': '登録メールアドレス @email',
+    'registered_email': '登録メールアドレス : @email',
     'resend_otp_email': 'メールを再送信する。',
     'authentication': '認証。',
     'fanclub_register_title': 'ファンクラブ会員証表示\n(ファンクラブIDの登録)',
@@ -384,7 +412,8 @@ class Locales {
     'login_to_your_account': 'アカウントにログイン',
     'login_to_your_account_desc':
         'メールアドレスとパスワードを入力してログインしてください。ログインするとファンクラブ会員証が表示されます。',
-    'forgot_password_desc': 'パスワードをお忘れの場合、こちらから再設定してください。',
+    'forgot_password_desc': 'パスワードをお忘れの場合、',
+    'forgot_password_desc_from_home': 'メールの受信箱をご確認ください。 OTP コードはすでに送信されています。',
     'forgot_password_navigation': 'こちらから',
     'forgot_password_desc2': '再設定してください。',
     'login': 'ログイン',
@@ -401,6 +430,9 @@ class Locales {
         'メールアドレスまたはパスワードが確認できませんでした。\nご入力情報をご確認の上、再度ログインしてください。',
     'close_dialog': '近い',
     'forgot_password_title': 'パスワードをお忘れですか？',
+    'forgot_password_header': 'パスワードをお忘れですか',
+    'forgot_password_header_home': 'ワンタイムパスコード',
+    'forgot_password_navigation_from_home': 'ここをタップ',
     'forgot_password_page_desc':
         'ご登録済みのメールアドレスを入力してください。メールアドレス認証のため、ワンタイムパスワードを送信いたします。\n認証後にパスワード再設定用のリンクを送信いたします。',
     'email_title': '電子メール',
@@ -435,6 +467,7 @@ class Locales {
     'menu': 'メニュー',
     'register': '登録する',
     'email_field_desc': '登録済みのメールアドレスを入力してください。その後、メールを確認するためのOTPコードを送信します。',
+    'forgot_password_btn_home': 'ワンタイムパスコードを送信する',
     'certification': '認証',
     'membership_dialog_title': '会員情報を確認中です',
     'membership_dialog_message':
@@ -443,7 +476,7 @@ class Locales {
     'event_en': 'Event',
     'other': 'Other',
     'active': 'アクティブ',
-    'inactive': 'inactive',
+    'inactive': '不活発',
     'detailled_notification': '詳細通知',
     'delete_account_title': 'アカウントを削除',
     'delete_account_desc1':
@@ -452,5 +485,17 @@ class Locales {
     'delete_account_confirmation_title': 'アカウントを削除しますか',
     'delete_account_confirmation_message': 'Blue Sharkアカウントを削除してもよろしいですか？',
     'delete_account_button': 'アカウントを削除',
+    'error_password_different_new_password': '確認パスワードは新しいパスワードと同じでなければならない',
+    'error_password_must_8_char': 'パスワードは8文字以上であること',
+    'error_password_required': 'パスワードは必須です',
+    'error_email_invalid': 'メールアドレスが無効です',
+    'error_email_duplicate': '登録済みのメールアドレスです。\n新規登録を行うには、別のメールアドレスをご使用ください。',
+    'error_email_required': 'メールアドレスを入力してください。',
+    'error_id_required': 'ファンクラブ会員IDを空にすることはできません',
+    'not_receive_otp': 'OTP コードを受け取らない場合は?',
+    'resend': '再送信',
+    'update_password_success': 'パスワード更新成功',
+    'error_wallpaper_required': '壁紙を選択してください。',
+    'wallpaper_placeholder': '壁紙を選択してください',
   };
 }

@@ -124,7 +124,7 @@ class AuthProvider extends GetConnect {
     return response;
   }
 
-  Future<Response> updatePassword(String currentPassword, String confirmPassword, String newPassword,Function onError) async {
+  Future<Response> updatePassword(String currentPassword, String confirmPassword, String newPassword,Function(String, String) onError) async {
     httpClient.baseUrl = Constants.baseUrlAuthApi;
 
     final url = Uri.parse('new-password');
@@ -151,7 +151,8 @@ class AuthProvider extends GetConnect {
     print("Login successful2 , ${response.body}");
 
     if (response.hasError) {
-      onError();
+      print("Login successful2 , ${response.body['errors']}");
+      onError("${response.body['errors']}", "${response.body['message']}");
       throw Exception('Failed to login: ${response.statusText}');
     }
 

@@ -44,20 +44,64 @@ class GameInfoController extends GetxController {
     print("selectYear ${latestMatches}");
   }
 
+  // void fetchMatchResult() async {
+  //   final Map<String, dynamic>? data = await getSeasonCategoryId();
+  //   if (data != null) {
+  //     final List<MatchResultBySeason> latestMatches =
+  //     await getLatestPosts(data['id'], data['count']);
+  //
+  //     listMatch.value = latestMatches;
+  //     isLoading.value = false;
+  //   } else {
+  //     print("No data found for the current season.");
+  //   }
+  // }
   void fetchMatchResult() async {
+    print("fetch match result");
     final Map<String, dynamic>? data = await getSeasonCategoryId();
     if (data != null) {
-      final List<MatchResultBySeason> latestMatches =
-      await getLatestPosts(data['id'], data['count']);
+      try {
+        final List<MatchResultBySeason> sortedMatches =
+        await getLatestPosts(data['id'], data['count']);
 
-      listMatch.value = latestMatches;
-      isLoading.value = false;
+        listMatch.value = sortedMatches;
+        isLoading.value = false;
+      } catch (e) {
+        print("Error fetching match results: $e");
+        isLoading.value = false;
+      }
     } else {
       print("No data found for the current season.");
+      isLoading.value = false;
+    }
+  }
+
+// Helper function to parse Japanese date format
+  DateTime? parseJapaneseDate(String japaneseDate) {
+    try {
+      // Remove day of week in parentheses and split the string
+      String dateStr = japaneseDate.replaceAll(RegExp(r'（[月火水木金土日]）'), '');
+
+      // Extract year, month, and day using RegExp
+      RegExp exp = RegExp(r'(\d+)年(\d+)月(\d+)日');
+      var match = exp.firstMatch(dateStr);
+
+      if (match != null) {
+        int year = int.parse(match.group(1)!);
+        int month = int.parse(match.group(2)!);
+        int day = int.parse(match.group(3)!);
+
+        return DateTime(year, month, day);
+      }
+      return null;
+    } catch (e) {
+      print("Error parsing Japanese date: $e");
+      return null;
     }
   }
 
   Future<Map<String, dynamic>?> getSeasonCategoryId() async {
+    print("get latest getSeasonCategoryId");
     int page = 1; // Start with page 1
 
     while (true) {
@@ -88,21 +132,44 @@ class GameInfoController extends GetxController {
 
   Future<List<MatchResultBySeason>> getLatestPosts(
       int categoryId, int count) async {
-    int postsPerPage = 10; // Each page returns 10 posts
-    int totalPages =
-    (count / postsPerPage).ceil(); // Calculate total number of pages
-    int lastPage = totalPages; // Start with the last page
+    print("get latest post");
+    int postsPerPage = 10;
+    int totalPages = (count / postsPerPage).ceil();
+    List<MatchResultBySeason> allPosts = []; // Collect all posts first
 
-    List<MatchResultBySeason> posts = [];
-
-    while (lastPage > 0) {
+    // Fetch all pages
+    for (int page = 1; page <= totalPages; page++) {
       List<MatchResultBySeason> pagePosts =
-      await apiProvider.getMatchBySeasonId(categoryId, page: lastPage);
-      posts.addAll(pagePosts);
-      lastPage--;
+      await apiProvider.getMatchBySeasonId(categoryId, page: page);
+      allPosts.addAll(pagePosts);
     }
 
-    // Return only the first 4 matches after the current date and time
-    return posts.toList();
+    // Sort all collected posts at once
+    allPosts.sort((a, b) {
+      try {
+        String? dateStrA = a.custom_field.gameDate?.firstOrNull;
+        String? dateStrB = b.custom_field.gameDate?.firstOrNull;
+
+        if (dateStrA == null || dateStrB == null) {
+          return 0;
+        }
+
+        DateTime? dateA = parseJapaneseDate(dateStrA);
+        DateTime? dateB = parseJapaneseDate(dateStrB);
+
+        if (dateA == null || dateB == null) {
+          return 0;
+        }
+
+        return dateB.compareTo(dateA); // Newest first
+      } catch (e) {
+        print("Error sorting game dates: $e");
+        print("Date A: ${a.custom_field.gameDate}");
+        print("Date B: ${b.custom_field.gameDate}");
+        return 0;
+      }
+    });
+
+    return allPosts;
   }
 }

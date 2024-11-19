@@ -5,6 +5,7 @@ class Routes {
   }
 
   static const CALENDAR = '/calendar';
+  static const DELETE_ACCOUNT_CONFIRMATION = '/delete-account-confirmation';
   static const DETAIL_INFO = '/detail-info';
   static const EDIT_PASSWORD = '/edit-password';
   static const FANCLUB = '/fanclub';
@@ -37,5 +38,5 @@ class Routes {
   static const WARNING_DIALOG = '/warning-dialog';
   static const WEBVIEW = '/webview';
   static const YEAR_FILTER_CONTROLLER = '/year-filter-controller';
-  static const DELETE_ACCOUNT_CONFIRMATION = '/delete-account-confirmation';
+  static const FORGOT_PASSWORD_HOME = '/forgot-password-home';
 }

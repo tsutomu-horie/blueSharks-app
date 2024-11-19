@@ -47,6 +47,7 @@ class MemberScreen extends GetView<MemberController> {
               onSet: onSet,
               scrollController: scrollController, // Pass the scroll controller
             ),
+            SizedBox(height: 24.h,),
           ],
         ),
       ),

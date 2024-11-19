@@ -16,6 +16,7 @@ import 'package:koto_blue_sharks/presentation/forgotPassword/forgot_password.scr
 import 'package:koto_blue_sharks/presentation/main/main.screen.dart';
 import 'package:koto_blue_sharks/utils/app_color.dart';
 import 'package:koto_blue_sharks/utils/fcm_helper.dart';
+import 'package:koto_blue_sharks/utils/my_shared_pref.dart';
 
 import 'controllers/fan_club_confirmation.controller.dart';
 
@@ -413,6 +414,7 @@ class FanClubConfirmationScreen extends GetView<FanClubConfirmationController> {
           style: ElevatedButton.styleFrom(backgroundColor: BrandColor.main),
           onPressed: () async {
             await FcmHelper.initFcm();
+            MySharedPref.setFirstOpen("alreadyOpen");
             Get.offAll(() => const MainScreen());
           },
           child: CustomTextView(

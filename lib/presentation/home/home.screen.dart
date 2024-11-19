@@ -18,6 +18,7 @@ import 'package:koto_blue_sharks/utils/app_color.dart';
 import 'package:koto_blue_sharks/utils/date_formatter.dart';
 import 'package:koto_blue_sharks/utils/map_id_to_categories.dart';
 import 'package:koto_blue_sharks/utils/match+extensions.dart';
+import 'package:koto_blue_sharks/utils/utils.dart';
 import 'package:shimmer/shimmer.dart';
 
 import 'controllers/home.controller.dart';
@@ -45,16 +46,16 @@ class HomeScreen extends GetView<MainController> {
                   ? CustomImageView(
                       image: homeController.selectedWallpaper.value,
                       radius: 0.r,
-                      customFit: BoxFit.fitWidth,
+                      customFit: BoxFit.cover,
                     )
                   : Image.asset(
                       "assets/images/default_wallpaper.png",
-                      fit: BoxFit.fitWidth,
+                      fit: BoxFit.cover,
                     );
             }),
           ),
           DefaultHeaderTitleView(
-              LocaleKeys.next_match.tr, LocaleKeys.next_match_en.tr),
+              LocaleKeys.next_match.tr, LocaleKeys.next_match_en.tr.toUpperCase()),
           Obx(() {
             // Access the observable list value directly
             final nextMatchData = homeController.threeLatestMatch.value;
@@ -230,9 +231,11 @@ class HomeScreen extends GetView<MainController> {
                                   ),
                                 ],
                               ),
-                              Spacer(), // Spacer will push the button down
+                              const Spacer(), // Spacer will push the button down
                               ElevatedButton.icon(
-                                onPressed: () {},
+                                onPressed: () {
+
+                                },
                                 label: CustomTextView(
                                   LocaleKeys.buy_ticket.tr,
                                   color: TextColor.primary,
@@ -306,7 +309,7 @@ class HomeScreen extends GetView<MainController> {
           }),
           Container(
             padding: EdgeInsets.symmetric(vertical: 12.h, horizontal: 16.w),
-            child: Container(
+            child: SizedBox(
               width: double.infinity, // Make the button take full width
               child: OutlinedButton(
                 onPressed: () {
@@ -327,6 +330,7 @@ class HomeScreen extends GetView<MainController> {
           DefaultHeaderTitleView(
               LocaleKeys.promotion_video.tr, LocaleKeys.promotion_video_en.tr),
           const VideoThumbnailView(),
+          SizedBox(height: 27.h,),
         ],
       )),
     );

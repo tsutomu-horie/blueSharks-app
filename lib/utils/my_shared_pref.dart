@@ -14,6 +14,7 @@ class MySharedPref {
   static const String _currentWallpaper = 'wallpaperPreferences';
   static const String _currentWallpaperName = 'wallpaperName';
   static const String _notificationKey = 'notification';
+  static const String _isFirstOpen = 'isFirstOpen';
 
   /// init get storage services
   static Future<void> init() async {
@@ -57,7 +58,20 @@ class MySharedPref {
   static String? getNotification() =>
       _sharedPreferences.getString(_notificationKey);
 
-  /// clear all data from shared pref
-  static Future<void> clear() async => await _sharedPreferences.clear();
+  /// save generated fcm token
+  static Future<void> setFirstOpen(String status) =>
+      _sharedPreferences.setString(_isFirstOpen, status);
 
+  /// get authorization token
+  static String? getFirstOpen() =>
+      _sharedPreferences.getString(_isFirstOpen);
+
+  /// clear all data from shared pref
+  // static Future<void> clear() async => await _sharedPreferences.clear();
+
+  static Future<void> clear() async {
+    await _sharedPreferences.remove(_currentWallpaper);
+    await _sharedPreferences.remove(_currentWallpaperName);
+    await _sharedPreferences.remove(_notificationKey);
+  }
 }

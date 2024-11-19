@@ -7,11 +7,13 @@ import 'package:koto_blue_sharks/infrastructure/navigation/routes.dart';
 import 'package:koto_blue_sharks/presentation/forgotPassword/forgot_password.screen.dart';
 import 'package:koto_blue_sharks/presentation/register/register_member_fanclub/register_member_fanclub.screen.dart';
 import 'package:koto_blue_sharks/presentation/reset_password/reset_password.screen.dart';
+import 'package:koto_blue_sharks/utils/utils.dart';
 
 class RegisterOtpController extends GetxController {
   final TextEditingController otpController = TextEditingController();
   var otp = ''.obs;
   var otp_id = ''.obs;
+  var hasError = false.obs;
   final OtpProvider otpProvider = OtpProvider();
 
   @override
@@ -23,13 +25,24 @@ class RegisterOtpController extends GetxController {
 
   }
   
-  void onSubmitOtp(String email, BuildContext context, String fromScreen, String? otpId, String selectedPlayer, String selectedPlayerName, Function? onSuccess) async {
+  void onSubmitOtp(String email, BuildContext context, String fromScreen, String? otpId, String selectedPlayer, String selectedPlayerName, Function? onSuccess, bool isRegister) async {
     print(otp.value);
     if (otp.isNotEmpty && otp.value.length > 4) {
       print("isfrom ${fromScreen}");
       if (fromScreen == "register" || fromScreen == "register_home") {
-        final response = await otpProvider.verifyOtp(otp.value, otp_id.value, (){
-          //todo::display error
+        final response = await otpProvider.verifyOtp(otp.value, otp_id.value, (errorMessage){
+          var newMessage = "";
+          //todo:: move to localization
+          if (errorMessage.contains("verify_otp")) {
+            newMessage = "入力したOTPコードが間違っています。もう一度お試しください。";
+          } else if (errorMessage.contains("otp_max_limit")) {
+            newMessage = "OTPの送信回数が多すぎる。";
+          } else {
+            newMessage = "メール送信エラー。\nしばらくしてから再度メールを送信してください。";
+          }
+
+          Utils.showError(context, "", newMessage);
+
           print("error on submit otp ");
         });
 
@@ -39,10 +52,20 @@ class RegisterOtpController extends GetxController {
           Get.to(() => RegisterMemberFanclubScreen(email: email, otpId: otp_id.value, selectedPlayer: selectedPlayer, selectedPlayerName: selectedPlayerName,));
         }
 
-      } else if (fromScreen == "forgotPassword" || fromScreen == "home" ) {
+      } else if (fromScreen == "forgotPassword" || fromScreen == "home" || fromScreen == "forgotPasswordHome" ) {
 
-        final response = await otpProvider.verifyOtp(otp.value, otp_id.value, (){
-          //todo::display error
+        final response = await otpProvider.verifyOtp(otp.value, otp_id.value, (errorMessage){
+          var newMessage = "";
+          if (errorMessage.contains("verify_otp")) {
+            newMessage = "送信されたOTPが正しくありません。";
+          } else if (errorMessage.contains("otp_max_limit")) {
+            newMessage = "OTPの送信回数が多すぎる。";
+          } else {
+            newMessage = "メール送信エラー。\nしばらくしてから再度メールを送信してください。";
+          }
+
+          Utils.showError(context, "", newMessage);
+
           print("error on submit otp ");
         });
 
@@ -61,32 +84,20 @@ class RegisterOtpController extends GetxController {
         onSuccess();
       }
     } else {
-      WarningDialogView.showWarningDialog(
-        context: context,
-        title: 'Warning!',
-        message: 'This is a warning message.',
+      hasError.value = true;
+      Utils.showError(
+          context,
+          "",  // Empty title as per your utils pattern
+          "OTPコードを入力してください。"  // Please enter OTP code in Japanese
       );
     }
   }
 
-  void resendOtp(String email, BuildContext context, String? otpId) async {
-    print(otp.value);
-    if (otp.isNotEmpty && otp.value.length > 4) {
-      final response = await otpProvider.requestOtp(email, otpId,  (){
-        //todo::display error
-        print("error on submit otp");
-      });
+  void resendOtp(String email, BuildContext context, String? otpId, bool isRegister) async {
+    final response = await otpProvider.requestOtp(email, otpId,  (error){
+      Utils.handleErrorOtp(error, context);
+    }, isRegister);
 
-      if (response.id != null) {
-        otp_id.value = "${response.id}";
-      }
-
-    } else {
-      WarningDialogView.showWarningDialog(
-        context: context,
-        title: 'Warning!',
-        message: 'This is a warning message.',
-      );
+    otp_id.value = "${response.id}";
     }
-  }
 }

@@ -65,11 +65,11 @@ class ResetPasswordScreen extends GetView<ResetPasswordController> {
                       validator: (value) {
                         // Ensure password is not empty
                         if (value!.isEmpty) {
-                          return 'Password is required';
+                          return LocaleKeys.error_password_required.tr;
                         }
                         // Ensure password has at least 8 characters
                         if (value.length < 8) {
-                          return 'Password must be at least 8 characters long';
+                          return LocaleKeys.error_password_must_8_char.tr;
                         }
                         // Ensure password contains at least one uppercase letter
                         // if (!RegExp(r'[A-Z]').hasMatch(value)) {
@@ -135,11 +135,11 @@ class ResetPasswordScreen extends GetView<ResetPasswordController> {
                       validator: (value) {
                         // Ensure password is not empty
                         if (value!.isEmpty) {
-                          return 'Password is required';
+                          return LocaleKeys.error_password_required.tr;
                         }
                         // Ensure password has at least 8 characters
                         if (value.length < 8) {
-                          return 'Password must be at least 8 characters long';
+                          return LocaleKeys.error_password_must_8_char.tr;
                         }
                         // Ensure password contains at least one uppercase letter
                         // if (!RegExp(r'[A-Z]').hasMatch(value)) {

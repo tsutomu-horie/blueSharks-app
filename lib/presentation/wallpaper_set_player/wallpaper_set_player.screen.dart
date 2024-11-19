@@ -8,6 +8,7 @@ import 'package:koto_blue_sharks/app/views/views/custom_text_view.dart';
 import 'package:koto_blue_sharks/generated/locales.g.dart';
 import 'package:koto_blue_sharks/presentation/main/main.screen.dart';
 import 'package:koto_blue_sharks/presentation/mypage/mypage.screen.dart';
+import 'package:koto_blue_sharks/presentation/register/register_email/register_email.screen.dart';
 import 'package:koto_blue_sharks/utils/app_color.dart';
 
 import 'controllers/wallpaper_set_player.controller.dart';
@@ -128,7 +129,7 @@ class WallpaperSetPlayerScreen extends GetView<WallpaperSetPlayerController> {
           ),
         ),
       ),
-      bottomNavigationBar: Container(
+      bottomNavigationBar:  onSet == null ? Container(
         padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
         width: double.infinity,
         child: OutlinedButton(
@@ -138,14 +139,15 @@ class WallpaperSetPlayerScreen extends GetView<WallpaperSetPlayerController> {
             ),
           ),
           onPressed: () {
-            Get.offAll(() => const MainScreen());
+            Get.to(() => const RegisterEmailScreen("", ""));
+            // Get.offAll(() => const MainScreen());
           },
           child: CustomTextView(
             LocaleKeys.jump_to.tr,
             color: BrandColor.main,
           ),
         ),
-      ),
+      )  : null,
     );
   }
 }

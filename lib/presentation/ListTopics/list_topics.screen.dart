@@ -132,51 +132,56 @@ class ListTopicsScreen  extends StatelessWidget {
                         ],
                       );
                     } else {
-                      return ListView.builder(
-                        shrinkWrap: true,
-                        // Use shrinkWrap for smooth scrolling
-                        physics: const NeverScrollableScrollPhysics(),
-                        // Disable ListView scrolling
-                        itemCount: data.length,
-                        itemBuilder: (context, itemIndex) {
-                          return FutureBuilder<String>(
-                            future: controller.getNewsImage(
-                                "${data[itemIndex].id}"),
-                            builder: (context, snapshot) {
-                              if (snapshot.connectionState ==
-                                  ConnectionState.waiting) {
-                                return shimmer();
-                              } else if (snapshot.hasError) {
-                                return TopicItemView(
-                                      () {
-                                    print("tapp TopicItemView ");
-                                    onOpenDetail(data[itemIndex]);
-                                  },
-                                  image: null,
-                                  date: data[itemIndex].date,
-                                  title: data[itemIndex].title.rendered,
-                                  categories: mapCategoryIdsToNames(
-                                      data[itemIndex].categories),
-                                );
-                              } else {
-                                final postImage = snapshot.data ??
-                                    'https://example.com/placeholder.png'; // Fallback in case of null
+                      return Column(
+                        children: [
+                          ListView.builder(
+                            shrinkWrap: true,
+                            // Use shrinkWrap for smooth scrolling
+                            physics: const NeverScrollableScrollPhysics(),
+                            // Disable ListView scrolling
+                            itemCount: data.length,
+                            itemBuilder: (context, itemIndex) {
+                              return FutureBuilder<String>(
+                                future: controller.getNewsImage(
+                                    "${data[itemIndex].id}"),
+                                builder: (context, snapshot) {
+                                  if (snapshot.connectionState ==
+                                      ConnectionState.waiting) {
+                                    return shimmer();
+                                  } else if (snapshot.hasError) {
+                                    return TopicItemView(
+                                          () {
+                                        print("tapp TopicItemView ");
+                                        onOpenDetail(data[itemIndex]);
+                                      },
+                                      image: null,
+                                      date: data[itemIndex].date,
+                                      title: data[itemIndex].title.rendered,
+                                      categories: mapCategoryIdsToNames(
+                                          data[itemIndex].categories),
+                                    );
+                                  } else {
+                                    final postImage = snapshot.data ??
+                                        'https://example.com/placeholder.png'; // Fallback in case of null
 
-                                // Ensure that TopicItemView is returned
-                                return TopicItemView(
-                                      () {
-                                    onOpenDetail(data[itemIndex]);
-                                  },
-                                  image: postImage,
-                                  date: data[itemIndex].date,
-                                  title: data[itemIndex].title.rendered,
-                                  categories: mapCategoryIdsToNames(
-                                      data[itemIndex].categories),
-                                );
-                              }
+                                    // Ensure that TopicItemView is returned
+                                    return TopicItemView(
+                                          () {
+                                        onOpenDetail(data[itemIndex]);
+                                      },
+                                      image: postImage,
+                                      date: data[itemIndex].date,
+                                      title: data[itemIndex].title.rendered,
+                                      categories: mapCategoryIdsToNames(
+                                          data[itemIndex].categories),
+                                    );
+                                  }
+                                },
+                              );
                             },
-                          );
-                        },
+                          ),
+                          SizedBox(height: 24.h,),
+                        ],
                       );
                     }
                   });
