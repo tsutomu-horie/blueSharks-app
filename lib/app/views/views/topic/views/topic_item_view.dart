@@ -157,9 +157,9 @@ class TopicItemView extends GetView {
                                           padding: EdgeInsets.symmetric(
                                               vertical: 4.h, horizontal: 8.w),
                                           decoration: BoxDecoration(
-                                            color: BackgroundColor.secondary,
+                                            color: BrandColor.background,
                                             borderRadius:
-                                                BorderRadius.circular(6.r),
+                                                BorderRadius.circular(24.r),
                                           ),
                                           child: CustomTextView(
                                             element,

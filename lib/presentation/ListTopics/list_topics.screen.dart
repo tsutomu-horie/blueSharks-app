@@ -23,11 +23,11 @@ class ListTopicsScreen  extends StatelessWidget {
   Widget build(BuildContext context) {
     final ListTopicsController controller = Get.put(ListTopicsController());
     final List<String> tabs = [
-      'Match Information',
-      'Notice',
-      'Event Information',
-      'Activities',
-      'Interview'
+      LocaleKeys.all.tr,
+      LocaleKeys.notice_tab.tr,
+      LocaleKeys.event_information.tr,
+      LocaleKeys.event_tab.tr,
+      LocaleKeys.activites.tr,
     ];
 
     return Scaffold(

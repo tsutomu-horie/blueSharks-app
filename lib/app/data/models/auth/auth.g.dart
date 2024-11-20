@@ -45,6 +45,7 @@ _$UserDataImpl _$$UserDataImplFromJson(Map<String, dynamic> json) =>
       kanLastName: json['kan_last_name'] as String?,
       katFirstName: json['kat_first_name'] as String?,
       katLastName: json['kat_last_name'] as String?,
+      customerLevel: json['customer_level'] as String?,
     );
 
 Map<String, dynamic> _$$UserDataImplToJson(_$UserDataImpl instance) =>
@@ -59,4 +60,5 @@ Map<String, dynamic> _$$UserDataImplToJson(_$UserDataImpl instance) =>
       'kan_last_name': instance.kanLastName,
       'kat_first_name': instance.katFirstName,
       'kat_last_name': instance.katLastName,
+      'customer_level': instance.customerLevel,
     };

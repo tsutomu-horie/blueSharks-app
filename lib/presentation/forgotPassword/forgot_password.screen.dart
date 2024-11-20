@@ -98,7 +98,7 @@ class ForgotPasswordScreen extends GetView<ForgotPasswordController> {
             ),
             onPressed: () {
               if (globalKey.currentState!.validate()) {
-                controller.sendOtp(context, selectedPlayer, selectedPlayerName);
+                controller.sendOtp(context, selectedPlayer, selectedPlayerName, false);
               }
             },
             child: controller.isLoadingLogin.value

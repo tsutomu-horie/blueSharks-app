@@ -37,104 +37,106 @@ class MypageScreen extends GetView<MypageController> {
                 // ),
                 Container(
                     padding:
-                        EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
+                    EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
                     child: (controller.isLogin.value &&
-                            controller.profileData.value?.isVerified != 0
+                        controller.profileData.value?.isVerified != 0
                         ? Column(
-                            children: [
-                              !controller.isLoading.value
-                                  ? MemberCardView(
-                                      "beginner",
-                                      controller.profileData.value?.accountId ??
-                                          "")
-                                  : SizedBox(
-                                      width: 343.w,
-                                      height: 218.h,
-                                      child: shimmer()),
-                              SizedBox(height: 16.h,),
-                              Row(
-                                children: [
-                                  SizedBox(
-                                    width: 16.w,
-                                  ),
-                                  Flexible(
-                                    child: SizedBox(
-                                      width: double.infinity,
-                                      child: ElevatedButton(
-                                          onPressed: () {
-                                            controller.getToken();
-                                          },
-                                          style: ButtonStyle(
-                                              backgroundColor:
-                                                  WidgetStateProperty.all(
-                                                      BrandColor.main)),
-                                          child: Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.center,
-                                            children: [
-                                              Icon(
-                                                IconsaxPlusLinear.refresh_2,
-                                                color: Colors.white,
-                                                size: 18.w,
-                                              ),
-                                              SizedBox(
-                                                width: 8.w,
-                                              ),
-                                              CustomTextView(
-                                                LocaleKeys
-                                                    .membership_renewal.tr,
-                                                type: TDSFontType.labelLarge,
-                                                color: Colors.white,
-                                              ),
-                                            ],
-                                          )),
-                                    ),
-                                  ),
-                                  SizedBox(
-                                    width: 16.w,
-                                  ),
-                                ],
-                              ),
-                              SizedBox(
-                                height: 24.h,
-                              ),
-                            ],
-                          )
-                        : AspectRatio(
-                            aspectRatio: 16 / 10,
-                            child: Container(
-                              padding: EdgeInsets.symmetric(
-                                  horizontal: 20.w, vertical: 20.h),
-                              width: double.infinity,
-                              decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(12.r),
-                                  color: WarningColor.surface,
-                                  border: Border.all(color: WarningColor.main)),
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  const Icon(IconsaxPlusLinear.info_circle),
-                                  SizedBox(
-                                    height: 16.h,
-                                  ),
-                                  CustomTextView(
-                                    LocaleKeys.your_not_login.tr,
-                                    style:
-                                        const TextStyle(fontWeight: FontWeight.w700),
-                                  ),
-                                  SizedBox(
-                                    height: 4.h,
-                                  ),
-                                  CustomTextView(
-                                    LocaleKeys.not_login_desc.tr,
-                                    type: TDSFontType.bodyTextMedium,
-                                    color: TextColor.secondary,
-                                    align: TextAlign.center,
-                                  ),
-                                ],
+                      children: [
+                        !controller.isLoading.value
+                            ? Obx(() {
+                          return MemberCardView(
+                              controller.profileData.value?.customerLevel ?? "",
+                              controller.profileData.value?.accountId ??
+                                  "");
+                        })
+                            : SizedBox(
+                            width: 343.w,
+                            height: 218.h,
+                            child: shimmer()),
+                        SizedBox(height: 16.h,),
+                        Row(
+                          children: [
+                            SizedBox(
+                              width: 16.w,
+                            ),
+                            Flexible(
+                              child: SizedBox(
+                                width: double.infinity,
+                                child: ElevatedButton(
+                                    onPressed: () {
+                                      controller.getToken();
+                                    },
+                                    style: ButtonStyle(
+                                        backgroundColor:
+                                        WidgetStateProperty.all(
+                                            BrandColor.main)),
+                                    child: Row(
+                                      mainAxisAlignment:
+                                      MainAxisAlignment.center,
+                                      children: [
+                                        Icon(
+                                          IconsaxPlusLinear.refresh_2,
+                                          color: Colors.white,
+                                          size: 18.w,
+                                        ),
+                                        SizedBox(
+                                          width: 8.w,
+                                        ),
+                                        CustomTextView(
+                                          LocaleKeys
+                                              .membership_renewal.tr,
+                                          type: TDSFontType.labelLarge,
+                                          color: Colors.white,
+                                        ),
+                                      ],
+                                    )),
                               ),
                             ),
-                          ))),
+                            SizedBox(
+                              width: 16.w,
+                            ),
+                          ],
+                        ),
+                        SizedBox(
+                          height: 24.h,
+                        ),
+                      ],
+                    )
+                        : AspectRatio(
+                      aspectRatio: 16 / 10,
+                      child: Container(
+                        padding: EdgeInsets.symmetric(
+                            horizontal: 20.w, vertical: 20.h),
+                        width: double.infinity,
+                        decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(12.r),
+                            color: WarningColor.surface,
+                            border: Border.all(color: WarningColor.main)),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(IconsaxPlusLinear.info_circle),
+                            SizedBox(
+                              height: 16.h,
+                            ),
+                            CustomTextView(
+                              LocaleKeys.your_not_login.tr,
+                              style:
+                              const TextStyle(fontWeight: FontWeight.w700),
+                            ),
+                            SizedBox(
+                              height: 4.h,
+                            ),
+                            CustomTextView(
+                              LocaleKeys.not_login_desc.tr,
+                              type: TDSFontType.bodyTextMedium,
+                              color: TextColor.secondary,
+                              align: TextAlign.center,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ))),
                 if (controller.isLogin.value == true)
                   Column(
                     children: [
@@ -315,25 +317,27 @@ class MypageScreen extends GetView<MypageController> {
                                     controller.profileData.value?.email ?? "";
 
                                 controller.idController.text = await controller
-                                        .profileData.value?.accountId ??
+                                    .profileData.value?.accountId ??
                                     "";
                                 editProfileBottomSheet(controller, context,
-                                    (email, id, wallpaper, wallpaperName,
+                                        (email, id, wallpaper, wallpaperName,
                                         isNotifActive) async {
-                                  print("get id ${id}");
-                                  controller.playerNameController.value =
-                                      wallpaperName;
-                                  controller.playerLinkController.value =
-                                      wallpaper;
-                                  controller.emailController.text = email;
-                                  controller.idController.text = id;
-                                  controller.isSelectNotificaiton.value =
-                                      isNotifActive;
+                                      print("get name ${wallpaperName}");
+                                      controller.playerNameController.value =
+                                          wallpaperName;
+                                      controller.playerLinkController.value =
+                                          wallpaper;
+                                      controller.emailController.text = email;
+                                      controller.idController.text = id;
+                                      controller.isSelectNotificaiton.value =
+                                          isNotifActive;
 
-                                  await Future.delayed(
-                                      const Duration(seconds: 1));
-                                  controller.getToken();
-                                }, controller.profileData.value?.email ?? "");
+                                      await Future.delayed(
+                                          const Duration(seconds: 1));
+                                      controller.getToken();
+                                      controller.update();
+                                    },
+                                    controller.profileData.value?.email ?? "");
                               },
                               child: Row(
                                 mainAxisSize: MainAxisSize.max,
@@ -367,7 +371,7 @@ class MypageScreen extends GetView<MypageController> {
                 Container(
                   color: BackgroundColor.fafafa,
                   padding:
-                      EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
+                  EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
                   child: Column(
                     children: [
                       Row(
@@ -414,63 +418,63 @@ class MypageScreen extends GetView<MypageController> {
                         children: [
                           controller.isLogin.value
                               ? SizedBox(
-                                  width: double.infinity,
-                                  height: 48.h,
-                                  child: OutlinedButton(
-                                    onPressed: () {
-                                      Get.to(() => const EditPasswordScreen());
-                                    },
-                                    style: ButtonStyle(
-                                      side: WidgetStateProperty.all(BorderSide(
-                                              color: BrandColor
-                                                  .main) // Set your desired color here
-                                          ),
-                                    ),
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.max,
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.center,
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      children: [
-                                        Icon(
-                                          size: 18.w,
-                                          IconsaxPlusLinear.security_safe,
-                                          color: BrandColor.main,
-                                        ),
-                                        SizedBox(
-                                          width: 8.w,
-                                        ),
-                                        CustomTextView(
-                                            LocaleKeys.edit_information.tr,
-                                            type: TDSFontType.titleSmall,
-                                            color: BrandColor.main),
-                                      ],
-                                    ),
+                            width: double.infinity,
+                            height: 48.h,
+                            child: OutlinedButton(
+                              onPressed: () {
+                                Get.to(() => const EditPasswordScreen());
+                              },
+                              style: ButtonStyle(
+                                side: WidgetStateProperty.all(BorderSide(
+                                    color: BrandColor
+                                        .main) // Set your desired color here
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.max,
+                                crossAxisAlignment:
+                                CrossAxisAlignment.center,
+                                mainAxisAlignment:
+                                MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    size: 18.w,
+                                    IconsaxPlusLinear.security_safe,
+                                    color: BrandColor.main,
                                   ),
-                                )
+                                  SizedBox(
+                                    width: 8.w,
+                                  ),
+                                  CustomTextView(
+                                      LocaleKeys.edit_password.tr,
+                                      type: TDSFontType.titleSmall,
+                                      color: BrandColor.main),
+                                ],
+                              ),
+                            ),
+                          )
                               : SizedBox(
-                                  width: double.infinity,
-                                  height: 48.h,
-                                  child: OutlinedButton(
-                                    onPressed: () async {
-                                      Get.to(LoginScreen(
-                                          controller.playerLinkController.value,
-                                          true,
-                                          controller
-                                              .playerNameController.value));
-                                    },
-                                    style: ButtonStyle(
-                                      side: WidgetStateProperty.all(BorderSide(
-                                              color: BrandColor
-                                                  .main) // Set your desired color here
-                                          ),
-                                    ),
-                                    child: CustomTextView(LocaleKeys.login.tr,
-                                        type: TDSFontType.titleSmall,
-                                        color: BrandColor.main),
-                                  ),
-                                )
+                            width: double.infinity,
+                            height: 48.h,
+                            child: OutlinedButton(
+                              onPressed: () async {
+                                Get.to(LoginScreen(
+                                    controller.playerLinkController.value,
+                                    true,
+                                    controller
+                                        .playerNameController.value));
+                              },
+                              style: ButtonStyle(
+                                side: WidgetStateProperty.all(BorderSide(
+                                    color: BrandColor
+                                        .main) // Set your desired color here
+                                ),
+                              ),
+                              child: CustomTextView(LocaleKeys.login.tr,
+                                  type: TDSFontType.titleSmall,
+                                  color: BrandColor.main),
+                            ),
+                          )
                         ],
                       ),
                       SizedBox(
@@ -480,104 +484,108 @@ class MypageScreen extends GetView<MypageController> {
                         children: [
                           controller.isLogin.value
                               ? Column(
-                                children: [
-                                  SizedBox(
-                                    width: double.infinity,
-                                    height: 48.h,
-                                    child: OutlinedButton(
-                                      onPressed: () {
-                                        Get.to(() => const DeleteAccountConfirmationScreen());
-                                      },
-                                      style: ButtonStyle(
-                                        side: WidgetStateProperty.all(BorderSide(
-                                            color: DangerColor
-                                                .main) // Set your desired color here
-                                        ),
-                                      ),
-                                      child: Row(
-                                        mainAxisSize: MainAxisSize.max,
-                                        crossAxisAlignment:
-                                        CrossAxisAlignment.center,
-                                        mainAxisAlignment:
-                                        MainAxisAlignment.center,
-                                        children: [
-                                          Icon(
-                                            size: 18.w,
-                                            IconsaxPlusLinear.profile_delete,
-                                            color: DangerColor.main,
-                                          ),
-                                          SizedBox(
-                                            width: 8.w,
-                                          ),
-                                          CustomTextView(
-                                              LocaleKeys.delete_account.tr,
-                                              type: TDSFontType.titleSmall,
-                                              color: DangerColor.main)
-                                        ],
-                                      ),
+                            children: [
+                              SizedBox(
+                                width: double.infinity,
+                                height: 48.h,
+                                child: OutlinedButton(
+                                  onPressed: () {
+                                    Get
+                                        .to(() => const DeleteAccountConfirmationScreen());
+                                  },
+                                  style: ButtonStyle(
+                                    side: WidgetStateProperty.all(BorderSide(
+                                        color: DangerColor
+                                            .main) // Set your desired color here
                                     ),
                                   ),
-                                  SizedBox(height: 19.h,),
-                                  SizedBox(
-                                      width: double.infinity,
-                                      height: 48.h,
-                                      child: OutlinedButton(
-                                        onPressed: () {
-                                          controller.logout();
-                                        },
-                                        style: ButtonStyle(
-                                          side: WidgetStateProperty.all(BorderSide(
-                                                  color: DangerColor
-                                                      .main) // Set your desired color here
-                                              ),
-                                        ),
-                                        child: Row(
-                                          mainAxisSize: MainAxisSize.max,
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.center,
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.center,
-                                          children: [
-                                            Icon(
-                                              size: 18.w,
-                                              IconsaxPlusLinear.logout,
-                                              color: DangerColor.main,
-                                            ),
-                                            SizedBox(
-                                              width: 8.w,
-                                            ),
-                                            CustomTextView(
-                                                LocaleKeys.logout.tr,
-                                                type: TDSFontType.titleSmall,
-                                                color: DangerColor.main)
-                                          ],
-                                        ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.max,
+                                    crossAxisAlignment:
+                                    CrossAxisAlignment.center,
+                                    mainAxisAlignment:
+                                    MainAxisAlignment.center,
+                                    children: [
+                                      Icon(
+                                        size: 18.w,
+                                        IconsaxPlusLinear.profile_delete,
+                                        color: DangerColor.main,
                                       ),
+                                      SizedBox(
+                                        width: 8.w,
+                                      ),
+                                      CustomTextView(
+                                          LocaleKeys.delete_account.tr,
+                                          type: TDSFontType.titleSmall,
+                                          color: DangerColor.main)
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              SizedBox(height: 19.h,),
+                              SizedBox(
+                                width: double.infinity,
+                                height: 48.h,
+                                child: OutlinedButton(
+                                  onPressed: () {
+                                    showLogoutConfirmation(
+                                      context,
+                                          () => controller.logout(),
+                                    );
+                                  },
+                                  style: ButtonStyle(
+                                    side: WidgetStateProperty.all(BorderSide(
+                                        color: DangerColor
+                                            .main) // Set your desired color here
                                     ),
-                                ],
-                              )
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.max,
+                                    crossAxisAlignment:
+                                    CrossAxisAlignment.center,
+                                    mainAxisAlignment:
+                                    MainAxisAlignment.center,
+                                    children: [
+                                      Icon(
+                                        size: 18.w,
+                                        IconsaxPlusLinear.logout,
+                                        color: DangerColor.main,
+                                      ),
+                                      SizedBox(
+                                        width: 8.w,
+                                      ),
+                                      CustomTextView(
+                                          LocaleKeys.logout.tr,
+                                          type: TDSFontType.titleSmall,
+                                          color: DangerColor.main)
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
+                          )
                               : SizedBox(
-                                  width: double.infinity,
-                                  height: 48.h,
-                                  child: OutlinedButton(
-                                    onPressed: () async {
-                                      Get.to(RegisterEmailFromHomeScreen(
-                                          controller.playerNameController.value,
-                                          controller
-                                              .playerLinkController.value));
-                                    },
-                                    style: ButtonStyle(
-                                      side: WidgetStateProperty.all(BorderSide(
-                                              color: BrandColor
-                                                  .main) // Set your desired color here
-                                          ),
-                                    ),
-                                    child: CustomTextView(
-                                        LocaleKeys.register.tr,
-                                        type: TDSFontType.titleSmall,
-                                        color: BrandColor.main),
-                                  ),
-                                )
+                            width: double.infinity,
+                            height: 48.h,
+                            child: OutlinedButton(
+                              onPressed: () async {
+                                Get.to(RegisterEmailFromHomeScreen(
+                                    controller.playerNameController.value,
+                                    controller
+                                        .playerLinkController.value));
+                              },
+                              style: ButtonStyle(
+                                side: WidgetStateProperty.all(BorderSide(
+                                    color: BrandColor
+                                        .main) // Set your desired color here
+                                ),
+                              ),
+                              child: CustomTextView(
+                                  LocaleKeys.register.tr,
+                                  type: TDSFontType.titleSmall,
+                                  color: BrandColor.main),
+                            ),
+                          )
                         ],
                       ),
                     ],
@@ -613,7 +621,8 @@ class MypageScreen extends GetView<MypageController> {
                                 decoration: TextDecoration.underline,
                               ),
                               text: LocaleKeys.privacy_policy.tr,
-                              recognizer: TapGestureRecognizer()..onTap = () {},
+                              recognizer: TapGestureRecognizer()
+                                ..onTap = () {},
                             ),
                             TextSpan(
                               style: TextStyle(
@@ -629,7 +638,8 @@ class MypageScreen extends GetView<MypageController> {
                                 decoration: TextDecoration.underline,
                               ),
                               text: LocaleKeys.term_of_use.tr,
-                              recognizer: TapGestureRecognizer()..onTap = () {},
+                              recognizer: TapGestureRecognizer()
+                                ..onTap = () {},
                             ),
                             TextSpan(
                               style: TextStyle(
@@ -652,6 +662,83 @@ class MypageScreen extends GetView<MypageController> {
             );
           }),
         ));
+  }
+
+  // Add this function at the bottom of the file
+  void showLogoutConfirmation(BuildContext context, VoidCallback onConfirm) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
+      ),
+      builder: (context) {
+        return Padding(
+          padding: EdgeInsets.all(16.w),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.info_outline,
+                color: WarningColor.main,
+                size: 24.w,
+              ),
+              SizedBox(height: 16.h),
+              CustomTextView(
+                LocaleKeys.logout_confirmation_title.tr,
+                type: TDSFontType.titleMedium,
+                color: TextColor.primary,
+                align: TextAlign.center,
+              ),
+              SizedBox(height: 8.h),
+              CustomTextView(
+                LocaleKeys.logout_confirmation_desc.tr,
+                type: TDSFontType.bodyTextMedium,
+                color: TextColor.secondary,
+                align: TextAlign.center,
+              ),
+              SizedBox(height: 24.h),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Get.back(),
+                      style: OutlinedButton.styleFrom(
+                        side: BorderSide(color: BorderColor.primary),
+                        padding: EdgeInsets.symmetric(vertical: 12.h),
+                      ),
+                      child: CustomTextView(
+                        LocaleKeys.cancel.tr,
+                        type: TDSFontType.labelLarge,
+                        color: TextColor.primary,
+                      ),
+                    ),
+                  ),
+                  SizedBox(width: 16.w),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Get.back();
+                        onConfirm();
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: BrandColor.main,
+                        padding: EdgeInsets.symmetric(vertical: 12.h),
+                      ),
+                      child: CustomTextView(
+                        LocaleKeys.confirm.tr,
+                        type: TDSFontType.labelLarge,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 }
 
