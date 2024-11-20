@@ -52,6 +52,10 @@ class MypageController extends FanClubConfirmationController {
 
     }
 
+
+    playerNameController.value =  MySharedPref.getWallpaperName() ?? "";
+    isSelectNotificaiton.value = MySharedPref.getNotification() == LocaleKeys.active.tr;
+
   }
 
   void getProfile(String token) async {

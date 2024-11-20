@@ -260,40 +260,48 @@ class MatchDetailScreen extends GetView<MatchDetailController> {
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  CustomTextView(
-                                    customField?.team_score_1?.first != null &&
-                                            customField!.team_score_1!.first !=
-                                                "試合前"
-                                        ? customField.team_score_1!.first
-                                        : "0",
-                                    style: TextStyle(
-                                        fontWeight: FontWeight.w700,
-                                        color: BrandColor.hover,
-                                        fontSize: 32.sp),
-                                  ),
-                                  SizedBox(
-                                    width: 8.w,
-                                  ),
-                                  CustomTextView("-",
-                                      style: TextStyle(
-                                          fontWeight: FontWeight.w700,
-                                          color: TextColor.primary,
-                                          fontSize: 32.sp)),
-                                  SizedBox(
-                                    width: 8.w,
-                                  ),
-                                  CustomTextView(
-                                      customField?.team_score_2?.first !=
-                                                  null &&
-                                              customField!
-                                                      .team_score_2!.first !=
-                                                  "試合前"
-                                          ? customField.team_score_2!.first
-                                          : "0",
-                                      style: TextStyle(
-                                          fontWeight: FontWeight.w700,
-                                          color: TextColor.primary,
-                                          fontSize: 32.sp)),
+                                  if (customField?.game_result?.first == LocaleKeys.pre_game.tr)
+                                    Column(
+                                      children: [
+                                        SizedBox(height: 16.h,),
+                                        CustomTextView(
+                                          LocaleKeys.pre_game.tr,
+                                          style: TDSTypography.titleMedium,
+                                        ),
+                                      ],
+                                    )
+                                  else
+                                    Row(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        CustomTextView(
+                                          customField?.team_score_1?.first ?? "0",
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.w700,
+                                            color: BrandColor.hover,
+                                            fontSize: 32.sp,
+                                          ),
+                                        ),
+                                        SizedBox(width: 8.w),
+                                        CustomTextView(
+                                          "-",
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.w700,
+                                            color: TextColor.primary,
+                                            fontSize: 32.sp,
+                                          ),
+                                        ),
+                                        SizedBox(width: 8.w),
+                                        CustomTextView(
+                                          customField?.team_score_2?.first ?? "0",
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.w700,
+                                            color: TextColor.primary,
+                                            fontSize: 32.sp,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
                                 ],
                               )
                             ],

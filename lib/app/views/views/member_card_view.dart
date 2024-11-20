@@ -18,7 +18,7 @@ class MemberCardView extends GetView {
       child: Stack(
         children: [
           SvgPicture.asset(
-            "assets/vectors/member_card/$memberType.svg",
+            "assets/vectors/member_card/${getIconName(memberType)}.svg",
             width: 343.w,
             height: 218.h,
           ),
@@ -49,5 +49,18 @@ class MemberCardView extends GetView {
         ],
       ),
     );
+  }
+
+  String getIconName(String playerMember) {
+    switch (playerMember) {
+      case "ビギナー" : return "beginner";
+      case "ワンシミズ" : return "one_shimz";
+      case "ジュニア" : return "junior";
+      case "江東区民" : return "koto";
+      case "レギュラー" : return "regular";
+      case "作成中" : return "premium";
+      case "激推し会員" : return "beginner";
+    }
+    return "";
   }
 }

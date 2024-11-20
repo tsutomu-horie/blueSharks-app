@@ -197,6 +197,7 @@ class LocaleKeys {
   static const wallpaper_setting = 'wallpaper_setting';
   static const notice = 'notice';
   static const edit_information = 'edit_information';
+  static const edit_password = 'edit_password';
   static const delete_account = 'delete_account';
   static const logout = 'logout';
   static const edit = 'edit';
@@ -247,6 +248,15 @@ class LocaleKeys {
   static const update_password_success = 'update_password_success';
   static const error_wallpaper_required = 'error_wallpaper_required';
   static const wallpaper_placeholder = 'wallpaper_placeholder';
+  static const logout_confirmation_title = 'logout_confirmation_title';
+  static const logout_confirmation_desc = 'logout_confirmation_desc';
+  static const all = 'all';
+  static const notice_tab = 'notice_tab';
+  static const event_information = 'event_information';
+  static const event_tab = 'event_tab';
+  static const activites = 'activites';
+  static const other_jp = 'other_jp';
+  static const pre_game = 'pre_game';
 }
 
 class Locales {
@@ -449,7 +459,8 @@ class Locales {
     'wallpaper_setting': '壁紙設定',
     'notice': '通知',
     'edit_information': '情報を編集する',
-    'delete_account': 'アカウントを削除',
+    'edit_password': '情報を編集する',
+    'delete_account': 'スワードを変更する',
     'logout': 'ログアウト',
     'edit': '編集',
     'privacy_policy_desc': 'ご登録いただいたお客様情報の取り扱いについては、当社',
@@ -497,5 +508,14 @@ class Locales {
     'update_password_success': 'パスワード更新成功',
     'error_wallpaper_required': '壁紙を選択してください。',
     'wallpaper_placeholder': '壁紙を選択してください',
+    'logout_confirmation_title': 'ログアウトしますか？',
+    'logout_confirmation_desc': 'アカウントからログアウトしてもよろしいですか？',
+    'all': 'ALL',
+    'notice_tab': 'お知らせ',
+    'event_information': '試合情報',
+    'event_tab': 'イベント情報',
+    'activites': '普及活動',
+    'other_jp': 'その他',
+    'pre_game': '試合前',
   };
 }

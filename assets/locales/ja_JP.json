@@ -183,7 +183,8 @@
   "wallpaper_setting": "壁紙設定",
   "notice": "通知",
   "edit_information": "情報を編集する",
-  "delete_account": "アカウントを削除",
+  "edit_password": "情報を編集する",
+  "delete_account": "スワードを変更する",
   "logout": "ログアウト",
   "edit": "編集",
   "privacy_policy_desc": "ご登録いただいたお客様情報の取り扱いについては、当社",
@@ -228,5 +229,14 @@
   "resend": "再送信",
   "update_password_success": "パスワード更新成功",
   "error_wallpaper_required": "壁紙を選択してください。",
-  "wallpaper_placeholder": "壁紙を選択してください"
+  "wallpaper_placeholder": "壁紙を選択してください",
+  "logout_confirmation_title": "ログアウトしますか？",
+  "logout_confirmation_desc": "アカウントからログアウトしてもよろしいですか？",
+  "all": "ALL",
+  "notice_tab": "お知らせ",
+  "event_information": "試合情報",
+  "event_tab": "イベント情報",
+  "activites": "普及活動",
+  "other_jp": "その他",
+  "pre_game": "試合前"
 }

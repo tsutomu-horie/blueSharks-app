@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 import 'package:get/get.dart';
+import 'package:iconsax_plus/iconsax_plus.dart';
 import 'package:koto_blue_sharks/app/data/models/info/post.dart';
 import 'package:koto_blue_sharks/app/data/models/member/member.dart';
 import 'package:koto_blue_sharks/app/views/views/custom_image_view.dart';
@@ -83,7 +84,7 @@ class HomeScreen extends GetView<MainController> {
                 scrollDirection: Axis.horizontal,
                 // Set scrolling direction to horizontal
                 child: Padding(
-                  padding: EdgeInsets.only(left: 37.w, top: 20.h, bottom: 20.h),
+                  padding: EdgeInsets.only(left: 16.w, top: 20.h, bottom: 20.h),
                   child: Row(
                     children: nextMatchData.map((element) {
                       final gameDate = element.custom_field.gameDate ?? [];
@@ -173,7 +174,7 @@ class HomeScreen extends GetView<MainController> {
           Row(
             children: [
               SizedBox(
-                width: 16.w,
+                width: 37.w,
               ),
               Flexible(
                 child: Stack(
@@ -182,7 +183,8 @@ class HomeScreen extends GetView<MainController> {
                     ClipRRect(
                       borderRadius: BorderRadius.circular(12.r),
                       child: SizedBox(
-                        width: double.infinity,
+                        width: 300.w,
+                        height: 133.h,
                         child: Image.asset(
                           "assets/images/img_banner_ticket.png",
                           fit: BoxFit
@@ -195,18 +197,17 @@ class HomeScreen extends GetView<MainController> {
                       borderRadius: BorderRadius.circular(12.r),
                       // Apply the same borderRadius here
                       child: Container(
+                        width: 300.w,
+                        height: 133.h,
                         padding: EdgeInsets.symmetric(
-                            horizontal: 16.w, vertical: 24.h),
+                            horizontal: 16.w, vertical: 16.h),
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(12.r),
                           // Ensure the radius is applied
                           color: Colors.black.withOpacity(
                               0.5), // Optional: add some background overlay color
                         ),
-                        child: SizedBox(
-                          width: double.infinity,
-                          height: 120.h,
-                          // Set a fixed height for the Container
+                        child: SizedBox(                          // Set a fixed height for the Container
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -225,29 +226,27 @@ class HomeScreen extends GetView<MainController> {
                                     LocaleKeys.ticket_information.tr,
                                     style: TextStyle(
                                       color: TextColor.inverse,
-                                      fontSize: 24.sp,
+                                      fontSize: 20.sp,
                                       fontWeight: FontWeight.w600,
                                     ),
                                   ),
                                 ],
                               ),
                               const Spacer(), // Spacer will push the button down
-                              ElevatedButton.icon(
-                                onPressed: () {
+                              SizedBox(
+                                height: 32.h,
+                                child: ElevatedButton.icon(
+                                  onPressed: () {
 
-                                },
-                                label: CustomTextView(
-                                  LocaleKeys.buy_ticket.tr,
-                                  color: TextColor.primary,
-                                  type: TDSFontType.labelMedium,
+                                  },
+                                  label: CustomTextView(
+                                    LocaleKeys.buy_ticket.tr,
+                                    color: TextColor.primary,
+                                    type: TDSFontType.labelMedium,
+                                  ),
+                                  icon: Icon(IconsaxPlusBold.ticket, color: BrandColor.main, size: 14.w,),
+                                  style: const ButtonStyle(),
                                 ),
-                                icon: SvgPicture.asset(
-                                  width: 14.w,
-                                  "assets/vectors/ic_goods.svg",
-                                  colorFilter: ColorFilter.mode(
-                                      BrandColor.main, BlendMode.srcIn),
-                                ),
-                                style: const ButtonStyle(),
                               ),
                             ],
                           ),
