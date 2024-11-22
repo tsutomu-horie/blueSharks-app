@@ -570,9 +570,9 @@ class MypageScreen extends GetView<MypageController> {
                             child: OutlinedButton(
                               onPressed: () async {
                                 Get.to(RegisterEmailFromHomeScreen(
-                                    controller.playerNameController.value,
+                                    controller.playerLinkController.value,
                                     controller
-                                        .playerLinkController.value));
+                                        .playerNameController.value));
                               },
                               style: ButtonStyle(
                                 side: WidgetStateProperty.all(BorderSide(

@@ -223,7 +223,7 @@ class GameInfoScreen extends GetView<GameInfoController> {
                                       homeStatus:
                                           snapshot.data?['matchStatus'] ?? "",
                                     ));
-                                  },
+                                  }, isFromHome: false,
                                 );
                               }
                             },

@@ -30,7 +30,7 @@ class RegisterMemberFanclubController extends GetxController {
   }
 
   void onRegister(String otpId, String email, Function showError, Function showSuccess, String playerLink, String playerName, BuildContext context) async {
-    print("onRrror");
+    print("set wallpaper ${playerLink}");
     final response = await apiProvider.register(idTextFieldController.text, email, otpId, passwordTextFieldController.text, (String errorText){
       Utils.showError(context, "Something wrong", errorText);
     });

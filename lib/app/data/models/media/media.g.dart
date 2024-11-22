@@ -194,3 +194,15 @@ Map<String, dynamic> _$$WallpaperImplToJson(_$WallpaperImpl instance) =>
       'category_name': instance.category_name,
       'photo': instance.photo,
     };
+
+_$CustomBannerImpl _$$CustomBannerImplFromJson(Map<String, dynamic> json) =>
+    _$CustomBannerImpl(
+      id: (json['id'] as num).toInt(),
+      photo: json['photo'] as String,
+    );
+
+Map<String, dynamic> _$$CustomBannerImplToJson(_$CustomBannerImpl instance) =>
+    <String, dynamic>{
+      'id': instance.id,
+      'photo': instance.photo,
+    };

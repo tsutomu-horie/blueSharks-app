@@ -1985,3 +1985,157 @@ abstract class _Wallpaper implements Wallpaper {
   _$$WallpaperImplCopyWith<_$WallpaperImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }
+
+CustomBanner _$CustomBannerFromJson(Map<String, dynamic> json) {
+  return _CustomBanner.fromJson(json);
+}
+
+/// @nodoc
+mixin _$CustomBanner {
+  int get id => throw _privateConstructorUsedError;
+  String get photo => throw _privateConstructorUsedError;
+
+  Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
+  @JsonKey(ignore: true)
+  $CustomBannerCopyWith<CustomBanner> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class $CustomBannerCopyWith<$Res> {
+  factory $CustomBannerCopyWith(
+          CustomBanner value, $Res Function(CustomBanner) then) =
+      _$CustomBannerCopyWithImpl<$Res, CustomBanner>;
+  @useResult
+  $Res call({int id, String photo});
+}
+
+/// @nodoc
+class _$CustomBannerCopyWithImpl<$Res, $Val extends CustomBanner>
+    implements $CustomBannerCopyWith<$Res> {
+  _$CustomBannerCopyWithImpl(this._value, this._then);
+
+  // ignore: unused_field
+  final $Val _value;
+  // ignore: unused_field
+  final $Res Function($Val) _then;
+
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? id = null,
+    Object? photo = null,
+  }) {
+    return _then(_value.copyWith(
+      id: null == id
+          ? _value.id
+          : id // ignore: cast_nullable_to_non_nullable
+              as int,
+      photo: null == photo
+          ? _value.photo
+          : photo // ignore: cast_nullable_to_non_nullable
+              as String,
+    ) as $Val);
+  }
+}
+
+/// @nodoc
+abstract class _$$CustomBannerImplCopyWith<$Res>
+    implements $CustomBannerCopyWith<$Res> {
+  factory _$$CustomBannerImplCopyWith(
+          _$CustomBannerImpl value, $Res Function(_$CustomBannerImpl) then) =
+      __$$CustomBannerImplCopyWithImpl<$Res>;
+  @override
+  @useResult
+  $Res call({int id, String photo});
+}
+
+/// @nodoc
+class __$$CustomBannerImplCopyWithImpl<$Res>
+    extends _$CustomBannerCopyWithImpl<$Res, _$CustomBannerImpl>
+    implements _$$CustomBannerImplCopyWith<$Res> {
+  __$$CustomBannerImplCopyWithImpl(
+      _$CustomBannerImpl _value, $Res Function(_$CustomBannerImpl) _then)
+      : super(_value, _then);
+
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? id = null,
+    Object? photo = null,
+  }) {
+    return _then(_$CustomBannerImpl(
+      id: null == id
+          ? _value.id
+          : id // ignore: cast_nullable_to_non_nullable
+              as int,
+      photo: null == photo
+          ? _value.photo
+          : photo // ignore: cast_nullable_to_non_nullable
+              as String,
+    ));
+  }
+}
+
+/// @nodoc
+@JsonSerializable()
+class _$CustomBannerImpl implements _CustomBanner {
+  const _$CustomBannerImpl({required this.id, required this.photo});
+
+  factory _$CustomBannerImpl.fromJson(Map<String, dynamic> json) =>
+      _$$CustomBannerImplFromJson(json);
+
+  @override
+  final int id;
+  @override
+  final String photo;
+
+  @override
+  String toString() {
+    return 'CustomBanner(id: $id, photo: $photo)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$CustomBannerImpl &&
+            (identical(other.id, id) || other.id == id) &&
+            (identical(other.photo, photo) || other.photo == photo));
+  }
+
+  @JsonKey(ignore: true)
+  @override
+  int get hashCode => Object.hash(runtimeType, id, photo);
+
+  @JsonKey(ignore: true)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$CustomBannerImplCopyWith<_$CustomBannerImpl> get copyWith =>
+      __$$CustomBannerImplCopyWithImpl<_$CustomBannerImpl>(this, _$identity);
+
+  @override
+  Map<String, dynamic> toJson() {
+    return _$$CustomBannerImplToJson(
+      this,
+    );
+  }
+}
+
+abstract class _CustomBanner implements CustomBanner {
+  const factory _CustomBanner(
+      {required final int id,
+      required final String photo}) = _$CustomBannerImpl;
+
+  factory _CustomBanner.fromJson(Map<String, dynamic> json) =
+      _$CustomBannerImpl.fromJson;
+
+  @override
+  int get id;
+  @override
+  String get photo;
+  @override
+  @JsonKey(ignore: true)
+  _$$CustomBannerImplCopyWith<_$CustomBannerImpl> get copyWith =>
+      throw _privateConstructorUsedError;
+}

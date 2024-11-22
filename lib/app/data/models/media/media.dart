@@ -131,3 +131,13 @@ class Wallpaper with _$Wallpaper {
       _$WallpaperFromJson(json);
 }
 
+@freezed
+class CustomBanner with _$CustomBanner {
+  const factory CustomBanner({
+    required int id,
+    required String photo,
+  }) = _CustomBanner;
+
+  factory CustomBanner.fromJson(Map<String, dynamic> json) =>
+      _$CustomBannerFromJson(json);
+}

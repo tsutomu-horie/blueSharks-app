@@ -36,6 +36,8 @@ class RegisterEmailController extends GetxController {
     MySharedPref.setWallpaper(selectedPlayer);
     MySharedPref.setFirstOpen("alreadyOpen");
     MySharedPref.setWallpaperName(playerName);
+
+    print("set wallpaper link ${selectedPlayer}");
     Get.offAll(() => const MainScreen());
   }
 }

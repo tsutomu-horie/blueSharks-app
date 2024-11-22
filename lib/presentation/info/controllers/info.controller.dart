@@ -4,6 +4,7 @@ import 'package:koto_blue_sharks/app/data/api/info/info_provider.dart';
 import 'package:koto_blue_sharks/app/data/models/info/post.dart';
 import 'package:koto_blue_sharks/app/services/AnalyticsService.dart';
 import 'package:koto_blue_sharks/infrastructure/navigation/routes.dart';
+import 'package:koto_blue_sharks/utils/Constant.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class InfoController extends GetxController {
@@ -33,7 +34,7 @@ class InfoController extends GetxController {
   }
 
   void launchInstagram() async {
-    final Uri instagramUrl = Uri.parse('https://www.instagram.com/shimz.bluesharks/'); // Replace with your profile URL
+    final Uri instagramUrl = Uri.parse(Constants.instagramUrl); // Replace with your profile URL
     if (await canLaunchUrl(instagramUrl)) {
       await launchUrl(instagramUrl);
     } else {
@@ -42,7 +43,7 @@ class InfoController extends GetxController {
   }
 
   void launchTwitter() async {
-    final Uri instagramUrl = Uri.parse('https://x.com/Bluesharks_2020'); // Replace with your profile URL
+    final Uri instagramUrl = Uri.parse(Constants.xUrl); // Replace with your profile URL
     if (await canLaunchUrl(instagramUrl)) {
       await launchUrl(instagramUrl);
     } else {

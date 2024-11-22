@@ -21,7 +21,7 @@ class NotificationListScreen extends GetView<NotificationListController> {
     return Scaffold(
       appBar: AppBar(
         title: CustomTextView(
-          LocaleKeys.notice.tr,
+          LocaleKeys.news_title.tr,
           type: TDSFontType.titleMedium,
           color: TextColor.inverse,
         ),

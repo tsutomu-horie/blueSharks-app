@@ -23,7 +23,7 @@ class MatchItemView extends GetView {
       required this.opponentName,
       this.gameResult,
       this.team1Score,
-      this.team2Score, required this.onTap});
+      this.team2Score, required this.onTap, required this.isFromHome});
 
   final String matchStatus;
   final String title;
@@ -37,6 +37,7 @@ class MatchItemView extends GetView {
   final String? gameResult;
   final String? team1Score;
   final String? team2Score;
+  final bool isFromHome;
 
   final Function onTap;
 
@@ -101,7 +102,7 @@ class MatchItemView extends GetView {
                   SizedBox(width: 16.w,),
                 ],
               ),
-              if (gameResult != null && gameResult != "試合前")
+              if (!isFromHome)
                 Column(
                   children: [
                     SizedBox(height: 12.h,),
@@ -124,18 +125,18 @@ class MatchItemView extends GetView {
                                     child: Row(
                                       mainAxisAlignment: MainAxisAlignment.center,
                                       children: [
-                                      CustomTextView(team1Score ?? "0", style: TextStyle(fontWeight: FontWeight.w700, color: BrandColor.main, fontSize: 32.sp),),
+                                      CustomTextView(team1Score ?? "", style: TextStyle(fontWeight: FontWeight.w700, color: BrandColor.main, fontSize: 32.sp),),
                                       SizedBox(width: 8.w,),
                                       CustomTextView("-", style: TextStyle(fontWeight: FontWeight.w700, color: TextColor.primary, fontSize: 32.sp),),
                                       SizedBox(width: 8.w,),
-                                      CustomTextView(team2Score ?? "0", style: TextStyle(fontWeight: FontWeight.w700, color: TextColor.primary, fontSize: 32.sp),),
+                                      CustomTextView(team2Score ?? "", style: TextStyle(fontWeight: FontWeight.w700, color: TextColor.primary, fontSize: 32.sp),),
                                     ],),
                                   ),
                                 ),
                                 Container(
                                   padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 6.w),
-                                  color: gameResult! == "WIN" ? BrandColor.background : BackgroundColor.muted,
-                                  child: CustomTextView(gameResult!, style: TextStyle(fontSize: 12.sp, color: TextColor.inverse, fontWeight: FontWeight.w500),),
+                                  color: gameResult == "WIN" ? BrandColor.background : ( gameResult == "LOSE" ? BackgroundColor.muted : SuccessColor.main),
+                                  child: CustomTextView(gameResult ?? "試合前", style: TextStyle(fontSize: 12.sp, color: TextColor.inverse, fontWeight: FontWeight.w500),),
                                 ),
                                 SizedBox(width: 12.w,),
                               ],
