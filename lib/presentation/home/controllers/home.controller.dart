@@ -24,6 +24,7 @@ class HomeController extends GetxController {
       Rx<List<MatchResultBySeason>>([]);
   final text = "".obs;
   final Rx<List<Post>> topicsData = Rx([]);
+  final Rx<List<CustomBanner>> bannerData = Rx([]);
   final selectedWallpaper = "".obs;
   final selectedWallpaperName = "".obs;
 
@@ -36,18 +37,25 @@ class HomeController extends GetxController {
     infoProvider.onInit();
     fetchMatchResult();
     getTopics();
+    getBanner();
     print("getwallpaper 1");
+  }
+
+  void getBanner() async {
+    final response = await mediaProvider.fetchBanner();
+
+    bannerData.value = response;
   }
 
   void getWallpaper() async {
     mediaProvider.onInit();
 
-    print("getwallpaper 2");
+
 
     final wallpaperLink = MySharedPref.getWallpaper();
     final wallpaperName = MySharedPref.getWallpaperName();
 
-
+    print("getwallpaper 2 $wallpaperName");
     if (wallpaperLink != null) {
       selectedWallpaper.value = wallpaperLink;
       selectedWallpaperName.value = wallpaperName ?? "";

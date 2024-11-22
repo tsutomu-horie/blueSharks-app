@@ -70,16 +70,28 @@ class MediaProvider extends GetConnect {
       return (response.body['data'] as List)
         .map((json) => WallpaperCategory.fromJson(json as Map<String, dynamic>))
         .toList();
+  }
 
-    // if (response.statusCode == 200) {
-    //   final data = jsonDecode(response.body)['data'] as List;
-    //
-    //   return data
-    //       .map((categoryJson) =>
-    //       WallpaperCategory.fromJson(categoryJson as Map<String, dynamic>))
-    //       .toList();
-    // } else {
-    //   throw Exception('Failed to load wallpapers');
-    // }
+  Future<List<CustomBanner>> fetchBanner() async {
+    // final response = await get('wallpapers');
+    httpClient.baseUrl = Constants.baseUrlAuthApi;
+    final url = Uri.parse('banners');
+    print("load ${httpClient.baseUrl}${url.toString()}");
+
+    final response = await get(
+        url.toString() // Send the body in the request
+    );
+
+    print("Login successful2 , ${response.body}");
+
+    if (response.hasError) {
+      throw Exception('Failed to login: ${response.statusText}');
+    }
+
+    print("Login successful, received data: ${response.body}");
+
+    return (response.body['data'] as List)
+        .map((json) => CustomBanner.fromJson(json as Map<String, dynamic>))
+        .toList();
   }
 }

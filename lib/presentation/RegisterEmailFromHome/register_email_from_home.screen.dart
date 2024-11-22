@@ -185,6 +185,7 @@ class RegisterEmailFromHomeScreen
                     ),
                     onPressed: () {
                       Get.back();
+                      print("selectedPlayerLink ${selectedPlayer}");
                       Get.to(() => RegisterOtpScreen(
                         isRegister: true,
                         fromScreen: "register_home",

@@ -16,4 +16,10 @@ class Constants {
   static const stadiumTitle = '清水建設 江東ブルーシャークス\nホストグラウンド';
   static const stadiumSubtitle = '荏田グラウンド';
   static const stadiumDescription = '〒224-0008 神奈川県横浜市都筑区\n荏田南町741番地';
+
+  static const ticketsUrl = 'https://blue-sharks.jp/tickets/';
+  static const fanClubUrl = 'https://blue-sharks.jp/fanclub/';
+  static const shopUrl = 'https://bluesharks.base.shop/';
+  static const instagramUrl = 'https://www.instagram.com/shimz.bluesharks/';
+  static const xUrl = 'https://x.com/Bluesharks_2020';
 }

@@ -28,7 +28,10 @@ class MemberProvider extends GetConnect {
 
   // Fetch categories
   Future<List<Category>> getCategories({int page = 1}) async {
+    print("getaaa \n ${baseUrl}categories?parent=2&page=$page");
+
     final response = await get('categories?parent=2&page=$page');
+
     if (response.hasError || response.body.isEmpty) {
       return []; // Return an empty list if no data or error occurs
     }

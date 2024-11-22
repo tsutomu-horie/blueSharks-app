@@ -253,7 +253,7 @@ class FanClubConfirmationScreen extends GetView<FanClubConfirmationController> {
                             vertical: 12.h, horizontal: 16.w),
                         child: Obx(() {
                           return CustomTextView(
-                            controller.playerLinkController.value,
+                            controller.playerNameController.value != "" ? controller.playerNameController.value : LocaleKeys.default_jp.tr,
                             align: TextAlign.start,
                             color: TextColor.primary,
                             type: TDSFontType.bodyTextMedium,

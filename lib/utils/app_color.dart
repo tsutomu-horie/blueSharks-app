@@ -81,7 +81,7 @@ abstract class DangerColor {
 }
 
 abstract class SuccessColor {
-  static final main = RGBA.rgba(45, 110, 80, 1);
+  static final main = RGBA.rgba(42, 155, 8, 1);
   static final hover = RGBA.rgba(36, 88, 65, 1);
   static final pressed = RGBA.rgba(31, 70, 53, 1);
   static final surface = RGBA.rgba(241, 248, 244, 1);

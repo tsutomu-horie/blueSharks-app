@@ -146,7 +146,8 @@ class _MainScreenState extends State<MainScreen> {
                               height: 24.h,
                             ),
                             LocaleKeys.fan_club.tr, (){
-                          Get.to(() => const FanclubScreen());
+                          // Get.to(() => const FanclubScreen());
+                          controller.launchFanClub();
                         }),
                         SizedBox(
                           width: 8.w,
@@ -158,7 +159,7 @@ class _MainScreenState extends State<MainScreen> {
                               height: 24.h,
                             ),
                             LocaleKeys.ticket.tr, (){
-      
+                          controller.launchTicket();
                         }),
                         SizedBox(
                           width: 8.w,
@@ -170,7 +171,7 @@ class _MainScreenState extends State<MainScreen> {
                               height: 24.h,
                             ),
                             LocaleKeys.goods.tr, (){
-      
+                              controller.launchGood();
                         }),
                       ],
                     )

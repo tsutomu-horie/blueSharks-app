@@ -9,18 +9,19 @@ import 'package:koto_blue_sharks/infrastructure/navigation/routes.dart';
 import 'package:syncfusion_flutter_calendar/calendar.dart';
 
 class CalendarScreenController extends GetxController {
+  final String publicCalendarAllSchedulue = 'bluesharksrugby.official@gmail.com'; // Replace with your public calendar ID
   final String publicCalendarIdGameSchedulue = '49d1fb0089629f5d035c69511fcd066cca299e022b41cc6ba43ed818090d6631@group.calendar.google.com'; // Replace with your public calendar ID
   final String publicCalendarIdOpenPractice = '49d1fb0089629f5d035c69511fcd066cca299e022b41cc6ba43ed818090d6631@group.calendar.google.com'; // Replace with your public calendar ID
   final String publicCalendarIdEvent = '49d1fb0089629f5d035c69511fcd066cca299e022b41cc6ba43ed818090d6631@group.calendar.google.com'; // Replace with your public calendar ID
-  final String publicCalendarIdPlayerBirthday = 'bluesharksrugby.official@gmail.com'; // Replace with your public calendar ID
+  final String publicCalendarIdPlayerBirthday = '49d1fb0089629f5d035c69511fcd066cca299e022b41cc6ba43ed818090d6631@group.calendar.google.com'; // Replace with your public calendar ID
   final String apiKey = 'AIzaSyAJMnARaJbvTrp5s9opMyyjFbZVVj0d0xY'; // Replace with your Google API Key
   RxList<CalendarEvent> publicEvents = <CalendarEvent>[].obs;
-  final selectedYear = LocaleKeys.game_schedule.tr.obs;
+  final selectedYear = LocaleKeys.all.tr.obs;
 
   final Rx<DateTime> minDate = DateTime.now().obs;
   final Rx<DateTime> maxDate = DateTime.now().obs;
 
-  final List<String> filterEvent = [LocaleKeys.game_schedule.tr, LocaleKeys.open_practice_match.tr, LocaleKeys.event.tr, LocaleKeys.player_birthday.tr];
+  final List<String> filterEvent = [LocaleKeys.all.tr, LocaleKeys.game_schedule.tr, LocaleKeys.open_practice_match.tr, LocaleKeys.event.tr, LocaleKeys.player_birthday.tr];
 
   var calendarView = CalendarView.month.obs;
 
@@ -60,7 +61,9 @@ class CalendarScreenController extends GetxController {
     }
 
     print("onCHange ${selectedYear.value}");
-    if (selectedYear.value == LocaleKeys.game_schedule.tr) {
+    if (selectedYear.value == LocaleKeys.all.tr) {
+      fetchPublicEvents(minDate, maxDate, publicCalendarAllSchedulue);
+    } else if (selectedYear.value == LocaleKeys.game_schedule.tr) {
       fetchPublicEvents(minDate, maxDate, publicCalendarIdGameSchedulue);
     } else if (selectedYear.value == LocaleKeys.open_practice_match.tr) {
       fetchPublicEvents(minDate, maxDate, publicCalendarIdOpenPractice);
@@ -86,6 +89,7 @@ class CalendarScreenController extends GetxController {
         final data = json.decode(response.body);
         final List<dynamic> events = data['items'];
 
+        print("get data\n ${data}");
         // Map the event data to your CalendarEvent model
         final fetchedEvents = events.map((eventData) {
           return CalendarEvent(
