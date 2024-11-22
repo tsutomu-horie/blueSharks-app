@@ -249,7 +249,7 @@ class MypageScreen extends GetView<MypageController> {
                                     vertical: 12.h, horizontal: 16.w),
                                 child: Obx(() {
                                   return CustomTextView(
-                                    controller.playerNameController.value,
+                                    controller.playerNameController.value != "" ? controller.playerNameController.value : LocaleKeys.default_jp.tr,
                                     align: TextAlign.start,
                                     color: TextColor.primary,
                                     type: TDSFontType.bodyTextMedium,
@@ -446,7 +446,7 @@ class MypageScreen extends GetView<MypageController> {
                                     width: 8.w,
                                   ),
                                   CustomTextView(
-                                      LocaleKeys.edit_password.tr,
+                                      LocaleKeys.change_password.tr,
                                       type: TDSFontType.titleSmall,
                                       color: BrandColor.main),
                                 ],

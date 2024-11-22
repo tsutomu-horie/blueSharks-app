@@ -14,8 +14,8 @@ class DefaultAppBarView extends StatelessWidget implements PreferredSizeWidget {
         backgroundColor: Colors.white,
         title: SvgPicture.asset(
           "assets/vectors/app_logo.svg",
-          width: 56.w,
-          height: 56.h,
+          width: 46.w,
+          height: 46.h,
         ),
         centerTitle: true,
         leading: IconButton(

@@ -80,8 +80,8 @@ class RegisterOtpScreen extends GetView<RegisterOtpController> {
         backgroundColor: Colors.white,
         title: SvgPicture.asset(
           "assets/vectors/app_logo.svg",
-          width: 56.w,
-          height: 56.h,
+          width: 46.w,
+          height: 46.h,
         ),
         centerTitle: true,
         leading: IconButton(
@@ -200,57 +200,80 @@ class RegisterOtpScreen extends GetView<RegisterOtpController> {
                 SizedBox(
                   height: 20.h,
                 ),
-                if (fromScreen != "forgotPasswordHome")
-                  InkWell(
-                    onTap: () {
-                      print("resend");
-                      controller.resendOtp(email, context, otpId, isRegister);
-                    },
-                    child: CustomTextView(
-                      LocaleKeys.resend_otp_email.tr,
-
-                      style: TextStyle(color: BrandColor.main,
-                          decoration: TextDecoration.underline,
-                          fontWeight: FontWeight.w700),
-                    ),
-                  )
-                else
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    // Ensure wrapping of content
+                // if (fromScreen != "forgotPasswordHome")
+                  Row(
                     children: [
-                      RichText(
-                        textAlign: TextAlign.start,
-                        text: TextSpan(
-                          children: [
-                            TextSpan(
-                              style: TextStyle(
-                                color: TextColor.secondary,
-                                fontSize: 14.sp,
-
-                              ),
-                              text: "${LocaleKeys.not_receive_otp.tr} ",
-                            ),
-                            TextSpan(
-                              style: TextStyle(
-                                color: BrandColor.main,
-                                fontSize: 14.sp,
-                                decoration: TextDecoration.underline,
-
-                              ),
-                              text: LocaleKeys.resend.tr,
-                              recognizer: TapGestureRecognizer()
-                                ..onTap = () {
-                                  controller.resendOtp(
-                                      email, context, otpId, isRegister);
-                                },
-                            ),
-                          ],
+                      CustomTextView(
+                        LocaleKeys.request_resend_otp.tr,
+                        style: TextStyle(
+                          color: TextColor.secondary,
                         ),
                       ),
+                      SizedBox(width: 4.w),
+                      Obx(() {
+                        if (!controller.canResend.value) {
+                          return CustomTextView(
+                            controller.formattedTime,
+                            style: TextStyle(
+                              color: BrandColor.main,
+                            ),
+                          );
+                        } else {
+                          return InkWell(
+                            onTap: () {
+                              controller.handleResendOtp(
+                                  email, context, otpId, isRegister);
+                            },
+                            child: CustomTextView(
+                              LocaleKeys.resend.tr,
+                              style: TextStyle(
+                                color: BrandColor.main,
+                                decoration: TextDecoration.underline,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          );
+                        }
+                      }),
                     ],
                   )
+                // else
+                //   Column(
+                //     crossAxisAlignment: CrossAxisAlignment.start,
+                //     mainAxisSize: MainAxisSize.min,
+                //     // Ensure wrapping of content
+                //     children: [
+                //       RichText(
+                //         textAlign: TextAlign.start,
+                //         text: TextSpan(
+                //           children: [
+                //             TextSpan(
+                //               style: TextStyle(
+                //                 color: TextColor.secondary,
+                //                 fontSize: 14.sp,
+                //
+                //               ),
+                //               text: "${LocaleKeys.not_receive_otp.tr} ",
+                //             ),
+                //             TextSpan(
+                //               style: TextStyle(
+                //                 color: BrandColor.main,
+                //                 fontSize: 14.sp,
+                //                 decoration: TextDecoration.underline,
+                //
+                //               ),
+                //               text: LocaleKeys.resend.tr,
+                //               recognizer: TapGestureRecognizer()
+                //                 ..onTap = () {
+                //                   controller.resendOtp(
+                //                       email, context, otpId, isRegister);
+                //                 },
+                //             ),
+                //           ],
+                //         ),
+                //       ),
+                //     ],
+                //   )
               ],
             ),
           ),
@@ -280,4 +303,58 @@ class RegisterOtpScreen extends GetView<RegisterOtpController> {
       ),
     );
   }
+
+  // void showLimitDialog(BuildContext context) {
+  //   showDialog(
+  //     context: context,
+  //     barrierDismissible: false,
+  //     builder: (BuildContext context) {
+  //       return Dialog(
+  //         shape: RoundedRectangleBorder(
+  //           borderRadius: BorderRadius.circular(20.r),
+  //         ),
+  //         child: Padding(
+  //           padding: EdgeInsets.all(16.w),
+  //           child: Column(
+  //             mainAxisSize: MainAxisSize.min,
+  //             children: [
+  //               Icon(
+  //                 Icon
+  //                 color: WarningColor.main,
+  //                 size: 48.w,
+  //               ),
+  //               SizedBox(height: 16.h),
+  //               CustomTextView(
+  //                 LocaleKeys.otp_limit_title.tr,
+  //                 type: TDSFontType.titleMedium,
+  //                 align: TextAlign.center,
+  //               ),
+  //               SizedBox(height: 8.h),
+  //               CustomTextView(
+  //                 LocaleKeys.otp_limit_message.tr,
+  //                 type: TDSFontType.bodyTextMedium,
+  //                 color: TextColor.secondary,
+  //                 align: TextAlign.center,
+  //               ),
+  //               SizedBox(height: 24.h),
+  //               SizedBox(
+  //                 width: double.infinity,
+  //                 child: ElevatedButton(
+  //                   style: ElevatedButton.styleFrom(
+  //                     backgroundColor: BrandColor.main,
+  //                   ),
+  //                   onPressed: () => Get.back(),
+  //                   child: CustomTextView(
+  //                     LocaleKeys.close.tr,
+  //                     color: Colors.white,
+  //                   ),
+  //                 ),
+  //               ),
+  //             ],
+  //           ),
+  //         ),
+  //       );
+  //     },
+  //   );
+  // }
 }

@@ -135,11 +135,11 @@ class GalleryScreenDetailScreen extends GetView<GalleryScreenDetailController> {
                   ),
                   itemCount: controller.album.length,
                   itemBuilder: (context, playerIndex) {
-                    return Flexible(child: SizedBox(width: double.infinity,
+                    return SizedBox(width: double.infinity,
                         child: CustomImageView(
                             radius: 0.r,
                             image: controller.album[playerIndex].galleries
-                                .photo ?? "")));
+                                .photo ?? ""));
                   },
                 );
               }),

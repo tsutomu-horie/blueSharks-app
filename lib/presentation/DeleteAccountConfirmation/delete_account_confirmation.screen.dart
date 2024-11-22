@@ -92,14 +92,28 @@ class DeleteAccountConfirmationScreen
           padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
           child: Obx(() {
             return ElevatedButton(
+
               style: ElevatedButton.styleFrom(
                 backgroundColor: deleteAccountConfirmationController.emailText
                     .value == "消去" ||
                     deleteAccountConfirmationController.emailText.value ==
                         "delete" ? TextColor.error : BackgroundColor.disabled,
+
+                overlayColor: deleteAccountConfirmationController.emailText
+                    .value == "消去" ||
+                    deleteAccountConfirmationController.emailText.value ==
+                        "delete" ? null : Colors.transparent
               ),
               onPressed: () {
-                showDeleteAccountBottomSheet(context, deleteAccountConfirmationController.onDeleteAccount);
+                if (deleteAccountConfirmationController.emailText
+                    .value == "消去" ||
+                    deleteAccountConfirmationController.emailText.value ==
+                        "delete") {
+                  showDeleteAccountBottomSheet(context,
+                      deleteAccountConfirmationController.onDeleteAccount);
+                } else {
+                  null;
+                }
               },
               child: CustomTextView(
                 LocaleKeys.delete_account_button.tr,

@@ -80,17 +80,15 @@ class MatchItemView extends GetView {
                     mainAxisAlignment: MainAxisAlignment.end,
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
-                      CustomTextView(date, style: TextStyle(fontSize: 24.sp, fontWeight: FontWeight.w700),),
+                      CustomTextView(date, style: TextStyle(fontSize: 24.sp, fontWeight: FontWeight.w700, color: BrandColor.main),),
                       SizedBox(width: 4.w,),
-                      CustomTextView(day, type: TDSFontType.labelLarge,),
+                      CustomTextView(day, type: TDSFontType.labelLarge, color: BrandColor.main),
                     ],
                   )
-
-
                 ],
               ),
               SizedBox(height: 4.h,),
-              CustomTextView(time, style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w700),),
+              CustomTextView(time, style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w700, color: BrandColor.main),),
               SizedBox(height: 4.h,),
               Row(
                 children: [

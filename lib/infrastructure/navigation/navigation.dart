@@ -159,7 +159,7 @@ class Nav {
     ),
     GetPage(
       name: Routes.FORGOT_PASSWORD,
-      page: () => const ResetPasswordScreen(""),
+      page: () => const ResetPasswordScreen("", isFromHome: false,),
       binding: ResetPasswordControllerBinding(),
     ),
     GetPage(
