@@ -1,3 +1,5 @@
+import 'dart:ffi';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -11,8 +13,9 @@ import 'package:koto_blue_sharks/utils/app_color.dart';
 import 'controllers/reset_password.controller.dart';
 
 class ResetPasswordScreen extends GetView<ResetPasswordController> {
-  const ResetPasswordScreen(this.otpId, {super.key});
+  const ResetPasswordScreen(this.otpId, {super.key, required this.isFromHome});
   final String? otpId;
+  final bool isFromHome;
 
   @override
   Widget build(BuildContext context) {
@@ -21,11 +24,31 @@ class ResetPasswordScreen extends GetView<ResetPasswordController> {
 
 
     return Scaffold(
-      appBar: AppBar(
+      backgroundColor: Colors.white,
+      appBar: isFromHome ?
+      AppBar(
+        backgroundColor: BrandColor.main,
+        title: CustomTextView(
+          LocaleKeys.forgot_password_title_home.tr, color: Colors.white,
+          type: TDSFontType.titleMedium,),
+        centerTitle: true,
+        leading: IconButton(
+          icon: const Icon(
+            Icons.arrow_back,
+            color: Colors.white,
+          ),
+          // Change this to your desired icon
+          onPressed: () {
+            Get.back();
+          },
+        ),
+      )
+      :
+      AppBar(
         title: SvgPicture.asset(
           "assets/vectors/app_logo.svg",
-          width: 56.w,
-          height: 56.h,
+          width: 46.w,
+          height: 46.h,
         ),
         centerTitle: true,
         leading: IconButton(
@@ -71,6 +94,7 @@ class ResetPasswordScreen extends GetView<ResetPasswordController> {
                         if (value.length < 8) {
                           return LocaleKeys.error_password_must_8_char.tr;
                         }
+
                         // Ensure password contains at least one uppercase letter
                         // if (!RegExp(r'[A-Z]').hasMatch(value)) {
                         //   return 'Password must contain at least one uppercase letter';
@@ -122,7 +146,7 @@ class ResetPasswordScreen extends GetView<ResetPasswordController> {
 
                   Row(
                     children: [
-                      CustomTextView(LocaleKeys.confirm_new_password.tr, type: TDSFontType.labelLarge, color: TextColor.secondary,),
+                      CustomTextView(isFromHome ? LocaleKeys.confirm_new_password_placeholder_home.tr : LocaleKeys.confirm_new_password.tr, type: TDSFontType.labelLarge, color: TextColor.secondary,),
                       CustomTextView(" *", type: TDSFontType.labelLarge, color: TextColor.error,),
                     ],
                   ),
@@ -140,6 +164,11 @@ class ResetPasswordScreen extends GetView<ResetPasswordController> {
                         // Ensure password has at least 8 characters
                         if (value.length < 8) {
                           return LocaleKeys.error_password_must_8_char.tr;
+                        }
+
+                        if (value != forgotPasswordController
+                            .newPasswordController.text) {
+                          return LocaleKeys.error_password_different_new_password.tr;
                         }
                         // Ensure password contains at least one uppercase letter
                         // if (!RegExp(r'[A-Z]').hasMatch(value)) {
@@ -190,6 +219,8 @@ class ResetPasswordScreen extends GetView<ResetPasswordController> {
                   ),
 
                   SizedBox(height: 12.h,),
+
+                  if (isFromHome != true)
                   CustomTextView(LocaleKeys.password_desc.tr, type: TDSFontType.bodyTextMedium, color: TextColor.secondary,)
                 ],
               ),

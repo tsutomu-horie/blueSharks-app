@@ -1,8 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/cupertino.dart';
 import 'package:get/get.dart';
 import 'package:koto_blue_sharks/app/data/api/otp/otp_provider.dart';
 import 'package:koto_blue_sharks/app/services/AnalyticsService.dart';
 import 'package:koto_blue_sharks/app/views/views/warning_dialog_view.dart';
+import 'package:koto_blue_sharks/generated/locales.g.dart';
 import 'package:koto_blue_sharks/infrastructure/navigation/routes.dart';
 import 'package:koto_blue_sharks/presentation/forgotPassword/forgot_password.screen.dart';
 import 'package:koto_blue_sharks/presentation/register/register_member_fanclub/register_member_fanclub.screen.dart';
@@ -16,15 +19,33 @@ class RegisterOtpController extends GetxController {
   var hasError = false.obs;
   final OtpProvider otpProvider = OtpProvider();
 
+  RxInt resendAttempts = 0.obs;
+  RxInt timerSeconds = 30.obs;
+  RxBool canResend = false.obs;
+  Timer? _timer;
+
+  @override
+  void onClose() {
+    _timer?.cancel();
+    super.onClose();
+  }
+
   @override
   void onInit() async {
     super.onInit();
     otpProvider.onInit();
+    startResendTimer();
 
     AnalyticsService.logPageView(Routes.REGISTER_OTP);
 
   }
-  
+
+  String get formattedTime {
+    int minutes = timerSeconds.value ~/ 60;
+    int seconds = timerSeconds.value % 60;
+    return '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
+  }
+
   void onSubmitOtp(String email, BuildContext context, String fromScreen, String? otpId, String selectedPlayer, String selectedPlayerName, Function? onSuccess, bool isRegister) async {
     print(otp.value);
     if (otp.isNotEmpty && otp.value.length > 4) {
@@ -72,7 +93,7 @@ class RegisterOtpController extends GetxController {
 
 
         if (response != null) {
-          Get.to(() => ResetPasswordScreen(otp_id.value));
+          Get.to(() => ResetPasswordScreen(otp_id.value, isFromHome: fromScreen == "forgotPasswordHome" ? true : false,));
         }
 
 
@@ -100,4 +121,34 @@ class RegisterOtpController extends GetxController {
 
     otp_id.value = "${response.id}";
     }
+
+  void startResendTimer() {
+    canResend.value = false;
+    timerSeconds.value = 30;
+
+    _timer?.cancel();
+    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (timerSeconds.value > 0) {
+        timerSeconds.value--;
+      } else {
+        timer.cancel();
+        canResend.value = true;
+      }
+    });
+  }
+
+  void handleResendOtp(String email, BuildContext context, String? otpId, bool isRegister) {
+    if (resendAttempts.value >= 3) {
+      // Show dialog for 1-minute cooldown
+      Utils.showError(context, LocaleKeys.otp_limit_title.tr, LocaleKeys.otp_limit_message.tr);
+      Future.delayed(const Duration(minutes: 1), () {
+        resendAttempts.value = 0;
+        canResend.value = true;
+      });
+    } else {
+      resendAttempts.value++;
+      resendOtp(email, context, otpId, isRegister);
+      startResendTimer();
+    }
+  }
 }

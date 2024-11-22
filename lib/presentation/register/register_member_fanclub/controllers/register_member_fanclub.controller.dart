@@ -45,7 +45,6 @@ class RegisterMemberFanclubController extends GetxController {
 
     Utils.showCustomSuccessRegisterDialog(context, () {
       Get.offAll(() => FanClubConfirmationScreen(email: email, id: idTextFieldController.text, isNotification: true, playerSelected: playerLink, playerSelectedName: playerName,));
-
     });
     // showSuccess();
   }

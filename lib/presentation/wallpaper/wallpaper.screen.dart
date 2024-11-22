@@ -19,26 +19,12 @@ class WallpaperScreen extends GetView<WallpaperController> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: BackgroundColor.primary,
-      appBar: AppBar(
-        backgroundColor: BackgroundColor.primary,
-        toolbarHeight: 92.h,
-        title: Column(
-          children: [
-            SizedBox(
-              height: 16.h,
-            ),
-            SvgPicture.asset(
-              width: 56.w,
-              height: 56.h,
-              'assets/vectors/app_logo.svg', // Replace with your SVG file path
-            ),
-            SizedBox(
-              height: 20.h,
-            )
-          ],
-        ),
-        centerTitle: true,
-      ),
+      // appBar: AppBar(
+      //   backgroundColor: BackgroundColor.primary,
+      //   toolbarHeight: 92.h,
+      //   title:
+      //   centerTitle: true,
+      // ),
       bottomNavigationBar: Padding(
         padding: EdgeInsets.all(16.w),
         child: ElevatedButton(
@@ -52,179 +38,196 @@ class WallpaperScreen extends GetView<WallpaperController> {
           ),
         ),
       ),
-      body: SingleChildScrollView(
-        child: Container(
-          color: RGBA.rgba(250, 250, 250, 1),
-          child: Column(
-            children: [
-              CustomTextView(
-                LocaleKeys.set_wallpaper_header.tr,
-                color: BrandColor.main,
-                type: TDSFontType.subtitleLarge,
-              ),
-              SizedBox(
-                height: 24.h,
-              ),
-              CustomTextView(
-                LocaleKeys.step_en.trParams({'step': '1'}).toUpperCase(),
-                color: BrandColor.main,
-                type: TDSFontType.titleSmall,
-              ),
-              SizedBox(
-                height: 4.h,
-              ),
-              CustomTextView(
-                LocaleKeys.set_wallpaper_title.tr,
-                color: BrandColor.main,
-                type: TDSFontType.subtitleLarge,
-              ),
-              SizedBox(
-                height: 24.h,
-              ),
-              Stack(
-                children: [
-                  SizedBox(
-                    height: 240.h,
-                    child: Row(
-                      children: [
-                        SizedBox(
-                          width: 16.w,
-                        ),
-                        Flexible(
-                            child: Image.asset(
-                          "assets/images/image_wallpaper_1.png",
-                          width: double.infinity,
-                          height: 240.h,
-                        )),
-                        SizedBox(
-                          width: 16.w,
-                        ),
-                      ],
+      body: SafeArea(
+        child: SingleChildScrollView(
+          child: Container(
+            color: RGBA.rgba(250, 250, 250, 1),
+            child: Column(
+              children: [
+                Column(
+                  children: [
+                    SizedBox(
+                      height: 16.h,
                     ),
-                  ),
-                  Positioned(
-                    bottom: 0,
-                    child: Row(
-                      children: [
-                        SizedBox(
-                          width: 16.w,
-                        ),
-                        Image.asset(
-                          "assets/images/white_shadow.png",
-                        ),
-                        SizedBox(
-                          width: 16.w,
-                        ),
-                      ],
+                    SvgPicture.asset(
+                      width: 46.w,
+                      height: 46.h,
+                      'assets/vectors/app_logo.svg', // Replace with your SVG file path
                     ),
-                  ),
-                ],
-              ),
-              Row(
-                children: [
-                  SizedBox(
-                    width: 16.w,
-                  ),
-                  Flexible(
-                      child: CustomTextView(
-                    LocaleKeys.set_wallpaper_desc.tr,
-                    color: TextColor.secondary,
-                    type: TDSFontType.bodyTextMedium,
-                  )),
-                  SizedBox(
-                    width: 16.w,
-                  ),
-                ],
-              ),
-              SizedBox(
-                height: 24.h,
-              ),
-              Container(
-                color: BorderColor.primary,
-                height: 1.h,
-              ),
-              SizedBox(
-                height: 24.h,
-              ),
-              CustomTextView(
-                LocaleKeys.step_en.trParams({'step': '2'}).toUpperCase(),
-                color: BrandColor.main,
-                type: TDSFontType.titleSmall,
-              ),
-              SizedBox(
-                height: 4.h,
-              ),
-              CustomTextView(
-                LocaleKeys.set_wallpaper_title2.tr,
-                color: BrandColor.main,
-                type: TDSFontType.subtitleLarge,
-              ),
-              SizedBox(
-                height: 24.h,
-              ),
-              Stack(
-                children: [
-                  SizedBox(
-                    height: 240.h,
-                    child: Row(
-                      children: [
-                        SizedBox(
-                          width: 16.w,
-                        ),
-                        Flexible(
-                            child: Image.asset(
-                          "assets/images/image_wallpaper2.png",
-                          width: double.infinity,
-                          height: 240.h,
-                        )),
-                        SizedBox(
-                          width: 16.w,
-                        ),
-                      ],
+                    SizedBox(
+                      height: 20.h,
+                    )
+                  ],
+                ),
+                CustomTextView(
+                  LocaleKeys.set_wallpaper_header.tr,
+                  color: BrandColor.main,
+                  type: TDSFontType.subtitleLarge,
+                ),
+                SizedBox(
+                  height: 24.h,
+                ),
+                CustomTextView(
+                  LocaleKeys.step_en.trParams({'step': '1'}).toUpperCase(),
+                  color: BrandColor.main,
+                  type: TDSFontType.titleSmall,
+                ),
+                SizedBox(
+                  height: 4.h,
+                ),
+                CustomTextView(
+                  LocaleKeys.set_wallpaper_title.tr,
+                  color: BrandColor.main,
+                  type: TDSFontType.subtitleLarge,
+                ),
+                SizedBox(
+                  height: 24.h,
+                ),
+                Stack(
+                  children: [
+                    SizedBox(
+                      height: 240.h,
+                      child: Row(
+                        children: [
+                          SizedBox(
+                            width: 16.w,
+                          ),
+                          Flexible(
+                              child: Image.asset(
+                            "assets/images/image_wallpaper_1.png",
+                            width: double.infinity,
+                            height: 240.h,
+                          )),
+                          SizedBox(
+                            width: 16.w,
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                  Positioned(
-                    bottom: 0,
-                    child: Row(
-                      children: [
-                        SizedBox(
-                          width: 16.w,
-                        ),
-                        Image.asset(
-                          "assets/images/white_shadow.png",
-                        ),
-                        SizedBox(
-                          width: 16.w,
-                        ),
-                      ],
+                    Positioned(
+                      bottom: 0,
+                      child: Row(
+                        children: [
+                          SizedBox(
+                            width: 16.w,
+                          ),
+                          Image.asset(
+                            "assets/images/white_shadow.png",
+                          ),
+                          SizedBox(
+                            width: 16.w,
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                ],
-              ),
-              SizedBox(
-                height: 16.h,
-              ),
-              Row(
-                children: [
-                  SizedBox(
-                    width: 16.w,
-                  ),
-                  Flexible(
-                      child: CustomTextView(
-                    LocaleKeys.set_wallpaper_desc2.tr,
-                    color: TextColor.secondary,
-                    type: TDSFontType.bodyTextMedium,
-                  )),
-                  SizedBox(
-                    width: 16.w,
-                  ),
-                ],
-              ),
-              Container(
-                color: BorderColor.primary,
-                height: 1.h,
-              ),
-            ],
+                  ],
+                ),
+                Row(
+                  children: [
+                    SizedBox(
+                      width: 16.w,
+                    ),
+                    Flexible(
+                        child: CustomTextView(
+                      LocaleKeys.set_wallpaper_desc.tr,
+                      color: TextColor.secondary,
+                      type: TDSFontType.bodyTextMedium,
+                    )),
+                    SizedBox(
+                      width: 16.w,
+                    ),
+                  ],
+                ),
+                SizedBox(
+                  height: 24.h,
+                ),
+                Container(
+                  color: BorderColor.primary,
+                  height: 1.h,
+                ),
+                SizedBox(
+                  height: 24.h,
+                ),
+                CustomTextView(
+                  LocaleKeys.step_en.trParams({'step': '2'}).toUpperCase(),
+                  color: BrandColor.main,
+                  type: TDSFontType.titleSmall,
+                ),
+                SizedBox(
+                  height: 4.h,
+                ),
+                CustomTextView(
+                  LocaleKeys.set_wallpaper_title2.tr,
+                  color: BrandColor.main,
+                  type: TDSFontType.subtitleLarge,
+                ),
+                SizedBox(
+                  height: 24.h,
+                ),
+                Stack(
+                  children: [
+                    SizedBox(
+                      height: 240.h,
+                      child: Row(
+                        children: [
+                          SizedBox(
+                            width: 16.w,
+                          ),
+                          Flexible(
+                              child: Image.asset(
+                            "assets/images/image_wallpaper2.png",
+                            width: double.infinity,
+                            height: 240.h,
+                          )),
+                          SizedBox(
+                            width: 16.w,
+                          ),
+                        ],
+                      ),
+                    ),
+                    Positioned(
+                      bottom: 0,
+                      child: Row(
+                        children: [
+                          SizedBox(
+                            width: 16.w,
+                          ),
+                          Image.asset(
+                            "assets/images/white_shadow.png",
+                          ),
+                          SizedBox(
+                            width: 16.w,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(
+                  height: 16.h,
+                ),
+                Row(
+                  children: [
+                    SizedBox(
+                      width: 16.w,
+                    ),
+                    Flexible(
+                        child: CustomTextView(
+                      LocaleKeys.set_wallpaper_desc2.tr,
+                      color: TextColor.secondary,
+                      type: TDSFontType.bodyTextMedium,
+                    )),
+                    SizedBox(
+                      width: 16.w,
+                    ),
+                  ],
+                ),
+                Container(
+                  color: BorderColor.primary,
+                  height: 1.h,
+                ),
+              ],
+            ),
           ),
         ),
       ),

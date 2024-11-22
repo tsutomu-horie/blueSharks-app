@@ -34,6 +34,7 @@ void errorDialogView(BuildContext context, String title, String? message) {
                 Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
+                    SizedBox(height: 4.h,),
                     CustomTextView(
                       message,
                       type: TDSFontType.bodyTextMedium,

@@ -29,8 +29,8 @@ class WallpaperSetPlayerScreen extends GetView<WallpaperSetPlayerController> {
         backgroundColor: BackgroundColor.primary,
         title: SvgPicture.asset(
           "assets/vectors/app_logo.svg",
-          width: 56.w,
-          height: 56.h,
+          width: 46.w,
+          height: 46.h,
         ),
         centerTitle: true,
         actions: [

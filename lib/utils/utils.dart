@@ -61,6 +61,7 @@ class Utils {
 
   static void showCustomSuccessRegisterDialog(BuildContext context, Function onTapsuccess) {
     showDialog(
+      barrierDismissible: false,
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(

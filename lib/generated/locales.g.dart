@@ -174,6 +174,8 @@ class LocaleKeys {
   static const confirm_new_password = 'confirm_new_password';
   static const confirm_new_password_placeholder =
       'confirm_new_password_placeholder';
+  static const confirm_new_password_placeholder_home =
+      'confirm_new_password_placeholder_home';
   static const password_desc = 'password_desc';
   static const save_changes = 'save_changes';
   static const error_login_message = 'error_login_message';
@@ -257,6 +259,14 @@ class LocaleKeys {
   static const activites = 'activites';
   static const other_jp = 'other_jp';
   static const pre_game = 'pre_game';
+  static const request_resend_otp = 'request_resend_otp';
+  static const otp_limit_title = 'otp_limit_title';
+  static const otp_limit_message = 'otp_limit_message';
+  static const resend_otp_in = 'resend_otp_in';
+  static const close_otp = 'close_otp';
+  static const forgot_password_title_home = 'forgot_password_title_home';
+  static const default_jp = 'default_jp';
+  static const login_title_home = 'login_title_home';
 }
 
 class Locales {
@@ -434,6 +444,7 @@ class Locales {
     'new_password_placeholder': '新しいパスワードを入力してください',
     'confirm_new_password': '新しいパスワードの確認',
     'confirm_new_password_placeholder': '新しいパスワードでも同様',
+    'confirm_new_password_placeholder_home': '新しいパスワードを再入力してください',
     'password_desc': 'パスワードは半角英数8〜12文字以内を入力してください。',
     'save_changes': '変更を保存する',
     'error_login_message':
@@ -510,12 +521,20 @@ class Locales {
     'wallpaper_placeholder': '壁紙を選択してください',
     'logout_confirmation_title': 'ログアウトしますか？',
     'logout_confirmation_desc': 'アカウントからログアウトしてもよろしいですか？',
-    'all': 'ALL',
+    'all': 'すべて',
     'notice_tab': 'お知らせ',
     'event_information': '試合情報',
     'event_tab': 'イベント情報',
     'activites': '普及活動',
     'other_jp': 'その他',
     'pre_game': '試合前',
+    'request_resend_otp': 'OTP コードを受け取らない場合は?',
+    'otp_limit_title': 'OTPコードをリクエストできる上限に達しました',
+    'otp_limit_message': 'しばらくしてから、電子メールを確認するためのOTPコードを再度リクエストしてください。',
+    'resend_otp_in': '再送信まで',
+    'close_otp': '近いい',
+    'forgot_password_title_home': 'パスワードをリセットする',
+    'default_jp': 'デフォルト',
+    'login_title_home': '登録したメールアドレスとパスワードを入力して、メンバーシップアカウントにログインしてください。',
   };
 }

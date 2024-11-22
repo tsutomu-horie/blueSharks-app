@@ -25,9 +25,9 @@ class MemberCardView extends GetView {
           Positioned(
             bottom: 65.h,
             left: 15.w,
-            child: CustomTextView(
-              memberId,
-              style: const TextStyle(fontWeight: FontWeight.w400),
+            child: Text(
+              "No. $memberId",
+              style: TextStyle(fontWeight: FontWeight.w400, fontSize: 16.sp),
             ),
           ),
           Positioned(
