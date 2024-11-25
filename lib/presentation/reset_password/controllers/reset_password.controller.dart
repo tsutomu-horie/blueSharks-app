@@ -42,7 +42,7 @@ class ResetPasswordController extends GetxController {
       if (!response.hasError) {
         Get.back();
         Get.back();
-        Get.back();
+        Get.back(result: true);
       }
       // final response = await apiProvider.login(
       //   emailTextFieldController.text,

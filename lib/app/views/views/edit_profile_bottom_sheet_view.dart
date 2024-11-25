@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import 'package:get/get.dart';
@@ -125,6 +126,10 @@ void editProfileBottomSheet(
                           ],
                         ),
                         TextFormField(
+                          keyboardType: TextInputType.number,
+                          inputFormatters: [
+                            FilteringTextInputFormatter.digitsOnly,
+                          ],
                           controller: fanclubController.idController,
                           validator: (value) {
                             if (value == null || value.isEmpty) {

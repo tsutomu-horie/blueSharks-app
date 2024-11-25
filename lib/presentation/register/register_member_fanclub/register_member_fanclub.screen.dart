@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
@@ -17,12 +18,14 @@ class RegisterMemberFanclubScreen
     required this.otpId,
     required this.selectedPlayer,
     required this.selectedPlayerName,
+    required this.isFromHome,
   });
 
   final String email;
   final String otpId;
   final String selectedPlayer;
   final String selectedPlayerName;
+  final bool isFromHome;
 
   @override
   Widget build(BuildContext context) {
@@ -53,7 +56,23 @@ class RegisterMemberFanclubScreen
   }
 
   AppBar _buildAppBar() {
-    return AppBar(
+    return isFromHome ?  AppBar(
+      backgroundColor: BrandColor.main,
+      title: const CustomTextView(
+        "登録", color: Colors.white,
+        type: TDSFontType.titleMedium,),
+      centerTitle: true,
+      leading: IconButton(
+        icon: const Icon(
+          Icons.arrow_back,
+          color: Colors.white,
+        ),
+        // Change this to your desired icon
+        onPressed: () {
+          Get.back();
+        },
+      ),
+    ) : AppBar(
       backgroundColor: Colors.white,
       title: SvgPicture.asset(
         "assets/vectors/app_logo.svg",
@@ -103,14 +122,19 @@ class RegisterMemberFanclubScreen
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         SizedBox(height: 16.h,),
+        if (!isFromHome)
+          Column(
+            children: [
+              CustomTextView(
+                LocaleKeys.register_email_title.tr,
+                type: TDSFontType.headlineSmall,
+                color: BrandColor.main,
+              ),
+              SizedBox(height: 8.h),
+            ],
+          ),
         CustomTextView(
-          LocaleKeys.register_email_title.tr,
-          type: TDSFontType.headlineSmall,
-          color: BrandColor.main,
-        ),
-        SizedBox(height: 8.h),
-        CustomTextView(
-          LocaleKeys.fanclub_register_desc.tr,
+          isFromHome ? "ファンクラブIDとパスワードを入力して会員登録を完了してください。" : LocaleKeys.fanclub_register_desc.tr,
           type: TDSFontType.bodyTextMedium,
           color: TextColor.secondary,
         ),
@@ -170,6 +194,10 @@ class RegisterMemberFanclubScreen
           ],
         ),
         TextFormField(
+          keyboardType: TextInputType.number,
+          inputFormatters: [
+            FilteringTextInputFormatter.digitsOnly,
+          ],
           controller: controller,
           validator: (value) => value!.isEmpty ? hintText : null,
           decoration: InputDecoration(
@@ -233,7 +261,7 @@ class RegisterMemberFanclubScreen
             ),
           ),
         ),
-        CustomTextView(LocaleKeys.password_desc.tr,
+        CustomTextView(isFromHome ? "パスワードは半角英数字8～12文字{{ドット}}でお願いします。" : LocaleKeys.password_desc.tr,
             type: TDSFontType.bodyTextMedium, color: TextColor.tertiary),
       ],
     );
@@ -262,7 +290,8 @@ class RegisterMemberFanclubScreen
                 },
                 selectedPlayer,
                 selectedPlayerName,
-                context
+                context,
+                isFromHome
               );
             }
           },

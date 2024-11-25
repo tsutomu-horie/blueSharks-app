@@ -1,6 +1,4 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 import 'package:flutter_html/flutter_html.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -240,13 +238,12 @@ class MatchDetailScreen extends GetView<MatchDetailController> {
                               Container(
                                 width: 56.w,
                                 height: 32.h,
-                                color: BrandColor.background,
+                                color:  customField?.game_result?.first != null && customField?.game_result?.first !=
+                                    "試合前" ? BrandColor.background : SuccessColor.main,
                                 child: Center(
                                   child: CustomTextView(
-                                    customField?.game_result?.first != null &&
-                                            customField!.game_result!.first !=
-                                                "試合前"
-                                        ? customField.game_result!.first
+                                    customField?.game_result?.first != null
+                                        ? customField!.game_result!.first
                                         : "-",
                                     style: TextStyle(
                                         fontWeight: FontWeight.w500,
@@ -261,15 +258,7 @@ class MatchDetailScreen extends GetView<MatchDetailController> {
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
                                   if (customField?.game_result?.first == LocaleKeys.pre_game.tr)
-                                    Column(
-                                      children: [
-                                        SizedBox(height: 16.h,),
-                                        CustomTextView(
-                                          LocaleKeys.pre_game.tr,
-                                          style: TDSTypography.titleMedium,
-                                        ),
-                                      ],
-                                    )
+                                    CustomTextView("-", style: TDSTypography.headlineLarge, color: TextColor.primary,)
                                   else
                                     Row(
                                       mainAxisAlignment: MainAxisAlignment.center,

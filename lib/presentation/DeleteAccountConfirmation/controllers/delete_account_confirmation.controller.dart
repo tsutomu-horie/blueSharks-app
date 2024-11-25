@@ -21,6 +21,8 @@ class DeleteAccountConfirmationController extends GetxController {
     });
 
     await auth.deleteToken();
-    Get.offAll(() => const SplashScreen());
+    print("onDelete");
+    Get.back();
+    Get.back(result: true);
   }
 }

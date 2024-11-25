@@ -30,7 +30,7 @@ class RegisterEmailFromHomeScreen
       appBar: AppBar(
         backgroundColor: BrandColor.main,
         title: CustomTextView(
-          LocaleKeys.forgot_password_header.tr,
+          LocaleKeys.register.tr,
           color: Colors.white,
           type: TDSFontType.titleMedium,
         ),
@@ -53,7 +53,7 @@ class RegisterEmailFromHomeScreen
           child: Column(
             children: [
               CustomTextView(
-                LocaleKeys.email_field_desc.tr,
+                LocaleKeys.register_from_home_desc.tr,
                 type: TDSFontType.bodyTextMedium,
                 color: TextColor.secondary,
               ),
@@ -63,7 +63,7 @@ class RegisterEmailFromHomeScreen
               Row(
                 children: [
                   CustomTextView(
-                    LocaleKeys.email_title.tr,
+                    LocaleKeys.email.tr,
                     type: TDSFontType.bodyTextMedium,
                     color: TextColor.secondary,
                   ),
@@ -105,6 +105,8 @@ class RegisterEmailFromHomeScreen
                       .trParams({"example": "jack@email.com"}),
                 ),
               ),
+              SizedBox(height: 4.h,),
+              CustomTextView(LocaleKeys.email_warning.tr, color: TextColor.tertiary,)
             ],
           ),
         ),

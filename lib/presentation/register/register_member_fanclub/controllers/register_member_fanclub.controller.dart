@@ -6,6 +6,7 @@ import 'package:koto_blue_sharks/app/data/api/userPreferences/wallpaper_preferen
 import 'package:koto_blue_sharks/app/services/AnalyticsService.dart';
 import 'package:koto_blue_sharks/infrastructure/navigation/routes.dart';
 import 'package:koto_blue_sharks/presentation/FanClubConfirmation/fan_club_confirmation.screen.dart';
+import 'package:koto_blue_sharks/presentation/main/main.screen.dart';
 import 'package:koto_blue_sharks/utils/my_shared_pref.dart';
 import 'package:koto_blue_sharks/utils/utils.dart';
 
@@ -29,7 +30,7 @@ class RegisterMemberFanclubController extends GetxController {
     isPasswordHidden.value = !isPasswordHidden.value;
   }
 
-  void onRegister(String otpId, String email, Function showError, Function showSuccess, String playerLink, String playerName, BuildContext context) async {
+  void onRegister(String otpId, String email, Function showError, Function showSuccess, String playerLink, String playerName, BuildContext context, bool isFromHome) async {
     print("set wallpaper ${playerLink}");
     final response = await apiProvider.register(idTextFieldController.text, email, otpId, passwordTextFieldController.text, (String errorText){
       Utils.showError(context, "Something wrong", errorText);
@@ -44,8 +45,20 @@ class RegisterMemberFanclubController extends GetxController {
     MySharedPref.setWallpaperName(playerName);
 
     Utils.showCustomSuccessRegisterDialog(context, () {
-      Get.offAll(() => FanClubConfirmationScreen(email: email, id: idTextFieldController.text, isNotification: true, playerSelected: playerLink, playerSelectedName: playerName,));
+      if (!isFromHome) {
+        Get.offAll(() => FanClubConfirmationScreen(
+              email: email,
+              id: idTextFieldController.text,
+              isNotification: true,
+              playerSelected: playerLink,
+              playerSelectedName: playerName,
+              isFromHome: false,
+            ));
+      } else {
+        Get.offAll(() => const MainScreen(initialTab: 2));
+      }
     });
+
     // showSuccess();
   }
 

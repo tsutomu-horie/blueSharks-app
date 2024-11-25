@@ -303,7 +303,7 @@ class LoginScreen extends GetView<LoginController> {
             ),
             onPressed: () {
               if (globalKey.currentState!.validate()) {
-                loginController.login(context, selectedPlayer, selectedPlayerName);
+                loginController.login(context, selectedPlayer, selectedPlayerName, isFromHome);
               }
             },
             child: loginController.isLoadingLogin.value

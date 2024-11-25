@@ -36,7 +36,10 @@ class MypageController extends FanClubConfirmationController {
     final auth = AuthToken();
     await auth.deleteToken();
 
-    Get.offAll(() => const SplashScreen());
+    isLogin.value = false;
+    profileData.value = null;
+
+    onInit();
   }
 
   void getToken() async {

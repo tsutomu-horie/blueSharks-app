@@ -58,11 +58,11 @@ class RegisterOtpScreen extends GetView<RegisterOtpController> {
 
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: fromScreen == "forgotPasswordHome" ?
+      appBar: fromScreen == "forgotPasswordHome" || fromScreen == "register_home" ?
       AppBar(
         backgroundColor: BrandColor.main,
         title: CustomTextView(
-          LocaleKeys.forgot_password_header.tr, color: Colors.white,
+          LocaleKeys.forgot_password_header_home.tr, color: Colors.white,
           type: TDSFontType.titleMedium,),
         centerTitle: true,
         leading: IconButton(
@@ -136,7 +136,7 @@ class RegisterOtpScreen extends GetView<RegisterOtpController> {
                 SizedBox(
                   height: 20.h,
                 ),
-                if (fromScreen != "forgotPasswordHome")
+                if (fromScreen != "forgotPasswordHome" && fromScreen != "register_home")
                   Column(
                     children: [
                       CustomTextView(
@@ -150,7 +150,7 @@ class RegisterOtpScreen extends GetView<RegisterOtpController> {
                     ],
                   ),
                 CustomTextView(
-                  fromScreen == "forgotPasswordHome"
+                  fromScreen == "forgotPasswordHome" || fromScreen == "register_home"
                       ? LocaleKeys.forgot_password_desc_from_home.tr
                       : LocaleKeys.otp_message.tr,
                   type: TDSFontType.bodyTextMedium,
