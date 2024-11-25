@@ -360,7 +360,9 @@ mixin _$UserData {
   String? get gender => throw _privateConstructorUsedError;
   int get id => throw _privateConstructorUsedError;
   @JsonKey(name: 'is_verified')
-  int get isVerified => throw _privateConstructorUsedError;
+  bool get isVerified => throw _privateConstructorUsedError;
+  @JsonKey(name: 'is_either_matched')
+  bool? get isEitherMatched => throw _privateConstructorUsedError;
   @JsonKey(name: 'kan_first_name')
   String? get kanFirstName => throw _privateConstructorUsedError;
   @JsonKey(name: 'kan_last_name')
@@ -389,7 +391,8 @@ abstract class $UserDataCopyWith<$Res> {
       String email,
       String? gender,
       int id,
-      @JsonKey(name: 'is_verified') int isVerified,
+      @JsonKey(name: 'is_verified') bool isVerified,
+      @JsonKey(name: 'is_either_matched') bool? isEitherMatched,
       @JsonKey(name: 'kan_first_name') String? kanFirstName,
       @JsonKey(name: 'kan_last_name') String? kanLastName,
       @JsonKey(name: 'kat_first_name') String? katFirstName,
@@ -416,6 +419,7 @@ class _$UserDataCopyWithImpl<$Res, $Val extends UserData>
     Object? gender = freezed,
     Object? id = null,
     Object? isVerified = null,
+    Object? isEitherMatched = freezed,
     Object? kanFirstName = freezed,
     Object? kanLastName = freezed,
     Object? katFirstName = freezed,
@@ -446,7 +450,11 @@ class _$UserDataCopyWithImpl<$Res, $Val extends UserData>
       isVerified: null == isVerified
           ? _value.isVerified
           : isVerified // ignore: cast_nullable_to_non_nullable
-              as int,
+              as bool,
+      isEitherMatched: freezed == isEitherMatched
+          ? _value.isEitherMatched
+          : isEitherMatched // ignore: cast_nullable_to_non_nullable
+              as bool?,
       kanFirstName: freezed == kanFirstName
           ? _value.kanFirstName
           : kanFirstName // ignore: cast_nullable_to_non_nullable
@@ -485,7 +493,8 @@ abstract class _$$UserDataImplCopyWith<$Res>
       String email,
       String? gender,
       int id,
-      @JsonKey(name: 'is_verified') int isVerified,
+      @JsonKey(name: 'is_verified') bool isVerified,
+      @JsonKey(name: 'is_either_matched') bool? isEitherMatched,
       @JsonKey(name: 'kan_first_name') String? kanFirstName,
       @JsonKey(name: 'kan_last_name') String? kanLastName,
       @JsonKey(name: 'kat_first_name') String? katFirstName,
@@ -510,6 +519,7 @@ class __$$UserDataImplCopyWithImpl<$Res>
     Object? gender = freezed,
     Object? id = null,
     Object? isVerified = null,
+    Object? isEitherMatched = freezed,
     Object? kanFirstName = freezed,
     Object? kanLastName = freezed,
     Object? katFirstName = freezed,
@@ -540,7 +550,11 @@ class __$$UserDataImplCopyWithImpl<$Res>
       isVerified: null == isVerified
           ? _value.isVerified
           : isVerified // ignore: cast_nullable_to_non_nullable
-              as int,
+              as bool,
+      isEitherMatched: freezed == isEitherMatched
+          ? _value.isEitherMatched
+          : isEitherMatched // ignore: cast_nullable_to_non_nullable
+              as bool?,
       kanFirstName: freezed == kanFirstName
           ? _value.kanFirstName
           : kanFirstName // ignore: cast_nullable_to_non_nullable
@@ -575,6 +589,7 @@ class _$UserDataImpl implements _UserData {
       this.gender,
       required this.id,
       @JsonKey(name: 'is_verified') required this.isVerified,
+      @JsonKey(name: 'is_either_matched') this.isEitherMatched,
       @JsonKey(name: 'kan_first_name') this.kanFirstName,
       @JsonKey(name: 'kan_last_name') this.kanLastName,
       @JsonKey(name: 'kat_first_name') this.katFirstName,
@@ -598,7 +613,10 @@ class _$UserDataImpl implements _UserData {
   final int id;
   @override
   @JsonKey(name: 'is_verified')
-  final int isVerified;
+  final bool isVerified;
+  @override
+  @JsonKey(name: 'is_either_matched')
+  final bool? isEitherMatched;
   @override
   @JsonKey(name: 'kan_first_name')
   final String? kanFirstName;
@@ -617,7 +635,7 @@ class _$UserDataImpl implements _UserData {
 
   @override
   String toString() {
-    return 'UserData(accountId: $accountId, createdAt: $createdAt, email: $email, gender: $gender, id: $id, isVerified: $isVerified, kanFirstName: $kanFirstName, kanLastName: $kanLastName, katFirstName: $katFirstName, katLastName: $katLastName, customerLevel: $customerLevel)';
+    return 'UserData(accountId: $accountId, createdAt: $createdAt, email: $email, gender: $gender, id: $id, isVerified: $isVerified, isEitherMatched: $isEitherMatched, kanFirstName: $kanFirstName, kanLastName: $kanLastName, katFirstName: $katFirstName, katLastName: $katLastName, customerLevel: $customerLevel)';
   }
 
   @override
@@ -634,6 +652,8 @@ class _$UserDataImpl implements _UserData {
             (identical(other.id, id) || other.id == id) &&
             (identical(other.isVerified, isVerified) ||
                 other.isVerified == isVerified) &&
+            (identical(other.isEitherMatched, isEitherMatched) ||
+                other.isEitherMatched == isEitherMatched) &&
             (identical(other.kanFirstName, kanFirstName) ||
                 other.kanFirstName == kanFirstName) &&
             (identical(other.kanLastName, kanLastName) ||
@@ -656,6 +676,7 @@ class _$UserDataImpl implements _UserData {
       gender,
       id,
       isVerified,
+      isEitherMatched,
       kanFirstName,
       kanLastName,
       katFirstName,
@@ -683,7 +704,8 @@ abstract class _UserData implements UserData {
           required final String email,
           final String? gender,
           required final int id,
-          @JsonKey(name: 'is_verified') required final int isVerified,
+          @JsonKey(name: 'is_verified') required final bool isVerified,
+          @JsonKey(name: 'is_either_matched') final bool? isEitherMatched,
           @JsonKey(name: 'kan_first_name') final String? kanFirstName,
           @JsonKey(name: 'kan_last_name') final String? kanLastName,
           @JsonKey(name: 'kat_first_name') final String? katFirstName,
@@ -708,7 +730,10 @@ abstract class _UserData implements UserData {
   int get id;
   @override
   @JsonKey(name: 'is_verified')
-  int get isVerified;
+  bool get isVerified;
+  @override
+  @JsonKey(name: 'is_either_matched')
+  bool? get isEitherMatched;
   @override
   @JsonKey(name: 'kan_first_name')
   String? get kanFirstName;

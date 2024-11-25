@@ -22,13 +22,14 @@ import 'controllers/fan_club_confirmation.controller.dart';
 
 class FanClubConfirmationScreen extends GetView<FanClubConfirmationController> {
   const FanClubConfirmationScreen(
-      {super.key, required this.email, required this.id, required this.playerSelected, required this.isNotification, required this.playerSelectedName,});
+      {super.key, required this.email, required this.id, required this.playerSelected, required this.isNotification, required this.playerSelectedName, required this.isFromHome});
 
   final String email;
   final String id;
   final String playerSelected;
   final String playerSelectedName;
   final bool isNotification;
+  final bool isFromHome;
 
   @override
   Widget build(BuildContext context) {
@@ -415,7 +416,11 @@ class FanClubConfirmationScreen extends GetView<FanClubConfirmationController> {
           onPressed: () async {
             await FcmHelper.initFcm();
             MySharedPref.setFirstOpen("alreadyOpen");
-            Get.offAll(() => const MainScreen());
+            if (!isFromHome) {
+              Get.offAll(() => const MainScreen());
+            } else {
+              Get.offAll(() => const MainScreen(initialTab: 2));
+            }
           },
           child: CustomTextView(
             LocaleKeys.jump_to.tr,

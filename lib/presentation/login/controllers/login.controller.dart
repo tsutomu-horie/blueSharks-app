@@ -36,7 +36,7 @@ class LoginController extends GetxController {
     isPasswordHidden.value = !isPasswordHidden.value;
   }
 
-  void login(BuildContext context, String selectedPlayer, String selectedPlayerName) async {
+  void login(BuildContext context, String selectedPlayer, String selectedPlayerName, bool isFromHome) async {
     isLoadingLogin.value = true; // Start loading
 
     try {
@@ -64,7 +64,12 @@ class LoginController extends GetxController {
         print("get data ${selectedPlayer})");
         await FcmHelper.initFcm();
         MySharedPref.setFirstOpen("alreadyOpen");
-        Get.offAll(() => const MainScreen());
+
+        if (!isFromHome) {
+          Get.offAll(() => const MainScreen());
+        } else {
+          Get.back(result: true);
+        }
       }
     } catch (e) {
       print("catch $e");

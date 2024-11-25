@@ -13,7 +13,8 @@ import 'package:koto_blue_sharks/utils/app_color.dart';
 import 'controllers/main.controller.dart';
 
 class MainScreen extends StatefulWidget {
-  const MainScreen({super.key});
+  final int? initialTab;
+  const MainScreen({this.initialTab, super.key});
 
   @override
   _MainScreenState createState() => _MainScreenState();
@@ -21,6 +22,14 @@ class MainScreen extends StatefulWidget {
 
 class _MainScreenState extends State<MainScreen> {
   final MainController controller = Get.put(MainController());
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.initialTab != null) {
+      controller.selectedIndex.value = widget.initialTab!;
+    }
+  }
 
   void selectTopic(Post? data) {
     print("selectTopic ${data?.id}");

@@ -95,20 +95,14 @@ class DeleteAccountConfirmationScreen
 
               style: ElevatedButton.styleFrom(
                 backgroundColor: deleteAccountConfirmationController.emailText
-                    .value == "消去" ||
-                    deleteAccountConfirmationController.emailText.value ==
-                        "delete" ? TextColor.error : BackgroundColor.disabled,
+                    .value == "削除" ? TextColor.error : BackgroundColor.disabled,
 
                 overlayColor: deleteAccountConfirmationController.emailText
-                    .value == "消去" ||
-                    deleteAccountConfirmationController.emailText.value ==
-                        "delete" ? null : Colors.transparent
+                    .value == "削除" ? null : Colors.transparent
               ),
               onPressed: () {
                 if (deleteAccountConfirmationController.emailText
-                    .value == "消去" ||
-                    deleteAccountConfirmationController.emailText.value ==
-                        "delete") {
+                    .value == "削除" ) {
                   showDeleteAccountBottomSheet(context,
                       deleteAccountConfirmationController.onDeleteAccount);
                 } else {

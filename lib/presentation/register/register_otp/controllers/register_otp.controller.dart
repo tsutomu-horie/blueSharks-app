@@ -70,7 +70,7 @@ class RegisterOtpController extends GetxController {
 
 
         if (response != null) {
-          Get.to(() => RegisterMemberFanclubScreen(email: email, otpId: otp_id.value, selectedPlayer: selectedPlayer, selectedPlayerName: selectedPlayerName,));
+          Get.to(() => RegisterMemberFanclubScreen(email: email, otpId: otp_id.value, selectedPlayer: selectedPlayer, selectedPlayerName: selectedPlayerName, isFromHome: fromScreen == "register_home",),);
         }
 
       } else if (fromScreen == "forgotPassword" || fromScreen == "home" || fromScreen == "forgotPasswordHome" ) {

@@ -149,6 +149,7 @@ class Nav {
         otpId: "",
         selectedPlayer: "",
         selectedPlayerName: '',
+        isFromHome: false
       ),
       binding: RegisterMemberFanclubControllerBinding(),
     ),
@@ -175,6 +176,7 @@ class Nav {
         isNotification: true,
         playerSelected: "",
         playerSelectedName: "",
+        isFromHome: false,
       ),
       binding: FanClubConfirmationControllerBinding(),
     ),
