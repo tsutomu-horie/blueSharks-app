@@ -26,6 +26,7 @@ class NotificationData with _$NotificationData {
     required String model,
     required String model_id,
     required String title,
+    required String photo,
   }) = _NotificationData;
 
   factory NotificationData.fromJson(Map<String, dynamic> json) =>

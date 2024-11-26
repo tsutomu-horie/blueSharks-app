@@ -37,6 +37,7 @@ _$NotificationDataImpl _$$NotificationDataImplFromJson(
       model: json['model'] as String,
       model_id: json['model_id'] as String,
       title: json['title'] as String,
+      photo: json['photo'] as String,
     );
 
 Map<String, dynamic> _$$NotificationDataImplToJson(
@@ -46,4 +47,5 @@ Map<String, dynamic> _$$NotificationDataImplToJson(
       'model': instance.model,
       'model_id': instance.model_id,
       'title': instance.title,
+      'photo': instance.photo,
     };

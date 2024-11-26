@@ -12,6 +12,7 @@ import 'package:koto_blue_sharks/app/views/views/custom_switch_view.dart';
 import 'package:koto_blue_sharks/app/views/views/custom_text_view.dart';
 import 'package:koto_blue_sharks/app/views/views/edit_profile_bottom_sheet_view.dart';
 import 'package:koto_blue_sharks/generated/locales.g.dart';
+import 'package:koto_blue_sharks/presentation/PrivacyPolicyScreen/privacy_policy_screen.screen.dart';
 import 'package:koto_blue_sharks/presentation/forgotPassword/forgot_password.screen.dart';
 import 'package:koto_blue_sharks/presentation/main/main.screen.dart';
 import 'package:koto_blue_sharks/utils/app_color.dart';
@@ -135,7 +136,9 @@ class FanClubConfirmationScreen extends GetView<FanClubConfirmationController> {
                       mainAxisSize: MainAxisSize.max,
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        TextButton(onPressed: () {}, child: Column(
+                        TextButton(onPressed: () {
+                          controller.launchFanClub();
+                        }, child: Column(
                           children: [
                             Row(
                               children: [
@@ -366,7 +369,7 @@ class FanClubConfirmationScreen extends GetView<FanClubConfirmationController> {
                           text: LocaleKeys.privacy_policy.tr,
                           recognizer: TapGestureRecognizer()
                             ..onTap = () {
-
+                              Get.to(() => const PrivacyPolicyScreen());
                             },
                         ),
                         TextSpan(

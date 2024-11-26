@@ -1,3 +1,4 @@
+import 'package:flutter/services.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class AuthToken {
@@ -8,13 +9,21 @@ class AuthToken {
   }
 
   Future<String?> getAccessToken() async {
-    String? token = await _storage.read(key: 'accessToken');
-
-    if (token != null){
-      return "Bearer $token";
+    const _storage = FlutterSecureStorage();
+    try {
+      final accessToken = await _storage.read(key: 'accessToken');
+      return accessToken;
+    } on PlatformException catch (e) {
+      // Workaround for https://github.com/mogol/flutter_secure_storage/issues/43
+      await _storage.deleteAll();
     }
-
-    return null;
+    // String? token = await _storage.read(key: 'accessToken');
+    //
+    // if (token != null){
+    //   return "Bearer $token";
+    // }
+    //
+    // return null;
   }
 
   Future<void> deleteToken() async {

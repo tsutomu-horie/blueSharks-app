@@ -23,7 +23,7 @@ class MemberCardView extends GetView {
             height: 218.h,
           ),
           Positioned(
-            bottom: 65.h,
+            bottom: 63.h,
             left: 15.w,
             child: Text(
               "No. $memberId",

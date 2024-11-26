@@ -11,6 +11,7 @@ class Routes {
   static const FANCLUB = '/fanclub';
   static const FAN_CLUB_CONFIRMATION = '/fan-club-confirmation';
   static const FORGOT_PASSWORD = '/forgot-password';
+  static const FORGOT_PASSWORD_HOME = '/forgot-password-home';
   static const GALLERY = '/gallery';
   static const GALLERY_SCREEN_DETAIL = '/gallery-screen-detail';
   static const GAME_INFO = '/game-info';
@@ -38,5 +39,5 @@ class Routes {
   static const WARNING_DIALOG = '/warning-dialog';
   static const WEBVIEW = '/webview';
   static const YEAR_FILTER_CONTROLLER = '/year-filter-controller';
-  static const FORGOT_PASSWORD_HOME = '/forgot-password-home';
+  static const PRIVACY_POLICY_SCREEN = '/privacy-policy-screen';
 }

@@ -145,12 +145,11 @@ class Nav {
     GetPage(
       name: Routes.REGISTER_MEMBER_FANCLUB,
       page: () => const RegisterMemberFanclubScreen(
-        email: "",
-        otpId: "",
-        selectedPlayer: "",
-        selectedPlayerName: '',
-        isFromHome: false
-      ),
+          email: "",
+          otpId: "",
+          selectedPlayer: "",
+          selectedPlayerName: '',
+          isFromHome: false),
       binding: RegisterMemberFanclubControllerBinding(),
     ),
     GetPage(
@@ -160,7 +159,10 @@ class Nav {
     ),
     GetPage(
       name: Routes.FORGOT_PASSWORD,
-      page: () => const ResetPasswordScreen("", isFromHome: false,),
+      page: () => const ResetPasswordScreen(
+        "",
+        isFromHome: false,
+      ),
       binding: ResetPasswordControllerBinding(),
     ),
     GetPage(
@@ -217,8 +219,13 @@ class Nav {
     ),
     GetPage(
       name: Routes.FORGOT_PASSWORD_HOME,
-      page: () => const ForgotPasswordHomeScreen("",""),
+      page: () => const ForgotPasswordHomeScreen("", ""),
       binding: ForgotPasswordHomeControllerBinding(),
+    ),
+    GetPage(
+      name: Routes.PRIVACY_POLICY_SCREEN,
+      page: () => const PrivacyPolicyScreen(),
+      binding: PrivacyPolicyScreenControllerBinding(),
     ),
   ];
 }

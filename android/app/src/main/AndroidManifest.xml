@@ -3,8 +3,13 @@
         android:label="koto_blue_sharks"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
+        <meta-data
+            android:name="flutter_secure_storage_enable_encryption"
+            android:value="true" />
         <activity
             android:name=".MainActivity"
+            android:allowBackup="false"
+            android:fullBackupContent="false"
             android:exported="true"
             android:launchMode="singleTop"
             android:taskAffinity=""
