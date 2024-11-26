@@ -78,27 +78,34 @@ class CalendarScreen extends StatelessWidget {
             SizedBox(
               width: 10.w,
             ),
-            PopupMenuButton<CalendarView>(
-              color: Colors.white,
-              position: PopupMenuPosition.under,
-              icon: SvgPicture.asset("assets/vectors/ic_calendar.svg"),
-              itemBuilder: (context) => [
-                const PopupMenuItem(
-                  value: CalendarView.day,
-                  child: Text('Day'),
-                ),
-                const PopupMenuItem(
-                  value: CalendarView.week,
-                  child: Text('Week'),
-                ),
-                const PopupMenuItem(
-                  value: CalendarView.month,
-                  child: Text('Month'),
-                ),
-              ],
-              onSelected: (value) {
-                controller.onChangeCalendar(value);
-              },
+            Container(
+              height: 40.h,
+              decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(8.r),
+                  border: Border.all(color: BorderColor.secondary)),
+              child: PopupMenuButton<CalendarView>(
+                color: Colors.white,
+                position: PopupMenuPosition.under,
+                icon: SvgPicture.asset("assets/vectors/ic_calendar.svg"),
+                itemBuilder: (context) => [
+                  const PopupMenuItem(
+                    value: CalendarView.day,
+                    child: Text('Day'),
+                  ),
+                  const PopupMenuItem(
+                    value: CalendarView.week,
+                    child: Text('Week'),
+                  ),
+                  const PopupMenuItem(
+                    value: CalendarView.month,
+                    child: Text('Month'),
+                  ),
+                ],
+                onSelected: (value) {
+                  controller.onChangeCalendar(value);
+                },
+              ),
             ),
           ],
         ),
@@ -110,6 +117,7 @@ class CalendarScreen extends StatelessWidget {
               return SfCalendar(
                 key: Key("${controller.calendarView.value}"),
                 view: controller.calendarView.value,
+                headerDateFormat: 'yyyy年M月',
                 monthViewSettings: const MonthViewSettings(
                   appointmentDisplayMode: MonthAppointmentDisplayMode.appointment, // Proper display mode
                   showAgenda: false,

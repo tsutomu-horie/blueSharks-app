@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_widget_from_html/flutter_widget_from_html.dart';
 
 import 'package:get/get.dart';
+import 'package:koto_blue_sharks/app/views/views/custom_image_view.dart';
 import 'package:koto_blue_sharks/app/views/views/custom_text_view.dart';
 import 'package:koto_blue_sharks/generated/locales.g.dart';
 import 'package:koto_blue_sharks/utils/app_color.dart';
 import 'package:koto_blue_sharks/utils/date_formatter.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import 'controllers/notification_detail.controller.dart';
 import 'package:koto_blue_sharks/app/data/models/info/notification.dart';
@@ -22,7 +25,7 @@ class NotificationDetailScreen extends GetView<NotificationDetailController> {
     return Scaffold(
       appBar: AppBar(
         title: CustomTextView(
-          LocaleKeys.detailled_notification.tr,
+         "Detail News",
           type: TDSFontType.titleMedium,
           color: TextColor.inverse,
         ),
@@ -66,8 +69,9 @@ class NotificationDetailScreen extends GetView<NotificationDetailController> {
             SizedBox(height: 8.h,),
             CustomTextView(notificationDetail!.data.title, style: TDSTypography.titleMedium, color: TextColor.primary,),
             SizedBox(height: 24.h,),
+            CustomImageView(image: notificationDetail!.data.photo),
+            SizedBox(height: 16.h,),
             CustomTextView(notificationDetail!.data.body, style: TDSTypography.bodyTextMedium, color: TextColor.secondary,),
-
           ],
         ),
       )

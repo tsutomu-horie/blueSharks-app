@@ -302,6 +302,7 @@ mixin _$NotificationData {
   String get model => throw _privateConstructorUsedError;
   String get model_id => throw _privateConstructorUsedError;
   String get title => throw _privateConstructorUsedError;
+  String get photo => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
   @JsonKey(ignore: true)
@@ -315,7 +316,8 @@ abstract class $NotificationDataCopyWith<$Res> {
           NotificationData value, $Res Function(NotificationData) then) =
       _$NotificationDataCopyWithImpl<$Res, NotificationData>;
   @useResult
-  $Res call({String body, String model, String model_id, String title});
+  $Res call(
+      {String body, String model, String model_id, String title, String photo});
 }
 
 /// @nodoc
@@ -335,6 +337,7 @@ class _$NotificationDataCopyWithImpl<$Res, $Val extends NotificationData>
     Object? model = null,
     Object? model_id = null,
     Object? title = null,
+    Object? photo = null,
   }) {
     return _then(_value.copyWith(
       body: null == body
@@ -353,6 +356,10 @@ class _$NotificationDataCopyWithImpl<$Res, $Val extends NotificationData>
           ? _value.title
           : title // ignore: cast_nullable_to_non_nullable
               as String,
+      photo: null == photo
+          ? _value.photo
+          : photo // ignore: cast_nullable_to_non_nullable
+              as String,
     ) as $Val);
   }
 }
@@ -365,7 +372,8 @@ abstract class _$$NotificationDataImplCopyWith<$Res>
       __$$NotificationDataImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({String body, String model, String model_id, String title});
+  $Res call(
+      {String body, String model, String model_id, String title, String photo});
 }
 
 /// @nodoc
@@ -383,6 +391,7 @@ class __$$NotificationDataImplCopyWithImpl<$Res>
     Object? model = null,
     Object? model_id = null,
     Object? title = null,
+    Object? photo = null,
   }) {
     return _then(_$NotificationDataImpl(
       body: null == body
@@ -401,6 +410,10 @@ class __$$NotificationDataImplCopyWithImpl<$Res>
           ? _value.title
           : title // ignore: cast_nullable_to_non_nullable
               as String,
+      photo: null == photo
+          ? _value.photo
+          : photo // ignore: cast_nullable_to_non_nullable
+              as String,
     ));
   }
 }
@@ -412,7 +425,8 @@ class _$NotificationDataImpl implements _NotificationData {
       {required this.body,
       required this.model,
       required this.model_id,
-      required this.title});
+      required this.title,
+      required this.photo});
 
   factory _$NotificationDataImpl.fromJson(Map<String, dynamic> json) =>
       _$$NotificationDataImplFromJson(json);
@@ -425,10 +439,12 @@ class _$NotificationDataImpl implements _NotificationData {
   final String model_id;
   @override
   final String title;
+  @override
+  final String photo;
 
   @override
   String toString() {
-    return 'NotificationData(body: $body, model: $model, model_id: $model_id, title: $title)';
+    return 'NotificationData(body: $body, model: $model, model_id: $model_id, title: $title, photo: $photo)';
   }
 
   @override
@@ -440,12 +456,14 @@ class _$NotificationDataImpl implements _NotificationData {
             (identical(other.model, model) || other.model == model) &&
             (identical(other.model_id, model_id) ||
                 other.model_id == model_id) &&
-            (identical(other.title, title) || other.title == title));
+            (identical(other.title, title) || other.title == title) &&
+            (identical(other.photo, photo) || other.photo == photo));
   }
 
   @JsonKey(ignore: true)
   @override
-  int get hashCode => Object.hash(runtimeType, body, model, model_id, title);
+  int get hashCode =>
+      Object.hash(runtimeType, body, model, model_id, title, photo);
 
   @JsonKey(ignore: true)
   @override
@@ -467,7 +485,8 @@ abstract class _NotificationData implements NotificationData {
       {required final String body,
       required final String model,
       required final String model_id,
-      required final String title}) = _$NotificationDataImpl;
+      required final String title,
+      required final String photo}) = _$NotificationDataImpl;
 
   factory _NotificationData.fromJson(Map<String, dynamic> json) =
       _$NotificationDataImpl.fromJson;
@@ -480,6 +499,8 @@ abstract class _NotificationData implements NotificationData {
   String get model_id;
   @override
   String get title;
+  @override
+  String get photo;
   @override
   @JsonKey(ignore: true)
   _$$NotificationDataImplCopyWith<_$NotificationDataImpl> get copyWith =>

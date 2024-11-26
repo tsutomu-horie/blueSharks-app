@@ -50,7 +50,7 @@ class MypageController extends FanClubConfirmationController {
     if (token != null) {
       isLogin.value = true;
 
-      getProfile(token);
+      getProfile2(token);
       getNotificationSetting();
 
     }
@@ -61,7 +61,7 @@ class MypageController extends FanClubConfirmationController {
 
   }
 
-  void getProfile(String token) async {
+  void getProfile2(String token) async {
     print("response token = $token");
     final response = await apiProvider.getProfile(token, (){
       print("error get profile ");

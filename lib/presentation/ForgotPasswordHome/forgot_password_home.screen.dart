@@ -26,7 +26,7 @@ class ForgotPasswordHomeScreen extends GetView<ForgotPasswordHomeController> {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: BrandColor.main,
-        title: CustomTextView(LocaleKeys.forgot_password_header_home.tr, color: Colors.white, type: TDSFontType.titleMedium,),
+        title: CustomTextView(LocaleKeys.forgot_password_header.tr, color: Colors.white, type: TDSFontType.titleMedium,),
         centerTitle: true,
         leading: IconButton(
           icon: const Icon(

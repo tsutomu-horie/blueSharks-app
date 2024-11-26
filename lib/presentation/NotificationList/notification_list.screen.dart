@@ -39,35 +39,98 @@ class NotificationListScreen extends GetView<NotificationListController> {
         ),
       ),
       body: Obx(() {
-        return ListView.builder(
-            itemCount: controller.notificationList.length,
-            itemBuilder: (BuildContext context, int index) => InkWell(
-              onTap: (){
-                Get.to(() => NotificationDetailScreen(controller.notificationList[index]));
-              },
-              child: Column(
-                children: [
-                  Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.w),
-                    child: Row(
-                          children: [
-                            SvgPicture.asset("assets/vectors/ic_notification_status.svg", width: 36.w, height: 36.h,),
-                            SizedBox(width: 12.w,),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                CustomTextView(controller.notificationList[index].data.title, style: TextStyle(fontWeight: FontWeight.w600, color: TextColor.primary),),
-                                SizedBox(height: 4.h,),
-                                CustomTextView(controller.formatDate(controller.notificationList[index].created_at))
-                              ],
-                            )
-                          ],
+        if (controller.notificationList.length > 0) {
+          return ListView.builder(
+              itemCount: controller.notificationList.length,
+              itemBuilder: (BuildContext context, int index) =>
+                  InkWell(
+                    onTap: () {
+                      Get.to(() =>
+                          NotificationDetailScreen(
+                              controller.notificationList[index]));
+                    },
+                    child: Column(
+                      children: [
+                        Padding(
+                          padding: EdgeInsets.symmetric(
+                              horizontal: 16.w, vertical: 16.w),
+                          child: Row(
+                            children: [
+                              SvgPicture.asset(
+                                "assets/vectors/ic_notification_status.svg",
+                                width: 36.w, height: 36.h,),
+                              SizedBox(width: 12.w,),
+                              Flexible(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    CustomTextView(
+                                      controller.notificationList[index].data
+                                          .title, style: TextStyle(
+                                        fontWeight: FontWeight.w600,
+                                        color: TextColor.primary),),
+                                    SizedBox(height: 4.h,),
+                                    CustomTextView(controller.formatDate(
+                                        controller.notificationList[index]
+                                            .created_at))
+                                  ],
+                                ),
+                              )
+                            ],
+                          ),
                         ),
+                        const Divider()
+                      ],
+                    ),
+                  ));
+        } else {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // Icon or Image
+                SvgPicture.asset(
+                  "assets/vectors/ic_empty_news.svg",  // Your empty state icon
+                  width: 48.w,
+                  height: 48.h,
+                ),
+                SizedBox(height: 16.h),
+
+                // Main text
+                CustomTextView(
+                  "ここにはニュースはありません",  // "No news here"
+                  style: TextStyle(
+                    fontSize: 16.sp,
+                    fontWeight: FontWeight.w700,
+                    color: TextColor.primary,
                   ),
-                  const Divider()
-                ],
-              ),
-            ));
+                  align: TextAlign.center,
+                ),
+                SizedBox(height: 8.h),
+
+                // Description text
+                Row(
+                  children: [
+                    SizedBox(width: 60.w,),
+                    Flexible(
+                      child: CustomTextView(
+                        "管理者がアプリでニュースを放送した後、ニュースのリストがここに表示されます。",
+                        // "After the administrator broadcasts news in the app,\nthe news list will be displayed here."
+                        style: TextStyle(
+                          fontSize: 14.sp,
+                          color: TextColor.secondary,
+                        ),
+                        align: TextAlign.center,
+                        type: TDSFontType.bodyTextMedium,
+                      ),
+                    ),
+                    SizedBox(width: 60.w,),
+                  ],
+                ),
+              ],
+            ),
+          );
+        }
       }),
     );
   }

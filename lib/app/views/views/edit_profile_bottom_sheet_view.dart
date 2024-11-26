@@ -294,7 +294,7 @@ void editProfileBottomSheet(
                                         );
                                       },
                                     );
-                                  }, false, context);
+                                  }, true, context);
                                 }
                               }
                             },
@@ -362,7 +362,7 @@ void showEmailDialog(FanClubConfirmationController registerEmailController,
                   onPressed: () {
                     Get.back();
                     Get.to(() => RegisterOtpScreen(
-                      isRegister: false,
+                      isRegister: true,
                         email: registerEmailController.emailController.text,
                         fromScreen: "editProfile",
                         otpId: otpId,

@@ -232,10 +232,12 @@ class RegisterEmailScreen extends GetView<RegisterEmailController> {
                     ),
                     SizedBox(
                         width: double.infinity,
-                        child: TextButton(
-                          onPressed: () {
-                            Get.to(() => LoginScreen(
-                                selectedPlayer, false, selectedPlayerName));
+                        child:InkWell(
+                          splashFactory: NoSplash.splashFactory,
+                          highlightColor: Colors.transparent,
+                          overlayColor: MaterialStateProperty.all(Colors.transparent),
+                          onTap: () {
+                            Get.to(() => LoginScreen(selectedPlayer, false, selectedPlayerName));
                           },
                           child: CustomTextView(
                             LocaleKeys.login_now.tr,
@@ -244,9 +246,12 @@ class RegisterEmailScreen extends GetView<RegisterEmailController> {
                             style: TextStyle(
                                 fontWeight: FontWeight.w700,
                                 fontSize: 14.sp,
-                                decoration: TextDecoration.underline),
+                                decoration: TextDecoration.underline,
+                              decorationColor: BrandColor.main,
+                            ),
                           ),
-                        )),
+                        )
+                    ),
                   ],
                 ),
               ),

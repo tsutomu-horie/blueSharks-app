@@ -15,6 +15,7 @@ import 'package:koto_blue_sharks/presentation/DeleteAccountConfirmation/delete_a
 import 'package:koto_blue_sharks/presentation/EditPassword/edit_password.screen.dart';
 import 'package:koto_blue_sharks/presentation/RegisterEmailFromHome/register_email_from_home.screen.dart';
 import 'package:koto_blue_sharks/presentation/login/login.screen.dart';
+import 'package:koto_blue_sharks/presentation/screens.dart';
 import 'package:koto_blue_sharks/utils/Constant.dart';
 import 'package:koto_blue_sharks/utils/app_color.dart';
 import 'package:shimmer/shimmer.dart';
@@ -393,6 +394,7 @@ class MypageScreen extends GetView<MypageController> {
                             height: 48.h,
                             child: OutlinedButton(
                               onPressed: () async {
+                                // Get.to(() => FanClubConfirmationScreen(email: '', id: '', playerSelected: '', isNotification: false, playerSelectedName: '', isFromHome: false,));
                                 controller.emailController.text =
                                     controller.profileData.value?.email ?? "";
 
@@ -715,7 +717,9 @@ class MypageScreen extends GetView<MypageController> {
                                 decoration: TextDecoration.underline,
                               ),
                               text: LocaleKeys.privacy_policy.tr,
-                              recognizer: TapGestureRecognizer()..onTap = () {},
+                              recognizer: TapGestureRecognizer()..onTap = () {
+                                Get.to(() => const PrivacyPolicyScreen());
+                              },
                             ),
                             TextSpan(
                               style: TextStyle(
@@ -731,7 +735,9 @@ class MypageScreen extends GetView<MypageController> {
                                 decoration: TextDecoration.underline,
                               ),
                               text: LocaleKeys.term_of_use.tr,
-                              recognizer: TapGestureRecognizer()..onTap = () {},
+                              recognizer: TapGestureRecognizer()..onTap = () {
+                                Get.to(() => const PrivacyPolicyScreen());
+                              },
                             ),
                             TextSpan(
                               style: TextStyle(

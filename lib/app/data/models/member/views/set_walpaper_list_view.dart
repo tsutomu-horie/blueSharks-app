@@ -189,240 +189,303 @@ class SetWalpaperListView extends GetView {
       ],
     );
   }
+}
 
-  void showPlayerFilterBottomSheet(
-      WallpaperSetPlayerController memberController, BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
-      ),
-      builder: (context) {
-        return Container(
-          padding: EdgeInsets.all(16.w),
-          height: 142.h,
-          // Fixed height for the bottom sheet
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              SizedBox(height: 8.h),
-              Center(
-                  child: Container(
-                width: 48.w,
-                height: 4.w,
-                color: BorderColor.primary,
-              )),
-              SizedBox(height: 16.h),
-              Expanded(
-                child: ListView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: memberController.playerCategory.length,
-                  itemBuilder: (context, index) {
-                    final item = memberController.playerCategory[index];
-                    return InkWell(
-                      onTap: () {
-                        // memberController.onSelectPosition(item);
-                        Get.back();
-                        memberController.scrollToGroup(memberController.playerCategoryFull[index]);
-                      },
-                      child: Column(
-                        children: [
-                          SizedBox(
-                            height: 44.h,
-                            child: Row(
-                              children: [
-                                Flexible(
-                                    child: SizedBox(
-                                        width: double.infinity,
-                                        child: CustomTextView(
-                                          item,
-                                          type: TDSFontType.labelLarge,
-                                        ))),
-                              ],
-                            ),
-                          ),
-                          if (index !=
-                              memberController.playerCategory.length - 1)
-                            Container(
-                              height: 1.h,
-                              color: BorderColor.primary,
-                            ),
-                        ],
-                      ),
-                    );
-                  },
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  void showSetWallpaper(
-      WallpaperSetPlayerController memberController,
-      BuildContext context,
-      String image,
-      String playerNameKatana,
-      String playerNameKanji,
-      String playerPosition,
-      String playerUrl,
-      Function(String, String)? onSet) {
-    showModalBottomSheet(
-      context: context,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
-      ),
-      backgroundColor: Colors.white,
-      builder: (context) {
-        return Container(
-          padding: EdgeInsets.symmetric(horizontal: 16.w),
-          height: 292.h, // Fixed height for the bottom sheet
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.start,
-            children: [
-              SizedBox(
-                height: 44.h,
-                child: Row(
-                  children: [
-                    Flexible(
-                        child: SizedBox(
-                            width: double.infinity,
-                            child: CustomTextView(
-                              LocaleKeys.set_wallpaper_title3.tr,
-                              type: TDSFontType.titleMedium,
-                            ))),
-                  ],
-                ),
-              ),
-              SizedBox(
-                height: 20.h,
-              ),
-              Container(
-                padding: EdgeInsets.symmetric(vertical: 12.h, horizontal: 16.w),
-                decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(16.r),
-                    border: Border.all(color: BorderColor.subtle, width: 1)),
-                child: Row(
-                  children: [
-                    image != ''
-                        ? SizedBox(
-                            width: 81.w,
-                            child: AspectRatio(
-                              aspectRatio: 3 / 4,
-                              child: CustomImageView(
-                                image: image,
-                                radius: 4.r,
-                                customFit: BoxFit.fitHeight,
-                              ),
-                            ))
-                        : Container(
-                            decoration: BoxDecoration(
-                              color: Colors.grey,
-                              borderRadius: BorderRadius.circular(4.r),
-                            ),
-                          ),
-                    SizedBox(
-                      width: 12.w,
-                    ),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+void showPlayerFilterBottomSheet(
+    WallpaperSetPlayerController memberController, BuildContext context) {
+  showModalBottomSheet(
+    context: context,
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
+    ),
+    builder: (context) {
+      return Container(
+        padding: EdgeInsets.all(16.w),
+        height: 142.h,
+        // Fixed height for the bottom sheet
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(height: 8.h),
+            Center(
+                child: Container(
+                  width: 48.w,
+                  height: 4.w,
+                  color: BorderColor.primary,
+                )),
+            SizedBox(height: 16.h),
+            Expanded(
+              child: ListView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: memberController.playerCategory.length,
+                itemBuilder: (context, index) {
+                  final item = memberController.playerCategory[index];
+                  return InkWell(
+                    onTap: () {
+                      // memberController.onSelectPosition(item);
+                      Get.back();
+                      memberController.scrollToGroup(memberController.playerCategoryFull[index]);
+                    },
+                    child: Column(
                       children: [
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            CustomTextView(
-                              playerNameKatana,
-                              type: TDSFontType.labelMedium,
-                              color: TextColor.secondary,
-                            ),
-                            CustomTextView(
-                              playerNameKanji,
-                              type: TDSFontType.titleSmall,
-                              color: TextColor.secondary,
-                            ),
-                          ],
-                        ),
                         SizedBox(
-                          height: 12.h,
+                          height: 44.h,
+                          child: Row(
+                            children: [
+                              Flexible(
+                                  child: SizedBox(
+                                      width: double.infinity,
+                                      child: CustomTextView(
+                                        item,
+                                        type: TDSFontType.labelLarge,
+                                      ))),
+                            ],
+                          ),
                         ),
-                        Container(
-                            padding: EdgeInsets.symmetric(
-                                vertical: 4.h, horizontal: 8.w),
-                            decoration: BoxDecoration(
-                              color: BrandColor.surface,
-                              borderRadius: BorderRadius.circular(24.r),
-                            ),
-                            child: CustomTextView(playerPosition.capitalizeText(),
-                                type: TDSFontType.labelMedium,
-                                color: BrandColor.main),
-                        ),
+                        if (index !=
+                            memberController.playerCategory.length - 1)
+                          Container(
+                            height: 1.h,
+                            color: BorderColor.primary,
+                          ),
                       ],
-                    )
-                  ],
-                ),
+                    ),
+                  );
+                },
               ),
-              SizedBox(
-                height: 28.h,
-              ),
-              Row(
+            ),
+          ],
+        ),
+      );
+    },
+  );
+}
+
+void showSetWallpaper(
+    WallpaperSetPlayerController memberController,
+    BuildContext context,
+    String image,
+    String playerNameKatana,
+    String playerNameKanji,
+    String playerPosition,
+    String playerUrl,
+    Function(String, String)? onSet) {
+  showModalBottomSheet(
+    context: context,
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
+    ),
+    backgroundColor: Colors.white,
+    builder: (context) {
+      return Container(
+        padding: EdgeInsets.symmetric(horizontal: 16.w),
+        height: 292.h, // Fixed height for the bottom sheet
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.start,
+          children: [
+            SizedBox(
+              height: 44.h,
+              child: Row(
                 children: [
                   Flexible(
-                    child: SizedBox(
-                      height: 48.h,
-                      width: double.infinity,
-                      child: OutlinedButton(
-                        style: ButtonStyle(
-                          side: WidgetStateProperty.all(BorderSide(
-                                  color: BrandColor
-                                      .main) // Set your desired color here
-                              ),
+                      child: SizedBox(
+                          width: double.infinity,
+                          child: CustomTextView(
+                            LocaleKeys.set_wallpaper_title3.tr,
+                            type: TDSFontType.titleMedium,
+                          ))),
+                ],
+              ),
+            ),
+            SizedBox(
+              height: 20.h,
+            ),
+            Container(
+              padding: EdgeInsets.symmetric(vertical: 12.h, horizontal: 16.w),
+              decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(16.r),
+                  border: Border.all(color: BorderColor.subtle, width: 1)),
+              child: Row(
+                children: [
+                  image != ''
+                      ? SizedBox(
+                      width: 81.w,
+                      child: AspectRatio(
+                        aspectRatio: 3 / 4,
+                        child: CustomImageView(
+                          image: image,
+                          radius: 4.r,
+                          customFit: BoxFit.fitHeight,
                         ),
-                        onPressed: () {
-                          Get.back();
-                        },
-                        child: CustomTextView(
-                          LocaleKeys.cancel.tr,
-                          color: BrandColor.main,
-                        ),
-                      ),
+                      ))
+                      : Container(
+                    decoration: BoxDecoration(
+                      color: Colors.grey,
+                      borderRadius: BorderRadius.circular(4.r),
                     ),
                   ),
                   SizedBox(
-                    width: 16.w,
+                    width: 12.w,
                   ),
-                  Flexible(
-                    child: SizedBox(
-                      height: 48.h,
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: BrandColor.main,
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          CustomTextView(
+                            playerNameKatana,
+                            type: TDSFontType.labelMedium,
+                            color: TextColor.secondary,
+                          ),
+                          CustomTextView(
+                            playerNameKanji,
+                            type: TDSFontType.titleSmall,
+                            color: TextColor.secondary,
+                          ),
+                        ],
+                      ),
+                      SizedBox(
+                        height: 12.h,
+                      ),
+                      Container(
+                        padding: EdgeInsets.symmetric(
+                            vertical: 4.h, horizontal: 8.w),
+                        decoration: BoxDecoration(
+                          color: BrandColor.surface,
+                          borderRadius: BorderRadius.circular(24.r),
                         ),
-                        onPressed: () {
-                          if (onSet != null) {
-                            onSet("$playerNameKatana $playerNameKanji", playerUrl);
-                            Get.back();
-                          } else {
-                            Get.to(() => RegisterEmailScreen(playerUrl, "$playerNameKatana $playerNameKanji"));
-                          }
-                        },
-                        child: CustomTextView(
-                          LocaleKeys.confirm.tr,
-                          color: BrandColor.content,
+                        child: CustomTextView(playerPosition.capitalizeText(),
+                            type: TDSFontType.labelMedium,
+                            color: BrandColor.main),
+                      ),
+                    ],
+                  )
+                ],
+              ),
+            ),
+            SizedBox(
+              height: 28.h,
+            ),
+            Row(
+              children: [
+                Flexible(
+                  child: SizedBox(
+                    height: 48.h,
+                    width: double.infinity,
+                    child: OutlinedButton(
+                      style: ButtonStyle(
+                        side: WidgetStateProperty.all(BorderSide(
+                            color: BrandColor
+                                .main) // Set your desired color here
                         ),
+                      ),
+                      onPressed: () {
+                        Get.back();
+                      },
+                      child: CustomTextView(
+                        LocaleKeys.cancel.tr,
+                        color: BrandColor.main,
                       ),
                     ),
                   ),
-                ],
-              )
-            ],
+                ),
+                SizedBox(
+                  width: 16.w,
+                ),
+                Flexible(
+                  child: SizedBox(
+                    height: 48.h,
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: BrandColor.main,
+                      ),
+                      onPressed: () {
+                        if (onSet != null) {
+                          onSet("$playerNameKatana $playerNameKanji", playerUrl);
+                          Get.back();
+                        } else {
+                          Get.to(() => RegisterEmailScreen(playerUrl, "$playerNameKatana $playerNameKanji"));
+                        }
+                      },
+                      child: CustomTextView(
+                        LocaleKeys.confirm.tr,
+                        color: BrandColor.content,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            )
+          ],
+        ),
+      );
+    },
+  );
+}
+
+class FilterHeaderDelegate extends SliverPersistentHeaderDelegate {
+  final WallpaperSetPlayerController memberController;
+  final BuildContext context;
+
+  FilterHeaderDelegate(this.memberController, this.context);
+
+  @override
+  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
+    return Container(
+      color: BackgroundColor.primary,
+      padding: EdgeInsets.symmetric(vertical: 12.h, horizontal: 16.w),
+      child: OutlinedButton(
+        onPressed: () {
+          showPlayerFilterBottomSheet(memberController, context);
+        },
+        style: ButtonStyle(
+          padding: WidgetStateProperty.all(EdgeInsets.zero),
+          shape: MaterialStateProperty.all(
+            RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8.r),
+            ),
           ),
-        );
-      },
+        ),
+        child: Row(
+          children: [
+            SizedBox(width: 12.w),
+            SvgPicture.asset(
+              "assets/vectors/ic_user-search.svg",
+              width: 20.w,
+              height: 20.h,
+            ),
+            SizedBox(width: 8.w),
+            Flexible(
+              child: SizedBox(
+                width: double.infinity,
+                child: Obx(() {
+                  return CustomTextView(
+                    memberController.selectedPosition.value,
+                    type: TDSFontType.bodyTextMedium,
+                    color: TextColor.primary,
+                  );
+                }),
+              ),
+            ),
+            SizedBox(width: 8.w),
+            Icon(Icons.keyboard_arrow_down, size: 20.w),
+            SizedBox(width: 12.w),
+          ],
+        ),
+      ),
     );
   }
+
+  @override
+  double get maxExtent => 72.h;
+
+  @override
+  double get minExtent => 72.h;
+
+  @override
+  bool shouldRebuild(covariant SliverPersistentHeaderDelegate oldDelegate) => false;
 }

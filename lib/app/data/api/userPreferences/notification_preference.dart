@@ -1,3 +1,4 @@
+import 'package:flutter/services.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class NotificationPreference {
@@ -8,13 +9,22 @@ class NotificationPreference {
   }
 
   Future<String?> getNotificationSetting() async {
-    String? wallpaper = await _storage.read(key: 'notificationSetting');
-
-    if (wallpaper != null){
-      return wallpaper;
+    const _storage = FlutterSecureStorage();
+    try {
+      final accessToken = await _storage.read(key: 'notificationSetting');
+      return accessToken;
+    } on PlatformException catch (e) {
+      // Workaround for https://github.com/mogol/flutter_secure_storage/issues/43
+      await _storage.deleteAll();
     }
 
-    return null;
+    // String? wallpaper = await _storage.read(key: 'notificationSetting');
+    //
+    // if (wallpaper != null){
+    //   return wallpaper;
+    // }
+    //
+    // return null;
   }
 
   Future<void> deleteNotificationSetting() async {

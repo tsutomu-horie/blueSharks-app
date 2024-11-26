@@ -528,7 +528,7 @@ class Locales {
     'wallpaper_placeholder': '壁紙を選択してください',
     'logout_confirmation_title': 'ログアウトしますか？',
     'logout_confirmation_desc': 'アカウントからログアウトしてもよろしいですか？',
-    'all': 'All',
+    'all': 'ALL',
     'notice_tab': 'お知らせ',
     'event_information': '試合情報',
     'event_tab': 'イベント情報',

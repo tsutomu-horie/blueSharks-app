@@ -29,6 +29,7 @@ class MatchDetailScreen extends GetView<MatchDetailController> {
   Widget build(BuildContext context) {
     final MatchDetailController controller = Get.put(MatchDetailController());
 
+    print("data ${data}");
     final gameDate = data?.custom_field.gameDate ?? [];
     final date = gameDate.isNotEmpty
         ? convertJapaneseDate(gameDate.first)
@@ -36,6 +37,7 @@ class MatchDetailScreen extends GetView<MatchDetailController> {
     final matchStatus =
         data?.custom_field != null ? getStatusMatch(data!.custom_field) : null;
     final customField = data?.custom_field;
+    print("data ${matchStatus}");
 
     final List<String> tabs = [
       'Member',
@@ -219,7 +221,7 @@ class MatchDetailScreen extends GetView<MatchDetailController> {
                             SizedBox(
                                 width: 104.w,
                                 child: HtmlTextView(
-                                  matchStatus?["teamName"],
+                                  "${data?.custom_field.team_1?.first}",
                                   style: Style(
                                       fontSize: FontSize(12.sp),
                                       color: PrimaryColor.pressed,
@@ -227,7 +229,8 @@ class MatchDetailScreen extends GetView<MatchDetailController> {
                                       maxLines: 2,
                                       textOverflow: TextOverflow.ellipsis,
                                       alignment: Alignment.center),
-                                )),
+                                ),
+                            ),
                           ],
                         ),
                         SizedBox(
@@ -337,7 +340,7 @@ class MatchDetailScreen extends GetView<MatchDetailController> {
                             SizedBox(
                                 width: 104.w,
                                 child: HtmlTextView(
-                                  matchStatus?["teamName"],
+                                  "${data?.custom_field.team_2?.first}",
                                   style: Style(
                                       fontSize: FontSize(12.sp),
                                       color: PrimaryColor.pressed,

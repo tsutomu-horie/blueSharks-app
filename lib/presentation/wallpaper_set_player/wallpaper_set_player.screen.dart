@@ -151,3 +151,4 @@ class WallpaperSetPlayerScreen extends GetView<WallpaperSetPlayerController> {
     );
   }
 }
+
