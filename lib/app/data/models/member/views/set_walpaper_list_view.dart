@@ -25,60 +25,60 @@ class SetWalpaperListView extends GetView {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Container(
-          color: BackgroundColor.primary,
-          padding: EdgeInsets.symmetric(vertical: 12.h, horizontal: 16.w),
-          child: OutlinedButton(
-            onPressed: () {
-              showPlayerFilterBottomSheet(memberController, context);
-            },
-            style: ButtonStyle(
-              padding: WidgetStateProperty.all(EdgeInsets.zero),
-              shape: MaterialStateProperty.all(
-                RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8.r),
-                ),
-              ),
-            ),
-            child: Row(
-              children: [
-                SizedBox(
-                  width: 12.w,
-                ),
-                SvgPicture.asset(
-                  "assets/vectors/ic_user-search.svg",
-                  width: 20.w,
-                  height: 20.h,
-                ),
-                SizedBox(
-                  width: 8.w,
-                ),
-                Flexible(
-                  child: SizedBox(
-                    width: double.infinity,
-                    child: Obx(() {
-                      return CustomTextView(
-                        memberController.selectedPosition.value,
-                        type: TDSFontType.bodyTextMedium,
-                        color: TextColor.primary,
-                      );
-                    }),
-                  ),
-                ),
-                SizedBox(
-                  width: 8.w,
-                ),
-                Icon(
-                  Icons.keyboard_arrow_down,
-                  size: 20.w,
-                ),
-                SizedBox(
-                  width: 12.w,
-                ),
-              ],
-            ),
-          ),
-        ),
+        // Container(
+        //   color: BackgroundColor.primary,
+        //   padding: EdgeInsets.symmetric(vertical: 12.h, horizontal: 16.w),
+        //   child: OutlinedButton(
+        //     onPressed: () {
+        //       showPlayerFilterBottomSheet(memberController, context);
+        //     },
+        //     style: ButtonStyle(
+        //       padding: WidgetStateProperty.all(EdgeInsets.zero),
+        //       shape: MaterialStateProperty.all(
+        //         RoundedRectangleBorder(
+        //           borderRadius: BorderRadius.circular(8.r),
+        //         ),
+        //       ),
+        //     ),
+        //     child: Row(
+        //       children: [
+        //         SizedBox(
+        //           width: 12.w,
+        //         ),
+        //         SvgPicture.asset(
+        //           "assets/vectors/ic_user-search.svg",
+        //           width: 20.w,
+        //           height: 20.h,
+        //         ),
+        //         SizedBox(
+        //           width: 8.w,
+        //         ),
+        //         Flexible(
+        //           child: SizedBox(
+        //             width: double.infinity,
+        //             child: Obx(() {
+        //               return CustomTextView(
+        //                 memberController.selectedPosition.value,
+        //                 type: TDSFontType.bodyTextMedium,
+        //                 color: TextColor.primary,
+        //               );
+        //             }),
+        //           ),
+        //         ),
+        //         SizedBox(
+        //           width: 8.w,
+        //         ),
+        //         Icon(
+        //           Icons.keyboard_arrow_down,
+        //           size: 20.w,
+        //         ),
+        //         SizedBox(
+        //           width: 12.w,
+        //         ),
+        //       ],
+        //     ),
+        //   ),
+        // ),
         Obx(() {
           List<CategorizedPlayerGroup> groupedPlayers =
               memberController.wallpaperList;
@@ -481,10 +481,10 @@ class FilterHeaderDelegate extends SliverPersistentHeaderDelegate {
   }
 
   @override
-  double get maxExtent => 72.h;
+  double get maxExtent => 60.h; // Adjust maxExtent to fit the content
 
   @override
-  double get minExtent => 72.h;
+  double get minExtent => 60.h; // Adjust minExtent if needed
 
   @override
   bool shouldRebuild(covariant SliverPersistentHeaderDelegate oldDelegate) => false;
