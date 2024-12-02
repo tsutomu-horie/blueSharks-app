@@ -65,90 +65,94 @@ class WallpaperSetPlayerScreen extends GetView<WallpaperSetPlayerController> {
         ],
       ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          child: SizedBox(
-            width: double.infinity,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                SizedBox(
-                  height: 12.w,
-                ),
-                Row(
-                  children: [
-                    SizedBox(
-                      width: 16.w,
+        child: CustomScrollView(
+          slivers: [
+        SliverToBoxAdapter(
+          child: Column(
+            children: [
+              SizedBox(height: 12.w),
+              Row(
+                children: [
+                  SizedBox(width: 16.w),
+                  Flexible(
+                    child: CustomTextView(
+                      LocaleKeys.set_wallpaper_title.tr,
+                      type: TDSFontType.headlineSmall,
+                      color: BrandColor.main,
                     ),
-                    Flexible(
-                        child: CustomTextView(
-                          LocaleKeys.set_wallpaper_title.tr,
-                          type: TDSFontType.headlineSmall,
-                          color: BrandColor.main,
-                        )),
-                    SizedBox(
-                      width: 16.w,
+                  ),
+                  SizedBox(width: 16.w),
+                ],
+              ),
+              SizedBox(height: 8.w),
+              Row(
+                children: [
+                  SizedBox(width: 16.w),
+                  Flexible(
+                    child: CustomTextView(
+                      LocaleKeys.set_wallpaper_desc3.tr,
+                      type: TDSFontType.bodyTextMedium,
+                      color: TextColor.secondary,
                     ),
-                  ],
-                ),
-                SizedBox(
-                  height: 8.w,
-                ),
-                Row(
-                  children: [
-                    SizedBox(
-                      width: 16.w,
-                    ),
-                    Flexible(
-                        child: CustomTextView(
-                          LocaleKeys.set_wallpaper_desc3.tr,
-                          type: TDSFontType.bodyTextMedium,
-                          color: TextColor.secondary,
-                        )),
-                    SizedBox(
-                      width: 16.w,
-                    ),
-                  ],
-                ),
-                SizedBox(
-                  height: 30.w,
-                ),
-                Obx(() {
-                  return !memberController.isLoading.value
-                      ? SetWalpaperListView(
-                    memberController,
-                    isSetWallpaper: true,
-                    onSet: onSet,
-                  )
-                      : Column(
-                    children: [shimmer(), shimmer(), shimmer()],
-                  );
-                })
-
-              ],
-            ),
+                  ),
+                  SizedBox(width: 16.w),
+                ],
+              ),
+            ],
           ),
         ),
+            SliverPersistentHeader(
+              delegate: FilterHeaderDelegate(memberController, context),
+              pinned: true, // Pin the filter header at the top
+            ),
+
+            // Your content before the filter header
+            SliverToBoxAdapter(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SizedBox(height: 30.w),
+                  // Add your list or other content here
+                  Obx(() {
+                    return !memberController.isLoading.value
+                        ? SetWalpaperListView(
+                      memberController,
+                      isSetWallpaper: true,
+                      onSet: onSet,
+                    )
+                        : Column(
+                      children: [shimmer(), shimmer(), shimmer()],
+                    );
+                  }),
+                ],
+              ),
+            ),
+
+            // The Filter Header Delegate, pinned to the top of the scroll view
+
+
+          ],
+        ),
       ),
-      bottomNavigationBar:  onSet == null ? Container(
+      bottomNavigationBar: onSet == null
+          ? Container(
         padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
         width: double.infinity,
         child: OutlinedButton(
           style: ButtonStyle(
             side: WidgetStateProperty.all(BorderSide(
-                color: BrandColor.main) // Set your desired color here
-            ),
+                color: BrandColor.main)), // Set your desired color here
           ),
           onPressed: () {
             Get.to(() => const RegisterEmailScreen("", ""));
-            // Get.offAll(() => const MainScreen());
           },
           child: CustomTextView(
             LocaleKeys.jump_to.tr,
             color: BrandColor.main,
           ),
         ),
-      )  : null,
+      )
+          : null,
     );
   }
 }
-

@@ -45,7 +45,7 @@ class GalleryProvider extends GetConnect {
     print('fetch ${httpClient.baseUrl}wallpapers');
 
     if (response.hasError) {
-      throw Exception('Failed to load media with ${response.hasError}');
+      throw Exception('Failed to load media with ${response}');
     }
 
     print("finish with ${response.body}");
