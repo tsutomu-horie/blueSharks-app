@@ -113,28 +113,31 @@ class TopicItemView extends GetView {
                                   left: 12.w,
                                   child: Row(
                                     children: categories.map((element) {
-                                      return Row(
-                                        children: [
-                                          Container(
-                                            padding: EdgeInsets.symmetric(
-                                                vertical: 4.h, horizontal: 8.w),
-                                            decoration: BoxDecoration(
-                                              color: BrandColor.background,
-                                              borderRadius:
-                                                  BorderRadius.circular(24.r),
+                                      return SingleChildScrollView(
+                                        scrollDirection: Axis.horizontal,
+                                        child: Row(
+                                          children: [
+                                            Container(
+                                              padding: EdgeInsets.symmetric(
+                                                  vertical: 4.h, horizontal: 8.w),
+                                              decoration: BoxDecoration(
+                                                color: BrandColor.background,
+                                                borderRadius:
+                                                    BorderRadius.circular(24.r),
+                                              ),
+                                              child: CustomTextView(
+                                                element,
+                                                style: TextStyle(
+                                                    fontSize: 10.sp,
+                                                    fontWeight: FontWeight.w700,
+                                                    color: Colors.white),
+                                              ),
                                             ),
-                                            child: CustomTextView(
-                                              element,
-                                              style: TextStyle(
-                                                  fontSize: 10.sp,
-                                                  fontWeight: FontWeight.w700,
-                                                  color: Colors.white),
-                                            ),
-                                          ),
-                                          SizedBox(
-                                            width: 8.w,
-                                          )
-                                        ],
+                                            SizedBox(
+                                              width: 8.w,
+                                            )
+                                          ],
+                                        ),
                                       );
                                     }).toList(),
                                   ),

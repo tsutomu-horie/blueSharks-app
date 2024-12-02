@@ -5,8 +5,10 @@ import 'package:get/get.dart';
 import 'package:koto_blue_sharks/app/data/models/media/media.dart';
 import 'package:koto_blue_sharks/app/views/views/custom_image_view.dart';
 import 'package:koto_blue_sharks/app/views/views/custom_text_view.dart';
+import 'package:koto_blue_sharks/app/views/views/full_screen_image_view_view.dart';
 import 'package:koto_blue_sharks/utils/app_color.dart';
 import 'package:koto_blue_sharks/utils/date_formatter.dart';
+import 'package:photo_view/photo_view.dart';
 
 import 'controllers/gallery_screen_detail.controller.dart';
 
@@ -46,10 +48,17 @@ class GalleryScreenDetailScreen extends GetView<GalleryScreenDetailController> {
                 children: [
                   AspectRatio(
                     aspectRatio: 16 / 9,
-                    child: CustomImageView(
-                        customFit: BoxFit.fitWidth,
-                        radius: 0.r,
-                        image: albumData!.photo ?? ""),
+                    child:  GestureDetector(
+                      onTap: () {
+                        if (albumData!.photo != null) {
+                          Get.to(() => FullScreenImageView(imageUrl: albumData!.photo!,));
+                        }
+                      },
+                      child: CustomImageView(
+                          customFit: BoxFit.fitWidth,
+                          radius: 0.r,
+                          image: albumData!.photo ?? ""),
+                    ),
                   ),
                   Positioned(
                     bottom: 16.w,
@@ -124,25 +133,34 @@ class GalleryScreenDetailScreen extends GetView<GalleryScreenDetailController> {
                 return GridView.builder(
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
-                  gridDelegate:
-                  SliverGridDelegateWithFixedCrossAxisCount(
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: 3,
-                    // Number of columns in the grid
                     childAspectRatio: 0.75,
-                    // Adjust the aspect ratio of the grid items
                     mainAxisSpacing: 2.w,
                     crossAxisSpacing: 2.w,
                   ),
                   itemCount: controller.album.length,
                   itemBuilder: (context, playerIndex) {
-                    return SizedBox(width: double.infinity,
+                    String imageUrl = controller.album[playerIndex].galleries?.photo ?? "";
+
+                    return GestureDetector(
+                      onTap: () {
+                        Get.to(() => FullScreenImageView(imageUrl: imageUrl,));
+                        // // Open the full-screen image on tap
+                        // showFullScreenImageWithTransition(
+                        //     context,  imageUrl);
+                      },
+                      child: SizedBox(
+                        width: double.infinity,
                         child: CustomImageView(
-                            radius: 0.r,
-                            image: controller.album[playerIndex].galleries
-                                .photo ?? ""));
+                          radius: 0.r,
+                          image: imageUrl,
+                        ),
+                      ),
+                    );
                   },
                 );
-              }),
+              })
 
 
             ],
