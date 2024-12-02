@@ -247,7 +247,7 @@ class HomeScreen extends GetView<MainController> {
                                     height: 32.h,
                                     child: ElevatedButton.icon(
                                       onPressed: () {
-
+                                        controller.launchTicket();
                                       },
                                       label: CustomTextView(
                                         LocaleKeys.buy_ticket.tr,

@@ -358,7 +358,7 @@ class MatchDetailScreen extends GetView<MatchDetailController> {
                     height: 16.h,
                   ),
                   Table(
-                    border: TableBorder.symmetric(
+                    border: const TableBorder.symmetric(
                         inside: BorderSide(color: Colors.white)),
                     children: [
                       TableRow(children: [
@@ -443,7 +443,7 @@ class MatchDetailScreen extends GetView<MatchDetailController> {
                             padding: EdgeInsets.symmetric(vertical: 8.h),
                             child: Center(
                                 child: CustomTextView(
-                              customField?.team_T_first_half_1?.first ?? "0",
+                              customField?.team_T_first_half_1?.first ?? "",
                               align: TextAlign.center,
                               color: TextColor.secondary,
                               type: TDSFontType.bodyTextSmall,
@@ -457,7 +457,7 @@ class MatchDetailScreen extends GetView<MatchDetailController> {
                             padding: EdgeInsets.symmetric(vertical: 8.h),
                             child: Center(
                                 child: CustomTextView(
-                              customField?.team_T_second_half_1?.first ?? "0",
+                              customField?.team_T_second_half_1?.first ?? "",
                               align: TextAlign.center,
                               color: TextColor.secondary,
                               type: TDSFontType.bodyTextSmall,
@@ -485,7 +485,7 @@ class MatchDetailScreen extends GetView<MatchDetailController> {
                             padding: EdgeInsets.symmetric(vertical: 8.h),
                             child: Center(
                                 child: CustomTextView(
-                              customField?.team_T_first_half_2?.first ?? "0",
+                              customField?.team_T_first_half_2?.first ?? "",
                               align: TextAlign.center,
                               color: TextColor.secondary,
                               type: TDSFontType.bodyTextSmall,
@@ -499,7 +499,7 @@ class MatchDetailScreen extends GetView<MatchDetailController> {
                             padding: EdgeInsets.symmetric(vertical: 8.h),
                             child: Center(
                                 child: CustomTextView(
-                              customField?.team_T_second_half_2?.first ?? "0",
+                              customField?.team_T_second_half_2?.first ?? "",
                               align: TextAlign.center,
                               color: TextColor.secondary,
                               type: TDSFontType.bodyTextSmall,
@@ -515,7 +515,7 @@ class MatchDetailScreen extends GetView<MatchDetailController> {
                             padding: EdgeInsets.symmetric(vertical: 8.h),
                             child: Center(
                                 child: CustomTextView(
-                              customField?.team_G_first_half_1?.first ?? "0",
+                              customField?.team_G_first_half_1?.first ?? "",
                               align: TextAlign.center,
                               color: TextColor.secondary,
                               type: TDSFontType.bodyTextSmall,
@@ -529,7 +529,7 @@ class MatchDetailScreen extends GetView<MatchDetailController> {
                             padding: EdgeInsets.symmetric(vertical: 8.h),
                             child: Center(
                                 child: CustomTextView(
-                              customField?.team_G_second_half_1?.first ?? "0",
+                              customField?.team_G_second_half_1?.first ?? "",
                               align: TextAlign.center,
                               color: TextColor.secondary,
                               type: TDSFontType.bodyTextSmall,
@@ -557,7 +557,7 @@ class MatchDetailScreen extends GetView<MatchDetailController> {
                             padding: EdgeInsets.symmetric(vertical: 8.h),
                             child: Center(
                                 child: CustomTextView(
-                              customField?.team_G_first_half_2?.first ?? "0",
+                              customField?.team_G_first_half_2?.first ?? "",
                               align: TextAlign.center,
                               color: TextColor.secondary,
                               type: TDSFontType.bodyTextSmall,
@@ -571,7 +571,7 @@ class MatchDetailScreen extends GetView<MatchDetailController> {
                             padding: EdgeInsets.symmetric(vertical: 8.h),
                             child: Center(
                                 child: CustomTextView(
-                              customField?.team_G_second_half_2?.first ?? "0",
+                              customField?.team_G_second_half_2?.first ?? "",
                               align: TextAlign.center,
                               color: TextColor.secondary,
                               type: TDSFontType.bodyTextSmall,
@@ -587,7 +587,7 @@ class MatchDetailScreen extends GetView<MatchDetailController> {
                             padding: EdgeInsets.symmetric(vertical: 8.h),
                             child: Center(
                                 child: CustomTextView(
-                              customField?.team_PG_first_half_1?.first ?? "0",
+                              customField?.team_PG_first_half_1?.first ?? "",
                               align: TextAlign.center,
                               color: TextColor.secondary,
                               type: TDSFontType.bodyTextSmall,
@@ -601,7 +601,7 @@ class MatchDetailScreen extends GetView<MatchDetailController> {
                             padding: EdgeInsets.symmetric(vertical: 8.h),
                             child: Center(
                                 child: CustomTextView(
-                              customField?.team_PG_second_half_1?.first ?? "0",
+                              customField?.team_PG_second_half_1?.first ?? "",
                               align: TextAlign.center,
                               color: TextColor.secondary,
                               type: TDSFontType.bodyTextSmall,
@@ -629,7 +629,7 @@ class MatchDetailScreen extends GetView<MatchDetailController> {
                             padding: EdgeInsets.symmetric(vertical: 8.h),
                             child: Center(
                                 child: CustomTextView(
-                              customField?.team_PG_first_half_2?.first ?? "0",
+                              customField?.team_PG_first_half_2?.first ?? "",
                               align: TextAlign.center,
                               color: TextColor.secondary,
                               type: TDSFontType.bodyTextSmall,
@@ -643,7 +643,7 @@ class MatchDetailScreen extends GetView<MatchDetailController> {
                             padding: EdgeInsets.symmetric(vertical: 8.h),
                             child: Center(
                                 child: CustomTextView(
-                              customField?.team_PG_second_half_2?.first ?? "0",
+                              customField?.team_PG_second_half_2?.first ?? "",
                               align: TextAlign.center,
                               color: TextColor.secondary,
                               type: TDSFontType.bodyTextSmall,
@@ -659,7 +659,7 @@ class MatchDetailScreen extends GetView<MatchDetailController> {
                             padding: EdgeInsets.symmetric(vertical: 8.h),
                             child: Center(
                                 child: CustomTextView(
-                              customField?.team_DG_first_half_1?.first ?? "0",
+                              customField?.team_DG_first_half_1?.first ?? "",
                               align: TextAlign.center,
                               color: TextColor.secondary,
                               type: TDSFontType.bodyTextSmall,
@@ -673,7 +673,7 @@ class MatchDetailScreen extends GetView<MatchDetailController> {
                             padding: EdgeInsets.symmetric(vertical: 8.h),
                             child: Center(
                                 child: CustomTextView(
-                              customField?.team_DG_second_half_1?.first ?? "0",
+                              customField?.team_DG_second_half_1?.first ?? "",
                               align: TextAlign.center,
                               color: TextColor.secondary,
                               type: TDSFontType.bodyTextSmall,
@@ -701,7 +701,7 @@ class MatchDetailScreen extends GetView<MatchDetailController> {
                             padding: EdgeInsets.symmetric(vertical: 8.h),
                             child: Center(
                                 child: CustomTextView(
-                              customField?.team_DG_first_half_2?.first ?? "0",
+                              customField?.team_DG_first_half_2?.first ?? "",
                               align: TextAlign.center,
                               color: TextColor.secondary,
                               type: TDSFontType.bodyTextSmall,
@@ -715,7 +715,7 @@ class MatchDetailScreen extends GetView<MatchDetailController> {
                             padding: EdgeInsets.symmetric(vertical: 8.h),
                             child: Center(
                                 child: CustomTextView(
-                              customField?.team_DG_second_half_2?.first ?? "0",
+                              customField?.team_DG_second_half_2?.first ?? "",
                               align: TextAlign.center,
                               color: TextColor.secondary,
                               type: TDSFontType.bodyTextSmall,
@@ -732,7 +732,7 @@ class MatchDetailScreen extends GetView<MatchDetailController> {
                             child: Center(
                                 child: CustomTextView(
                               customField?.team_RESULT_first_half_1?.first ??
-                                  "0",
+                                  "",
                               align: TextAlign.center,
                               color: TextColor.secondary,
                               type: TDSFontType.bodyTextSmall,
@@ -747,7 +747,7 @@ class MatchDetailScreen extends GetView<MatchDetailController> {
                             child: Center(
                                 child: CustomTextView(
                               customField?.team_RESULT_second_half_1?.first ??
-                                  "0",
+                                  "",
                               align: TextAlign.center,
                               color: TextColor.secondary,
                               type: TDSFontType.bodyTextSmall,
@@ -776,7 +776,7 @@ class MatchDetailScreen extends GetView<MatchDetailController> {
                             child: Center(
                                 child: CustomTextView(
                               customField?.team_RESULT_first_half_2?.first ??
-                                  "0",
+                                  "",
                               align: TextAlign.center,
                               color: TextColor.secondary,
                               type: TDSFontType.bodyTextSmall,
@@ -791,7 +791,7 @@ class MatchDetailScreen extends GetView<MatchDetailController> {
                             child: Center(
                                 child: CustomTextView(
                               customField?.team_RESULT_second_half_2?.first ??
-                                  "0",
+                                  "",
                               align: TextAlign.center,
                               color: TextColor.secondary,
                               type: TDSFontType.bodyTextSmall,
@@ -1208,15 +1208,14 @@ class MatchDetailScreen extends GetView<MatchDetailController> {
   }
 
   Map<String, dynamic> getPlayerDetail(String attribute) {
-    List<String> parts = attribute.split(' ');
+    // Split based on spaces, using a regex to handle multiple spaces
+    List<String> parts = attribute.trim().split(RegExp(r'\s+'));
 
-    String number = parts[0].trim(); // "1"
-    String name = "";
-    if (parts.length > 2) {
-      name = "${parts[1].trim()} ${parts[2].trim()}";
-    } else {
-      name = "${parts[1].trim()}";
-    }
+    // The first part is always the number
+    String number = parts[0];
+
+    // The rest are part of the name
+    String name = parts.length > 1 ? parts.sublist(1).join(' ') : '';
 
     return {'number': number, 'name': name};
   }
