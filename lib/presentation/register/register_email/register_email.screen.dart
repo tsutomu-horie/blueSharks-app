@@ -241,9 +241,9 @@ class RegisterEmailScreen extends GetView<RegisterEmailController> {
                           },
                           child: CustomTextView(
                             LocaleKeys.login_now.tr,
-                            color: BrandColor.main,
                             align: TextAlign.center,
                             style: TextStyle(
+                              color: BrandColor.main,
                                 fontWeight: FontWeight.w700,
                                 fontSize: 14.sp,
                                 decoration: TextDecoration.underline,
