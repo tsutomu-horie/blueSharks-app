@@ -1208,10 +1208,15 @@ class MatchDetailScreen extends GetView<MatchDetailController> {
   }
 
   Map<String, dynamic> getPlayerDetail(String attribute) {
-    List<String> parts = attribute.split('\u3000');
+    List<String> parts = attribute.split(' ');
 
     String number = parts[0].trim(); // "1"
-    String name = parts.sublist(1).join(" ").trim(); // "志村 太基"
+    String name = "";
+    if (parts.length > 2) {
+      name = "${parts[1].trim()} ${parts[2].trim()}";
+    } else {
+      name = "${parts[1].trim()}";
+    }
 
     return {'number': number, 'name': name};
   }
