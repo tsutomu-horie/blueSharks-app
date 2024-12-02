@@ -11,6 +11,7 @@ import 'package:koto_blue_sharks/app/views/views/default_header_title_view.dart'
 import 'package:koto_blue_sharks/generated/locales.g.dart';
 import 'package:koto_blue_sharks/utils/Constant.dart';
 import 'package:koto_blue_sharks/utils/app_color.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import 'controllers/stadium.controller.dart';
 
@@ -154,7 +155,9 @@ class StadiumScreen extends GetView<StadiumController> {
                               width: 188.w,
                               height: 40.h,
                               child: ElevatedButton(
-                                  onPressed: () {},
+                                  onPressed: () {
+                                    openGoogleMaps();
+                                  },
                                   child: Row(
                                     children: [
                                       SvgPicture.asset(
@@ -655,5 +658,16 @@ class StadiumScreen extends GetView<StadiumController> {
         ),
       ),
     );
+  }
+
+  Future<void> openGoogleMaps() async {
+    const String googleMapsUrl = 'https://www.google.com/maps?ll=35.648557,139.82359&z=17&t=m&hl=ja&gl=JP&mapclient=embed&cid=1264634736669123728';
+
+    // Check if the URL can be launched
+    if (await canLaunch(googleMapsUrl)) {
+      await launch(googleMapsUrl);
+    } else {
+      throw 'Could not launch $googleMapsUrl';
+    }
   }
 }

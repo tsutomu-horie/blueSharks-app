@@ -134,22 +134,28 @@ class CalendarScreen extends StatelessWidget {
                 appointmentBuilder: (context, details) {
                   final Appointment appointment = details.appointments.first;
 
-                  return Container(
-                    decoration: BoxDecoration(
-                      color: BrandColor.main,
-                      borderRadius: BorderRadius.circular(4.r),
-                    ),
-                    // padding: const EdgeInsets.all(4), // Adjust padding as needed
-                    child: Center(
-                      child: Text(
-                        appointment.subject,
-                        style: TextStyle(
-                          fontSize: 10.sp,
-                          color: Colors.white, // Set the text color
-                          fontWeight: FontWeight.bold,
+                  return GestureDetector(
+                    onTap: () {
+                      // Call the onEventSelected when an event is tapped
+                      onEventSelected(context, controller, appointment);
+                    },
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: BrandColor.main,
+                        borderRadius: BorderRadius.circular(4.r),
+                      ),
+                      // padding: const EdgeInsets.all(4), // Adjust padding as needed
+                      child: Center(
+                        child: Text(
+                          appointment.subject,
+                          style: TextStyle(
+                            fontSize: 10.sp,
+                            color: Colors.white, // Set the text color
+                            fontWeight: FontWeight.bold,
+                          ),
+                          maxLines: 2, // Ensure the text has a maximum of 2 lines
+                          overflow: TextOverflow.ellipsis, // Add ellipsis if the text exceeds 2 lines
                         ),
-                        maxLines: 2, // Ensure the text has a maximum of 2 lines
-                        overflow: TextOverflow.ellipsis, // Add ellipsis if the text exceeds 2 lines
                       ),
                     ),
                   );
@@ -171,6 +177,19 @@ class CalendarScreen extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  void onEventSelected(BuildContext context, CalendarScreenController calendarController, Appointment selectedEvent) {
+    // Convert the selected event (Appointment) into a CalendarEvent
+    CalendarEvent event = CalendarEvent(
+      title: selectedEvent.subject,
+      description: selectedEvent.notes ?? 'No Description',
+      start: selectedEvent.startTime,
+      end: selectedEvent.endTime
+    );
+
+    // Show the event detail bottom sheet
+    showEventDetailBottomSheet(calendarController, context, event);
   }
 
   void showFilterBottomSheet( CalendarScreenController calendarController, BuildContext context) {
@@ -255,6 +274,90 @@ class CalendarScreen extends StatelessWidget {
       },
     );
   }
+
+  void showEventDetailBottomSheet(
+      CalendarScreenController calendarController,
+      BuildContext context,
+      CalendarEvent event) {
+
+    // Check if the event is spanning more than one day
+    bool isMultiDayEvent = event.start.day != event.end.day;
+
+    String eventDateDisplay = '';
+
+    if (isMultiDayEvent) {
+      // Format for multi-day event
+      String startFormattedDate = DateFormat('EEEE, d MMM').format(event.start);
+      String startFormattedTime = DateFormat('HH:mm').format(event.start);
+      String endFormattedDate = DateFormat('EEEE, d MMM').format(event.end);
+      String endFormattedTime = DateFormat('HH:mm').format(event.end);
+
+      eventDateDisplay = '$startFormattedDate at $startFormattedTime - $endFormattedDate at $endFormattedTime';
+    } else {
+      // Format for single-day event
+      String formattedDate = DateFormat('EEEE, d MMM').format(event.start);
+      String formattedTime = DateFormat('HH:mm').format(event.start);
+      String endTime = DateFormat('HH:mm').format(event.end);
+
+      eventDateDisplay = '$formattedDate • $formattedTime - $endTime';
+    }
+
+    // Show the modal bottom sheet with event details
+    showModalBottomSheet(
+      context: context,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
+      ),
+      backgroundColor: Colors.white,
+      builder: (context) {
+        return Container(
+          padding: EdgeInsets.symmetric(vertical: 20.h, horizontal: 16.w),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Align(
+                alignment: Alignment.topRight,
+                child: IconButton(
+                  icon: Icon(Icons.close, color: Colors.black),
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                ),
+              ),
+              SizedBox(height: 16.h),
+              Text(
+                event.title,
+                style: TextStyle(
+                  fontSize: 18.sp,
+                  fontWeight: FontWeight.bold,
+                  color: BrandColor.main,
+                ),
+              ),
+              SizedBox(height: 12.h),
+              // Display the formatted event date and time
+              Text(
+                eventDateDisplay,
+                style: TextStyle(
+                  fontSize: 14.sp,
+                  color: TextColor.secondary,
+                ),
+              ),
+              Text(
+                event.description,
+                style: TextStyle(
+                  fontSize: 14.sp,
+                  color: TextColor.secondary,
+                ),
+              ),
+              SizedBox(height: 12.h),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
 }
 
 class EventDataSource extends CalendarDataSource {
