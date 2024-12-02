@@ -30,6 +30,7 @@ class MypageScreen extends GetView<MypageController> {
   Widget build(BuildContext context) {
     final MypageController controller = Get.put(MypageController());
 
+    controller.onInit();
     return Scaffold(
         backgroundColor: Colors.white,
         body: SingleChildScrollView(
