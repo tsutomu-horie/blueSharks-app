@@ -194,10 +194,10 @@ class RegisterMemberFanclubScreen
           ],
         ),
         TextFormField(
-          keyboardType: TextInputType.number,
-          inputFormatters: [
-            FilteringTextInputFormatter.digitsOnly,
-          ],
+          // keyboardType: TextInputType.number,
+          // inputFormatters: [
+          //   FilteringTextInputFormatter.digitsOnly,
+          // ],
           controller: controller,
           validator: (value) => value!.isEmpty ? hintText : null,
           decoration: InputDecoration(

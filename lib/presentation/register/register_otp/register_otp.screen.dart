@@ -1,6 +1,4 @@
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_otp_text_field/flutter_otp_text_field.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
@@ -30,6 +28,7 @@ class RegisterOtpScreen extends GetView<RegisterOtpController> {
     final RegisterOtpController registerOtpController =
     Get.put(RegisterOtpController());
 
+    print("open from ${fromScreen}");
     if (otpId != null) {
       registerOtpController.otp_id.value = otpId!;
     }
@@ -58,7 +57,7 @@ class RegisterOtpScreen extends GetView<RegisterOtpController> {
 
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: fromScreen == "forgotPasswordHome" || fromScreen == "register_home" ?
+      appBar: fromScreen == "forgotPasswordHome" || fromScreen == "register_home" || fromScreen == "editProfile" ?
       AppBar(
         backgroundColor: BrandColor.main,
         title: CustomTextView(
@@ -136,7 +135,7 @@ class RegisterOtpScreen extends GetView<RegisterOtpController> {
                 SizedBox(
                   height: 20.h,
                 ),
-                if (fromScreen != "forgotPasswordHome" && fromScreen != "register_home")
+                if (fromScreen != "forgotPasswordHome" && fromScreen != "register_home" && fromScreen != "editProfile")
                   Column(
                     children: [
                       CustomTextView(
@@ -150,7 +149,7 @@ class RegisterOtpScreen extends GetView<RegisterOtpController> {
                     ],
                   ),
                 CustomTextView(
-                  fromScreen == "forgotPasswordHome" || fromScreen == "register_home"
+                  fromScreen == "forgotPasswordHome" || fromScreen == "register_home" || fromScreen == "editProfile"
                       ? LocaleKeys.forgot_password_desc_from_home.tr
                       : LocaleKeys.otp_message.tr,
                   type: TDSFontType.bodyTextMedium,

@@ -22,4 +22,6 @@ class Constants {
   static const shopUrl = 'https://bluesharks.base.shop/';
   static const instagramUrl = 'https://www.instagram.com/shimz.bluesharks/';
   static const xUrl = 'https://x.com/Bluesharks_2020';
+  static const partnerUrl = 'https://blue-sharks.donati.jp/partner/';
+  static const teamUrl = 'https://blue-sharks.donati.jp/team/';
 }

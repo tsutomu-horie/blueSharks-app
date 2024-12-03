@@ -22,7 +22,7 @@ class InfoScreen extends GetView<InfoController> {
   Widget build(BuildContext context) {
     final InfoController controller = Get.put(InfoController());
 
-    controller.selectedIndex.value = 0;
+    controller.onInit();
 
     final List<String> tabs = [
       'Topics',
@@ -55,7 +55,16 @@ class InfoScreen extends GetView<InfoController> {
                 );
               } else {
                 return InkWell(
-                  onTap: () => controller.changeTab(index),
+                  onTap: () => {
+                    if (index == 5) {
+                      controller.launchPartner()
+                    } else if (index == 3) {
+                      controller.launchTeam()
+                    } else
+                      {
+                        controller.changeTab(index)
+                      }
+                  },
                   child: Obx(() {
                     return AnimatedContainer(
                       duration: const Duration(milliseconds: 300),
