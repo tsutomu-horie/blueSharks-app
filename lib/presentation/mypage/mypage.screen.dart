@@ -39,11 +39,6 @@ class MypageScreen extends GetView<MypageController> {
             // final isEitherMatched = true;
             return Column(
               children: [
-                // QrImageView(
-                //   data: '1234567890',
-                //   version: QrVersions.auto,
-                //   size: 200.0,
-                // ),
                 Container(
                     padding:
                         EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
@@ -400,8 +395,9 @@ class MypageScreen extends GetView<MypageController> {
                                     controller.profileData.value?.email ?? "";
 
                                 controller.idController.text = await controller
-                                        .profileData.value?.accountId ??
-                                    "";
+                                        .profileData.value?.accountId ?? "";
+
+
                                 editProfileBottomSheet(controller, context,
                                     (email, id, wallpaper, wallpaperName,
                                         isNotifActive) async {

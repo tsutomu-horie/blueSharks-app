@@ -14,6 +14,7 @@ class InfoController extends GetxController {
   @override
   void onInit() {
     super.onInit();
+    selectedIndex.value = 0;
     AnalyticsService.logPageView(Routes.INFO);
 
   }
@@ -50,4 +51,23 @@ class InfoController extends GetxController {
       throw 'Could not launch $instagramUrl';
     }
   }
+
+  void launchPartner() async {
+    final Uri instagramUrl = Uri.parse(Constants.partnerUrl); // Replace with your profile URL
+    if (await canLaunchUrl(instagramUrl)) {
+      await launchUrl(instagramUrl);
+    } else {
+      throw 'Could not launch $instagramUrl';
+    }
+  }
+
+  void launchTeam() async {
+    final Uri instagramUrl = Uri.parse(Constants.teamUrl); // Replace with your profile URL
+    if (await canLaunchUrl(instagramUrl)) {
+      await launchUrl(instagramUrl);
+    } else {
+      throw 'Could not launch $instagramUrl';
+    }
+  }
+
 }

@@ -65,6 +65,7 @@ class NotificationListScreen extends GetView<NotificationListController> {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     CustomTextView(
+                                      maxLine: 2,
                                       controller.notificationList[index].data
                                           .title, style: TextStyle(
                                         fontWeight: FontWeight.w600,

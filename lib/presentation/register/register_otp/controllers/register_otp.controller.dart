@@ -90,19 +90,40 @@ class RegisterOtpController extends GetxController {
           print("error on submit otp ");
         });
 
-
-
         if (response != null) {
           Get.to(() => ResetPasswordScreen(otp_id.value, isFromHome: fromScreen == "forgotPasswordHome" ? true : false,));
         }
 
 
       } else if (fromScreen == "editProfile") {
-        Get.back();
+        final response = await otpProvider.verifyOtp(otp.value, otp_id.value, (errorMessage){
+          var newMessage = "";
+          //todo:: move to localization
+          if (errorMessage.contains("verify_otp")) {
+            newMessage = "入力したOTPコードが間違っています。もう一度お試しください。";
+          } else if (errorMessage.contains("otp_max_limit")) {
+            newMessage = "OTPの送信回数が多すぎる。";
+          } else {
+            newMessage = "メール送信エラー。\nしばらくしてから再度メールを送信してください。";
+          }
+
+          Utils.showError(context, "", newMessage);
+
+          print("error on submit otp ");
+        });
+
+        if (response != null) {
+          Get.back();
+          if (onSuccess != null) {
+              onSuccess();
+          }
+        }
       }
 
       if (onSuccess != null) {
-        onSuccess();
+        if (fromScreen != "editProfile") {
+          onSuccess();
+        }
       }
     } else {
       hasError.value = true;

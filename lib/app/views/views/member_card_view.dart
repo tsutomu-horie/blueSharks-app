@@ -59,7 +59,8 @@ class MemberCardView extends GetView {
       case "江東区民" : return "koto";
       case "レギュラー" : return "regular";
       case "プレミア" : return "premium";
-      case "激推し会員" : return "beginner";
+      case "激推し" : return "geki_oshi";
+      case "メルマガ" : return "free";
     }
     return "beginner";
   }
