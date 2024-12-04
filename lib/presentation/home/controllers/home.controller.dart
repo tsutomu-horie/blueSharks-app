@@ -24,7 +24,7 @@ class HomeController extends GetxController {
       Rx<List<MatchResultBySeason>>([]);
   final text = "".obs;
   final Rx<List<Post>> topicsData = Rx([]);
-  final Rx<List<CustomBanner>> bannerData = Rx([]);
+  List<CustomBanner> bannerData = [];
   final selectedWallpaper = "".obs;
   final selectedWallpaperName = "".obs;
 
@@ -41,10 +41,17 @@ class HomeController extends GetxController {
     print("getwallpaper 1");
   }
 
+  void setBannerData(List<CustomBanner> data) {
+    bannerData = data;
+    // Use update instead of .value assignment
+    update(['banner_slider']);  // Update only the banner slider
+  }
+  
   void getBanner() async {
     final response = await mediaProvider.fetchBanner();
 
-    bannerData.value = response;
+    print("Success fetch banner");
+    setBannerData(response);
   }
 
   void getWallpaper() async {

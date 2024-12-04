@@ -4,6 +4,7 @@ import 'package:koto_blue_sharks/app/data/api/auth/auth_provider.dart';
 import 'package:koto_blue_sharks/app/data/models/info/notification.dart';
 import 'package:koto_blue_sharks/app/services/AnalyticsService.dart';
 import 'package:koto_blue_sharks/infrastructure/navigation/routes.dart';
+import 'package:koto_blue_sharks/presentation/NotificationDetail/notification_detail.screen.dart';
 
 class NotificationListController extends GetxController {
   final AuthProvider apiProvider = AuthProvider();
@@ -18,10 +19,34 @@ class NotificationListController extends GetxController {
 
   }
 
-  void getNotification() async {
-    final response = await apiProvider.getNotificationList();
 
-    notificationList.value = response;
+
+  void getNotification() async {
+    try {
+      final response = await apiProvider.getNotificationList();
+      notificationList.value = response;
+
+      // Check if we came from a notification
+      final arguments = Get.arguments;
+      if (arguments != null && arguments['from_notification'] == true) {
+        final String? notificationId = arguments['notification_id'];
+        if (notificationId != null) {
+          // Find the notification in the list
+          final notification = notificationList.firstWhereOrNull(
+                  (element) => element.id.toString() == notificationId
+          );
+
+          if (notification != null) {
+            // Navigate to detail after a short delay to ensure list is loaded
+            await Future.delayed(Duration(milliseconds: 100));
+            Get.to(() => NotificationDetailScreen(notification));
+          }
+        }
+      }
+    } catch (e) {
+      print('Error fetching notifications: $e');
+    } finally {
+    }
   }
 
   String formatDate(String dateString) {

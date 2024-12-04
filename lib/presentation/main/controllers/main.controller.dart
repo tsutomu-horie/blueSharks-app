@@ -19,11 +19,7 @@ class MainController extends GetxController {
     var wallpaper = MySharedPref.getWallpaper();
     var wallpaperName = MySharedPref.getWallpaperName();
 
-    if (token != null) {
-      Get.to(() => const NotificationListScreen());
-    } else {
-      Get.to(() => LoginScreen(wallpaper ?? "", true, wallpaperName ?? ""));
-    }
+    Get.to(() => const NotificationListScreen());
   }
 
   void launchFanClub(){

@@ -38,7 +38,7 @@ class FcmHelper {
         ],
         );
       // }
-
+        await AwesomeNotificationsHelper.init();
       await Future.delayed(Duration(seconds: 1));
       // initialize firebase
       messaging = FirebaseMessaging.instance;
@@ -53,11 +53,6 @@ class FcmHelper {
       FirebaseMessaging.onMessage.listen(_fcmForegroundHandler);
       FirebaseMessaging.onBackgroundMessage(_fcmBackgroundHandler);
 
-      print("subscribe Topic");
-      messaging.unsubscribeFromTopic("staging.post");
-      messaging.subscribeToTopic("staging.post").then((_) {
-        print('Subscribed to topic');
-      });
     } catch (error) {
       // if you are connected to firebase and still get error
       // check the todo up in the function else ignore the error
@@ -114,9 +109,18 @@ class FcmHelper {
 
     final auth = AuthProvider();
     print("find toke 2 $token");
+
     if (token != null) {
       final authToken = await auth.updateNotificationToken(token);
       print("find toke $authToken");
+
+      if (authToken == null) {
+        messaging.unsubscribeFromTopic("news");
+
+        messaging.subscribeToTopic("news").then((_) {
+          print('Subscribed to topic');
+        });
+      }
 
     }
   }
@@ -126,7 +130,7 @@ class FcmHelper {
   /// https://stackoverflow.com/a/67083337
   @pragma('vm:entry-point')
   static Future<void> _fcmBackgroundHandler(RemoteMessage message) async {
-    print('Handling FCM Notification in Background: ${message}');
+    print('Handling FCM Notification in Background: ${message.notification?.title}');
 
     // AwesomeNotificationsHelper.showNotification(
     //   id: 1,
@@ -138,7 +142,7 @@ class FcmHelper {
 
   //handle fcm notification when app is open
   static Future<void> _fcmForegroundHandler(RemoteMessage message) async {
-    print('Handling FCM Notification in Foreground: ${message}');
+    print('Handling FCM Notification in Foreground: ${message.notification?.title}');
 
     if (Platform.isAndroid) {
       AwesomeNotificationsHelper.showNotification(

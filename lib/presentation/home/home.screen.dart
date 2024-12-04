@@ -273,10 +273,15 @@ class HomeScreen extends GetView<MainController> {
                 ],
               ),
               SizedBox(height: 39.h,),
-              Obx(() {
-                return BannerSliderView(
-                    banners: homeController.bannerData.value);
-              }),
+              GetBuilder<HomeController>(
+                id: 'banner_slider',  // unique ID for this builder
+                builder: (controller) {
+                  return BannerSliderView(
+                    key: ValueKey('banner_${controller.bannerData.length}'),  // Add key based on data length
+                    banners: controller.bannerData,
+                  );
+                },
+              ),
               SizedBox(height: 16.h,),
               DefaultHeaderTitleView(
                 LocaleKeys.featured_topics.tr, LocaleKeys.featured_topics_en.tr,
