@@ -13,18 +13,21 @@ class AwesomeNotificationsHelper {
   /// initialize local notifications service, create channels and groups
   /// setup notifications button actions handlers
   static init() async {
+    print("setup listten2 2");
     // initialize local notifications
     await _initNotification();
+
+    listenToActionButtons();
 
     // request permission to show notifications
     awesomeNotifications.requestPermissionToSendNotifications();
 
     // list when user click on notifications
-    listenToActionButtons();
   }
 
   /// when user click on notification or click on button on the notification
   static listenToActionButtons() {
+    print("setup listten");
     // Only after at least the action method is set, the notification events are delivered
     awesomeNotifications.setListeners(
         onActionReceivedMethod:         NotificationController.onActionReceivedMethod,
@@ -121,6 +124,7 @@ class NotificationController {
   /// Use this method to detect when a new notification or a schedule is created
   @pragma("vm:entry-point")
   static Future <void> onNotificationCreatedMethod(ReceivedNotification receivedNotification) async {
+    print("onNotif created");
     // Your code goes here
   }
 
@@ -128,23 +132,39 @@ class NotificationController {
   @pragma("vm:entry-point")
   static Future <void> onNotificationDisplayedMethod(ReceivedNotification receivedNotification) async {
     // Your code goes here
+    print("onNotif onNotificationDisplayedMethod");
+
   }
 
   /// Use this method to detect if the user dismissed a notification
   @pragma("vm:entry-point")
   static Future <void> onDismissActionReceivedMethod(ReceivedAction receivedAction) async {
     // Your code goes here
+    print("onNotif onDismissActionReceivedMethod");
+
   }
 
   /// Use this method to detect when the user taps on a notification or action button
   @pragma("vm:entry-point")
-  static Future <void> onActionReceivedMethod(ReceivedAction receivedAction) async {
-    Map<String,String?>? payload = receivedAction.payload;
-    // TODO handle clicking on notification
-    // example
-    // String routeToGetTo = payload['route'];
-    // normal navigation (Get.toNamed) will throw error
-    Get.key.currentState?.pushNamed(Routes.SPLASH);
+  static Future<void> onActionReceivedMethod(ReceivedAction receivedAction) async {
+    print("=== Notification Clicked ===");
+    print("Action Type: ${receivedAction.actionType}");
+    print("Payload: ${receivedAction.payload}");
+
+    if (receivedAction.actionType == ActionType.Default) {
+      final String? notificationId = receivedAction.payload?['id'];
+      print("Notification ID: $notificationId");
+
+      // Store the notification ID for later use
+      if (notificationId != null) {
+        await Get.toNamed(Routes.NOTIFICATION_LIST, arguments: {
+          'notification_id': notificationId,
+          'from_notification': true
+        });
+      } else {
+        await Get.toNamed(Routes.NOTIFICATION_LIST);
+      }
+    }
   }
 }
 

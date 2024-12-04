@@ -14,6 +14,7 @@ class CustomImageView extends GetView {
   final double? radius;
   final BoxFit? customFit;
 
+
   @override
   Widget build(BuildContext context) {
     print("load image ${image.toString()}");
@@ -23,14 +24,16 @@ class CustomImageView extends GetView {
         child: CachedNetworkImage(
           imageUrl:  image,
           fit: customFit ?? BoxFit.cover,
-          placeholder: (context, url) =>
-              Shimmer.fromColors(
-                baseColor: Colors.grey[300]!,
-                highlightColor: Colors.grey[100]!,
-                child: Container(
-                  color: Colors.white,
-                ),
+          placeholder: (context, url) {
+            print("Loading image from network: $url");
+            return Shimmer.fromColors(
+              baseColor: Colors.grey[300]!,
+              highlightColor: Colors.grey[100]!,
+              child: Container(
+                color: Colors.white,
               ),
+            );
+          },
           errorWidget: (context, url, error) => const Icon(Icons.error),
         ),
       );

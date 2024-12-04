@@ -18,4 +18,6 @@ class NotificationDetailController extends GetxController {
     AnalyticsService.logPageView(Routes.NOTIFICATION_DETAIL);
 
   }
+
+
 }

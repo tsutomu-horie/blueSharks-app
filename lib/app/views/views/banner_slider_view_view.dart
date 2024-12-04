@@ -1,4 +1,4 @@
-
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:koto_blue_sharks/app/data/models/media/media.dart';
@@ -19,7 +19,7 @@ class BannerSliderView extends StatefulWidget {
 
 class _BannerSliderViewState extends State<BannerSliderView> {
   final PageController _pageController = PageController(
-    viewportFraction: 0.8, // This will show part of prev/next images
+    viewportFraction: 0.8,
     initialPage: 0,
   );
   int _currentPage = 0;
@@ -51,12 +51,6 @@ class _BannerSliderViewState extends State<BannerSliderView> {
   }
 
   @override
-  void dispose() {
-    _pageController.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
     return Column(
       children: [
@@ -72,6 +66,8 @@ class _BannerSliderViewState extends State<BannerSliderView> {
             },
             itemCount: widget.banners.length,
             itemBuilder: (context, index) {
+              final String imageUrl = widget.banners[index].photo ?? "";
+
               return Center(
                 child: Container(
                   width: 300.w,
@@ -89,10 +85,11 @@ class _BannerSliderViewState extends State<BannerSliderView> {
                   ),
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(8.r),
-                    child: CustomImageView(
-                      image: widget.banners[index].photo ?? "",
-                      radius: 0,
-                      customFit: BoxFit.cover,
+                    child: CachedNetworkImage(
+                      imageUrl: imageUrl,
+                      fit: BoxFit.cover,
+                      placeholder: (context, url) => CircularProgressIndicator(),
+                      errorWidget: (context, url, error) => Icon(Icons.error),
                     ),
                   ),
                 ),
@@ -100,7 +97,7 @@ class _BannerSliderViewState extends State<BannerSliderView> {
             },
           ),
         ),
-        SizedBox(height: 12.h),  // Space between banner and indicators
+        SizedBox(height: 12.h),
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: List.generate(
@@ -113,12 +110,18 @@ class _BannerSliderViewState extends State<BannerSliderView> {
                 shape: BoxShape.circle,
                 color: _currentPage == index
                     ? BrandColor.main
-                    :  RGBA.rgba(217, 217, 217, 1),
+                    : RGBA.rgba(217, 217, 217, 1),
               ),
             ),
           ),
         ),
       ],
     );
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
   }
 }
