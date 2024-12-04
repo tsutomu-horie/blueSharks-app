@@ -17,20 +17,25 @@ class CustomImageView extends GetView {
   @override
   Widget build(BuildContext context) {
     print("load image ${image.toString()}");
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(radius != null ? radius! : 20.r),
-      child: CachedNetworkImage(
-        imageUrl: image != "" && image != "null" ? image : "https://placehold.co/600x400/000000/FFFFFF/png",
-        fit: customFit ?? BoxFit.cover,
-        placeholder: (context, url) => Shimmer.fromColors(
-          baseColor: Colors.grey[300]!,
-          highlightColor: Colors.grey[100]!,
-          child: Container(
-            color: Colors.white,
-          ),
+    if (image != null && image != "") {
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(radius != null ? radius! : 20.r),
+        child: CachedNetworkImage(
+          imageUrl:  image,
+          fit: customFit ?? BoxFit.cover,
+          placeholder: (context, url) =>
+              Shimmer.fromColors(
+                baseColor: Colors.grey[300]!,
+                highlightColor: Colors.grey[100]!,
+                child: Container(
+                  color: Colors.white,
+                ),
+              ),
+          errorWidget: (context, url, error) => const Icon(Icons.error),
         ),
-        errorWidget: (context, url, error) => const Icon(Icons.error),
-      ),
-    );
+      );
+    } else {
+      return SizedBox();
+    }
   }
 }

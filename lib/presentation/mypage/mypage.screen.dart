@@ -364,8 +364,8 @@ class MypageScreen extends GetView<MypageController> {
                                   child: Obx(() {
                                     return CustomTextView(
                                       controller.isSelectNotificaiton.value
-                                          ? LocaleKeys.active.tr
-                                          : LocaleKeys.inactive.tr,
+                                          ? LocaleKeys.on.tr
+                                          : LocaleKeys.off.tr,
                                       align: TextAlign.start,
                                       color: TextColor.primary,
                                       type: TDSFontType.bodyTextMedium,
@@ -823,7 +823,7 @@ class MypageScreen extends GetView<MypageController> {
                         padding: EdgeInsets.symmetric(vertical: 12.h),
                       ),
                       child: CustomTextView(
-                        LocaleKeys.confirm.tr,
+                        LocaleKeys.yes.tr,
                         type: TDSFontType.labelLarge,
                         color: Colors.white,
                       ),

@@ -121,15 +121,6 @@ class MemberDetailScreen extends GetView<PlayerDetailController> {
                 ],
               ),
 
-            Container(
-              width: double.infinity,
-              color: BrandColor.main,
-              padding: EdgeInsets.symmetric(vertical: 16.w, horizontal: 16.w),
-              child: CustomTextView(LocaleKeys.graph_en.tr.toUpperCase(),
-                style: TextStyle(fontWeight: FontWeight.w700,
-                    color: TextColor.inverse,
-                    fontSize: 18.sp),),
-            ),
             Row(
               children: [
                 SizedBox(width: 8.w,),
@@ -148,9 +139,24 @@ class MemberDetailScreen extends GetView<PlayerDetailController> {
                             'https://example.com/placeholder.png'; // Fallback in case of null
 
                         // Use your CustomImageView with the fetched image URL
-                        return CustomImageView(
-                          image: postImage,
-                          radius: 0,
+                        return Column(
+                          children: [
+                            if (postImage != "")
+                              Container(
+                                width: double.infinity,
+                                color: BrandColor.main,
+                                padding: EdgeInsets.symmetric(vertical: 16.w, horizontal: 16.w),
+                                child: CustomTextView(LocaleKeys.graph_en.tr.toUpperCase(),
+                                  style: TextStyle(fontWeight: FontWeight.w700,
+                                      color: TextColor.inverse,
+                                      fontSize: 18.sp),),
+                              ),
+
+                            CustomImageView(
+                              image: postImage,
+                              radius: 0,
+                            ),
+                          ],
                         );
                       }
                     },
@@ -160,6 +166,7 @@ class MemberDetailScreen extends GetView<PlayerDetailController> {
               ],
             ),
 
+            if (playerData?.custom_field?.position_image?.first != null && playerData?.custom_field?.position_image?.first != "")
             Container(
               width: double.infinity,
               color: BrandColor.main,
@@ -168,7 +175,9 @@ class MemberDetailScreen extends GetView<PlayerDetailController> {
                 style: TextStyle(fontWeight: FontWeight.w700,
                     color: TextColor.inverse,
                     fontSize: 18.sp),),
-            ),
+            )
+            else
+              SizedBox(height: 16.h,),
             Row(
               children: [
                 SizedBox(width: 8.w,),
