@@ -60,7 +60,7 @@ void errorDialogView(BuildContext context, String title, String? message) {
                     Navigator.of(context).pop(); // Close the dialog
                   },
                   child: CustomTextView(
-                    LocaleKeys.close_dialog.tr,
+                    LocaleKeys.close.tr,
                     type: TDSFontType.titleSmall,
                     color: Colors.white,
                   ),

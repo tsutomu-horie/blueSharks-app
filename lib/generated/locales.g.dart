@@ -137,6 +137,7 @@ class LocaleKeys {
   static const jump_to = 'jump_to';
   static const set_wallpaper_title3 = 'set_wallpaper_title3';
   static const confirm = 'confirm';
+  static const yes = 'yes';
   static const cancel = 'cancel';
   static const register_email_title = 'register_email_title';
   static const register_email_desc = 'register_email_desc';
@@ -229,6 +230,8 @@ class LocaleKeys {
   static const other = 'other';
   static const active = 'active';
   static const inactive = 'inactive';
+  static const on = 'on';
+  static const off = 'off';
   static const detailled_notification = 'detailled_notification';
   static const delete_account_title = 'delete_account_title';
   static const delete_account_desc1 = 'delete_account_desc1';
@@ -372,7 +375,7 @@ class Locales {
     'access': 'アクセス',
     'access_en': 'access',
     'ground': 'グラウンド',
-    'spectator_rules': '観客のルール',
+    'spectator_rules': '観戦ルール',
     'access_to_the_ground': 'グランドへのアクセス',
     'access_to_the_ground_desc':
         '東急田園都市線「江田駅」より徒歩20分（1.7km）\n横浜市営地下鉄ブルーライン「中川駅」より徒歩15分（1.0km）\nグランド北側（隣接）の「横浜市立荏田小学校」が目印です。',
@@ -409,6 +412,7 @@ class Locales {
     'jump_to': 'スキップ',
     'set_wallpaper_title3': '好きな選手を選択',
     'confirm': '選択する',
+    'yes': 'はい',
     'cancel': 'キャンセル',
     'register_email_title': 'ファンクラブ会員証を表示\n（メールアドレスの登録）',
     'register_email_desc':
@@ -476,7 +480,7 @@ class Locales {
     'notice': '通知',
     'edit_information': '情報を編集する',
     'edit_password': '情報を編集する',
-    'delete_account': 'スワードを変更する',
+    'delete_account': 'アカウント削除',
     'logout': 'ログアウト',
     'edit': '編集',
     'privacy_policy_desc': 'ご登録いただいたお客様情報の取り扱いについては、当社',
@@ -506,6 +510,8 @@ class Locales {
     'other': 'Other',
     'active': 'アクティブ',
     'inactive': '不活発',
+    'on': 'ON',
+    'off': 'OFF',
     'detailled_notification': '詳細通知',
     'delete_account_title': 'アカウントを削除',
     'delete_account_desc1':

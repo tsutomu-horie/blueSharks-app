@@ -18,6 +18,7 @@ class EditPasswordScreen extends GetView<EditPasswordController> {
     final EditPasswordController forgotPasswordController = EditPasswordController();
 
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: BrandColor.main,
         title: CustomTextView(

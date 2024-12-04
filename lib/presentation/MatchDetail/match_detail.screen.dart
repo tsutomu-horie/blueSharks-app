@@ -880,7 +880,7 @@ class MatchDetailScreen extends GetView<MatchDetailController> {
                                 if (controller.selectedIndex.value == 1)
                                   ReportView(data?.content.rendered ?? ""),
                                 if (controller.selectedIndex.value == 2)
-                                  GalleryView(controller, data?.custom_field.photos ?? [""]),
+                                  GalleryView(controller, data?.custom_field.photos),
                               ],
                             ),
                           );
@@ -945,11 +945,12 @@ class MatchDetailScreen extends GetView<MatchDetailController> {
     );
   }
 
-  Widget GalleryView(MatchDetailController controller, List<String> listMedia) {
+  Widget GalleryView(MatchDetailController controller, List<String>? listMedia) {
     return Column(
       children: [
         DefaultHeaderTitleView(
             LocaleKeys.gallery.tr, LocaleKeys.gallery_en.tr.toUpperCase()),
+        if (listMedia != null )
         SizedBox(
           child: GridView.builder(
             gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
@@ -983,7 +984,10 @@ class MatchDetailScreen extends GetView<MatchDetailController> {
               );
             },
           ),
-        ),
+        )
+        else
+          SizedBox()
+          // Text("Kosong")
       ],
     );
   }

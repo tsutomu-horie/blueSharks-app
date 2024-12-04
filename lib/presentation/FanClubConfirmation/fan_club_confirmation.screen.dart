@@ -334,8 +334,8 @@ class FanClubConfirmationScreen extends GetView<FanClubConfirmationController> {
                         padding: EdgeInsets.symmetric(
                             vertical: 12.h, horizontal: 16.w),
                         child: CustomTextView(
-                          isNotification ? LocaleKeys.active.tr : LocaleKeys
-                              .inactive.tr,
+                          isNotification ? LocaleKeys.on.tr : LocaleKeys
+                              .off.tr,
                           align: TextAlign.start,
                           color: TextColor.primary,
                           type: TDSFontType.bodyTextMedium,
