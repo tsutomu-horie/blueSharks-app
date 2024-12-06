@@ -14,8 +14,9 @@ import 'package:koto_blue_sharks/utils/app_color.dart';
 import 'controllers/wallpaper_set_player.controller.dart';
 
 class WallpaperSetPlayerScreen extends GetView<WallpaperSetPlayerController> {
-  const WallpaperSetPlayerScreen(this.onSet, {super.key});
+  const WallpaperSetPlayerScreen(this.onSet, this.wallpaperLink, {super.key});
 
+  final String wallpaperLink;
   final Function(String, String)? onSet;
 
   @override
@@ -118,7 +119,7 @@ class WallpaperSetPlayerScreen extends GetView<WallpaperSetPlayerController> {
                         ? SetWalpaperListView(
                       memberController,
                       isSetWallpaper: true,
-                      onSet: onSet,
+                      onSet: onSet, selectedPlayerLink: wallpaperLink,
                     )
                         : Column(
                       children: [shimmer(), shimmer(), shimmer()],

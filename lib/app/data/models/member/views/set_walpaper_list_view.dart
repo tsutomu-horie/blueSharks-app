@@ -15,70 +15,17 @@ import 'package:koto_blue_sharks/utils/app_color.dart';
 
 class SetWalpaperListView extends GetView {
   const SetWalpaperListView(this.memberController,
-      {super.key, required this.isSetWallpaper, this.onSet});
+      {super.key, required this.isSetWallpaper, required this.selectedPlayerLink, this.onSet});
 
   final WallpaperSetPlayerController memberController;
   final bool isSetWallpaper;
+  final String selectedPlayerLink;
   final Function(String, String)? onSet;
 
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
-        // Container(
-        //   color: BackgroundColor.primary,
-        //   padding: EdgeInsets.symmetric(vertical: 12.h, horizontal: 16.w),
-        //   child: OutlinedButton(
-        //     onPressed: () {
-        //       showPlayerFilterBottomSheet(memberController, context);
-        //     },
-        //     style: ButtonStyle(
-        //       padding: WidgetStateProperty.all(EdgeInsets.zero),
-        //       shape: MaterialStateProperty.all(
-        //         RoundedRectangleBorder(
-        //           borderRadius: BorderRadius.circular(8.r),
-        //         ),
-        //       ),
-        //     ),
-        //     child: Row(
-        //       children: [
-        //         SizedBox(
-        //           width: 12.w,
-        //         ),
-        //         SvgPicture.asset(
-        //           "assets/vectors/ic_user-search.svg",
-        //           width: 20.w,
-        //           height: 20.h,
-        //         ),
-        //         SizedBox(
-        //           width: 8.w,
-        //         ),
-        //         Flexible(
-        //           child: SizedBox(
-        //             width: double.infinity,
-        //             child: Obx(() {
-        //               return CustomTextView(
-        //                 memberController.selectedPosition.value,
-        //                 type: TDSFontType.bodyTextMedium,
-        //                 color: TextColor.primary,
-        //               );
-        //             }),
-        //           ),
-        //         ),
-        //         SizedBox(
-        //           width: 8.w,
-        //         ),
-        //         Icon(
-        //           Icons.keyboard_arrow_down,
-        //           size: 20.w,
-        //         ),
-        //         SizedBox(
-        //           width: 12.w,
-        //         ),
-        //       ],
-        //     ),
-        //   ),
-        // ),
         Obx(() {
           List<CategorizedPlayerGroup> groupedPlayers =
               memberController.wallpaperList;
@@ -138,6 +85,7 @@ class SetWalpaperListView extends GetView {
                               ),
                             ),
                           ),
+
                           // Grid to show players of the current position group
                           Padding(
                             padding: EdgeInsets.symmetric(
@@ -171,6 +119,7 @@ class SetWalpaperListView extends GetView {
                                     player.title.rendered,
                                     position,
                                     player.link,
+                                    selectedPlayerLink,
                                     onSet,
                                   );
                                 });
@@ -209,10 +158,10 @@ void showPlayerFilterBottomSheet(
             SizedBox(height: 8.h),
             Center(
                 child: Container(
-                  width: 48.w,
-                  height: 4.w,
-                  color: BorderColor.primary,
-                )),
+              width: 48.w,
+              height: 4.w,
+              color: BorderColor.primary,
+            )),
             SizedBox(height: 16.h),
             Expanded(
               child: ListView.builder(
@@ -225,7 +174,8 @@ void showPlayerFilterBottomSheet(
                     onTap: () {
                       // memberController.onSelectPosition(item);
                       Get.back();
-                      memberController.scrollToGroup(memberController.playerCategoryFull[index]);
+                      memberController.scrollToGroup(
+                          memberController.playerCategoryFull[index]);
                     },
                     child: Column(
                       children: [
@@ -243,8 +193,7 @@ void showPlayerFilterBottomSheet(
                             ],
                           ),
                         ),
-                        if (index !=
-                            memberController.playerCategory.length - 1)
+                        if (index != memberController.playerCategory.length - 1)
                           Container(
                             height: 1.h,
                             color: BorderColor.primary,
@@ -270,7 +219,9 @@ void showSetWallpaper(
     String playerNameKanji,
     String playerPosition,
     String playerUrl,
+    String selectedUrl,
     Function(String, String)? onSet) {
+  print("show sheet $playerUrl, $selectedUrl");
   showModalBottomSheet(
     context: context,
     shape: RoundedRectangleBorder(
@@ -311,21 +262,21 @@ void showSetWallpaper(
                 children: [
                   image != ''
                       ? SizedBox(
-                      width: 81.w,
-                      child: AspectRatio(
-                        aspectRatio: 3 / 4,
-                        child: CustomImageView(
-                          image: image,
-                          radius: 4.r,
-                          customFit: BoxFit.fitHeight,
-                        ),
-                      ))
+                          width: 81.w,
+                          child: AspectRatio(
+                            aspectRatio: 3 / 4,
+                            child: CustomImageView(
+                              image: image,
+                              radius: 4.r,
+                              customFit: BoxFit.fitHeight,
+                            ),
+                          ))
                       : Container(
-                    decoration: BoxDecoration(
-                      color: Colors.grey,
-                      borderRadius: BorderRadius.circular(4.r),
-                    ),
-                  ),
+                          decoration: BoxDecoration(
+                            color: Colors.grey,
+                            borderRadius: BorderRadius.circular(4.r),
+                          ),
+                        ),
                   SizedBox(
                     width: 12.w,
                   ),
@@ -378,15 +329,22 @@ void showSetWallpaper(
                     child: OutlinedButton(
                       style: ButtonStyle(
                         side: WidgetStateProperty.all(BorderSide(
-                            color: BrandColor
-                                .main) // Set your desired color here
-                        ),
+                                color: BrandColor
+                                    .main) // Set your desired color here
+                            ),
                       ),
                       onPressed: () {
-                        Get.back();
+                        if (selectedUrl == playerUrl) {
+                          if (onSet != null) {
+                            onSet("", "");
+                          }
+                          Get.back();
+                        } else {
+                          Get.back();
+                        }
                       },
                       child: CustomTextView(
-                        LocaleKeys.cancel.tr,
+                        selectedUrl == playerUrl ? LocaleKeys.unselect.tr : LocaleKeys.cancel.tr,
                         color: BrandColor.main,
                       ),
                     ),
@@ -405,10 +363,12 @@ void showSetWallpaper(
                       ),
                       onPressed: () {
                         if (onSet != null) {
-                          onSet("$playerNameKatana $playerNameKanji", playerUrl);
+                          onSet(
+                              "$playerNameKatana $playerNameKanji", playerUrl);
                           Get.back();
                         } else {
-                          Get.to(() => RegisterEmailScreen(playerUrl, "$playerNameKatana $playerNameKanji"));
+                          Get.to(() => RegisterEmailScreen(
+                              playerUrl, "$playerNameKatana $playerNameKanji"));
                         }
                       },
                       child: CustomTextView(
@@ -434,7 +394,8 @@ class FilterHeaderDelegate extends SliverPersistentHeaderDelegate {
   FilterHeaderDelegate(this.memberController, this.context);
 
   @override
-  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
+  Widget build(
+      BuildContext context, double shrinkOffset, bool overlapsContent) {
     return Container(
       color: BackgroundColor.primary,
       padding: EdgeInsets.symmetric(vertical: 12.h, horizontal: 16.w),
@@ -487,5 +448,6 @@ class FilterHeaderDelegate extends SliverPersistentHeaderDelegate {
   double get minExtent => 60.h; // Adjust minExtent if needed
 
   @override
-  bool shouldRebuild(covariant SliverPersistentHeaderDelegate oldDelegate) => false;
+  bool shouldRebuild(covariant SliverPersistentHeaderDelegate oldDelegate) =>
+      false;
 }

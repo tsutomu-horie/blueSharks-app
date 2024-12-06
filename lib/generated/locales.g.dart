@@ -171,8 +171,16 @@ class LocaleKeys {
   static const set_a_new_password = 'set_a_new_password';
   static const new_password = 'new_password';
   static const old_password = 'old_password';
+  static const new_password_edit = 'new_password_edit';
+  static const old_password_placeholder_change_password =
+      'old_password_placeholder_change_password';
+  static const new_password_placeholder_change_password =
+      'new_password_placeholder_change_password';
   static const new_password_placeholder = 'new_password_placeholder';
   static const confirm_new_password = 'confirm_new_password';
+  static const confirm_new_password_edit = 'confirm_new_password_edit';
+  static const confirm_new_password_edit_placeholder =
+      'confirm_new_password_edit_placeholder';
   static const confirm_new_password_placeholder =
       'confirm_new_password_placeholder';
   static const confirm_new_password_placeholder_home =
@@ -268,6 +276,7 @@ class LocaleKeys {
   static const otp_limit_message = 'otp_limit_message';
   static const resend_otp_in = 'resend_otp_in';
   static const close_otp = 'close_otp';
+  static const unselect = 'unselect';
   static const forgot_password_title_home = 'forgot_password_title_home';
   static const default_jp = 'default_jp';
   static const login_title_home = 'login_title_home';
@@ -449,9 +458,14 @@ class Locales {
     'password_placeholder': 'パスワードを入力してください',
     'set_a_new_password': '新しいパスワードを設定してください',
     'new_password': '新しいパスワード',
-    'old_password': '以前のパスワード',
+    'old_password': '以前のパスワード フォーム内',
+    'new_password_edit': '新しいパスワード',
+    'old_password_placeholder_change_password': '現在のパスワードを入力してください',
+    'new_password_placeholder_change_password': '新しいパスワードを入力してください',
     'new_password_placeholder': '新しいパスワードを入力してください',
     'confirm_new_password': '新しいパスワードの確認',
+    'confirm_new_password_edit': '新しいパスワード確認',
+    'confirm_new_password_edit_placeholder': '新しいパスワードを再入力してください',
     'confirm_new_password_placeholder': '新しいパスワードでも同様',
     'confirm_new_password_placeholder_home': '新しいパスワードを再入力してください',
     'password_desc': 'パスワードは半角英数8〜12文字以内を入力してください。',
@@ -546,6 +560,7 @@ class Locales {
     'otp_limit_message': 'しばらくしてから、電子メールを確認するためのOTPコードを再度リクエストしてください。',
     'resend_otp_in': '再送信まで',
     'close_otp': '近いい',
+    'unselect': 'アンセレクト',
     'forgot_password_title_home': 'パスワードをリセットする',
     'default_jp': 'デフォルト',
     'login_title_home': '登録したメールアドレスとパスワードを入力して、メンバーシップアカウントにログインしてください。',

@@ -1993,6 +1993,7 @@ CustomBanner _$CustomBannerFromJson(Map<String, dynamic> json) {
 /// @nodoc
 mixin _$CustomBanner {
   int get id => throw _privateConstructorUsedError;
+  String get url => throw _privateConstructorUsedError;
   String get photo => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -2007,7 +2008,7 @@ abstract class $CustomBannerCopyWith<$Res> {
           CustomBanner value, $Res Function(CustomBanner) then) =
       _$CustomBannerCopyWithImpl<$Res, CustomBanner>;
   @useResult
-  $Res call({int id, String photo});
+  $Res call({int id, String url, String photo});
 }
 
 /// @nodoc
@@ -2024,6 +2025,7 @@ class _$CustomBannerCopyWithImpl<$Res, $Val extends CustomBanner>
   @override
   $Res call({
     Object? id = null,
+    Object? url = null,
     Object? photo = null,
   }) {
     return _then(_value.copyWith(
@@ -2031,6 +2033,10 @@ class _$CustomBannerCopyWithImpl<$Res, $Val extends CustomBanner>
           ? _value.id
           : id // ignore: cast_nullable_to_non_nullable
               as int,
+      url: null == url
+          ? _value.url
+          : url // ignore: cast_nullable_to_non_nullable
+              as String,
       photo: null == photo
           ? _value.photo
           : photo // ignore: cast_nullable_to_non_nullable
@@ -2047,7 +2053,7 @@ abstract class _$$CustomBannerImplCopyWith<$Res>
       __$$CustomBannerImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({int id, String photo});
+  $Res call({int id, String url, String photo});
 }
 
 /// @nodoc
@@ -2062,6 +2068,7 @@ class __$$CustomBannerImplCopyWithImpl<$Res>
   @override
   $Res call({
     Object? id = null,
+    Object? url = null,
     Object? photo = null,
   }) {
     return _then(_$CustomBannerImpl(
@@ -2069,6 +2076,10 @@ class __$$CustomBannerImplCopyWithImpl<$Res>
           ? _value.id
           : id // ignore: cast_nullable_to_non_nullable
               as int,
+      url: null == url
+          ? _value.url
+          : url // ignore: cast_nullable_to_non_nullable
+              as String,
       photo: null == photo
           ? _value.photo
           : photo // ignore: cast_nullable_to_non_nullable
@@ -2080,7 +2091,8 @@ class __$$CustomBannerImplCopyWithImpl<$Res>
 /// @nodoc
 @JsonSerializable()
 class _$CustomBannerImpl implements _CustomBanner {
-  const _$CustomBannerImpl({required this.id, required this.photo});
+  const _$CustomBannerImpl(
+      {required this.id, required this.url, required this.photo});
 
   factory _$CustomBannerImpl.fromJson(Map<String, dynamic> json) =>
       _$$CustomBannerImplFromJson(json);
@@ -2088,11 +2100,13 @@ class _$CustomBannerImpl implements _CustomBanner {
   @override
   final int id;
   @override
+  final String url;
+  @override
   final String photo;
 
   @override
   String toString() {
-    return 'CustomBanner(id: $id, photo: $photo)';
+    return 'CustomBanner(id: $id, url: $url, photo: $photo)';
   }
 
   @override
@@ -2101,12 +2115,13 @@ class _$CustomBannerImpl implements _CustomBanner {
         (other.runtimeType == runtimeType &&
             other is _$CustomBannerImpl &&
             (identical(other.id, id) || other.id == id) &&
+            (identical(other.url, url) || other.url == url) &&
             (identical(other.photo, photo) || other.photo == photo));
   }
 
   @JsonKey(ignore: true)
   @override
-  int get hashCode => Object.hash(runtimeType, id, photo);
+  int get hashCode => Object.hash(runtimeType, id, url, photo);
 
   @JsonKey(ignore: true)
   @override
@@ -2125,6 +2140,7 @@ class _$CustomBannerImpl implements _CustomBanner {
 abstract class _CustomBanner implements CustomBanner {
   const factory _CustomBanner(
       {required final int id,
+      required final String url,
       required final String photo}) = _$CustomBannerImpl;
 
   factory _CustomBanner.fromJson(Map<String, dynamic> json) =
@@ -2132,6 +2148,8 @@ abstract class _CustomBanner implements CustomBanner {
 
   @override
   int get id;
+  @override
+  String get url;
   @override
   String get photo;
   @override

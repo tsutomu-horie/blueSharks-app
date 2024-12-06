@@ -93,7 +93,7 @@ class InfoScreen extends GetView<InfoController> {
                                   .border, // Selected/Unselected Color
                             ),
                           ),
-                          if (tabs[index].toLowerCase() == "partner")
+                          if (index == 5 || index == 3)
                             Padding(
                               padding: EdgeInsets.symmetric(horizontal: 8.w),
                               child: SvgPicture.asset("assets/vectors/ic_external_link.svg", width: 16.w, height: 16.h,),
