@@ -280,13 +280,11 @@ class CalendarScreen extends StatelessWidget {
       BuildContext context,
       CalendarEvent event) {
 
-    // Check if the event is spanning more than one day
     bool isMultiDayEvent = event.start.day != event.end.day;
 
     String eventDateDisplay = '';
 
     if (isMultiDayEvent) {
-      // Format for multi-day event
       String startFormattedDate = DateFormat('EEEE, d MMM').format(event.start);
       String startFormattedTime = DateFormat('HH:mm').format(event.start);
       String endFormattedDate = DateFormat('EEEE, d MMM').format(event.end);
@@ -294,7 +292,6 @@ class CalendarScreen extends StatelessWidget {
 
       eventDateDisplay = '$startFormattedDate at $startFormattedTime - $endFormattedDate at $endFormattedTime';
     } else {
-      // Format for single-day event
       String formattedDate = DateFormat('EEEE, d MMM').format(event.start);
       String formattedTime = DateFormat('HH:mm').format(event.start);
       String endTime = DateFormat('HH:mm').format(event.end);
@@ -302,7 +299,8 @@ class CalendarScreen extends StatelessWidget {
       eventDateDisplay = '$formattedDate • $formattedTime - $endTime';
     }
 
-    // Show the modal bottom sheet with event details
+    List<String> categories = controller.parseCategories(event.title, event.description);
+
     showModalBottomSheet(
       context: context,
       shape: RoundedRectangleBorder(
@@ -316,26 +314,51 @@ class CalendarScreen extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Align(
-                alignment: Alignment.topRight,
-                child: IconButton(
-                  icon: Icon(Icons.close, color: Colors.black),
-                  onPressed: () {
-                    Navigator.pop(context);
-                  },
-                ),
+              Row(
+                children: [
+                  Flexible(
+                    child: Text(
+                      event.title,
+                      style: TextStyle(
+                        fontSize: 18.sp,
+                        fontWeight: FontWeight.bold,
+                        color: BrandColor.main,
+                      ),
+                    ),
+                  ),
+                  SizedBox(width: 16.w,),
+                  Align(
+                    alignment: Alignment.topRight,
+                    child: IconButton(
+                      icon: const Icon(Icons.close, color: Colors.black),
+                      onPressed: () {
+                        Navigator.pop(context);
+                      },
+                    ),
+                  ),
+                ],
               ),
-              SizedBox(height: 16.h),
-              Text(
-                event.title,
-                style: TextStyle(
-                  fontSize: 18.sp,
-                  fontWeight: FontWeight.bold,
-                  color: BrandColor.main,
-                ),
+              SizedBox(height: 8.h),
+              Wrap(
+                spacing: 4.w,
+                children: categories.map((category) {
+                  return Container(
+                    padding: EdgeInsets.symmetric(vertical: 2.h, horizontal: 8.w),
+                    decoration: BoxDecoration(
+                      color: BrandColor.background,
+                      borderRadius: BorderRadius.circular(12.r),
+                    ),
+                    child: CustomTextView(
+                      category,
+                      style: TextStyle(
+                        fontSize: 10.sp,
+                        color: Colors.white,
+                      ),
+                    ),
+                  );
+                }).toList(),
               ),
               SizedBox(height: 12.h),
-              // Display the formatted event date and time
               Text(
                 eventDateDisplay,
                 style: TextStyle(

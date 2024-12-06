@@ -26,8 +26,14 @@ class RegisterOtpController extends GetxController {
 
   @override
   void onClose() {
+    resetState();
     _timer?.cancel();
     super.onClose();
+  }
+
+  void resetState() {
+    otp.value = '';
+    hasError.value = false;
   }
 
   @override

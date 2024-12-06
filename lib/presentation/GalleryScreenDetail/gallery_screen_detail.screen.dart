@@ -44,87 +44,90 @@ class GalleryScreenDetailScreen extends GetView<GalleryScreenDetailController> {
         body: SingleChildScrollView(
           child: Column(
             children: [
-              Stack(
-                children: [
-                  AspectRatio(
-                    aspectRatio: 16 / 9,
-                    child:  GestureDetector(
-                      onTap: () {
-                        if (albumData!.photo != null) {
-                          Get.to(() => FullScreenImageView(imageUrl: albumData!.photo!,));
-                        }
-                      },
-                      child: CustomImageView(
-                          customFit: BoxFit.fitWidth,
-                          radius: 0.r,
-                          image: albumData!.photo ?? ""),
+              Container(
+                color: Colors.black,
+                child: Stack(
+                  children: [
+                    AspectRatio(
+                      aspectRatio: 16 / 9,
+                      child:  GestureDetector(
+                        onTap: () {
+                          if (albumData!.photo != null) {
+                            Get.to(() => FullScreenImageView(imageUrl: albumData!.photo!,));
+                          }
+                        },
+                        child: CustomImageView(
+                            customFit: BoxFit.contain,
+                            radius: 0.r,
+                            image: albumData!.photo ?? ""),
+                      ),
                     ),
-                  ),
-                  Positioned(
-                    bottom: 16.w,
-                    left: 16.w,
-                    right: 16.w,
-                    child: Column(
-                      crossAxisAlignment:
-                      CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Container(
-                              padding: EdgeInsets.symmetric(
-                                  horizontal: 8.w, vertical: 4.h),
-                              decoration: BoxDecoration(
-                                color: BrandColor.main,
-                                borderRadius:
-                                BorderRadius.circular(24.r),
-                              ),
-                              child: CustomTextView(
-                                name,
-                                color: Colors.white,
-                                type: TDSFontType.labelMedium,
-                              ),
-                            ),
-                            SizedBox(width: 8.w,),
-                            Container(
-                              decoration: BoxDecoration(
+                    Positioned(
+                      bottom: 16.w,
+                      left: 16.w,
+                      right: 16.w,
+                      child: Column(
+                        crossAxisAlignment:
+                        CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Container(
+                                padding: EdgeInsets.symmetric(
+                                    horizontal: 8.w, vertical: 4.h),
+                                decoration: BoxDecoration(
+                                  color: BrandColor.main,
                                   borderRadius:
-                                  BorderRadius.circular(8.r),
-                                  color: Colors.white
+                                  BorderRadius.circular(24.r),
+                                ),
+                                child: CustomTextView(
+                                  name,
+                                  color: Colors.white,
+                                  type: TDSFontType.labelMedium,
+                                ),
                               ),
-                              width: 4.w,
-                              height: 4.w,
-                            ),
-                            SizedBox(width: 8.w,),
-                            FutureBuilder<String>(
-                              future: convertToJapaneseFormat(albumData!.date ??
-                                  ""),
-                              builder: (BuildContext context,
-                                  AsyncSnapshot<String> snapshot) {
-                                if (snapshot.connectionState ==
-                                    ConnectionState.waiting ||
-                                    snapshot.hasError) {
-                                  return const SizedBox();
-                                } else {
-                                  return Row(
-                                    children: [
-                                      CustomTextView(
-                                        snapshot.data!, color: Colors.white,
-                                        type: TDSFontType.bodyTextMedium,),
-                                    ],
-                                  ); // Display the formatted date
-                                }
-                              },
-                            ),
-                          ],
-                        ),
-                        SizedBox(height: 6.h,),
-                        CustomTextView(
-                          albumData!.name ?? "", type: TDSFontType.titleLarge,
-                          color: Colors.white,)
-                      ],
-                    ),
-                  )
-                ],
+                              SizedBox(width: 8.w,),
+                              Container(
+                                decoration: BoxDecoration(
+                                    borderRadius:
+                                    BorderRadius.circular(8.r),
+                                    color: Colors.white
+                                ),
+                                width: 4.w,
+                                height: 4.w,
+                              ),
+                              SizedBox(width: 8.w,),
+                              FutureBuilder<String>(
+                                future: convertToJapaneseFormat(albumData!.date ??
+                                    ""),
+                                builder: (BuildContext context,
+                                    AsyncSnapshot<String> snapshot) {
+                                  if (snapshot.connectionState ==
+                                      ConnectionState.waiting ||
+                                      snapshot.hasError) {
+                                    return const SizedBox();
+                                  } else {
+                                    return Row(
+                                      children: [
+                                        CustomTextView(
+                                          snapshot.data!, color: Colors.white,
+                                          type: TDSFontType.bodyTextMedium,),
+                                      ],
+                                    ); // Display the formatted date
+                                  }
+                                },
+                              ),
+                            ],
+                          ),
+                          SizedBox(height: 6.h,),
+                          CustomTextView(
+                            albumData!.name ?? "", type: TDSFontType.titleLarge,
+                            color: Colors.white,)
+                        ],
+                      ),
+                    )
+                  ],
+                ),
               ),
 
               SizedBox(height: 8.h,),

@@ -277,6 +277,7 @@ void editProfileBottomSheet(
                               backgroundColor: BrandColor.main,
                             ),
                             onPressed: () {
+                              print("trigger button ${formKey.currentState!.validate()}");
                               if (formKey.currentState!.validate()) {
                                 if (fanclubController.emailController.text == oldEmail) {
                                   fanclubController.updateProfile(onSuccess);
@@ -360,6 +361,7 @@ void showEmailDialog(FanClubConfirmationController registerEmailController,
                     backgroundColor: BrandColor.main,
                   ),
                   onPressed: () {
+                    print("dialog tapped");
                     Get.back();
                     Get.to(() => RegisterOtpScreen(
                       isRegister: true,
@@ -369,7 +371,7 @@ void showEmailDialog(FanClubConfirmationController registerEmailController,
                         selectedPlayer:
                             registerEmailController.playerNameController.value,
                         selectedPlayerName: registerEmailController.playerLinkController.value,
-                        onSuccess: onSuccess));
+                        onSuccess: onSuccess), preventDuplicates: false);
                   },
                   child: CustomTextView(
                     LocaleKeys.close.tr,
