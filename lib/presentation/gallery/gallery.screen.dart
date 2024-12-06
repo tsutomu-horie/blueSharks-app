@@ -22,6 +22,8 @@ class GalleryScreen extends GetView<GalleryController> {
   Widget build(BuildContext context) {
     final GalleryController galleryController = Get.put(GalleryController());
 
+    galleryController.selectedYear.value = "";
+
     if (Get.isRegistered<YearFilterController>()) {
       Get.find<YearFilterController>().reset();
     }

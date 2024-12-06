@@ -32,6 +32,35 @@ class CalendarScreenController extends GetxController {
     AnalyticsService.logPageView(Routes.CALENDAR);
 
   }
+
+  List<String> parseCategories(String title, String description) {
+    List<String> categories = [];
+
+    if (title.contains('Meeting') || description.contains('Meeting')) {
+      categories.add('Meeting');
+    }
+    if (title.contains('Workshop') || description.contains('Workshop')) {
+      categories.add('Workshop');
+    }
+    if (title.contains('Conference') || description.contains('Conference')) {
+      categories.add('Conference');
+    } 
+
+    // Add more conditions as needed
+
+    print("parse catrgot ${selectedYear.value} ${LocaleKeys.all.tr.toUpperCase()}");
+
+    // Filter categories based on selectedYear
+    if (selectedYear.value.toLowerCase() != LocaleKeys.all.tr.toLowerCase()) {
+      categories = categories.where((category) => category == selectedYear.value).toList();
+      print("masuk $categories");
+    } else {
+      categories = filterEvent.where((value) => value != LocaleKeys.all.tr).toList();
+    }
+
+    return categories;
+  }
+
   void onChangeCalendar(CalendarView value) {
     calendarView.value = value;
   }

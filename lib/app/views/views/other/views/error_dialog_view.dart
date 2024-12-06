@@ -57,7 +57,7 @@ void errorDialogView(BuildContext context, String title, String? message) {
                     padding: EdgeInsets.symmetric(vertical: 12.h),
                   ),
                   onPressed: () {
-                    Navigator.of(context).pop(); // Close the dialog
+                   Get.back();
                   },
                   child: CustomTextView(
                     LocaleKeys.close.tr,
