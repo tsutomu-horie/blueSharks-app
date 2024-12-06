@@ -9,6 +9,7 @@ import 'package:koto_blue_sharks/app/views/views/custom_image_view.dart';
 import 'package:koto_blue_sharks/app/views/views/custom_text_view.dart';
 import 'package:koto_blue_sharks/app/views/views/default_header_title_view.dart';
 import 'package:koto_blue_sharks/generated/locales.g.dart';
+import 'package:koto_blue_sharks/presentation/LocalFullScreen/local_full_screen.screen.dart';
 import 'package:koto_blue_sharks/utils/Constant.dart';
 import 'package:koto_blue_sharks/utils/app_color.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -661,13 +662,15 @@ class StadiumScreen extends GetView<StadiumController> {
   }
 
   Future<void> openGoogleMaps() async {
-    const String googleMapsUrl = 'https://www.google.com/maps?ll=35.648557,139.82359&z=17&t=m&hl=ja&gl=JP&mapclient=embed&cid=1264634736669123728';
-
-    // Check if the URL can be launched
-    if (await canLaunch(googleMapsUrl)) {
-      await launch(googleMapsUrl);
-    } else {
-      throw 'Could not launch $googleMapsUrl';
-    }
+    // const String googleMapsUrl = 'https://www.google.com/maps?ll=35.648557,139.82359&z=17&t=m&hl=ja&gl=JP&mapclient=embed&cid=1264634736669123728';
+    //
+    // // Check if the URL can be launched
+    // if (await canLaunch(googleMapsUrl)) {
+    //   await launch(googleMapsUrl);
+    // } else {
+    //   throw 'Could not launch $googleMapsUrl';
+    // }
+    
+    Get.to(() => LocalFullScreenScreen(imageUrl: 'assets/images/stadiumImage.jpg'));
   }
 }

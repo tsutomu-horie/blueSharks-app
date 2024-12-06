@@ -4,6 +4,7 @@ export 'package:koto_blue_sharks/presentation/FanClubConfirmation/fan_club_confi
 export 'package:koto_blue_sharks/presentation/ForgotPasswordHome/forgot_password_home.screen.dart';
 export 'package:koto_blue_sharks/presentation/GalleryScreenDetail/gallery_screen_detail.screen.dart';
 export 'package:koto_blue_sharks/presentation/ListTopics/list_topics.screen.dart';
+export 'package:koto_blue_sharks/presentation/LocalFullScreen/local_full_screen.screen.dart';
 export 'package:koto_blue_sharks/presentation/MatchDetail/match_detail.screen.dart';
 export 'package:koto_blue_sharks/presentation/NotificationDetail/notification_detail.screen.dart';
 export 'package:koto_blue_sharks/presentation/NotificationList/notification_list.screen.dart';

@@ -105,8 +105,8 @@ class EditPasswordScreen extends GetView<EditPasswordController> {
                             ),
                             contentPadding: EdgeInsets.only(top: 2.h, left: 16
                                 .w),
-                            hintText: LocaleKeys.new_password_placeholder
-                                .trParams({"example": "Your password"}),
+                            hintText: LocaleKeys.old_password_placeholder_change_password
+                                .tr,
                             // Adjust hint text
                             suffixIcon: IconButton(
                               icon: Icon(
@@ -131,7 +131,7 @@ class EditPasswordScreen extends GetView<EditPasswordController> {
 
                   Row(
                     children: [
-                      CustomTextView(LocaleKeys.new_password.tr,
+                      CustomTextView(LocaleKeys.new_password_edit.tr,
                         type: TDSFontType.labelLarge,
                         color: TextColor.secondary,),
                       CustomTextView(" *", type: TDSFontType.labelLarge,
@@ -191,9 +191,7 @@ class EditPasswordScreen extends GetView<EditPasswordController> {
                             contentPadding: EdgeInsets.only(top: 2.h, left: 16
                                 .w),
                             hintText: LocaleKeys
-                                .confirm_new_password_placeholder.trParams({
-                              "example": "Your password"
-                            }),
+                                .new_password_placeholder_change_password.tr,
                             // Adjust hint text
                             suffixIcon: IconButton(
                               icon: Icon(
@@ -219,7 +217,7 @@ class EditPasswordScreen extends GetView<EditPasswordController> {
 
                   Row(
                     children: [
-                      CustomTextView(LocaleKeys.confirm_new_password.tr,
+                      CustomTextView(LocaleKeys.confirm_new_password_edit.tr,
                         type: TDSFontType.labelLarge,
                         color: TextColor.secondary,),
                       CustomTextView(" *", type: TDSFontType.labelLarge,
@@ -284,9 +282,7 @@ class EditPasswordScreen extends GetView<EditPasswordController> {
                             contentPadding: EdgeInsets.only(top: 2.h, left: 16
                                 .w),
                             hintText: LocaleKeys
-                                .confirm_new_password_placeholder.trParams({
-                              "example": "Your password"
-                            }),
+                                .confirm_new_password_edit_placeholder.tr,
                             // Adjust hint text
                             suffixIcon: IconButton(
                               icon: Icon(

@@ -135,6 +135,7 @@ class Wallpaper with _$Wallpaper {
 class CustomBanner with _$CustomBanner {
   const factory CustomBanner({
     required int id,
+    required String url,
     required String photo,
   }) = _CustomBanner;
 

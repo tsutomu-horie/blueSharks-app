@@ -122,7 +122,7 @@ class Nav {
     ),
     GetPage(
       name: Routes.WALLPAPER_SET_PLAYER,
-      page: () => const WallpaperSetPlayerScreen(null),
+      page: () => const WallpaperSetPlayerScreen(null, ""),
       binding: WallpaperSetPlayerControllerBinding(),
     ),
     GetPage(
@@ -226,6 +226,11 @@ class Nav {
       name: Routes.PRIVACY_POLICY_SCREEN,
       page: () => const PrivacyPolicyScreen(),
       binding: PrivacyPolicyScreenControllerBinding(),
+    ),
+    GetPage(
+      name: Routes.LOCAL_FULL_SCREEN,
+      page: () => const LocalFullScreenScreen(imageUrl: '',),
+      binding: LocalFullScreenControllerBinding(),
     ),
   ];
 }

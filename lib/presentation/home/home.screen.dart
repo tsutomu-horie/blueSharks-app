@@ -279,6 +279,9 @@ class HomeScreen extends GetView<MainController> {
                   return BannerSliderView(
                     key: ValueKey('banner_${controller.bannerData.length}'),  // Add key based on data length
                     banners: controller.bannerData,
+                    onTap: (index){
+                      controller.launchExternalWeb("${controller.bannerData[index].url}");
+                    },
                   );
                 },
               ),

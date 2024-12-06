@@ -162,34 +162,34 @@ void editProfileBottomSheet(
                               type: TDSFontType.bodyTextSmall,
                               color: TextColor.secondary,
                             ),
-                            CustomTextView(
-                              " *",
-                              type: TDSFontType.bodyTextMedium,
-                              color: DangerColor.main,
-                            ),
+                            // CustomTextView(
+                            //   " *",
+                            //   type: TDSFontType.bodyTextMedium,
+                            //   color: DangerColor.main,
+                            // ),
                           ],
                         ),
                         FormField<String>(
-                          validator: (value) {
-                            if (fanclubController.playerNameController.value.isEmpty) {
-                              return LocaleKeys.error_wallpaper_required.tr;
-                            }
-                            return null;
-                          },
+                          // validator: (value) {
+                          //   if (fanclubController.playerNameController.value.isEmpty) {
+                          //     return LocaleKeys.error_wallpaper_required.tr;
+                          //   }
+                          //   return null;
+                          // },
                           builder: (FormFieldState<String> state) {
                             return Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 OutlinedButton(
                                   onPressed: () {
-                                    print("button set wallpaper");
+                                    print("button set wallpaper ${fanclubController.playerLinkController.value}");
                                     Get.to(() => WallpaperSetPlayerScreen((value, link) {
-                                      print("valuenya ${value}");
+                                      print("valuenya ${fanclubController.playerLinkController.value}");
                                       fanclubController.playerNameController.value = value;
                                       fanclubController.playerLinkController.value = link;
                                       state.didChange(value);
                                       Get.back();
-                                    }), preventDuplicates: false);
+                                    }, fanclubController.playerLinkController.value), preventDuplicates: false);
                                   },
                                   style: ButtonStyle(
                                     padding: WidgetStateProperty.all(EdgeInsets.zero),

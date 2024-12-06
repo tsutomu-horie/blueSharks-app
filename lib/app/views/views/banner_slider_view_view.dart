@@ -7,10 +7,11 @@ import 'package:koto_blue_sharks/utils/app_color.dart';
 
 class BannerSliderView extends StatefulWidget {
   final List<CustomBanner> banners;
+  final Function(int) onTap;
 
   const BannerSliderView({
     super.key,
-    required this.banners,
+    required this.banners, required this.onTap,
   });
 
   @override
@@ -69,27 +70,32 @@ class _BannerSliderViewState extends State<BannerSliderView> {
               final String imageUrl = widget.banners[index].photo ?? "";
 
               return Center(
-                child: Container(
-                  width: 300.w,
-                  height: 160.h,
-                  margin: EdgeInsets.symmetric(horizontal: 6.w),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(8.r),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.1),
-                        blurRadius: 5,
-                        offset: const Offset(0, 2),
+                child: GestureDetector(
+                  onTap: (){
+                    widget.onTap(index);
+                  },
+                  child: Container(
+                    width: 300.w,
+                    height: 160.h,
+                    margin: EdgeInsets.symmetric(horizontal: 6.w),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(8.r),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.1),
+                          blurRadius: 5,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(8.r),
+                      child: CachedNetworkImage(
+                        imageUrl: imageUrl,
+                        fit: BoxFit.cover,
+                        placeholder: (context, url) => CircularProgressIndicator(),
+                        errorWidget: (context, url, error) => Icon(Icons.error),
                       ),
-                    ],
-                  ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(8.r),
-                    child: CachedNetworkImage(
-                      imageUrl: imageUrl,
-                      fit: BoxFit.cover,
-                      placeholder: (context, url) => CircularProgressIndicator(),
-                      errorWidget: (context, url, error) => Icon(Icons.error),
                     ),
                   ),
                 ),

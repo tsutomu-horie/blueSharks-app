@@ -25,6 +25,7 @@ class Routes {
   static const NOTIFICATION_DETAIL = '/notification-detail';
   static const NOTIFICATION_LIST = '/notification-list';
   static const PLAYER_DETAIL = '/player-detail';
+  static const PRIVACY_POLICY_SCREEN = '/privacy-policy-screen';
   static const REGISTER_EMAIL = '/register-email';
   static const REGISTER_EMAIL_FROM_HOME = '/register-email-from-home';
   static const REGISTER_MEMBER_FANCLUB = '/register-member-fanclub';
@@ -38,5 +39,5 @@ class Routes {
   static const WARNING_DIALOG = '/warning-dialog';
   static const WEBVIEW = '/webview';
   static const YEAR_FILTER_CONTROLLER = '/year-filter-controller';
-  static const PRIVACY_POLICY_SCREEN = '/privacy-policy-screen';
+  static const LOCAL_FULL_SCREEN = '/local-full-screen';
 }

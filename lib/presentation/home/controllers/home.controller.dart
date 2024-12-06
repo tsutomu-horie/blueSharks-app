@@ -15,6 +15,7 @@ import 'package:koto_blue_sharks/app/data/models/media/media.dart';
 import 'package:koto_blue_sharks/app/data/models/member/member.dart';
 import 'package:koto_blue_sharks/utils/Constant.dart';
 import 'package:koto_blue_sharks/utils/my_shared_pref.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class HomeController extends GetxController {
   final MatchProvider apiProvider = MatchProvider();
@@ -181,5 +182,14 @@ class HomeController extends GetxController {
     final image = imageData?.media_details.sizes.thumbnail.source_url;
     print("GET NEWS IMAGE ${mediaId}, ${image}");
     return image ?? "";
+  }
+
+  void launchExternalWeb(String url) async {
+    final Uri webUrl = Uri.parse(url); // Replace with your profile URL
+    if (await canLaunchUrl(webUrl)) {
+      await launchUrl(webUrl);
+    } else {
+      throw 'Could not launch $webUrl';
+    }
   }
 }

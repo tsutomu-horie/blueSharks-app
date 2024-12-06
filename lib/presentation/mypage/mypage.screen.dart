@@ -113,6 +113,9 @@ class MypageScreen extends GetView<MypageController> {
                           )
                         : Column(
                           children: [
+                            controller.isLogin.value ?
+                            notVerifiedUserCard(controller)
+                            :
                             AspectRatio(
                                 aspectRatio: 16 / 10,
                                 child: DottedBorder(
@@ -861,4 +864,120 @@ void launchExternalWeb(String url) async {
   } else {
     throw 'Could not launch $webUrl';
   }
+}
+
+Widget notVerifiedUserCard(MypageController controller) {
+  return Column(
+    children: [
+      Container(
+          padding: EdgeInsets.symmetric(horizontal: 16.w),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              CustomTextView(LocaleKeys.fanclub_title.tr,
+                type: TDSFontType.headlineSmall, color: BrandColor
+                    .main,),
+              SizedBox(height: 30.h,),
+              DottedBorder(
+                color: Colors.blue,
+                // Border color
+                strokeWidth: 1.w,
+                // Border thickness
+                dashPattern: const [6, 3],
+                // Dash and gap lengths
+                borderType: BorderType.RRect,
+                // Rounded Rectangular border
+                radius: Radius.circular(12.r),
+                // Corner radius for rounded rectangle
+                child: Container(
+                    padding: EdgeInsets.symmetric(
+                        horizontal: 20.w, vertical: 26.h),
+                    width: double.infinity,
+                    color: BrandColor.surface,
+                    child: Column(
+                      children: [
+                        CustomTextView(
+                          LocaleKeys.membership_card_display
+                              .tr, style: TextStyle(
+                            fontWeight: FontWeight.w700,
+                            color: TextColor.primary),),
+                        SizedBox(height: 4.h,),
+                        CustomTextView(LocaleKeys
+                            .membership_card_display_desc.tr,
+                          type: TDSFontType.bodyTextMedium,
+                          align: TextAlign.center,
+                          color: TextColor.secondary,),
+                        SizedBox(height: 16.h,),
+                        Container(
+                          decoration: BoxDecoration(
+                              color: Colors.white,
+                              border:
+                              Border.all(color: BrandColor.main),
+                              borderRadius:
+                              BorderRadius.circular(24.r)),
+                          padding: EdgeInsets.symmetric(
+                              horizontal: 24.w, vertical: 8.h),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                IconsaxPlusLinear.tick_circle,
+                                color: BrandColor.main,
+                              ),
+                              SizedBox(
+                                width: 8.w,
+                              ),
+                              CustomTextView(
+                                LocaleKeys.membership_information
+                                    .tr,
+                                color: BrandColor.main,
+                                type: TDSFontType.labelMedium,
+                              )
+                            ],
+                          ),
+                        )
+                      ],
+                    )
+                ),
+              ),
+              SizedBox(height: 24.h,),
+              CustomTextView(
+                LocaleKeys.membership_information_desc
+                    .tr,
+                style: TextStyle(
+                    fontWeight: FontWeight.w400, fontSize: 14.sp),
+                align: TextAlign.center,),
+              SizedBox(height: 16.h,),
+              Row(
+                mainAxisSize: MainAxisSize.max,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  TextButton(onPressed: () {
+                    controller.launchFanClub();
+                  }, child: Column(
+                    children: [
+                      Row(
+                        children: [
+                          CustomTextView(
+                            LocaleKeys.fan_club_site.tr,
+                            color: BrandColor.main,),
+                          SizedBox(width: 8.w,),
+                          Icon(
+                            IconsaxPlusLinear.export_2,
+                            size: 16.w,
+                            color: BrandColor.main,),
+                        ],
+                      ),
+                      Container(color: BrandColor.main,
+                        height: 1.h,
+                        width: 150.w,)
+                    ],
+                  ),),
+                ],
+              ),
+              SizedBox(height: 24.h,),
+            ],
+          )),
+    ],
+  );
 }
