@@ -61,8 +61,9 @@ class FanClubConfirmationScreen extends GetView<FanClubConfirmationController> {
 
             Obx(() {
               final isEitherMatched = controller.profileData.value?.isEitherMatched == true;
+              final isVerified = controller.profileData.value?.isVerified == true;
 
-              if (isEitherMatched) {
+              if (isVerified) {
                 return Column(
                   children: [
                     !controller.isLoading.value
