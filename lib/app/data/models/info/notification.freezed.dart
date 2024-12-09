@@ -20,9 +20,9 @@ NotificationItem _$NotificationItemFromJson(Map<String, dynamic> json) {
 
 /// @nodoc
 mixin _$NotificationItem {
-  String get id => throw _privateConstructorUsedError;
-  int get notifiable_id => throw _privateConstructorUsedError;
-  String get notifiable_type => throw _privateConstructorUsedError;
+  int get id => throw _privateConstructorUsedError;
+  int? get notifiable_id => throw _privateConstructorUsedError;
+  String? get notifiable_type => throw _privateConstructorUsedError;
   String get created_at => throw _privateConstructorUsedError;
   String get updated_at => throw _privateConstructorUsedError;
   NotificationData get data => throw _privateConstructorUsedError;
@@ -41,9 +41,9 @@ abstract class $NotificationItemCopyWith<$Res> {
       _$NotificationItemCopyWithImpl<$Res, NotificationItem>;
   @useResult
   $Res call(
-      {String id,
-      int notifiable_id,
-      String notifiable_type,
+      {int id,
+      int? notifiable_id,
+      String? notifiable_type,
       String created_at,
       String updated_at,
       NotificationData data,
@@ -66,8 +66,8 @@ class _$NotificationItemCopyWithImpl<$Res, $Val extends NotificationItem>
   @override
   $Res call({
     Object? id = null,
-    Object? notifiable_id = null,
-    Object? notifiable_type = null,
+    Object? notifiable_id = freezed,
+    Object? notifiable_type = freezed,
     Object? created_at = null,
     Object? updated_at = null,
     Object? data = null,
@@ -77,15 +77,15 @@ class _$NotificationItemCopyWithImpl<$Res, $Val extends NotificationItem>
       id: null == id
           ? _value.id
           : id // ignore: cast_nullable_to_non_nullable
-              as String,
-      notifiable_id: null == notifiable_id
+              as int,
+      notifiable_id: freezed == notifiable_id
           ? _value.notifiable_id
           : notifiable_id // ignore: cast_nullable_to_non_nullable
-              as int,
-      notifiable_type: null == notifiable_type
+              as int?,
+      notifiable_type: freezed == notifiable_type
           ? _value.notifiable_type
           : notifiable_type // ignore: cast_nullable_to_non_nullable
-              as String,
+              as String?,
       created_at: null == created_at
           ? _value.created_at
           : created_at // ignore: cast_nullable_to_non_nullable
@@ -123,9 +123,9 @@ abstract class _$$NotificationImplCopyWith<$Res>
   @override
   @useResult
   $Res call(
-      {String id,
-      int notifiable_id,
-      String notifiable_type,
+      {int id,
+      int? notifiable_id,
+      String? notifiable_type,
       String created_at,
       String updated_at,
       NotificationData data,
@@ -147,8 +147,8 @@ class __$$NotificationImplCopyWithImpl<$Res>
   @override
   $Res call({
     Object? id = null,
-    Object? notifiable_id = null,
-    Object? notifiable_type = null,
+    Object? notifiable_id = freezed,
+    Object? notifiable_type = freezed,
     Object? created_at = null,
     Object? updated_at = null,
     Object? data = null,
@@ -158,15 +158,15 @@ class __$$NotificationImplCopyWithImpl<$Res>
       id: null == id
           ? _value.id
           : id // ignore: cast_nullable_to_non_nullable
-              as String,
-      notifiable_id: null == notifiable_id
+              as int,
+      notifiable_id: freezed == notifiable_id
           ? _value.notifiable_id
           : notifiable_id // ignore: cast_nullable_to_non_nullable
-              as int,
-      notifiable_type: null == notifiable_type
+              as int?,
+      notifiable_type: freezed == notifiable_type
           ? _value.notifiable_type
           : notifiable_type // ignore: cast_nullable_to_non_nullable
-              as String,
+              as String?,
       created_at: null == created_at
           ? _value.created_at
           : created_at // ignore: cast_nullable_to_non_nullable
@@ -192,8 +192,8 @@ class __$$NotificationImplCopyWithImpl<$Res>
 class _$NotificationImpl implements _Notification {
   const _$NotificationImpl(
       {required this.id,
-      required this.notifiable_id,
-      required this.notifiable_type,
+      this.notifiable_id,
+      this.notifiable_type,
       required this.created_at,
       required this.updated_at,
       required this.data,
@@ -203,11 +203,11 @@ class _$NotificationImpl implements _Notification {
       _$$NotificationImplFromJson(json);
 
   @override
-  final String id;
+  final int id;
   @override
-  final int notifiable_id;
+  final int? notifiable_id;
   @override
-  final String notifiable_type;
+  final String? notifiable_type;
   @override
   final String created_at;
   @override
@@ -261,9 +261,9 @@ class _$NotificationImpl implements _Notification {
 
 abstract class _Notification implements NotificationItem {
   const factory _Notification(
-      {required final String id,
-      required final int notifiable_id,
-      required final String notifiable_type,
+      {required final int id,
+      final int? notifiable_id,
+      final String? notifiable_type,
       required final String created_at,
       required final String updated_at,
       required final NotificationData data,
@@ -273,11 +273,11 @@ abstract class _Notification implements NotificationItem {
       _$NotificationImpl.fromJson;
 
   @override
-  String get id;
+  int get id;
   @override
-  int get notifiable_id;
+  int? get notifiable_id;
   @override
-  String get notifiable_type;
+  String? get notifiable_type;
   @override
   String get created_at;
   @override
@@ -300,9 +300,9 @@ NotificationData _$NotificationDataFromJson(Map<String, dynamic> json) {
 mixin _$NotificationData {
   String get body => throw _privateConstructorUsedError;
   String get model => throw _privateConstructorUsedError;
-  String get model_id => throw _privateConstructorUsedError;
+  int get model_id => throw _privateConstructorUsedError;
   String get title => throw _privateConstructorUsedError;
-  String get photo => throw _privateConstructorUsedError;
+  String? get photo => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
   @JsonKey(ignore: true)
@@ -317,7 +317,7 @@ abstract class $NotificationDataCopyWith<$Res> {
       _$NotificationDataCopyWithImpl<$Res, NotificationData>;
   @useResult
   $Res call(
-      {String body, String model, String model_id, String title, String photo});
+      {String body, String model, int model_id, String title, String? photo});
 }
 
 /// @nodoc
@@ -337,7 +337,7 @@ class _$NotificationDataCopyWithImpl<$Res, $Val extends NotificationData>
     Object? model = null,
     Object? model_id = null,
     Object? title = null,
-    Object? photo = null,
+    Object? photo = freezed,
   }) {
     return _then(_value.copyWith(
       body: null == body
@@ -351,15 +351,15 @@ class _$NotificationDataCopyWithImpl<$Res, $Val extends NotificationData>
       model_id: null == model_id
           ? _value.model_id
           : model_id // ignore: cast_nullable_to_non_nullable
-              as String,
+              as int,
       title: null == title
           ? _value.title
           : title // ignore: cast_nullable_to_non_nullable
               as String,
-      photo: null == photo
+      photo: freezed == photo
           ? _value.photo
           : photo // ignore: cast_nullable_to_non_nullable
-              as String,
+              as String?,
     ) as $Val);
   }
 }
@@ -373,7 +373,7 @@ abstract class _$$NotificationDataImplCopyWith<$Res>
   @override
   @useResult
   $Res call(
-      {String body, String model, String model_id, String title, String photo});
+      {String body, String model, int model_id, String title, String? photo});
 }
 
 /// @nodoc
@@ -391,7 +391,7 @@ class __$$NotificationDataImplCopyWithImpl<$Res>
     Object? model = null,
     Object? model_id = null,
     Object? title = null,
-    Object? photo = null,
+    Object? photo = freezed,
   }) {
     return _then(_$NotificationDataImpl(
       body: null == body
@@ -405,15 +405,15 @@ class __$$NotificationDataImplCopyWithImpl<$Res>
       model_id: null == model_id
           ? _value.model_id
           : model_id // ignore: cast_nullable_to_non_nullable
-              as String,
+              as int,
       title: null == title
           ? _value.title
           : title // ignore: cast_nullable_to_non_nullable
               as String,
-      photo: null == photo
+      photo: freezed == photo
           ? _value.photo
           : photo // ignore: cast_nullable_to_non_nullable
-              as String,
+              as String?,
     ));
   }
 }
@@ -426,7 +426,7 @@ class _$NotificationDataImpl implements _NotificationData {
       required this.model,
       required this.model_id,
       required this.title,
-      required this.photo});
+      this.photo});
 
   factory _$NotificationDataImpl.fromJson(Map<String, dynamic> json) =>
       _$$NotificationDataImplFromJson(json);
@@ -436,11 +436,11 @@ class _$NotificationDataImpl implements _NotificationData {
   @override
   final String model;
   @override
-  final String model_id;
+  final int model_id;
   @override
   final String title;
   @override
-  final String photo;
+  final String? photo;
 
   @override
   String toString() {
@@ -484,9 +484,9 @@ abstract class _NotificationData implements NotificationData {
   const factory _NotificationData(
       {required final String body,
       required final String model,
-      required final String model_id,
+      required final int model_id,
       required final String title,
-      required final String photo}) = _$NotificationDataImpl;
+      final String? photo}) = _$NotificationDataImpl;
 
   factory _NotificationData.fromJson(Map<String, dynamic> json) =
       _$NotificationDataImpl.fromJson;
@@ -496,11 +496,11 @@ abstract class _NotificationData implements NotificationData {
   @override
   String get model;
   @override
-  String get model_id;
+  int get model_id;
   @override
   String get title;
   @override
-  String get photo;
+  String? get photo;
   @override
   @JsonKey(ignore: true)
   _$$NotificationDataImplCopyWith<_$NotificationDataImpl> get copyWith =>

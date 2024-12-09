@@ -275,6 +275,11 @@ class CalendarScreen extends StatelessWidget {
     );
   }
 
+  String formatJapaneseDate(DateTime date) {
+    // Format: yyyy年MM月dd日
+    return DateFormat.yMMMMd('ja_JP').format(date);
+  }
+
   void showEventDetailBottomSheet(
       CalendarScreenController calendarController,
       BuildContext context,
@@ -284,19 +289,21 @@ class CalendarScreen extends StatelessWidget {
 
     String eventDateDisplay = '';
 
-    if (isMultiDayEvent) {
-      String startFormattedDate = DateFormat('EEEE, d MMM').format(event.start);
+    if (event.start.day != event.end.day) {
+      // Multi-day event
+      String startFormattedDate = formatJapaneseDate(event.start);
       String startFormattedTime = DateFormat('HH:mm').format(event.start);
-      String endFormattedDate = DateFormat('EEEE, d MMM').format(event.end);
+      String endFormattedDate = formatJapaneseDate(event.end);
       String endFormattedTime = DateFormat('HH:mm').format(event.end);
 
-      eventDateDisplay = '$startFormattedDate at $startFormattedTime - $endFormattedDate at $endFormattedTime';
+      eventDateDisplay = '$startFormattedDate $startFormattedTime - $endFormattedDate $endFormattedTime';
     } else {
-      String formattedDate = DateFormat('EEEE, d MMM').format(event.start);
+      // Single-day event
+      String formattedDate = formatJapaneseDate(event.start);
       String formattedTime = DateFormat('HH:mm').format(event.start);
       String endTime = DateFormat('HH:mm').format(event.end);
 
-      eventDateDisplay = '$formattedDate • $formattedTime - $endTime';
+      eventDateDisplay = '$formattedDate $formattedTime - $endTime';
     }
 
     List<String> categories = controller.parseCategories(event.title, event.description);
@@ -315,6 +322,9 @@ class CalendarScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.start,
+               mainAxisSize: MainAxisSize.max,
                 children: [
                   Flexible(
                     child: Text(
@@ -327,18 +337,18 @@ class CalendarScreen extends StatelessWidget {
                     ),
                   ),
                   SizedBox(width: 16.w,),
-                  Align(
-                    alignment: Alignment.topRight,
-                    child: IconButton(
-                      icon: const Icon(Icons.close, color: Colors.black),
-                      onPressed: () {
-                        Navigator.pop(context);
-                      },
-                    ),
-                  ),
+                  InkWell(onTap: (){
+                    Get.back();
+                  },child: const Icon(Icons.close, color: Colors.black))
+                  // IconButton(
+                  //   icon: const ,
+                  //   onPressed: () {
+                  //     Navigator.pop(context);
+                  //   },
+                  // ),
                 ],
               ),
-              SizedBox(height: 8.h),
+              SizedBox(height: 12.h),
               Wrap(
                 spacing: 4.w,
                 children: categories.map((category) {

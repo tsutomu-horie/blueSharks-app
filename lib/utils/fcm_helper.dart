@@ -71,17 +71,20 @@ class FcmHelper {
     );
 
     //NotificationSettings settings
-    NotificationSettings settings = await messaging.requestPermission(
-      alert: true,
-      announcement: false,
-      badge: false,
-      carPlay: false,
-      criticalAlert: false,
-      provisional: false,
-      sound: true,
-    );
+    if (Platform.isIOS) {
+      NotificationSettings settings = await messaging.requestPermission(
+        alert: true,
+        announcement: false,
+        badge: true,
+        carPlay: false,
+        criticalAlert: false,
+        provisional: false,
+        sound: true
+      );
 
-    print('User granted permission: ${settings.authorizationStatus}');
+      print('User granted permission: ${settings.authorizationStatus}');
+    }
+
   }
 
   /// generate and save fcm token if its not already generated (generate only for 1 time)

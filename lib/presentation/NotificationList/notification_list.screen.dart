@@ -39,7 +39,7 @@ class NotificationListScreen extends GetView<NotificationListController> {
         ),
       ),
       body: Obx(() {
-        if (controller.notificationList.length > 0) {
+        if (controller.notificationList.isNotEmpty) {
           return ListView.builder(
               itemCount: controller.notificationList.length,
               itemBuilder: (BuildContext context, int index) =>

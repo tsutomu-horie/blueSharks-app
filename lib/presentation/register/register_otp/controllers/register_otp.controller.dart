@@ -76,6 +76,7 @@ class RegisterOtpController extends GetxController {
 
 
         if (response != null) {
+          Get.back();
           Get.to(() => RegisterMemberFanclubScreen(email: email, otpId: otp_id.value, selectedPlayer: selectedPlayer, selectedPlayerName: selectedPlayerName, isFromHome: fromScreen == "register_home",),);
         }
 
@@ -97,6 +98,7 @@ class RegisterOtpController extends GetxController {
         });
 
         if (response != null) {
+          Get.back();
           Get.to(() => ResetPasswordScreen(otp_id.value, isFromHome: fromScreen == "forgotPasswordHome" ? true : false,));
         }
 

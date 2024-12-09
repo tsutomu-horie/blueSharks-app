@@ -69,8 +69,14 @@ class NotificationDetailScreen extends GetView<NotificationDetailController> {
             SizedBox(height: 8.h,),
             CustomTextView(notificationDetail!.data.title, style: TDSTypography.titleMedium, color: TextColor.primary,),
             SizedBox(height: 24.h,),
-            AspectRatio(aspectRatio: 2.144, child: CustomImageView(image: notificationDetail!.data.photo)),
-            SizedBox(height: 16.h,),
+
+            if (notificationDetail!.data.photo != null)
+            Column(
+              children: [
+                AspectRatio(aspectRatio: 2.144, child: CustomImageView(image: notificationDetail!.data.photo!)),
+                SizedBox(height: 16.h,),
+              ],
+            ),
             CustomTextView(notificationDetail!.data.body, style: TDSTypography.bodyTextMedium, color: TextColor.secondary,),
           ],
         ),

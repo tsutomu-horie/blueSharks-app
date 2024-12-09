@@ -12,6 +12,7 @@ import 'package:package_info_plus/package_info_plus.dart';
 
 class SplashController extends GetxController {
   RxString version = "".obs;
+  RxString isFirstOpen = "".obs;
 
   final MemberProvider memberProvider = MemberProvider();
   final RxList<Category> allCategories = <Category>[].obs;
@@ -31,11 +32,12 @@ class SplashController extends GetxController {
 
     AnalyticsService.logPageView(Routes.SPLASH);
 
-    final auth = AuthToken();
-    final token = await auth.getAccessToken();
     final isOpen = MySharedPref.getFirstOpen();
+    isFirstOpen.value = "${MySharedPref.getFirstOpen()}";
 
-    if (token != null || (isOpen != null && isOpen != "")) {
+    await Future.delayed(const Duration(seconds: 2));
+
+    if (isOpen != null && isOpen != "") {
       Get.offAll(() => const MainScreen());
     } else {
       Get.offAndToNamed('/wallpaper');
