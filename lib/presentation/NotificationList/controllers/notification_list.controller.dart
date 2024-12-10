@@ -19,8 +19,6 @@ class NotificationListController extends GetxController {
 
   }
 
-
-
   void getNotification() async {
     try {
       final response = await apiProvider.getNotificationList();

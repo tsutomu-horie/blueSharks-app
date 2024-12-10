@@ -1,3 +1,4 @@
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:get/get.dart';
 import 'package:koto_blue_sharks/app/data/api/auth/AuthToken.dart';
 import 'package:koto_blue_sharks/app/data/models/info/post.dart';
@@ -7,19 +8,47 @@ import 'package:koto_blue_sharks/utils/Constant.dart';
 import 'package:koto_blue_sharks/utils/my_shared_pref.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../../app/data/api/auth/auth_provider.dart';
+
 class MainController extends GetxController {
   var selectedIndex = 0.obs;
   var selectedTopicId = Rx<int?>(null); // Track the selected topic ID
   var selectedPost = Rx<Post?>(null); // Track the selected topic ID
+  final AuthProvider apiProvider = AuthProvider();
 
-  void navigateToNotification() async {
+  var unreadMessage = 0.obs;
+
+  @override
+  void onInit() {
+    super.onInit();
+
+    print("saklfajs djsalk $unreadMessage");
+
+    getUnreadNotificationCount();
+    setupFirebaseMessaging();
+  }
+
+  void setupFirebaseMessaging() {
+    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+      getUnreadNotificationCount();
+    });
+  }
+
+  void getUnreadNotificationCount() async {
+
     final auth = AuthToken();
     final token = await auth.getAccessToken();
 
-    var wallpaper = MySharedPref.getWallpaper();
-    var wallpaperName = MySharedPref.getWallpaperName();
+    if (token != null) {
+      unreadMessage.value = await apiProvider.getUnreadNotification();
+    }
+  }
 
-    Get.to(() => const NotificationListScreen());
+  void navigateToNotification() async {
+    await Get.to(() => const NotificationListScreen())?.then((_) {
+      // Refresh the unread notification count after returning
+      getUnreadNotificationCount();
+    });
   }
 
   void launchFanClub(){

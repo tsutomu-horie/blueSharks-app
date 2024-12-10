@@ -22,6 +22,8 @@ class NotificationDetailScreen extends GetView<NotificationDetailController> {
   Widget build(BuildContext context) {
     final NotificationDetailController notificationController = Get.put(NotificationDetailController());
 
+    notificationController.readNotification("${notificationDetail?.id}");
+
     return Scaffold(
       appBar: AppBar(
         title: CustomTextView(

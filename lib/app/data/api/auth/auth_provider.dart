@@ -279,4 +279,62 @@ class AuthProvider extends GetConnect {
         .toList();
   }
 
+  Future<int> getUnreadNotification() async {
+    httpClient.baseUrl = Constants.baseUrlAuthApi;
+
+    final url = Uri.parse('notifications/unread');
+
+    final auth = AuthToken();
+    final token = await auth.getAccessToken();
+    print("load ${httpClient.baseUrl}${url.toString()} with $token");
+
+    final headers = {
+      'Authorization': 'Bearer $token',
+      'Content-Type': 'application/json', // Optional, depending on the API
+    };
+
+    final response = await get(
+        url.toString(), headers: headers // Send the body in the request
+    );
+
+    print("Login notifications , ${response.body}");
+
+    if (response.hasError) {
+      throw Exception('Failed to send fcm token: ${response.statusText}');
+    }
+
+    print("Login successful, received data: ${response.body}");
+
+    return (response.body['data']['unread']);
+  }
+
+  Future<Response> readNotification(String notificationId) async {
+    httpClient.baseUrl = Constants.baseUrlAuthApi;
+
+    final url = Uri.parse('notifications/$notificationId');
+
+    final auth = AuthToken();
+    final token = await auth.getAccessToken();
+    print("load ${httpClient.baseUrl}${url.toString()} with $token");
+
+    final headers = {
+      'Authorization': 'Bearer $token',
+      'Content-Type': 'application/json', // Optional, depending on the API
+    };
+
+    final response = await patch(
+        url.toString(), null, headers: headers // Send the body in the request
+    );
+
+    print("read notifications , ${response.body}");
+
+    if (response.hasError) {
+      throw Exception('Failed to send fcm token: ${response.statusText}');
+    }
+
+    print("Login successful, received data: ${response.body}");
+
+    return response;
+  }
+
 }
