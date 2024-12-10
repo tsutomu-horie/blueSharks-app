@@ -28,8 +28,8 @@ class InfoScreen extends GetView<InfoController> {
       'Topics',
       'Game Info',
       'Player',
-      'Team',
       'Gallery',
+      'Team',
       'Partner',
       "",
       ""
@@ -58,7 +58,7 @@ class InfoScreen extends GetView<InfoController> {
                   onTap: () => {
                     if (index == 5) {
                       controller.launchPartner()
-                    } else if (index == 3) {
+                    } else if (index == 4) {
                       controller.launchTeam()
                     } else
                       {
@@ -93,7 +93,7 @@ class InfoScreen extends GetView<InfoController> {
                                   .border, // Selected/Unselected Color
                             ),
                           ),
-                          if (index == 5 || index == 3)
+                          if (index == 5 || index == 4)
                             Padding(
                               padding: EdgeInsets.symmetric(horizontal: 8.w),
                               child: SvgPicture.asset("assets/vectors/ic_external_link.svg", width: 16.w, height: 16.h,),
@@ -119,8 +119,8 @@ class InfoScreen extends GetView<InfoController> {
           ),
           const GameInfoScreen(),
           const MemberScreen(null),
+          const GalleryScreen(),
           const WebviewScreen(WebviewType.team),
-         const GalleryScreen(),
           const WebviewScreen(WebviewType.partner),
         ],
       ),

@@ -3,7 +3,12 @@ import 'package:intl/intl.dart';
 import 'package:koto_blue_sharks/app/services/AnalyticsService.dart';
 import 'package:koto_blue_sharks/infrastructure/navigation/routes.dart';
 
+import '../../../app/data/api/auth/AuthToken.dart';
+import '../../../app/data/api/auth/auth_provider.dart';
+
 class NotificationDetailController extends GetxController {
+
+  final AuthProvider apiProvider = AuthProvider();
 
   String formatJapaneseDate(String dateString) {
     DateTime parsedDate = DateTime.parse(dateString);
@@ -16,7 +21,15 @@ class NotificationDetailController extends GetxController {
   void onInit() {
     super.onInit();
     AnalyticsService.logPageView(Routes.NOTIFICATION_DETAIL);
+  }
 
+  void readNotification(String id) async {
+    final auth = AuthToken();
+    final token = await auth.getAccessToken();
+
+    if (token != null) {
+      apiProvider.readNotification(id);
+    }
   }
 
 

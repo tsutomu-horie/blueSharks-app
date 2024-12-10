@@ -2,7 +2,7 @@ class Constants {
   static const baseUrl = 'https://blue-sharks.donati.jp/wp-json/wp/v2/';
   // static const baseUrl = 'https://blue-sharks.donati.jp/wp-json/wp/v2/';
   static const baseUrlAuthApi = 'https://dev-blueshark.tmdsite.my.id/api/mobile/v1/';
-  static const baseUrlWeb = 'https://blue-sharks.donati.jp/';
+  static const baseUrlWeb = 'https://blue-sharks.jp/';
   static const teamName = 'シャークス';
   static const videoUrl ='https://www.youtube.com/watch?v=JJqanLQ3y0Q';
 
@@ -23,6 +23,6 @@ class Constants {
   static const shopUrl = 'https://bluesharks.base.shop/';
   static const instagramUrl = 'https://www.instagram.com/shimz.bluesharks/';
   static const xUrl = 'https://x.com/Bluesharks_2020';
-  static const partnerUrl = 'https://blue-sharks.donati.jp/partner/';
-  static const teamUrl = 'https://blue-sharks.donati.jp/team/';
+  static const partnerUrl = 'https://blue-sharks.jp/partner/';
+  static const teamUrl = 'https://blue-sharks.jp/team/';
 }

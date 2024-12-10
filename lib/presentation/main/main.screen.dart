@@ -14,6 +14,7 @@ import 'controllers/main.controller.dart';
 
 class MainScreen extends StatefulWidget {
   final int? initialTab;
+
   const MainScreen({this.initialTab, super.key});
 
   @override
@@ -36,7 +37,7 @@ class _MainScreenState extends State<MainScreen> {
     controller.selectedTopicId.value = data?.id;
     if (data?.id != null) {
       controller.selectedIndex.value =
-          1; // Set the bottom nav index to 1 (Topics tab)
+      1; // Set the bottom nav index to 1 (Topics tab)
       controller.selectedPost.value = data;
     }
   }
@@ -53,7 +54,7 @@ class _MainScreenState extends State<MainScreen> {
     final List<Widget> _pages = [
       HomeScreen((value) {
         selectTopic(value);
-      },(){
+      }, () {
         controller.selectedIndex.value =
         1;
       }), // Home page
@@ -133,19 +134,55 @@ class _MainScreenState extends State<MainScreen> {
                       child: Row(
                         mainAxisSize: MainAxisSize.max,
                         children: [
-                          toolbarButton(
-                              SvgPicture.asset(
-                                'assets/vectors/ic_notification.svg',
-                                width: 24.w,
-                                height: 24.h,
-                              ),
-                              LocaleKeys.news_title.tr, (){
-                                controller.navigateToNotification();
+                          Obx(() {
+                            final unreadMessageCount = controller.unreadMessage.value;
+                            return Stack(
+                              children: [
+                                toolbarButton(
+                                  SvgPicture.asset(
+                                    'assets/vectors/ic_notification.svg',
+                                    width: 24.w,
+                                    height: 24.h,
+                                  ),
+                                  LocaleKeys.news_title.tr, () {
+                                  controller.navigateToNotification();
+                                },
+                                ),
+                                if (unreadMessageCount > 0)
+                                  Positioned(
+                                    right: 0,
+                                    top: 0,
+                                    child: Container(
+                                      padding: EdgeInsets.all(2.w),
+                                      decoration: BoxDecoration(
+                                        color: Colors.red,
+                                        borderRadius: BorderRadius.circular(
+                                            12.w),
+                                      ),
+                                      constraints: BoxConstraints(
+                                        minWidth: 24.w,
+                                        minHeight: 24.h,
+                                      ),
+                                      child: Center(
+                                        child: Text(
+                                          unreadMessageCount > 9 ? '9+' : "$unreadMessageCount",
+                                          // Replace with dynamic count if needed
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 12.sp,
+                                          ),
+                                          textAlign: TextAlign.center,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                              ],
+                            );
                           }),
                         ],
                       ),
                     ),
-      
+
                     Row(
                       children: [
                         toolbarButton(
@@ -154,7 +191,7 @@ class _MainScreenState extends State<MainScreen> {
                               width: 24.w,
                               height: 24.h,
                             ),
-                            LocaleKeys.fan_club.tr, (){
+                            LocaleKeys.fan_club.tr, () {
                           // Get.to(() => const FanclubScreen());
                           controller.launchFanClub();
                         }),
@@ -167,7 +204,7 @@ class _MainScreenState extends State<MainScreen> {
                               width: 24.w,
                               height: 24.h,
                             ),
-                            LocaleKeys.ticket.tr, (){
+                            LocaleKeys.ticket.tr, () {
                           controller.launchTicket();
                         }),
                         SizedBox(
@@ -179,8 +216,8 @@ class _MainScreenState extends State<MainScreen> {
                               width: 24.w,
                               height: 24.h,
                             ),
-                            LocaleKeys.goods.tr, (){
-                              controller.launchGood();
+                            LocaleKeys.goods.tr, () {
+                          controller.launchGood();
                         }),
                       ],
                     )
@@ -192,8 +229,8 @@ class _MainScreenState extends State<MainScreen> {
           body: controller.selectedTopicId.value == null
               ? _pages[controller.selectedIndex.value]
               : DetailInfoScreen(() {
-                  selectTopic(null);
-                }, controller.selectedPost.value),
+            selectTopic(null);
+          }, controller.selectedPost.value),
           // Display the selected page
           bottomNavigationBar: Obx(() {
             return BottomNavigationBar(
@@ -202,35 +239,40 @@ class _MainScreenState extends State<MainScreen> {
               items: <BottomNavigationBarItem>[
                 BottomNavigationBarItem(
                   icon: _customBottomNavItem(
-                      "assets/vectors/ic_home_${controller.selectedIndex.value == 0 ? "enabled" : "default"}.svg",
+                      "assets/vectors/ic_home_${controller.selectedIndex
+                          .value == 0 ? "enabled" : "default"}.svg",
                       LocaleKeys.home.tr,
                       0),
                   label: '',
                 ),
                 BottomNavigationBarItem(
                   icon: _customBottomNavItem(
-                      "assets/vectors/ic_info_${controller.selectedIndex.value == 1 ? "enabled" : "default"}.svg",
+                      "assets/vectors/ic_info_${controller.selectedIndex
+                          .value == 1 ? "enabled" : "default"}.svg",
                       LocaleKeys.menu_en.tr,
                       1),
                   label: '',
                 ),
                 BottomNavigationBarItem(
                   icon: _customBottomNavItem(
-                      "assets/vectors/ic_member_${controller.selectedIndex.value == 2 ? "enabled" : "default"}.svg",
+                      "assets/vectors/ic_member_${controller.selectedIndex
+                          .value == 2 ? "enabled" : "default"}.svg",
                       LocaleKeys.my_page.tr,
                       2),
                   label: '',
                 ),
                 BottomNavigationBarItem(
                   icon: _customBottomNavItem(
-                      "assets/vectors/ic_stadium_${controller.selectedIndex.value == 3 ? "enabled" : "default"}.svg",
+                      "assets/vectors/ic_stadium_${controller.selectedIndex
+                          .value == 3 ? "enabled" : "default"}.svg",
                       LocaleKeys.stadium.tr,
                       3),
                   label: '',
                 ),
                 BottomNavigationBarItem(
                   icon: _customBottomNavItem(
-                      "assets/vectors/ic_calendar_${controller.selectedIndex.value == 4 ? "enabled" : "default"}.svg",
+                      "assets/vectors/ic_calendar_${controller.selectedIndex
+                          .value == 4 ? "enabled" : "default"}.svg",
                       LocaleKeys.calendar.tr,
                       4),
                   label: '',
@@ -253,7 +295,9 @@ class _MainScreenState extends State<MainScreen> {
         minimumSize: Size(40.w, 48.h),
         padding: EdgeInsets.zero,
       ),
-      onPressed: (){onPress();},
+      onPressed: () {
+        onPress();
+      },
       //     () {
       //   if (text == LocaleKeys.fan_club.tr) {
       //     Get.to(FanclubScreen());

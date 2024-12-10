@@ -19,13 +19,6 @@ class AuthToken {
       await _storage.deleteAll();
     }
     return null;
-    // String? token = await _storage.read(key: 'accessToken');
-    //
-    // if (token != null){
-    //   return "Bearer $token";
-    // }
-    //
-    // return null;
   }
 
   Future<void> deleteToken() async {

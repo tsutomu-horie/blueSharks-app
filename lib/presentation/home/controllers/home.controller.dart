@@ -42,6 +42,7 @@ class HomeController extends GetxController {
     print("getwallpaper 1");
   }
 
+
   void setBannerData(List<CustomBanner> data) {
     bannerData = data;
     // Use update instead of .value assignment
