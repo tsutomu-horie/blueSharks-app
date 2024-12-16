@@ -99,9 +99,17 @@ class GalleryScreen extends GetView<GalleryController> {
                         unselectedTextColor: TextColor.secondary,
                         onYearSelected: (selectedYear) {
                           // Handle year selection
-                          galleryController.selectedYear.value = "$selectedYear";
-                          galleryController.getGalleryList();
-                          print("Selected Year: $selectedYear");
+                          if (selectedYear == 0) {
+                            galleryController.selectedYear.value =
+                            "";
+                            galleryController.getGalleryList();
+                            print("Selected Year: $selectedYear");
+                          } else {
+                            galleryController.selectedYear.value =
+                            "$selectedYear";
+                            galleryController.getGalleryList();
+                            print("Selected Year: $selectedYear");
+                          }
                         },
                       ),
                       Padding(

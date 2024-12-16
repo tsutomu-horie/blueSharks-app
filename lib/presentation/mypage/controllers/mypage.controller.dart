@@ -32,6 +32,7 @@ class MypageController extends FanClubConfirmationController {
     print("open mypage");
     AnalyticsService.logPageView(Routes.MYPAGE);
   }
+
   void logout() async {
     final auth = AuthToken();
     await auth.deleteToken();

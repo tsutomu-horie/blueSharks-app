@@ -29,6 +29,20 @@ class MemberController extends GetxController {
     groupKeys[identifier] = GlobalKey();
   }
 
+  final Map<String, int> positionPriority = {
+    'prop': 0,
+    'hooker': 1,
+    'lock': 2,
+    'flanker': 3,
+    'no8': 4,
+    'scrumhalf': 5,
+    'standoff': 6,
+    'center': 7,
+    'wing': 8,
+    'fullback': 9,
+    'staff': 10,
+  };
+
   void scrollToGroup(String groupIdentifier) {
     final groupKey = groupKeys[groupIdentifier];
     print("groupKey is ${groupKeys} & ${groupIdentifier}");
@@ -188,186 +202,128 @@ class MemberController extends GetxController {
   }
 
   List<CategorizedPlayerGroup> groupPlayersByCategory(Map<int, List<Member>> categoryPlayers) {
-    // Combine all players into one list
     List<Member> allPlayers = combineAllPlayersFromCategories(categoryPlayers);
 
     if (allPlayers.isEmpty) {
-      return []; // Return empty list if no players
+      return [];
     }
 
-    List<Member> propPlayers = [];
-    List<Member> hookerPlayers = [];
-    List<Member> lockPlayers = [];
-    List<Member> flankerPlayers = [];
-    List<Member> no8Players = [];
-    List<Member> scrumhalfPlayers = [];
-    List<Member> standoffPlayers = [];
-    List<Member> centerPlayers = [];
-    List<Member> wingPlayers = [];
-    List<Member> fullbackPlayers = [];
-    List<Member> staffPlayers = [];
+    // Filter players based on position type
+    List<Member> forwardPlayers = allPlayers.where((p) =>
+        ['prop', 'hooker', 'lock', 'flanker', 'no8'].contains(p.categorySlug?.toLowerCase())).toList();
 
-    // Group players based on their slug
-    for (var player in allPlayers) {
-      if (player.categorySlug == 'prop') {
-        propPlayers.add(player);
-      } else if (player.categorySlug == 'hooker') {
-        hookerPlayers.add(player);
-      } else if (player.categorySlug == 'lock') {
-        lockPlayers.add(player);
-      } else if (player.categorySlug == 'flanker') {
-        flankerPlayers.add(player);
-      } else if (player.categorySlug == 'no8') {
-        no8Players.add(player);
-      } else if (player.categorySlug == 'scrumhalf') {
-        scrumhalfPlayers.add(player);
-      } else if (player.categorySlug == 'standoff') {
-        standoffPlayers.add(player);
-      } else if (player.categorySlug == 'center') {
-        centerPlayers.add(player);
-      } else if (player.categorySlug == 'wing') {
-        wingPlayers.add(player);
-      } else if (player.categorySlug == 'fullback') {
-        fullbackPlayers.add(player);
-      } else if (player.categorySlug == 'staff') {
-        staffPlayers.add(player);
-      }
-    }
+    List<Member> backPlayers = allPlayers.where((p) =>
+        ['scrumhalf', 'standoff', 'center', 'wing', 'fullback'].contains(p.categorySlug?.toLowerCase())).toList();
+
+    List<Member> staffPlayers = allPlayers.where((p) =>
+    p.categorySlug?.toLowerCase() == 'staff').toList();
 
     if (selectedPosition.value == LocaleKeys.forward.tr) {
       return [
         CategorizedPlayerGroup(
           categoryTitle: LocaleKeys.forward.tr,
-          playerGroups: [
-            if (propPlayers.isNotEmpty)
-              MemberGroup(title:
-              // propPlayers[0].categoryName ??
-                  "Prop", players: propPlayers),
-            if (hookerPlayers.isNotEmpty)
-              MemberGroup(title:
-              // hookerPlayers[0].categoryName ??
-                  "Hooker", players: hookerPlayers),
-            if (lockPlayers.isNotEmpty)
-              MemberGroup(title:
-              // lockPlayers[0].categoryName ??
-                  "Lock", players: lockPlayers),
-            if (flankerPlayers.isNotEmpty)
-              MemberGroup(title:
-              // flankerPlayers[0].categoryName ??
-                  "Flanker", players: flankerPlayers),
-            if (no8Players.isNotEmpty)
-              MemberGroup(title:
-              // no8Players[0].categoryName ??
-                  "No. 8", players: no8Players),
-          ],
+          playerGroups: createSortedPlayerGroups(forwardPlayers),
         ),
       ];
     } else if (selectedPosition.value == LocaleKeys.back.tr) {
       return [
         CategorizedPlayerGroup(
           categoryTitle: LocaleKeys.back.tr,
-          playerGroups: [
-            if (scrumhalfPlayers.isNotEmpty)
-              MemberGroup(title:
-              // scrumhalfPlayers[0].categoryName ??
-                  "Scrumhalf", players: scrumhalfPlayers),
-            if (standoffPlayers.isNotEmpty)
-              MemberGroup(title:
-              // standoffPlayers[0].categoryName ??
-                  "Standoff", players: standoffPlayers),
-            if (centerPlayers.isNotEmpty)
-              MemberGroup(title:
-              // centerPlayers[0].categoryName ??
-                  "Center", players: centerPlayers),
-            if (wingPlayers.isNotEmpty)
-              MemberGroup(title:
-              // wingPlayers[0].categoryName ??
-                  "Wing", players: wingPlayers),
-            if (fullbackPlayers.isNotEmpty)
-              MemberGroup(title:
-              // fullbackPlayers[0].categoryName ??
-                  "Fullback", players: fullbackPlayers),
-          ],
+          playerGroups: createSortedPlayerGroups(backPlayers),
         ),
       ];
     } else if (selectedPosition.value == LocaleKeys.staff.tr) {
       return [
         CategorizedPlayerGroup(
           categoryTitle: LocaleKeys.staff.tr,
-          playerGroups: [
-            if (staffPlayers.isNotEmpty)
-              MemberGroup(title:
-              // staffPlayers[0].categoryName ??
-                  "Staff", players: staffPlayers),
-          ],
+          playerGroups: createSortedPlayerGroups(staffPlayers),
         ),
       ];
     }
 
-    return [
-      if (propPlayers.isNotEmpty || hookerPlayers.isNotEmpty || lockPlayers.isNotEmpty ||
-          flankerPlayers.isNotEmpty || no8Players.isNotEmpty)
-        CategorizedPlayerGroup(
-          categoryTitle: LocaleKeys.forward.tr,
-          playerGroups: [
-            if (propPlayers.isNotEmpty)
-              MemberGroup(title:
-              // propPlayers[0].categoryName ??
-                  "Prop", players: propPlayers),
-            if (hookerPlayers.isNotEmpty)
-              MemberGroup(title:
-              // hookerPlayers[0].categoryName ??
-                  "Hooker", players: hookerPlayers),
-            if (lockPlayers.isNotEmpty)
-              MemberGroup(title:
-              // lockPlayers[0].categoryName ??
-                  "Lock", players: lockPlayers),
-            if (flankerPlayers.isNotEmpty)
-              MemberGroup(title:
-              // flankerPlayers[0].categoryName ??
-                  "Flanker", players: flankerPlayers),
-            if (no8Players.isNotEmpty)
-              MemberGroup(title:
-              // no8Players[0].categoryName ??
-                  "No. 8", players: no8Players),
-          ],
-        ),
-      if (scrumhalfPlayers.isNotEmpty || standoffPlayers.isNotEmpty || centerPlayers.isNotEmpty ||
-          wingPlayers.isNotEmpty || fullbackPlayers.isNotEmpty)
-        CategorizedPlayerGroup(
-          categoryTitle: LocaleKeys.back.tr,
-          playerGroups: [
-            if (scrumhalfPlayers.isNotEmpty)
-              MemberGroup(title:
-              // scrumhalfPlayers[0].categoryName ??
-                  "Scrumhalf", players: scrumhalfPlayers),
-            if (standoffPlayers.isNotEmpty)
-              MemberGroup(title:
-              // standoffPlayers[0].categoryName ??
-                  "Standoff", players: standoffPlayers),
-            if (centerPlayers.isNotEmpty)
-              MemberGroup(title:
-              // centerPlayers[0].categoryName ??
-                  "Center", players: centerPlayers),
-            if (wingPlayers.isNotEmpty)
-              MemberGroup(title:
-              // wingPlayers[0].categoryName ??
-                  "Wing", players: wingPlayers),
-            if (fullbackPlayers.isNotEmpty)
-              MemberGroup(title:
-              // fullbackPlayers[0].categoryName ??
-                  "Fullback", players: fullbackPlayers),
-          ],
-        ),
-      if (staffPlayers.isNotEmpty)
-        CategorizedPlayerGroup(
-          categoryTitle: LocaleKeys.staff.tr,
-          playerGroups: [
-            MemberGroup(title:
-            // staffPlayers[0].categoryName ??
-                "Staff", players: staffPlayers),
-          ],
-        ),
-    ];
+    // Show all positions
+    List<CategorizedPlayerGroup> result = [];
+
+    if (forwardPlayers.isNotEmpty) {
+      result.add(CategorizedPlayerGroup(
+        categoryTitle: LocaleKeys.forward.tr,
+        playerGroups: createSortedPlayerGroups(forwardPlayers),
+      ));
+    }
+
+    if (backPlayers.isNotEmpty) {
+      result.add(CategorizedPlayerGroup(
+        categoryTitle: LocaleKeys.back.tr,
+        playerGroups: createSortedPlayerGroups(backPlayers),
+      ));
+    }
+
+    if (staffPlayers.isNotEmpty) {
+      result.add(CategorizedPlayerGroup(
+        categoryTitle: LocaleKeys.staff.tr,
+        playerGroups: createSortedPlayerGroups(staffPlayers),
+      ));
+    }
+
+    return result;
+  }
+
+  List<MemberGroup> createSortedPlayerGroups(List<Member> players) {
+    Map<String, List<Member>> groupedPlayers = {};
+
+    // Group players by category slug
+    for (var player in players) {
+      String slug = player.categorySlug ?? "";
+      if (!groupedPlayers.containsKey(slug)) {
+        groupedPlayers[slug] = [];
+      }
+      groupedPlayers[slug]!.add(player);
+    }
+
+    // Create MemberGroup list and sort it
+    List<MemberGroup> groups = [];
+
+    if (groupedPlayers['prop']?.isNotEmpty ?? false) {
+      groups.add(MemberGroup(title: "Prop", players: groupedPlayers['prop']!));
+    }
+    if (groupedPlayers['hooker']?.isNotEmpty ?? false) {
+      groups.add(MemberGroup(title: "Hooker", players: groupedPlayers['hooker']!));
+    }
+    if (groupedPlayers['lock']?.isNotEmpty ?? false) {
+      groups.add(MemberGroup(title: "Lock", players: groupedPlayers['lock']!));
+    }
+    if (groupedPlayers['flanker']?.isNotEmpty ?? false) {
+      groups.add(MemberGroup(title: "Flanker", players: groupedPlayers['flanker']!));
+    }
+    if (groupedPlayers['no8']?.isNotEmpty ?? false) {
+      groups.add(MemberGroup(title: "No. 8", players: groupedPlayers['no8']!));
+    }
+    if (groupedPlayers['scrumhalf']?.isNotEmpty ?? false) {
+      groups.add(MemberGroup(title: "Scrumhalf", players: groupedPlayers['scrumhalf']!));
+    }
+    if (groupedPlayers['standoff']?.isNotEmpty ?? false) {
+      groups.add(MemberGroup(title: "Standoff", players: groupedPlayers['standoff']!));
+    }
+    if (groupedPlayers['center']?.isNotEmpty ?? false) {
+      groups.add(MemberGroup(title: "Center", players: groupedPlayers['center']!));
+    }
+    if (groupedPlayers['wing']?.isNotEmpty ?? false) {
+      groups.add(MemberGroup(title: "Wing", players: groupedPlayers['wing']!));
+    }
+    if (groupedPlayers['fullback']?.isNotEmpty ?? false) {
+      groups.add(MemberGroup(title: "Fullback", players: groupedPlayers['fullback']!));
+    }
+    if (groupedPlayers['staff']?.isNotEmpty ?? false) {
+      groups.add(MemberGroup(title: "Staff", players: groupedPlayers['staff']!));
+    }
+
+    // Sort groups based on position priority
+    groups.sort((a, b) {
+      String slugA = a.players.first.categorySlug?.toLowerCase() ?? "";
+      String slugB = b.players.first.categorySlug?.toLowerCase() ?? "";
+      return (positionPriority[slugA] ?? 999).compareTo(positionPriority[slugB] ?? 999);
+    });
+
+    return groups;
   }
 }

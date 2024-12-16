@@ -27,14 +27,13 @@ class FcmHelper {
           options: DefaultFirebaseOptions.currentPlatform,
         );
       // } else {
-        AwesomeNotifications().initialize(null, [
+        AwesomeNotifications().initialize("resource://drawable/notif", [
           NotificationChannel(
               channelGroupKey: 'general_channel_group',
               channelKey: 'general_channel',
               channelName: 'General Notifications',
               channelDescription: 'Notification channel for general notifications',
-              defaultColor: BrandColor.main,
-              ledColor: Colors.white)
+          )
         ],
         );
       // }

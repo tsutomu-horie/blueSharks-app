@@ -25,6 +25,7 @@ class NotificationDetailScreen extends GetView<NotificationDetailController> {
     notificationController.readNotification("${notificationDetail?.id}");
 
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
         title: CustomTextView(
          "Detail News",
@@ -75,7 +76,9 @@ class NotificationDetailScreen extends GetView<NotificationDetailController> {
             if (notificationDetail!.data.photo != null)
             Column(
               children: [
-                AspectRatio(aspectRatio: 2.144, child: CustomImageView(image: notificationDetail!.data.photo!)),
+                SizedBox(
+                  width: double.infinity,
+                    child: CustomImageView(image: notificationDetail!.data.photo!, radius: 0,)),
                 SizedBox(height: 16.h,),
               ],
             ),

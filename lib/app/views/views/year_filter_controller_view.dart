@@ -7,9 +7,13 @@ class YearFilterController extends GetxController {
   // Observable to keep track of the selected year
   final selectedYear = 0.obs;
 
+  // Add a method to check if "ALL" is selected
+  bool get isAllSelected => selectedYear.value == 0;
+
   void reset() {
     selectedYear.value = 0;
   }
+
   // Update the selected year
   void selectYear(int year) {
     print("selectYear = $year");
@@ -37,51 +41,82 @@ class YearFilter extends StatelessWidget {
     this.unselectedColor = Colors.grey,
     this.selectedTextColor = Colors.white,
     this.unselectedTextColor = Colors.black,
-  })
-  {
-    // yearController.selectedYear.value = initialSelectedYear;
-  }
+  });
 
   @override
   Widget build(BuildContext context) {
-
     return SizedBox(
       height: 32.h,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
-        itemCount: years.length,
+        // Add 1 to itemCount for "ALL" option
+        itemCount: years.length + 1,
         itemBuilder: (context, index) {
-          final year = years[index];
+          // Handle "ALL" option at index 0
+          if (index == 0) {
+            return Padding(
+              padding: EdgeInsets.symmetric(horizontal: 8.h),
+              child: GestureDetector(
+                onTap: () {
+                  yearController.reset(); // Reset to 0 for "ALL"
+                  if (onYearSelected != null) {
+                    onYearSelected!(0);
+                  }
+                },
+                child: Obx(() => Container(
+                  padding: EdgeInsets.symmetric(
+                      horizontal: 16.w,
+                      vertical: 6.h
+                  ),
+                  decoration: BoxDecoration(
+                    color: yearController.isAllSelected
+                        ? selectedColor
+                        : unselectedColor,
+                    borderRadius: BorderRadius.circular(30),
+                  ),
+                  child: CustomTextView(
+                    "ALL",
+                    type: TDSFontType.labelLarge,
+                    color: yearController.isAllSelected
+                        ? selectedTextColor
+                        : unselectedTextColor,
+                  ),
+                )),
+              ),
+            );
+          }
+
+          // Handle year options
+          final year = years[index - 1]; // Adjust index for years array
           return Padding(
             padding: EdgeInsets.symmetric(horizontal: 8.h),
             child: GestureDetector(
               onTap: () {
-                print("selec $year");
+                print("select $year");
                 yearController.selectYear(year);
                 if (onYearSelected != null) {
                   onYearSelected!(year);
                 }
               },
-              child: Obx(() =>
-                  Container( // Wrap Container with Obx
-                    padding: EdgeInsets.symmetric(
-                        horizontal: 16.w, vertical: 6.h),
-                    decoration: BoxDecoration(
-                      color: yearController.selectedYear.value == year &&
-                          yearController.selectedYear.value != 0
-                          ? selectedColor
-                          : unselectedColor,
-                      borderRadius: BorderRadius.circular(30),
-                    ),
-                    child: CustomTextView(
-                      "$year年",
-                      type: TDSFontType.labelLarge,
-                      color: yearController.selectedYear.value == year &&
-                          yearController.selectedYear.value != 0
-                          ? selectedTextColor
-                          : unselectedTextColor,
-                    ),
-                  )),
+              child: Obx(() => Container(
+                padding: EdgeInsets.symmetric(
+                    horizontal: 16.w,
+                    vertical: 6.h
+                ),
+                decoration: BoxDecoration(
+                  color: yearController.selectedYear.value == year
+                      ? selectedColor
+                      : unselectedColor,
+                  borderRadius: BorderRadius.circular(30),
+                ),
+                child: CustomTextView(
+                  "$year年",
+                  type: TDSFontType.labelLarge,
+                  color: yearController.selectedYear.value == year
+                      ? selectedTextColor
+                      : unselectedTextColor,
+                ),
+              )),
             ),
           );
         },
