@@ -186,6 +186,31 @@ class AuthProvider extends GetConnect {
     return UserData.fromJson(response.body["data"]);
   }
 
+  Future<UserData> refreshProfile(String token, Function onError) async {
+    final url = Uri.parse('profile/refresh');
+    print("load ${httpClient.baseUrl}${url.toString()}");
+
+    final headers = {
+      'Authorization': 'Bearer $token',
+      'Content-Type': 'application/json', // Optional, depending on the API
+    };
+
+    final response = await get(
+        url.toString(), headers: headers // Send the body in the request
+    );
+
+    print("Login successful2 , ${response.body}");
+
+    if (response.hasError) {
+      onError();
+      throw Exception('Failed to login: ${response.statusText}');
+    }
+
+    print("Login successful, received data: ${response.body}");
+
+    return UserData.fromJson(response.body["data"]);
+  }
+
   Future<Response> deleteProfile(String token, Function onError) async {
     final url = Uri.parse('profile');
     print("load ${httpClient.baseUrl}${url.toString()}");

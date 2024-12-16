@@ -9,9 +9,11 @@ import 'package:koto_blue_sharks/app/views/views/custom_image_view.dart';
 import 'package:koto_blue_sharks/app/views/views/custom_text_view.dart';
 import 'package:koto_blue_sharks/generated/locales.g.dart';
 import 'package:koto_blue_sharks/presentation/member/controllers/member.controller.dart';
+import 'package:koto_blue_sharks/presentation/mypage/mypage.screen.dart';
 import 'package:koto_blue_sharks/presentation/register/register_email/register_email.screen.dart';
 import 'package:koto_blue_sharks/utils/app_color.dart';
 import 'package:koto_blue_sharks/utils/match+extensions.dart';
+import 'package:shimmer/shimmer.dart';
 
 class MemberListView extends StatelessWidget {
   final MemberController memberController;
@@ -63,11 +65,15 @@ class MemberListView extends StatelessWidget {
                   child: SizedBox(
                     width: double.infinity,
                     child: Obx(() {
-                      return CustomTextView(
-                        memberController.selectedPosition.value,
-                        type: TDSFontType.bodyTextMedium,
-                        color: TextColor.primary,
-                      );
+                      if (!memberController.isLoading.value) {
+                        return CustomTextView(
+                          memberController.selectedPosition.value,
+                          type: TDSFontType.bodyTextMedium,
+                          color: TextColor.primary,
+                        );
+                      } else {
+                        return shimmerMemberList();
+                      }
                     }),
                   ),
                 ),
@@ -101,86 +107,128 @@ class MemberListView extends StatelessWidget {
                 .toList();
           }
 
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: groupedPlayers.map((group) {
-              return Column(
-                key: memberController.groupKeys[group.categoryTitle],
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    width: double.infinity,
-                    color: BrandColor.background,
-                    padding: EdgeInsets.symmetric(vertical: 12.h, horizontal: 16.w),
-                    child: CustomTextView(
-                      group.categoryTitle,
-                      style: TextStyle(
-                        fontSize: 18.sp,
-                        fontWeight: FontWeight.w600,
-                        color: TextColor.inverse,
+          if (!memberController.isLoading.value) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: groupedPlayers.map((group) {
+                return Column(
+                  key: memberController.groupKeys[group.categoryTitle],
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: double.infinity,
+                      color: BrandColor.background,
+                      padding: EdgeInsets.symmetric(
+                          vertical: 12.h, horizontal: 16.w),
+                      child: CustomTextView(
+                        group.categoryTitle,
+                        style: TextStyle(
+                          fontSize: 18.sp,
+                          fontWeight: FontWeight.w600,
+                          color: TextColor.inverse,
+                        ),
+                        align: TextAlign.center,
                       ),
-                      align: TextAlign.center,
                     ),
-                  ),
-                  ListView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: group.playerGroups.length,
-                    itemBuilder: (context, index) {
-                      final MemberGroup playerGroup = group.playerGroups[index];
-                      return Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Container(
-                            width: double.infinity,
-                            color: BrandColor.main,
-                            padding: EdgeInsets.symmetric(
-                                vertical: 12.h, horizontal: 16.w),
-                            child: Text(
-                              playerGroup.title,
-                              style: TextStyle(
-                                fontSize: 16.sp,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
+                    ListView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: group.playerGroups.length,
+                      itemBuilder: (context, index) {
+                        final MemberGroup playerGroup = group
+                            .playerGroups[index];
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Container(
+                              width: double.infinity,
+                              color: BrandColor.main,
+                              padding: EdgeInsets.symmetric(
+                                  vertical: 12.h, horizontal: 16.w),
+                              child: Text(
+                                playerGroup.title,
+                                style: TextStyle(
+                                  fontSize: 16.sp,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
                               ),
                             ),
-                          ),
-                          Padding(
-                            padding: EdgeInsets.symmetric(
-                                horizontal: 12.w, vertical: 16.h),
-                            child: GridView.builder(
-                              shrinkWrap: true,
-                              physics: const NeverScrollableScrollPhysics(),
-                              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                                crossAxisCount: 3,
-                                childAspectRatio: 0.75,
-                                mainAxisSpacing: 12.w,
-                                crossAxisSpacing: 12.w,
+                            Padding(
+                              padding: EdgeInsets.symmetric(
+                                  horizontal: 12.w, vertical: 16.h),
+                              child: GridView.builder(
+                                shrinkWrap: true,
+                                physics: const NeverScrollableScrollPhysics(),
+                                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: 3,
+                                  childAspectRatio: 0.75,
+                                  mainAxisSpacing: 12.w,
+                                  crossAxisSpacing: 12.w,
+                                ),
+                                itemCount: playerGroup.players.length,
+                                itemBuilder: (context, playerIndex) {
+                                  final player = playerGroup
+                                      .players[playerIndex];
+                                  return PlayerCardView(
+                                    player,
+                                    playerGroup.title,
+                                    onSet,
+                                    memberController.mediaProvider,
+                                    false,
+                                        (postImage, position) {
+                                      memberController.navigateToMemberDetail(
+                                          player);
+                                    },
+                                  );
+                                },
                               ),
-                              itemCount: playerGroup.players.length,
-                              itemBuilder: (context, playerIndex) {
-                                final player = playerGroup.players[playerIndex];
-                                return PlayerCardView(
-                                  player,
-                                  playerGroup.title,
-                                  onSet,
-                                  memberController.mediaProvider,
-                                  false,
-                                      (postImage, position) {
-                                    memberController.navigateToMemberDetail(player);
-                                  },
-                                );
-                              },
                             ),
-                          ),
-                        ],
-                      );
-                    },
-                  ),
-                ],
-              );
-            }).toList(),
-          );
+                          ],
+                        );
+                      },
+                    ),
+                  ],
+                );
+              }).toList(),
+            );
+          } else {
+            return Column(
+              children: [
+                SizedBox(height: 70.h, child: shimmer()),
+                SizedBox(height: 8.h,),
+                Row(children: [
+                  SizedBox(width: 8.w,),
+                  Flexible(child: SizedBox(height: 120.h, child: shimmer())),
+                  SizedBox(width: 8.w,),
+                  Flexible(child: SizedBox(height: 120.h, child: shimmer())),
+                  SizedBox(width: 8.w,),
+                  Flexible(child: SizedBox(height: 120.h, child: shimmer())),
+                  SizedBox(width: 8.w,),
+                ],),
+                SizedBox(height: 8.h,),
+                Row(children: [
+                  SizedBox(width: 8.w,),
+                  Flexible(child: SizedBox(height: 120.h, child: shimmer())),
+                  SizedBox(width: 8.w,),
+                  Flexible(child: SizedBox(height: 120.h, child: shimmer())),
+                  SizedBox(width: 8.w,),
+                  Flexible(child: SizedBox(height: 120.h, child: shimmer())),
+                  SizedBox(width: 8.w,),
+                ],),
+                SizedBox(height: 8.h,),
+                Row(children: [
+                  SizedBox(width: 8.w,),
+                  Flexible(child: SizedBox(height: 120.h, child: shimmer())),
+                  SizedBox(width: 8.w,),
+                  Flexible(child: SizedBox(height: 120.h, child: shimmer())),
+                  SizedBox(width: 8.w,),
+                  Flexible(child: SizedBox(height: 120.h, child: shimmer())),
+                  SizedBox(width: 8.w,),
+                ],),
+              ],
+            );
+          }
         }),
       ],
     );
@@ -256,4 +304,19 @@ class MemberListView extends StatelessWidget {
       },
     );
   }
+}
+
+Widget shimmerMemberList() {
+  return Shimmer.fromColors(
+    baseColor: BorderColor.disabled,
+    highlightColor: BorderColor.subtle,
+    child: Container(
+      width: double.infinity,
+      height: 20.h,
+      decoration: BoxDecoration(
+        color: BorderColor.disabled,
+        borderRadius: BorderRadius.all(Radius.circular(4.r)),
+      ),
+    ),
+  );
 }

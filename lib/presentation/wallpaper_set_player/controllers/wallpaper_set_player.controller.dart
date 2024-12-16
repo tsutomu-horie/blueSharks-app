@@ -17,7 +17,19 @@ class WallpaperSetPlayerController extends GetxController {
   final MediaProvider mediaProvider = MediaProvider();
   final isLoading = true.obs;
   final Map<String, materialGlobal.GlobalKey> groupKeys = <String, materialGlobal.GlobalKey>{}.obs;
-
+  final Map<String, int> positionPriority = {
+    'prop': 0,
+    'hooker': 1,
+    'lock': 2,
+    'flanker': 3,
+    'number8': 4,
+    'scrumhalf': 5,
+    'standoff': 6,
+    'center': 7,
+    'wing': 8,
+    'fullback': 9,
+    'staff': 10,
+  };
   // Store both original categories and processed player groups
   List<WallpaperCategory> _originalCategories = [];
   List<CategorizedPlayerGroup> _allPlayerGroups = [];
@@ -74,14 +86,11 @@ class WallpaperSetPlayerController extends GetxController {
   }
 
   List<CategorizedPlayerGroup> processWallpaperCategories(List<WallpaperCategory> categories) {
-    print("processWallpaperCategories ${categories}");
-    const forwardRoles = ["prop", "hooker", "lock", "flanker", "no8"];
+    const forwardRoles = ["prop", "hooker", "lock", "flanker", "number8"];
     const backRoles = ["scrumhalf", "standoff", "center", "wing", "fullback"];
     const staffRoles = ["staff"];
 
-    List<MemberGroup> forwardGroups = [];
-    List<MemberGroup> backGroups = [];
-    List<MemberGroup> staffGroups = [];
+    Map<String, List<Member>> positionGroups = {};
 
     // Process each category
     for (var category in categories) {
@@ -103,17 +112,54 @@ class WallpaperSetPlayerController extends GetxController {
         );
       }).toList();
 
-      MemberGroup memberGroup = MemberGroup(title: category.name.toUpperCase(), players: members);
+      positionGroups[category.name.toLowerCase()] = members;
+    }
 
-      if (forwardRoles.contains(category.name.toLowerCase())) {
-        forwardGroups.add(memberGroup);
-        print("processWallpaperCategories 2 ${forwardGroups}");
-      } else if (backRoles.contains(category.name.toLowerCase())) {
-        backGroups.add(memberGroup);
-      } else if (staffRoles.contains(category.name.toLowerCase())) {
-        staffGroups.add(memberGroup);
+    // Create and sort forward groups
+    List<MemberGroup> forwardGroups = [];
+    for (var role in forwardRoles) {
+      if (positionGroups.containsKey(role)) {
+        forwardGroups.add(MemberGroup(
+          title: role.toUpperCase(),
+          players: positionGroups[role]!,
+        ));
       }
     }
+
+    // Create and sort back groups
+    List<MemberGroup> backGroups = [];
+    for (var role in backRoles) {
+      if (positionGroups.containsKey(role)) {
+        backGroups.add(MemberGroup(
+          title: role.toUpperCase(),
+          players: positionGroups[role]!,
+        ));
+      }
+    }
+
+    // Create staff groups
+    List<MemberGroup> staffGroups = [];
+    for (var role in staffRoles) {
+      if (positionGroups.containsKey(role)) {
+        staffGroups.add(MemberGroup(
+          title: role.toUpperCase(),
+          players: positionGroups[role]!,
+        ));
+      }
+    }
+
+    // Sort groups based on position priority
+    void sortMemberGroups(List<MemberGroup> groups) {
+      groups.sort((a, b) {
+        String slugA = a.title.toLowerCase();
+        String slugB = b.title.toLowerCase();
+        return (positionPriority[slugA] ?? 999).compareTo(positionPriority[slugB] ?? 999);
+      });
+    }
+
+    sortMemberGroups(forwardGroups);
+    sortMemberGroups(backGroups);
+    sortMemberGroups(staffGroups);
 
     return [
       if (forwardGroups.isNotEmpty)
@@ -135,8 +181,6 @@ class WallpaperSetPlayerController extends GetxController {
   }
 
   List<CategorizedPlayerGroup> filterPlayerGroups(List<CategorizedPlayerGroup> allGroups) {
-    // Filter based on selected position
-    print("selectedPos ${selectedPosition.value}");
     if (selectedPosition.value == "FW") {
       return allGroups.where((group) => group.categoryTitle == LocaleKeys.forward.tr).toList();
     } else if (selectedPosition.value == "BK") {
@@ -144,8 +188,6 @@ class WallpaperSetPlayerController extends GetxController {
     } else if (selectedPosition.value == LocaleKeys.staff.tr) {
       return allGroups.where((group) => group.categoryTitle == LocaleKeys.staff.tr).toList();
     }
-
-    // Return all groups if no specific position is selected
     return allGroups;
   }
 }

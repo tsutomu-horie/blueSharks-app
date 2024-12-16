@@ -38,6 +38,22 @@ class FanClubConfirmationController extends GetxController {
     getProfile();
   }
 
+  void refreshProfile() async {
+    final auth = AuthToken();
+    final token = await auth.getAccessToken();
+
+    print("response token = $token");
+    if (token != null) {
+      final response = await apiProvider.refreshProfile(token, () {
+        print("error get profile ");
+      });
+
+      profileData.value = response;
+      print("finish profile ${response}");
+      isLoading.value = false;
+    }
+  }
+
   void getProfile() async {
     final auth = AuthToken();
     final token = await auth.getAccessToken();

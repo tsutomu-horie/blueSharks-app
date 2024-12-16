@@ -1,5 +1,8 @@
-import Flutter
 import UIKit
+import Flutter
+import awesome_notifications
+import FirebaseCore
+import Firebase
 
 @UIApplicationMain
 @objc class AppDelegate: FlutterAppDelegate {
@@ -8,6 +11,16 @@ import UIKit
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
   ) -> Bool {
     GeneratedPluginRegistrant.register(with: self)
+
+     SwiftAwesomeNotificationsPlugin.setPluginRegistrantCallback { registry in
+                SwiftAwesomeNotificationsPlugin.register(
+                  with: registry.registrar(forPlugin: "io.flutter.plugins.awesomenotifications.AwesomeNotificationsPlugin")!)
+            }
+
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
   }
+
+   override func application(_ application: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
+        Messaging.messaging().apnsToken = deviceToken
+      }
 }

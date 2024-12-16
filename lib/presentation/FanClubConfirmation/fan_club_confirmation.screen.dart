@@ -136,23 +136,28 @@ class FanClubConfirmationScreen extends GetView<FanClubConfirmationController> {
                                             BorderRadius.circular(24.r)),
                                         padding: EdgeInsets.symmetric(
                                             horizontal: 24.w, vertical: 8.h),
-                                        child: Row(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            Icon(
-                                              IconsaxPlusLinear.tick_circle,
-                                              color: BrandColor.main,
-                                            ),
-                                            SizedBox(
-                                              width: 8.w,
-                                            ),
-                                            CustomTextView(
-                                              LocaleKeys.membership_information
-                                                  .tr,
-                                              color: BrandColor.main,
-                                              type: TDSFontType.labelMedium,
-                                            )
-                                          ],
+                                        child: InkWell(
+                                          onTap: (){
+                                            controller.refreshProfile();
+                                          },
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Icon(
+                                                IconsaxPlusLinear.tick_circle,
+                                                color: BrandColor.main,
+                                              ),
+                                              SizedBox(
+                                                width: 8.w,
+                                              ),
+                                              CustomTextView(
+                                                LocaleKeys.membership_information
+                                                    .tr,
+                                                color: BrandColor.main,
+                                                type: TDSFontType.labelMedium,
+                                              )
+                                            ],
+                                          ),
                                         ),
                                       )
                                     ],

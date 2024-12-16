@@ -84,7 +84,7 @@ class TopicItemView extends GetView {
                                     bottom: Radius.circular(12.r),
                                   ),
                                   child: AspectRatio(
-                                    aspectRatio: 2.144,
+                                    aspectRatio: 343/193,
                                     child: Stack(
                                       children: [
                                         SizedBox(

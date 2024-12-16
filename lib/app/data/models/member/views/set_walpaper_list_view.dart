@@ -31,7 +31,6 @@ class SetWalpaperListView extends GetView {
               memberController.wallpaperList;
 
           for (var group in groupedPlayers) {
-            print("loog group ${group.categoryTitle}");
             memberController.addGroupKey(group.categoryTitle);
           }
 
@@ -77,7 +76,7 @@ class SetWalpaperListView extends GetView {
                             padding: EdgeInsets.symmetric(
                                 vertical: 12.h, horizontal: 16.w),
                             child: Text(
-                              playerGroup.title,
+                              playerGroup.title.toLowerCase() == "number8" ? "No. 8" : playerGroup.title.capitalizeText(),
                               style: TextStyle(
                                 fontSize: 16.sp,
                                 fontWeight: FontWeight.bold,

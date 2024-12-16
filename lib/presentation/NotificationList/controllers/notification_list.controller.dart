@@ -54,7 +54,7 @@ class NotificationListController extends GetxController {
 
     if (difference.inDays >= 1) {
       // If the date difference is more than or equal to 1 day, return the date in 'MMM d, yyyy' format
-      return DateFormat('MMM d, yyyy').format(parsedDate);
+      return DateFormat('yyyy.MM.dd').format(parsedDate);
     } else if (difference.inHours >= 1) {
       // If the difference is more than or equal to 1 hour, return in hours
       return '${difference.inHours} hours ago';

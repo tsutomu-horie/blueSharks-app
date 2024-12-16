@@ -326,7 +326,7 @@ class StadiumScreen extends GetView<StadiumController> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: LocaleKeys
                                     .access_to_the_ground_desc.tr
-                                    .split("\n")
+                                    .split("(---)")
                                     .map((point) {
                                   return Padding(
                                     padding:
@@ -574,7 +574,7 @@ class StadiumScreen extends GetView<StadiumController> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: LocaleKeys.spectator_rules_desc.tr
-                            .split("\n")
+                            .split("(---)")
                             .map((point) {
                           return Padding(
                             padding: EdgeInsets.symmetric(vertical: 4.0.h),

@@ -43,45 +43,52 @@ class NotificationListScreen extends GetView<NotificationListController> {
           return ListView.builder(
               itemCount: controller.notificationList.length,
               itemBuilder: (BuildContext context, int index) =>
-                  InkWell(
-                    onTap: () {
-                      Get.to(() =>
-                          NotificationDetailScreen(
-                              controller.notificationList[index]));
-                    },
-                    child: Column(
-                      children: [
-                        Padding(
-                          padding: EdgeInsets.symmetric(
-                              horizontal: 16.w, vertical: 16.w),
-                          child: Row(
-                            children: [
-                              SvgPicture.asset(
-                                "assets/vectors/ic_notification_status.svg",
-                                width: 36.w, height: 36.h,),
-                              SizedBox(width: 12.w,),
-                              Flexible(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    CustomTextView(
-                                      maxLine: 2,
-                                      controller.notificationList[index].data
-                                          .title, style: TextStyle(
-                                        fontWeight: FontWeight.w600,
-                                        color: TextColor.primary),),
-                                    SizedBox(height: 4.h,),
-                                    CustomTextView(controller.formatDate(
-                                        controller.notificationList[index]
-                                            .created_at))
-                                  ],
-                                ),
-                              )
-                            ],
+                  Container(
+                    color: controller.notificationList[index].read_at != null ? Colors.white : BrandColor.surface,
+                    child: InkWell(
+                      onTap: () async {
+                        await Get.to(() => NotificationDetailScreen(controller.notificationList[index]))?.then((_) {
+                          // Refresh the unread notification count after returning
+                          controller.getNotification();
+                        });
+                        // Get.to(() =>
+                        //     NotificationDetailScreen(
+                        //         controller.notificationList[index]));
+                      },
+                      child: Column(
+                        children: [
+                          Padding(
+                            padding: EdgeInsets.symmetric(
+                                horizontal: 16.w, vertical: 16.w),
+                            child: Row(
+                              children: [
+                                SvgPicture.asset(
+                                  "assets/vectors/ic_notification_status.svg",
+                                  width: 36.w, height: 36.h,),
+                                SizedBox(width: 12.w,),
+                                Flexible(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      CustomTextView(
+                                        maxLine: 2,
+                                        controller.notificationList[index].data
+                                            .title, style: TextStyle(
+                                          fontWeight: FontWeight.w600,
+                                          color: TextColor.primary),),
+                                      SizedBox(height: 4.h,),
+                                      CustomTextView(controller.formatDate(
+                                          controller.notificationList[index]
+                                              .created_at))
+                                    ],
+                                  ),
+                                )
+                              ],
+                            ),
                           ),
-                        ),
-                        const Divider()
-                      ],
+                         Container(color: Colors.black12, height: 1.h,)
+                        ],
+                      ),
                     ),
                   ));
         } else {

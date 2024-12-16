@@ -1,3 +1,5 @@
+import 'package:awesome_notifications/awesome_notifications.dart';
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:hive/hive.dart';
 import 'package:koto_blue_sharks/app/data/api/auth/AuthToken.dart';
@@ -42,11 +44,148 @@ class SplashController extends GetxController {
     } else {
       Get.offAndToNamed('/wallpaper');
     }
+
+    // await NotificationService.initializeNotification(); // Add this line
+    // print("Shownifo");
+    // NotificationService.showSimpleNotification(
+    //   title: 'Simple Notification',
+    //   body: 'This is a simple notification',
+    // );
   }
 
   void getAppVersion() async {
     PackageInfo packageInfo = await PackageInfo.fromPlatform();
 
     version.value = packageInfo.version;
+  }
+}
+
+class NotificationService {
+  static Future<void> initializeNotification() async {
+    await AwesomeNotifications().initialize(
+      // set the icon to null if you want to use the default app icon
+      'resource://drawable/app_icon',
+      [
+        NotificationChannel(
+          channelKey: 'basic_channel',
+          channelName: 'Basic notifications',
+          channelDescription: 'Notification channel for basic tests',
+          defaultColor: Colors.blue,
+          ledColor: Colors.white,
+          importance: NotificationImportance.High,
+          channelShowBadge: true,
+        )
+      ],
+    );
+
+    // Request permission
+    await AwesomeNotifications().isNotificationAllowed().then((isAllowed) {
+      if (!isAllowed) {
+        AwesomeNotifications().requestPermissionToSendNotifications();
+      }
+    });
+  }
+
+  static Future<void> showNotification({
+    required final String title,
+    required final String body,
+    final String? summary,
+    final Map<String, String>? payload,
+    final ActionType actionType = ActionType.Default,
+    final NotificationLayout notificationLayout = NotificationLayout.Default,
+    final NotificationCategory? category,
+    final String? bigPicture,
+    final List<NotificationActionButton>? actionButtons,
+    final bool scheduled = false,
+    final int? interval,
+  }) async {
+    assert(!scheduled || (scheduled && interval != null));
+
+    print("show edsksd");
+    await AwesomeNotifications().createNotification(
+      content: NotificationContent(
+        id: 10, // -1 is random id
+        channelKey: 'basic_channel',
+        title: title,
+        body: body,
+        summary: summary,
+        payload: payload,
+        actionType: actionType,
+        notificationLayout: notificationLayout,
+        category: category,
+        bigPicture: bigPicture,
+      ),
+      actionButtons: actionButtons,
+      schedule: scheduled
+          ? NotificationInterval(
+        interval: interval,
+        repeats: false,
+      )
+          : null,
+    );
+  }
+
+  // Show simple notification
+  static Future<void> showSimpleNotification({
+    required String title,
+    required String body,
+  }) async {
+    
+    await showNotification(
+      title: title,
+      body: body,
+    );
+
+    print("send notif suksesss");
+  }
+
+  // Show notification with image
+  static Future<void> showBigPictureNotification({
+    required String title,
+    required String body,
+    required String imageUrl,
+  }) async {
+    await showNotification(
+      title: title,
+      body: body,
+      bigPicture: imageUrl,
+      notificationLayout: NotificationLayout.BigPicture,
+    );
+  }
+
+  // Show notification with buttons
+  static Future<void> showNotificationWithButtons({
+    required String title,
+    required String body,
+  }) async {
+    await showNotification(
+      title: title,
+      body: body,
+      actionButtons: [
+        NotificationActionButton(
+          key: 'ACCEPT',
+          label: 'Accept',
+        ),
+        NotificationActionButton(
+          key: 'REJECT',
+          label: 'Reject',
+          isDangerousOption: true,
+        ),
+      ],
+    );
+  }
+
+  // Show scheduled notification
+  static Future<void> showScheduledNotification({
+    required String title,
+    required String body,
+    required int seconds,
+  }) async {
+    await showNotification(
+      title: title,
+      body: body,
+      scheduled: true,
+      interval: seconds,
+    );
   }
 }
