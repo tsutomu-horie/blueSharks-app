@@ -5,9 +5,6 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 import 'package:koto_blue_sharks/app/data/models/info/post.dart';
-import 'package:koto_blue_sharks/presentation/ListTopics/list_topics.screen.dart';
-import 'package:koto_blue_sharks/presentation/gameInfo/game_info.screen.dart';
-import 'package:koto_blue_sharks/presentation/member/member.screen.dart';
 import 'package:koto_blue_sharks/presentation/screens.dart';
 import 'package:koto_blue_sharks/utils/app_color.dart';
 
@@ -120,8 +117,6 @@ class InfoScreen extends GetView<InfoController> {
           const GameInfoScreen(),
           const MemberScreen(null),
           const GalleryScreen(),
-          const WebviewScreen(WebviewType.team),
-          const WebviewScreen(WebviewType.partner),
         ],
       ),
     );

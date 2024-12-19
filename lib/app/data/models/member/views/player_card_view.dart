@@ -5,10 +5,6 @@ import 'package:get/get.dart';
 import 'package:koto_blue_sharks/app/data/api/media/media_provider.dart';
 import 'package:koto_blue_sharks/app/views/views/custom_image_view.dart';
 import 'package:koto_blue_sharks/app/views/views/custom_text_view.dart';
-import 'package:koto_blue_sharks/generated/locales.g.dart';
-import 'package:koto_blue_sharks/presentation/member/controllers/member.controller.dart';
-import 'package:koto_blue_sharks/presentation/register/register_email/register_email.screen.dart';
-import 'package:koto_blue_sharks/presentation/wallpaper_set_player/controllers/wallpaper_set_player.controller.dart';
 import 'package:koto_blue_sharks/utils/app_color.dart';
 import 'package:koto_blue_sharks/utils/match+extensions.dart';
 
@@ -93,12 +89,15 @@ class PlayerCardView extends GetView {
                           color: Colors.white,
                         ),
                       ),
-                      CustomTextView(
+                      Text(
                         player.title.rendered,
+                        maxLines: 2,
+                        softWrap: true,
                         style: TextStyle(
                           fontSize: 14.sp,
                           fontWeight: FontWeight.w700,
                           color: Colors.white,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                     ],

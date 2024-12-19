@@ -60,29 +60,29 @@ class DeleteAccountConfirmationScreen
                       color: TextColor.error,),
                   ],
                 ),
-                TextFormField(
-                  controller: deleteAccountConfirmationController
-                      .emailTextFieldController,
-                  onChanged: (value) {
-                    deleteAccountConfirmationController.emailText.value = value;
-                  },
-                  decoration: InputDecoration(
-                    errorMaxLines: 1,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8.r),
-                      // Custom border radius
-                      borderSide: BorderSide(
-                        color: BorderColor
-                            .secondary, // Border color when not focused
-                      ),
-                    ),
-                    hintStyle: TextStyle(
-                      color: TextColor.placeholder, // Custom hint color
-                    ),
-                    contentPadding: EdgeInsets.only(top: 2.h, left: 16.w),
-                    hintText: "",
-                  ),
-                ),
+                // TextFormField(
+                //   controller: deleteAccountConfirmationController
+                //       .emailTextFieldController,
+                //   onChanged: (value) {
+                //     deleteAccountConfirmationController.emailText.value = value;
+                //   },
+                //   decoration: InputDecoration(
+                //     errorMaxLines: 1,
+                //     border: OutlineInputBorder(
+                //       borderRadius: BorderRadius.circular(8.r),
+                //       // Custom border radius
+                //       borderSide: BorderSide(
+                //         color: BorderColor
+                //             .secondary, // Border color when not focused
+                //       ),
+                //     ),
+                //     hintStyle: TextStyle(
+                //       color: TextColor.placeholder, // Custom hint color
+                //     ),
+                //     contentPadding: EdgeInsets.only(top: 2.h, left: 16.w),
+                //     hintText: "",
+                //   ),
+                // ),
               ],
             ),
           ),
@@ -94,20 +94,19 @@ class DeleteAccountConfirmationScreen
             return ElevatedButton(
 
               style: ElevatedButton.styleFrom(
-                backgroundColor: deleteAccountConfirmationController.emailText
-                    .value == "削除" ? TextColor.error : BackgroundColor.disabled,
+                backgroundColor:  TextColor.error,
 
-                overlayColor: deleteAccountConfirmationController.emailText
-                    .value == "削除" ? null : Colors.transparent
+                // overlayColor: deleteAccountConfirmationController.emailText
+                //     .value == "削除" ? null : Colors.transparent
               ),
               onPressed: () {
-                if (deleteAccountConfirmationController.emailText
-                    .value == "削除" ) {
+                // if (deleteAccountConfirmationController.emailText
+                //     .value == "削除" ) {
                   showDeleteAccountBottomSheet(context,
                       deleteAccountConfirmationController.onDeleteAccount);
-                } else {
-                  null;
-                }
+                // } else {
+                //   null;
+                // }
               },
               child: CustomTextView(
                 LocaleKeys.delete_account_button.tr,
