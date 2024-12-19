@@ -30,6 +30,7 @@ class ListTopicsController extends GetxController {
 
   // Loading states for each tab
   final RxMap<int, bool> isLoading = RxMap<int, bool>({0: false, 1: false, 2: false, 3: false, 4: false});
+  final isLoadingFirstTime = false.obs;
 
   @override
   void onInit() {
@@ -55,6 +56,9 @@ class ListTopicsController extends GetxController {
     int page = pageNumbers[tabIndex]!; // Get the current page number for the tab
 
     try {
+      if (page == 0) {
+        isLoadingFirstTime.value = true;
+      }
       // Fetch data based on the tab
       List<Post> newData = await _fetchDataForTab(tabIndex, page);
 
@@ -109,16 +113,22 @@ class ListTopicsController extends GetxController {
   Future<List<Post>> _fetchDataForTab(int tabIndex, int page) async {
     switch (tabIndex) {
       case 0:
+        isLoadingFirstTime.value = false;
         return await apiProvider.getMatchInformation(page: page);
       case 1:
+        isLoadingFirstTime.value = false;
         return await apiProvider.getNotice(page: page);
       case 2:
+        isLoadingFirstTime.value = false;
         return await apiProvider.getEventInformation(page: page);
       case 3:
+        isLoadingFirstTime.value = false;
         return await apiProvider.getActivities(page: page);
       case 4:
+        isLoadingFirstTime.value = false;
         return await apiProvider.getInterview(page: page);
       default:
+        isLoadingFirstTime.value = false;
         return [];
     }
   }

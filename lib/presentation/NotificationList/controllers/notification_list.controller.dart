@@ -1,5 +1,6 @@
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
+import 'package:koto_blue_sharks/app/data/api/auth/AuthToken.dart';
 import 'package:koto_blue_sharks/app/data/api/auth/auth_provider.dart';
 import 'package:koto_blue_sharks/app/data/models/info/notification.dart';
 import 'package:koto_blue_sharks/app/services/AnalyticsService.dart';
@@ -9,17 +10,24 @@ import 'package:koto_blue_sharks/presentation/NotificationDetail/notification_de
 class NotificationListController extends GetxController {
   final AuthProvider apiProvider = AuthProvider();
   final RxList<NotificationItem> notificationList = RxList<NotificationItem>([]);
+  final isLogin = false.obs;
+  final isLoading = false.obs;
 
   @override
-  void onInit() {
+  void onInit() async {
     super.onInit();
     getNotification();
 
     AnalyticsService.logPageView(Routes.NOTIFICATION_LIST);
 
+    final auth = AuthToken();
+    final token = await auth.getAccessToken();
+
+    isLogin.value = token != null;
   }
 
   void getNotification() async {
+    isLoading.value = true;
     try {
       final response = await apiProvider.getNotificationList();
       notificationList.value = response;
@@ -41,9 +49,14 @@ class NotificationListController extends GetxController {
           }
         }
       }
+
+      isLoading.value = false;
+
     } catch (e) {
+      isLoading.value = false;
       print('Error fetching notifications: $e');
     } finally {
+      isLoading.value = false;
     }
   }
 

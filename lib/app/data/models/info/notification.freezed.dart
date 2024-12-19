@@ -20,7 +20,7 @@ NotificationItem _$NotificationItemFromJson(Map<String, dynamic> json) {
 
 /// @nodoc
 mixin _$NotificationItem {
-  String get id => throw _privateConstructorUsedError;
+  dynamic get id => throw _privateConstructorUsedError;
   int? get notifiable_id => throw _privateConstructorUsedError;
   String? get notifiable_type => throw _privateConstructorUsedError;
   String get created_at => throw _privateConstructorUsedError;
@@ -41,7 +41,7 @@ abstract class $NotificationItemCopyWith<$Res> {
       _$NotificationItemCopyWithImpl<$Res, NotificationItem>;
   @useResult
   $Res call(
-      {String id,
+      {dynamic id,
       int? notifiable_id,
       String? notifiable_type,
       String created_at,
@@ -65,7 +65,7 @@ class _$NotificationItemCopyWithImpl<$Res, $Val extends NotificationItem>
   @pragma('vm:prefer-inline')
   @override
   $Res call({
-    Object? id = null,
+    Object? id = freezed,
     Object? notifiable_id = freezed,
     Object? notifiable_type = freezed,
     Object? created_at = null,
@@ -74,10 +74,10 @@ class _$NotificationItemCopyWithImpl<$Res, $Val extends NotificationItem>
     Object? read_at = freezed,
   }) {
     return _then(_value.copyWith(
-      id: null == id
+      id: freezed == id
           ? _value.id
           : id // ignore: cast_nullable_to_non_nullable
-              as String,
+              as dynamic,
       notifiable_id: freezed == notifiable_id
           ? _value.notifiable_id
           : notifiable_id // ignore: cast_nullable_to_non_nullable
@@ -123,7 +123,7 @@ abstract class _$$NotificationImplCopyWith<$Res>
   @override
   @useResult
   $Res call(
-      {String id,
+      {dynamic id,
       int? notifiable_id,
       String? notifiable_type,
       String created_at,
@@ -146,7 +146,7 @@ class __$$NotificationImplCopyWithImpl<$Res>
   @pragma('vm:prefer-inline')
   @override
   $Res call({
-    Object? id = null,
+    Object? id = freezed,
     Object? notifiable_id = freezed,
     Object? notifiable_type = freezed,
     Object? created_at = null,
@@ -155,10 +155,10 @@ class __$$NotificationImplCopyWithImpl<$Res>
     Object? read_at = freezed,
   }) {
     return _then(_$NotificationImpl(
-      id: null == id
+      id: freezed == id
           ? _value.id
           : id // ignore: cast_nullable_to_non_nullable
-              as String,
+              as dynamic,
       notifiable_id: freezed == notifiable_id
           ? _value.notifiable_id
           : notifiable_id // ignore: cast_nullable_to_non_nullable
@@ -203,7 +203,7 @@ class _$NotificationImpl implements _Notification {
       _$$NotificationImplFromJson(json);
 
   @override
-  final String id;
+  final dynamic id;
   @override
   final int? notifiable_id;
   @override
@@ -227,7 +227,7 @@ class _$NotificationImpl implements _Notification {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
             other is _$NotificationImpl &&
-            (identical(other.id, id) || other.id == id) &&
+            const DeepCollectionEquality().equals(other.id, id) &&
             (identical(other.notifiable_id, notifiable_id) ||
                 other.notifiable_id == notifiable_id) &&
             (identical(other.notifiable_type, notifiable_type) ||
@@ -242,8 +242,15 @@ class _$NotificationImpl implements _Notification {
 
   @JsonKey(ignore: true)
   @override
-  int get hashCode => Object.hash(runtimeType, id, notifiable_id,
-      notifiable_type, created_at, updated_at, data, read_at);
+  int get hashCode => Object.hash(
+      runtimeType,
+      const DeepCollectionEquality().hash(id),
+      notifiable_id,
+      notifiable_type,
+      created_at,
+      updated_at,
+      data,
+      read_at);
 
   @JsonKey(ignore: true)
   @override
@@ -261,7 +268,7 @@ class _$NotificationImpl implements _Notification {
 
 abstract class _Notification implements NotificationItem {
   const factory _Notification(
-      {required final String id,
+      {required final dynamic id,
       final int? notifiable_id,
       final String? notifiable_type,
       required final String created_at,
@@ -273,7 +280,7 @@ abstract class _Notification implements NotificationItem {
       _$NotificationImpl.fromJson;
 
   @override
-  String get id;
+  dynamic get id;
   @override
   int? get notifiable_id;
   @override
@@ -300,7 +307,7 @@ NotificationData _$NotificationDataFromJson(Map<String, dynamic> json) {
 mixin _$NotificationData {
   String get body => throw _privateConstructorUsedError;
   String get model => throw _privateConstructorUsedError;
-  String get model_id => throw _privateConstructorUsedError;
+  dynamic get model_id => throw _privateConstructorUsedError;
   String get title => throw _privateConstructorUsedError;
   String? get photo => throw _privateConstructorUsedError;
 
@@ -319,7 +326,7 @@ abstract class $NotificationDataCopyWith<$Res> {
   $Res call(
       {String body,
       String model,
-      String model_id,
+      dynamic model_id,
       String title,
       String? photo});
 }
@@ -339,7 +346,7 @@ class _$NotificationDataCopyWithImpl<$Res, $Val extends NotificationData>
   $Res call({
     Object? body = null,
     Object? model = null,
-    Object? model_id = null,
+    Object? model_id = freezed,
     Object? title = null,
     Object? photo = freezed,
   }) {
@@ -352,10 +359,10 @@ class _$NotificationDataCopyWithImpl<$Res, $Val extends NotificationData>
           ? _value.model
           : model // ignore: cast_nullable_to_non_nullable
               as String,
-      model_id: null == model_id
+      model_id: freezed == model_id
           ? _value.model_id
           : model_id // ignore: cast_nullable_to_non_nullable
-              as String,
+              as dynamic,
       title: null == title
           ? _value.title
           : title // ignore: cast_nullable_to_non_nullable
@@ -379,7 +386,7 @@ abstract class _$$NotificationDataImplCopyWith<$Res>
   $Res call(
       {String body,
       String model,
-      String model_id,
+      dynamic model_id,
       String title,
       String? photo});
 }
@@ -397,7 +404,7 @@ class __$$NotificationDataImplCopyWithImpl<$Res>
   $Res call({
     Object? body = null,
     Object? model = null,
-    Object? model_id = null,
+    Object? model_id = freezed,
     Object? title = null,
     Object? photo = freezed,
   }) {
@@ -410,10 +417,10 @@ class __$$NotificationDataImplCopyWithImpl<$Res>
           ? _value.model
           : model // ignore: cast_nullable_to_non_nullable
               as String,
-      model_id: null == model_id
+      model_id: freezed == model_id
           ? _value.model_id
           : model_id // ignore: cast_nullable_to_non_nullable
-              as String,
+              as dynamic,
       title: null == title
           ? _value.title
           : title // ignore: cast_nullable_to_non_nullable
@@ -444,7 +451,7 @@ class _$NotificationDataImpl implements _NotificationData {
   @override
   final String model;
   @override
-  final String model_id;
+  final dynamic model_id;
   @override
   final String title;
   @override
@@ -462,16 +469,15 @@ class _$NotificationDataImpl implements _NotificationData {
             other is _$NotificationDataImpl &&
             (identical(other.body, body) || other.body == body) &&
             (identical(other.model, model) || other.model == model) &&
-            (identical(other.model_id, model_id) ||
-                other.model_id == model_id) &&
+            const DeepCollectionEquality().equals(other.model_id, model_id) &&
             (identical(other.title, title) || other.title == title) &&
             (identical(other.photo, photo) || other.photo == photo));
   }
 
   @JsonKey(ignore: true)
   @override
-  int get hashCode =>
-      Object.hash(runtimeType, body, model, model_id, title, photo);
+  int get hashCode => Object.hash(runtimeType, body, model,
+      const DeepCollectionEquality().hash(model_id), title, photo);
 
   @JsonKey(ignore: true)
   @override
@@ -492,7 +498,7 @@ abstract class _NotificationData implements NotificationData {
   const factory _NotificationData(
       {required final String body,
       required final String model,
-      required final String model_id,
+      required final dynamic model_id,
       required final String title,
       final String? photo}) = _$NotificationDataImpl;
 
@@ -504,7 +510,7 @@ abstract class _NotificationData implements NotificationData {
   @override
   String get model;
   @override
-  String get model_id;
+  dynamic get model_id;
   @override
   String get title;
   @override

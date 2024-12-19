@@ -129,7 +129,7 @@ class ListTopicsScreen  extends StatelessWidget {
                           shimmer(),
                           shimmer(),
                           shimmer(),
-                        ],
+                        ]
                       );
                     } else {
                       return Column(
@@ -145,10 +145,7 @@ class ListTopicsScreen  extends StatelessWidget {
                                 future: controller.getNewsImage(
                                     "${data[itemIndex].id}"),
                                 builder: (context, snapshot) {
-                                  if (snapshot.connectionState ==
-                                      ConnectionState.waiting) {
-                                    return shimmer();
-                                  } else if (snapshot.hasError) {
+                                   if (snapshot.hasError) {
                                     return TopicItemView(
                                           () {
                                         print("tapp TopicItemView ");

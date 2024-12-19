@@ -13,7 +13,7 @@ class InfoProvider extends GetConnect {
 
   Future<List<Post>> getMatchInformation({int page = 1}) async {
     final url = Uri.parse('posts?categories=33&page=$page');
-    print("load ${httpClient.baseUrl}${url.toString()}");
+    print("load getMatchInformation ${httpClient.baseUrl}${url.toString()}");
 
     final response = await get(url.toString());
     if (response.hasError) {

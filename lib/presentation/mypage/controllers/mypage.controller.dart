@@ -9,6 +9,7 @@ import 'package:koto_blue_sharks/app/services/AnalyticsService.dart';
 import 'package:koto_blue_sharks/generated/locales.g.dart';
 import 'package:koto_blue_sharks/infrastructure/navigation/routes.dart';
 import 'package:koto_blue_sharks/presentation/FanClubConfirmation/controllers/fan_club_confirmation.controller.dart';
+import 'package:koto_blue_sharks/presentation/main/controllers/main.controller.dart';
 import 'package:koto_blue_sharks/presentation/screens.dart';
 import 'package:koto_blue_sharks/utils/my_shared_pref.dart';
 import 'package:koto_blue_sharks/utils/utils.dart';
@@ -41,6 +42,9 @@ class MypageController extends FanClubConfirmationController {
     profileData.value = null;
 
     onInit();
+
+    final mainController = Get.find<MainController>();
+    mainController.refreshUnreadMessageCount();
   }
 
   void getToken() async {

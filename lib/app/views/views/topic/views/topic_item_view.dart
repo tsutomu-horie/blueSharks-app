@@ -24,6 +24,7 @@ class TopicItemView extends GetView {
   final List<String> categories;
   final Function onTap;
 
+
   @override
   Widget build(BuildContext context) {
     return InkWell(
