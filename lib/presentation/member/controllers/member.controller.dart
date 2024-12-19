@@ -67,6 +67,12 @@ class MemberController extends GetxController {
 
   }
 
+  void onReloadPage() {
+  categories.value = [];
+  categoryPlayers.value = {};
+  getAllMembers();
+}
+
   Future<void> getAllMembers() async {
     isLoading.value = true;
     int categoryPage = 1;

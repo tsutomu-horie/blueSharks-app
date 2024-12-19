@@ -113,7 +113,7 @@ class MypageScreen extends GetView<MypageController> {
                           )
                         : Column(
                           children: [
-                            controller.isLogin.value ?
+                            controller.isLogin.value && !isEitherMatched ?
                             notVerifiedUserCard(controller)
                             :
                             AspectRatio(
@@ -122,7 +122,8 @@ class MypageScreen extends GetView<MypageController> {
                                   borderType: BorderType.RRect,
                                   radius: Radius.circular(12.r),
                                   padding: EdgeInsets.zero,
-                                  color: isEitherMatched ? DangerColor.main : WarningColor.main,
+                                  color: isEitherMatched ? 
+                                  DangerColor.main : WarningColor.main,
                                   strokeWidth: 1,
                                   dashPattern: const [5, 5],
                                   child: Container(

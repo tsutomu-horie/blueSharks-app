@@ -1,19 +1,12 @@
-import 'dart:ffi';
 
 import 'package:get/get.dart';
-import 'package:hive/hive.dart';
 import 'package:intl/intl.dart';
-import 'package:koto_blue_sharks/app/data/api/auth/AuthToken.dart';
 import 'package:koto_blue_sharks/app/data/api/info/info_provider.dart';
 import 'package:koto_blue_sharks/app/data/api/match/match_provider.dart';
 import 'package:koto_blue_sharks/app/data/api/media/media_provider.dart';
-import 'package:koto_blue_sharks/app/data/api/member/member_provider.dart';
-import 'package:koto_blue_sharks/app/data/api/userPreferences/wallpaper_preference.dart';
 import 'package:koto_blue_sharks/app/data/models/info/post.dart';
 import 'package:koto_blue_sharks/app/data/models/match/match_result.dart';
 import 'package:koto_blue_sharks/app/data/models/media/media.dart';
-import 'package:koto_blue_sharks/app/data/models/member/member.dart';
-import 'package:koto_blue_sharks/utils/Constant.dart';
 import 'package:koto_blue_sharks/utils/my_shared_pref.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -28,6 +21,7 @@ class HomeController extends GetxController {
   List<CustomBanner> bannerData = [];
   final selectedWallpaper = "".obs;
   final selectedWallpaperName = "".obs;
+  final isLoading = false.obs;
 
 
   @override
@@ -36,10 +30,14 @@ class HomeController extends GetxController {
     apiProvider.onInit();
     mediaProvider.onInit();
     infoProvider.onInit();
+  }
+
+  void screenInit() {
     fetchMatchResult();
     getTopics();
     getBanner();
-    print("getwallpaper 1");
+
+    // isLoading.value = false;
   }
 
 
@@ -80,15 +78,30 @@ class HomeController extends GetxController {
   }
 
   void fetchMatchResult() async {
+    print("getwallpaper 1");
+
     final Map<String, dynamic>? data = await getSeasonCategoryId();
     if (data != null) {
       final List<MatchResultBySeason> latestMatches =
-          await getLatestPosts(data['id'], data['count']);
+      await getLatestPosts(data['id'], data['count']);
+
+      // Sort latestMatches by custom_field.gameDate
+      latestMatches.sort((a, b) {
+        DateTime? dateA = parseGameDateTime(a.custom_field.gameDate?.first ?? "");
+        DateTime? dateB = parseGameDateTime(b.custom_field.gameDate?.first ?? "");
+
+        // Handle null cases
+        if (dateA == null && dateB == null) return 0; // Both are null
+        if (dateA == null) return 1; // dateA is null, so dateB is "less"
+        if (dateB == null) return -1; // dateB is null, so dateA is "greater"
+
+        return dateA.compareTo(dateB); // Compare the two dates
+      });
 
       threeLatestMatch.value = latestMatches;
       text.value = "${latestMatches.length}";
       for (var match in latestMatches) {
-        print("Match Title: ${match.title.rendered}");
+        print("Match Title: ${match.custom_field.gameDate}");
       }
     } else {
       print("No data found for the current season.");
@@ -154,25 +167,24 @@ class HomeController extends GetxController {
     return filteredPosts.toList();
   }
 
-  DateTime? parseGameDateTime(String gameDate, String gameTime) {
+  DateTime? parseGameDateTime(String gameDate) {
     try {
-      // Parse game_date (e.g., "2024年02月03日（土）") and game_time ("12:00 K.O")
+      // Parse game_date (e.g., "2025年05月04日（日）")
       String formattedDate = gameDate
-          .replaceAll(RegExp(r'[年月日（）]'), '-')
-          .replaceAll(' ', '')
-          .replaceAll('--', '-');
-      formattedDate = formattedDate.substring(
-          0, formattedDate.length - 1); // Remove trailing "-"
+          .replaceAll(RegExp(r'[年月日（）]'), '-') // Replace Japanese characters
+          .replaceAll(' ', '') // Remove spaces
+          .replaceAll('--', '-'); // Remove double dashes
+
+      // Remove trailing "-"
+      if (formattedDate.endsWith('-')) {
+        formattedDate = formattedDate.substring(0, formattedDate.length - 1);
+      }
+
+      // Parse the date and set time to midnight (00:00)
       DateTime date = DateFormat('yyyy-MM-dd').parse(formattedDate);
-
-      String formattedTime = gameTime.split(' ')[0]; // Remove "K.O"
-      DateTime time = DateFormat('HH:mm').parse(formattedTime);
-
-      final formatted =
-          DateTime(date.year, date.month, date.day, time.hour, time.minute);
-      return formatted;
+      return DateTime(date.year, date.month, date.day, 0, 0); // Set time to 00:00
     } catch (e) {
-      print("Error parsing game date and time: $e");
+      print("Error parsing game date: $e");
       return null;
     }
   }

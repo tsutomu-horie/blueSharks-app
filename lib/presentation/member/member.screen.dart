@@ -20,29 +20,34 @@ class MemberScreen extends GetView<MemberController> {
 
     return Scaffold(
       backgroundColor: BackgroundColor.primary,
-      body: SingleChildScrollView(
-        controller: scrollController,
-        child: Column(
-          children: [
-            Container(
-              color: const Color(0xfffafafa),
-              child: DefaultHeaderTitleView(
-                LocaleKeys.member.tr,
-                LocaleKeys.member_en.tr.toUpperCase(),
+      body: RefreshIndicator(
+        onRefresh: () async {
+          memberController.onReloadPage();
+        },
+        child: SingleChildScrollView(
+          controller: scrollController,
+          child: Column(
+            children: [
+              Container(
+                color: const Color(0xfffafafa),
+                child: DefaultHeaderTitleView(
+                  LocaleKeys.member.tr,
+                  LocaleKeys.member_en.tr.toUpperCase(),
+                ),
               ),
-            ),
-            Container(
-              height: 1.h,
-              color: BorderColor.primary,
-            ),
-            MemberListView(
-              memberController,
-              isSetWallpaper: false,
-              onSet: onSet,
-              scrollController: scrollController, // Pass the scroll controller
-            ),
-            SizedBox(height: 24.h,),
-          ],
+              Container(
+                height: 1.h,
+                color: BorderColor.primary,
+              ),
+              MemberListView(
+                memberController,
+                isSetWallpaper: false,
+                onSet: onSet,
+                scrollController: scrollController, // Pass the scroll controller
+              ),
+              SizedBox(height: 24.h,),
+            ],
+          ),
         ),
       ),
     );

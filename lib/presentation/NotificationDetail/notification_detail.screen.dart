@@ -78,7 +78,7 @@ class NotificationDetailScreen extends GetView<NotificationDetailController> {
               children: [
                 SizedBox(
                   width: double.infinity,
-                    child: CustomImageView(image: notificationDetail!.data.photo!, radius: 0,)),
+                    child: CustomImageView(image: notificationDetail!.data.photo!, radius: 0, customFit: BoxFit.fitWidth)),
                 SizedBox(height: 16.h,),
               ],
             ),

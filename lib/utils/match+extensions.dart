@@ -63,18 +63,32 @@ Future<Map<String, String>> getAdditionalInfo(MediaProvider mediaProvider, Match
   }
 }
 
-Future<String> getImage(MediaProvider mediaProvider, String mediaId) async {
+Future<String> getImage(MediaProvider mediaProvider, String mediaId, {int retries = 5}) async {
   print("getAdditional2 ${mediaId}");
-  try {
-    final imageData = await mediaProvider.fetchMedia(mediaId);
-    print("getAdditional1 ${imageData}");
-    final image = imageData.media_details.sizes.full.source_url;
-    if (mediaId == "20160" ) {
-      print("getImagexx ${image}");
+
+  for (int attempt = 0; attempt < retries; attempt++) {
+    try {
+      final imageData = await mediaProvider.fetchMedia(mediaId);
+      print("getAdditional1 ${imageData}");
+
+      // Assuming imageData is not null and has the expected structure
+      final image = imageData.media_details.sizes.full.source_url;
+
+      if (mediaId == "20160") {
+        print("getImagexx ${image}");
+      }
+
+      return image; // Return the fetched image URL
+    } catch (e) {
+      print("Attempt ${attempt + 1} failed: $e");
+      if (attempt == retries - 1) {
+        // If this was the last attempt, return an empty string or a placeholder
+        return ""; // You can also return a placeholder image URL here
+      }
+      // Optionally, wait before retrying
+      await Future.delayed(Duration(seconds: 1)); // Wait 1 second before retrying
     }
-    return image;
-  } catch (e){
-    print(e);
-    return "";
   }
+
+  return ""; // Fallback in case of failure
 }

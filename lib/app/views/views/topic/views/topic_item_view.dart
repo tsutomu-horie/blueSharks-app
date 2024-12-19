@@ -84,7 +84,7 @@ class TopicItemView extends GetView {
                                     bottom: Radius.circular(12.r),
                                   ),
                                   child: AspectRatio(
-                                    aspectRatio: 343/193,
+                                    aspectRatio: 16/9,
                                     child: Stack(
                                       children: [
                                         SizedBox(
@@ -92,6 +92,7 @@ class TopicItemView extends GetView {
                                           child: CustomImageView(
                                             image: image!,
                                             radius: 0.r,
+                                            customFit: BoxFit.fitWidth,
                                           ),
                                         ),
                                         Container(

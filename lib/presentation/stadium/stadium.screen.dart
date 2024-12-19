@@ -335,18 +335,18 @@ class StadiumScreen extends GetView<StadiumController> {
                                       crossAxisAlignment:
                                           CrossAxisAlignment.start,
                                       children: [
-                                        Baseline(
-                                          baseline: 16.sp,
-                                          // Adjust this value to move the bullet more upwards
-                                          baselineType: TextBaseline.alphabetic,
-                                          child: Text(
-                                            "• ", // Bullet symbol
-                                            style: TextStyle(
-                                              fontSize: 24.sp,
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                          ),
-                                        ),
+                                        // Baseline(
+                                        //   baseline: 16.sp,
+                                        //   // Adjust this value to move the bullet more upwards
+                                        //   baselineType: TextBaseline.alphabetic,
+                                        //   child: Text(
+                                        //     "• ", // Bullet symbol
+                                        //     style: TextStyle(
+                                        //       fontSize: 24.sp,
+                                        //       fontWeight: FontWeight.bold,
+                                        //     ),
+                                        //   ),
+                                        // ),
                                         Expanded(
                                           child: CustomTextView(
                                             point,

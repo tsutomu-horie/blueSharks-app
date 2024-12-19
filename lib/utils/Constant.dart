@@ -1,8 +1,9 @@
 class Constants {
-  static const baseUrl = 'https://blue-sharks.donati.jp/wp-json/wp/v2/';
+  static const baseUrl = 'https://blue-sharks.jp/wp-json/wp/v2/';
   // static const baseUrl = 'https://blue-sharks.donati.jp/wp-json/wp/v2/';
+  // static const baseUrlAuthApi = 'https://app.blue-sharks.jp/api/mobile/v1/';
   static const baseUrlAuthApi = 'https://dev-blueshark.tmdsite.my.id/api/mobile/v1/';
-  static const baseUrlWeb = 'https://blue-sharks.jp/';
+  static const baseUrlWeb = 'https://app.blue-sharks.jp/api/';
   static const teamName = 'シャークス';
   static const videoUrl ='https://www.youtube.com/watch?v=JJqanLQ3y0Q';
 
