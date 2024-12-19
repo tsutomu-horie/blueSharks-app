@@ -51,6 +51,7 @@ class _MainScreenState extends State<MainScreen> {
 
   @override
   Widget build(BuildContext context) {
+    controller.refreshUnreadMessageCount();
     final List<Widget> _pages = [
       HomeScreen((value) {
         selectTopic(value);

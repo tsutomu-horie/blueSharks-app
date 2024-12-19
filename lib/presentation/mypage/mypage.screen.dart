@@ -15,6 +15,7 @@ import 'package:koto_blue_sharks/presentation/DeleteAccountConfirmation/delete_a
 import 'package:koto_blue_sharks/presentation/EditPassword/edit_password.screen.dart';
 import 'package:koto_blue_sharks/presentation/RegisterEmailFromHome/register_email_from_home.screen.dart';
 import 'package:koto_blue_sharks/presentation/login/login.screen.dart';
+import 'package:koto_blue_sharks/presentation/main/controllers/main.controller.dart';
 import 'package:koto_blue_sharks/presentation/screens.dart';
 import 'package:koto_blue_sharks/utils/Constant.dart';
 import 'package:koto_blue_sharks/utils/app_color.dart';
@@ -43,7 +44,7 @@ class MypageScreen extends GetView<MypageController> {
                     padding:
                         EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
                     child: (controller.isLogin.value &&
-                            controller.profileData.value?.isVerified != false
+                            controller.profileData.value?.isVerified != false && !isEitherMatched
                         ? Column(
                             children: [
                               !controller.isLoading.value
@@ -151,20 +152,25 @@ class MypageScreen extends GetView<MypageController> {
                                         ),
                                         SizedBox(height: 16.h,),
                                         if (isEitherMatched)
-                                          Container(
-                                            padding: EdgeInsets.symmetric(vertical: 8.h, horizontal: 24.w),
-                                            decoration: BoxDecoration(
-                                              color: Colors.white,
-                                              borderRadius: BorderRadius.circular(24.r),
-                                              border: Border.all(color: DangerColor.main)
-                                            ),
-                                            child: Row(
-                                              mainAxisSize: MainAxisSize.min,
-                                              children: [
-                                                Icon(IconsaxPlusLinear.tick_circle, color: DangerColor.main,),
-                                                SizedBox(width: 8.w,),
-                                                CustomTextView(LocaleKeys.member_authentication.tr,type: TDSFontType.labelMedium,),
-                                              ],
+                                          InkWell(
+                                            onTap: (){
+                                              controller.refreshProfile();
+                                            },
+                                            child: Container(
+                                              padding: EdgeInsets.symmetric(vertical: 8.h, horizontal: 24.w),
+                                              decoration: BoxDecoration(
+                                                color: Colors.white,
+                                                borderRadius: BorderRadius.circular(24.r),
+                                                border: Border.all(color: DangerColor.main)
+                                              ),
+                                              child: Row(
+                                                mainAxisSize: MainAxisSize.min,
+                                                children: [
+                                                  Icon(IconsaxPlusLinear.tick_circle, color: DangerColor.main,),
+                                                  SizedBox(width: 8.w,),
+                                                  CustomTextView(LocaleKeys.member_authentication.tr,type: TDSFontType.labelMedium,),
+                                                ],
+                                              ),
                                             ),
                                           )
                                       ],
@@ -548,6 +554,10 @@ class MypageScreen extends GetView<MypageController> {
                                         if (result == true) {
                                           // Refresh the page when we return
                                           controller.onInit();
+
+                                          print("refresshh");
+                                          final mainController = Get.find<MainController>();
+                                          mainController.refreshUnreadMessageCount();
                                         }
                                       });
                                     },

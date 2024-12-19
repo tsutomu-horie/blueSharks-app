@@ -73,8 +73,7 @@ class HomeController extends GetxController {
     print("get info");
     final List<Post> data = await infoProvider.getNotice();
 
-    data.take(3).toList();
-    topicsData.value = data;
+    topicsData.value = data.take(3).toList(); // Update this line
   }
 
   void fetchMatchResult() async {

@@ -28,6 +28,12 @@ class MainController extends GetxController {
     setupFirebaseMessaging();
   }
 
+  void refreshUnreadMessageCount() {
+    print("refreshUnreadMessageCount $unreadMessage");
+
+    getUnreadNotificationCount(); // Call the method to refresh the count
+  }
+
   void setupFirebaseMessaging() {
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
       getUnreadNotificationCount();
@@ -39,8 +45,11 @@ class MainController extends GetxController {
     final auth = AuthToken();
     final token = await auth.getAccessToken();
 
+    print("get unread isLogin=${token != null}");
     if (token != null) {
       unreadMessage.value = await apiProvider.getUnreadNotification();
+    } else {
+      unreadMessage.value = 0;
     }
   }
 

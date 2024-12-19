@@ -90,30 +90,28 @@ class DeleteAccountConfirmationScreen
       ),
       bottomNavigationBar: Padding(
           padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
-          child: Obx(() {
-            return ElevatedButton(
+          child: ElevatedButton(
 
-              style: ElevatedButton.styleFrom(
-                backgroundColor:  TextColor.error,
+            style: ElevatedButton.styleFrom(
+              backgroundColor:  TextColor.error,
 
-                // overlayColor: deleteAccountConfirmationController.emailText
-                //     .value == "削除" ? null : Colors.transparent
-              ),
-              onPressed: () {
-                // if (deleteAccountConfirmationController.emailText
-                //     .value == "削除" ) {
-                  showDeleteAccountBottomSheet(context,
-                      deleteAccountConfirmationController.onDeleteAccount);
-                // } else {
-                //   null;
-                // }
-              },
-              child: CustomTextView(
-                LocaleKeys.delete_account_button.tr,
-                color: Colors.white,
-              ),
-            );
-          })
+              // overlayColor: deleteAccountConfirmationController.emailText
+              //     .value == "削除" ? null : Colors.transparent
+            ),
+            onPressed: () {
+              // if (deleteAccountConfirmationController.emailText
+              //     .value == "削除" ) {
+              showDeleteAccountBottomSheet(context,
+                  deleteAccountConfirmationController.onDeleteAccount);
+              // } else {
+              //   null;
+              // }
+            },
+            child: CustomTextView(
+              LocaleKeys.delete_account_button.tr,
+              color: Colors.white,
+            ),
+          )
       ),
 
     );

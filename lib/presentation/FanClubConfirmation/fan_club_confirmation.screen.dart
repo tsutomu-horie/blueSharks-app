@@ -471,6 +471,7 @@ class FanClubConfirmationScreen extends GetView<FanClubConfirmationController> {
             MySharedPref.setFirstOpen("alreadyOpen");
             if (!isFromHome) {
               Get.offAll(() => const MainScreen());
+
             } else {
               Get.offAll(() => const MainScreen(initialTab: 2));
             }

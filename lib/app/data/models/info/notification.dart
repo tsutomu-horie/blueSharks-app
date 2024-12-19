@@ -6,7 +6,7 @@ part 'notification.g.dart';
 @freezed
 class NotificationItem with _$NotificationItem {
   const factory NotificationItem({
-    required String id,
+    required dynamic id,
     int? notifiable_id,
     String? notifiable_type,
     required String created_at,
@@ -24,7 +24,7 @@ class NotificationData with _$NotificationData {
   const factory NotificationData({
     required String body,
     required String model,
-    required String model_id,
+    required dynamic model_id,
     required String title,
     String? photo,
   }) = _NotificationData;
