@@ -36,7 +36,7 @@ class MypageScreen extends GetView<MypageController> {
         backgroundColor: Colors.white,
         body: SingleChildScrollView(
           child: Obx(() {
-            final isEitherMatched = controller.profileData.value?.isEitherMatched == false;
+            final isEitherMatched = controller.profileData.value?.isEitherMatched == true;
             // final isEitherMatched = true;
             return Column(
               children: [
@@ -44,7 +44,7 @@ class MypageScreen extends GetView<MypageController> {
                     padding:
                         EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
                     child: (controller.isLogin.value &&
-                            controller.profileData.value?.isVerified != false && !isEitherMatched
+                            controller.profileData.value?.isVerified != false && isEitherMatched
                         ? Column(
                             children: [
                               !controller.isLoading.value
@@ -425,7 +425,10 @@ class MypageScreen extends GetView<MypageController> {
                                       const Duration(seconds: 1));
                                   controller.getToken();
                                   controller.update();
-                                }, controller.profileData.value?.email ?? "");
+                                  controller.refreshProfile();
+                                  controller.getToken();
+
+                                    }, controller.profileData.value?.email ?? "");
                               },
                               child: Row(
                                 mainAxisSize: MainAxisSize.max,

@@ -40,144 +40,155 @@ class NotificationListScreen extends GetView<NotificationListController> {
           },
         ),
       ),
-      body: Obx(() {
-        if (!controller.isLoading.value) {
-          if (controller.notificationList.isNotEmpty) {
-            return ListView.builder(
-                itemCount: controller.notificationList.length,
-                itemBuilder: (BuildContext context, int index) =>
-                    Container(
-                      color: controller.notificationList[index].read_at !=
-                          null || controller.isLogin.value == false ? Colors
-                          .white : BrandColor.surface,
-                      child: InkWell(
-                        onTap: () async {
-                          await Get.to(() => NotificationDetailScreen(
-                              controller.notificationList[index]))?.then((_) {
-                            // Refresh the unread notification count after returning
-                            controller.getNotification();
-                          });
-                          // Get.to(() =>
-                          //     NotificationDetailScreen(
-                          //         controller.notificationList[index]));
-                        },
-                        child: Column(
-                          children: [
-                            Padding(
-                              padding: EdgeInsets.symmetric(
-                                  horizontal: 16.w, vertical: 16.w),
-                              child: Row(
-                                children: [
-                                  SvgPicture.asset(
-                                    "assets/vectors/ic_notification_status.svg",
-                                    width: 36.w, height: 36.h,),
-                                  SizedBox(width: 12.w,),
-                                  Flexible(
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment
-                                          .start,
-                                      children: [
-                                        CustomTextView(
-                                          maxLine: 2,
-                                          controller.notificationList[index]
-                                              .data
-                                              .title, style: TextStyle(
-                                            fontWeight: FontWeight.w600,
-                                            color: TextColor.primary),),
-                                        SizedBox(height: 4.h,),
-                                        CustomTextView(controller.formatDate(
+      body: RefreshIndicator(
+        onRefresh: () async {
+          controller.getNotification();
+        },
+        child: Obx(() {
+          if (!controller.isLoading.value) {
+            if (controller.notificationList.isNotEmpty) {
+              return ListView.builder(
+                  itemCount: controller.notificationList.length,
+                  itemBuilder: (BuildContext context, int index) =>
+                      Container(
+                        color: controller.notificationList[index].read_at !=
+                            null || controller.isLogin.value == false ? Colors
+                            .white : BrandColor.surface,
+                        child: InkWell(
+                          onTap: () async {
+                            await Get.to(() => NotificationDetailScreen(
+                                controller.notificationList[index]))?.then((_) {
+                              // Refresh the unread notification count after returning
+                              controller.getNotification();
+                            });
+                            // Get.to(() =>
+                            //     NotificationDetailScreen(
+                            //         controller.notificationList[index]));
+                          },
+                          child: Column(
+                            children: [
+                              Padding(
+                                padding: EdgeInsets.symmetric(
+                                    horizontal: 16.w, vertical: 16.w),
+                                child: Row(
+                                  children: [
+                                    SvgPicture.asset(
+                                      "assets/vectors/ic_notification_status.svg",
+                                      width: 36.w, height: 36.h,),
+                                    SizedBox(width: 12.w,),
+                                    Flexible(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment
+                                            .start,
+                                        children: [
+                                          CustomTextView(
+                                            maxLine: 2,
                                             controller.notificationList[index]
-                                                .created_at))
-                                      ],
-                                    ),
-                                  )
-                                ],
+                                                .data
+                                                .title, style: TextStyle(
+                                              fontWeight: FontWeight.w600,
+                                              color: TextColor.primary),),
+                                          SizedBox(height: 4.h,),
+                                          CustomTextView(controller.formatDate(
+                                              controller.notificationList[index]
+                                                  .created_at))
+                                        ],
+                                      ),
+                                    )
+                                  ],
+                                ),
                               ),
-                            ),
-                            Container(color: Colors.black12, height: 1.h,)
-                          ],
+                              Container(color: Colors.black12, height: 1.h,)
+                            ],
+                          ),
                         ),
-                      ),
-                    ));
-          } else {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  // Icon or Image
-                  SvgPicture.asset(
-                    "assets/vectors/ic_empty_news.svg", // Your empty state icon
-                    width: 48.w,
-                    height: 48.h,
-                  ),
-                  SizedBox(height: 16.h),
+                      ));
+            } else {
+              return SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                child: SizedBox(
+                  height: MediaQuery.of(context).size.height,
+                  child: Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        // Icon or Image
+                        SvgPicture.asset(
+                          "assets/vectors/ic_empty_news.svg", // Your empty state icon
+                          width: 48.w,
+                          height: 48.h,
+                        ),
+                        SizedBox(height: 16.h),
 
-                  // Main text
-                  CustomTextView(
-                    "ここにはニュースはありません", // "No news here"
-                    style: TextStyle(
-                      fontSize: 16.sp,
-                      fontWeight: FontWeight.w700,
-                      color: TextColor.primary,
-                    ),
-                    align: TextAlign.center,
-                  ),
-                  SizedBox(height: 8.h),
-
-                  // Description text
-                  Row(
-                    children: [
-                      SizedBox(width: 60.w,),
-                      Flexible(
-                        child: CustomTextView(
-                          "管理者がアプリでニュースを放送した後、ニュースのリストがここに表示されます。",
-                          // "After the administrator broadcasts news in the app,\nthe news list will be displayed here."
+                        // Main text
+                        CustomTextView(
+                          "ここにはニュースはありません", // "No news here"
                           style: TextStyle(
-                            fontSize: 14.sp,
-                            color: TextColor.secondary,
+                            fontSize: 16.sp,
+                            fontWeight: FontWeight.w700,
+                            color: TextColor.primary,
                           ),
                           align: TextAlign.center,
-                          type: TDSFontType.bodyTextMedium,
                         ),
-                      ),
-                      SizedBox(width: 60.w,),
-                    ],
+                        SizedBox(height: 8.h),
+
+                        // Description text
+                        Row(
+                          children: [
+                            SizedBox(width: 60.w,),
+                            Flexible(
+                              child: CustomTextView(
+                                "管理者がアプリでニュースを放送した後、ニュースのリストがここに表示されます。",
+                                // "After the administrator broadcasts news in the app,\nthe news list will be displayed here."
+                                style: TextStyle(
+                                  fontSize: 14.sp,
+                                  color: TextColor.secondary,
+                                ),
+                                align: TextAlign.center,
+                                type: TDSFontType.bodyTextMedium,
+                              ),
+                            ),
+                            SizedBox(width: 60.w,),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
+                ),
+              );
+            }
+          } else {
+            return SingleChildScrollView(
+              child: Column(
+                children: [
+                  SizedBox(height: 64.h,child: shimmer()),
+                  SizedBox(height: 4.h,),
+                  SizedBox(height: 64.h,child: shimmer()),
+                  SizedBox(height: 4.h,),
+                  SizedBox(height: 64.h,child: shimmer()),
+                  SizedBox(height: 4.h,),
+                  SizedBox(height: 64.h,child: shimmer()),
+                  SizedBox(height: 4.h,),
+                  SizedBox(height: 64.h,child: shimmer()),
+                  SizedBox(height: 4.h,),
+                  SizedBox(height: 64.h,child: shimmer()),
+                  SizedBox(height: 4.h,),
+                  SizedBox(height: 64.h,child: shimmer()),
+                  SizedBox(height: 4.h,),
+                  SizedBox(height: 64.h,child: shimmer()),
+                  SizedBox(height: 4.h,),
+                  SizedBox(height: 64.h,child: shimmer()),
+                  SizedBox(height: 4.h,),
+                  SizedBox(height: 64.h,child: shimmer()),
+                  SizedBox(height: 4.h,),
+                  SizedBox(height: 64.h,child: shimmer()),
+                  SizedBox(height: 4.h,),
                 ],
               ),
             );
           }
-        } else {
-          return SingleChildScrollView(
-            child: Column(
-              children: [
-                SizedBox(height: 64.h,child: shimmer()),
-                SizedBox(height: 4.h,),
-                SizedBox(height: 64.h,child: shimmer()),
-                SizedBox(height: 4.h,),
-                SizedBox(height: 64.h,child: shimmer()),
-                SizedBox(height: 4.h,),
-                SizedBox(height: 64.h,child: shimmer()),
-                SizedBox(height: 4.h,),
-                SizedBox(height: 64.h,child: shimmer()),
-                SizedBox(height: 4.h,),
-                SizedBox(height: 64.h,child: shimmer()),
-                SizedBox(height: 4.h,),
-                SizedBox(height: 64.h,child: shimmer()),
-                SizedBox(height: 4.h,),
-                SizedBox(height: 64.h,child: shimmer()),
-                SizedBox(height: 4.h,),
-                SizedBox(height: 64.h,child: shimmer()),
-                SizedBox(height: 4.h,),
-                SizedBox(height: 64.h,child: shimmer()),
-                SizedBox(height: 4.h,),
-                SizedBox(height: 64.h,child: shimmer()),
-                SizedBox(height: 4.h,),
-              ],
-            ),
-          );
-        }
-      }),
+        }),
+      ),
     );
   }
 }
