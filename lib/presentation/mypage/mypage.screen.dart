@@ -36,7 +36,7 @@ class MypageScreen extends GetView<MypageController> {
         backgroundColor: Colors.white,
         body: SingleChildScrollView(
           child: Obx(() {
-            final isEitherMatched = controller.profileData.value?.isEitherMatched == true;
+            final isEitherMatched = controller.profileData.value?.isEitherMatched == false;
             // final isEitherMatched = true;
             return Column(
               children: [

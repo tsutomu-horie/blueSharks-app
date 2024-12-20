@@ -41,7 +41,7 @@ class AwesomeNotificationsHelper {
   ///init notifications channels
   static _initNotification() async {
     await awesomeNotifications.initialize(
-        null, // null mean it will show app icon on the notification (status bar)
+        'resource://mipmap/notif_icon',
         [
           NotificationChannel(
             channelGroupKey: NotificationChannels.generalChannelGroupKey,

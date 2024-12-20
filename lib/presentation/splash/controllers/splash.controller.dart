@@ -9,6 +9,7 @@ import 'package:koto_blue_sharks/app/data/models/member/member.dart';
 import 'package:koto_blue_sharks/app/services/AnalyticsService.dart';
 import 'package:koto_blue_sharks/infrastructure/navigation/routes.dart';
 import 'package:koto_blue_sharks/presentation/screens.dart';
+import 'package:koto_blue_sharks/utils/awesome_notifications_helper.dart';
 import 'package:koto_blue_sharks/utils/my_shared_pref.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
@@ -64,10 +65,10 @@ class NotificationService {
   static Future<void> initializeNotification() async {
     await AwesomeNotifications().initialize(
       // set the icon to null if you want to use the default app icon
-      'resource://drawable/app_icon',
+      'resource://mipmap/notif_icon',
       [
         NotificationChannel(
-          channelKey: 'basic_channel',
+          channelKey: 'news_channel',
           channelName: 'Basic notifications',
           channelDescription: 'Notification channel for basic tests',
           defaultColor: Colors.blue,
@@ -77,6 +78,17 @@ class NotificationService {
         )
       ],
     );
+
+    await AwesomeNotifications().isNotificationAllowed().then((isAllowed) {
+      if (!isAllowed) {
+        // Prompt the user to enable notifications
+        AwesomeNotifications().requestPermissionToSendNotifications();
+        print("notif allowed");
+
+      } else {
+        print("notif rejected");
+      }
+    });
 
     // Request permission
     await AwesomeNotifications().isNotificationAllowed().then((isAllowed) {
@@ -101,11 +113,12 @@ class NotificationService {
   }) async {
     assert(!scheduled || (scheduled && interval != null));
 
+
     print("show edsksd");
     await AwesomeNotifications().createNotification(
       content: NotificationContent(
         id: 10, // -1 is random id
-        channelKey: 'basic_channel',
+        channelKey:  "chat_channel",
         title: title,
         body: body,
         summary: summary,
