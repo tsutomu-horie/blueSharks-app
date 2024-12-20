@@ -7,6 +7,9 @@
         android:allowBackup="false"
         tools:replace="android:allowBackup">
         <meta-data
+            android:name="com.google.firebase.messaging.default_notification_icon"
+            android:resource="@mipmap/ic_launcher" />
+        <meta-data
             android:name="flutter_secure_storage_enable_encryption"
             android:value="true" />
         <activity
