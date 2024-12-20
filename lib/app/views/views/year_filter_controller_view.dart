@@ -31,6 +31,7 @@ class YearFilter extends StatelessWidget {
   final Color unselectedColor;
   final Color selectedTextColor;
   final Color unselectedTextColor;
+  final RxString selectedYear;
 
   YearFilter({
     super.key,
@@ -40,7 +41,7 @@ class YearFilter extends StatelessWidget {
     this.selectedColor = Colors.blue,
     this.unselectedColor = Colors.grey,
     this.selectedTextColor = Colors.white,
-    this.unselectedTextColor = Colors.black,
+    this.unselectedTextColor = Colors.black, required this.selectedYear,
   });
 
   @override
@@ -69,7 +70,7 @@ class YearFilter extends StatelessWidget {
                       vertical: 6.h
                   ),
                   decoration: BoxDecoration(
-                    color: yearController.isAllSelected
+                    color: yearController.isAllSelected || selectedYear.value == ""
                         ? selectedColor
                         : unselectedColor,
                     borderRadius: BorderRadius.circular(30),
@@ -77,7 +78,7 @@ class YearFilter extends StatelessWidget {
                   child: CustomTextView(
                     "ALL",
                     type: TDSFontType.labelLarge,
-                    color: yearController.isAllSelected
+                    color: yearController.isAllSelected || selectedYear.value == ""
                         ? selectedTextColor
                         : unselectedTextColor,
                   ),
@@ -104,7 +105,7 @@ class YearFilter extends StatelessWidget {
                     vertical: 6.h
                 ),
                 decoration: BoxDecoration(
-                  color: yearController.selectedYear.value == year
+                  color: yearController.selectedYear.value == year && selectedYear.value != ""
                       ? selectedColor
                       : unselectedColor,
                   borderRadius: BorderRadius.circular(30),
@@ -112,7 +113,7 @@ class YearFilter extends StatelessWidget {
                 child: CustomTextView(
                   "$year年",
                   type: TDSFontType.labelLarge,
-                  color: yearController.selectedYear.value == year
+                  color: yearController.selectedYear.value == year  && selectedYear.value != ""
                       ? selectedTextColor
                       : unselectedTextColor,
                 ),

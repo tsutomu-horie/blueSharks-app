@@ -25,7 +25,15 @@ class GalleryController extends GetxController {
 
   }
 
+  void onRefresh() {
+    selectedIndex.value = 1;
+    selectedName.value = LocaleKeys.game.tr;
+    selectedYear.value = "";
+    onSwitch(1, LocaleKeys.game.toUpperCase().tr);
+  }
+
   void onSwitch(int index, String name) {
+    print("switch $index $name");
     selectedIndex.value = index;
     selectedName.value =  name;
     getGalleryList();
