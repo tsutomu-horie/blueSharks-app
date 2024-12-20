@@ -27,6 +27,7 @@ class ListTopicsController extends GetxController {
 
   // Track page numbers for pagination
   final RxMap<int, int> pageNumbers = RxMap<int, int>({0: 1, 1: 1, 2: 1, 3: 1, 4: 1});
+  final RxMap<int, bool> isImageLoading = RxMap<int, bool>({0: true, 1: true, 2: true, 3: true, 4: true});
 
   // Loading states for each tab
   final RxMap<int, bool> isLoading = RxMap<int, bool>({0: false, 1: false, 2: false, 3: false, 4: false});
@@ -158,6 +159,8 @@ selectedIndex.value = 0;
     if (getTabData(index).isEmpty) {
       getInfo(index);
     }
+
+    isImageLoading[index] = false;
   }
 
   RxList<Post> getTabData(int tabIndex) {

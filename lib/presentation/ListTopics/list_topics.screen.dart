@@ -144,47 +144,43 @@ class ListTopicsScreen  extends StatelessWidget {
                           children: [
                             ListView.builder(
                               shrinkWrap: true,
-                              // Use shrinkWrap for smooth scrolling
                               physics: const NeverScrollableScrollPhysics(),
-                              // Disable ListView scrolling
                               itemCount: data.length,
                               itemBuilder: (context, itemIndex) {
                                 return FutureBuilder<String>(
-                                  future: controller.getNewsImage(
-                                      "${data[itemIndex].id}"),
+                                  future: controller.getNewsImage("${data[itemIndex].id}"),
                                   builder: (context, snapshot) {
-                                     if (snapshot.hasError) {
+                                    if (snapshot.connectionState == ConnectionState.waiting) {
+                                      // Show shimmer while waiting for the image
+                                      return shimmer();
+                                    } else if (snapshot.hasError) {
+                                      // Fallback view if there's an error
                                       return TopicItemView(
                                             () {
-                                          print("tapp TopicItemView ");
                                           onOpenDetail(data[itemIndex]);
                                         },
                                         image: null,
                                         date: data[itemIndex].date,
                                         title: data[itemIndex].title.rendered,
-                                        categories: mapCategoryIdsToNames(
-                                            data[itemIndex].categories),
+                                        categories: mapCategoryIdsToNames(data[itemIndex].categories),
                                       );
                                     } else {
-                                      final postImage = snapshot.data ??
-                                          'https://example.com/placeholder.png'; // Fallback in case of null
-        
-                                      // Ensure that TopicItemView is returned
+                                      // Display the image when loaded
                                       return TopicItemView(
                                             () {
                                           onOpenDetail(data[itemIndex]);
                                         },
-                                        image: postImage,
+                                        image: snapshot.data,
                                         date: data[itemIndex].date,
                                         title: data[itemIndex].title.rendered,
-                                        categories: mapCategoryIdsToNames(
-                                            data[itemIndex].categories),
+                                        categories: mapCategoryIdsToNames(data[itemIndex].categories),
                                       );
                                     }
                                   },
                                 );
                               },
                             ),
+
                             SizedBox(height: 24.h,),
                           ],
                         );
