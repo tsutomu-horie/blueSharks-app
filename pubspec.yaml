@@ -87,6 +87,8 @@ dev_dependencies:
   hive_generator: # generate hive files
   freezed: ^2.5.2
   json_serializable: ^6.7.1
+  logger: ^2.1.0 # log events in clear way insted of (print)
+
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

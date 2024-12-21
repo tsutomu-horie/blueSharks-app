@@ -43,7 +43,96 @@ class GalleryScreen extends GetView<GalleryController> {
                     LocaleKeys.gallery_en.tr.toUpperCase()),
                 Obx(() {
                   if (galleryController.isLoading.value && galleryController.album.isEmpty) {
-                    return SizedBox(height: 500.h, child: shimmer());
+                    return Column(
+                      children: [
+                        Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
+                          child: Container(
+                            padding: EdgeInsets.all(3.w),
+                            width: 343.w,
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              // Background color
+                              borderRadius: BorderRadius.circular(30),
+                              // Rounded container
+                              border:
+                              Border.all(color: Colors.grey.shade300), // Outer border
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                buildToggleOption(LocaleKeys.game.tr.toUpperCase(), 1, galleryController),
+                                SizedBox(
+                                  width: 8.w,
+                                ),
+                                Container(
+                                  width: 1.w,
+                                  height: 16.h,
+                                  color: BorderColor.primary,
+                                ),
+                                SizedBox(
+                                  width: 8.w,
+                                ),
+                                buildToggleOption(
+                                    LocaleKeys.event_en.tr.toUpperCase(), 2, galleryController),
+                                SizedBox(
+                                  width: 8.w,
+                                ),
+                                Container(
+                                  width: 1.w,
+                                  height: 16.h,
+                                  color: BorderColor.primary,
+                                ),
+                                SizedBox(
+                                  width: 8.w,
+                                ),
+                                buildToggleOption(LocaleKeys.other.tr.toUpperCase(), 3, galleryController),
+                              ],
+                            ),
+                          ),
+                        ),
+                        YearFilter(
+                          years: List.generate(DateTime.now().year - 2019 + 1,
+                                  (index) => DateTime.now().year - index),
+                          // Generate year list dynamically
+                          initialSelectedYear: 0,
+                          selectedColor: BrandColor.main,
+                          unselectedColor: Colors.grey.shade200,
+                          selectedTextColor: Colors.white,
+                          unselectedTextColor: TextColor.secondary,
+                          onYearSelected: (selectedYear) {
+                            // Handle year selection
+                            if (selectedYear == 0) {
+                              galleryController.selectedYear.value =
+                              "";
+                              galleryController.getGalleryList();
+                              print("Selected Year: $selectedYear");
+                            } else {
+                              galleryController.selectedYear.value =
+                              "$selectedYear";
+                              galleryController.getGalleryList();
+                              print("Selected Year: $selectedYear");
+                            }
+                          }, selectedYear: galleryController.selectedYear,
+                        ),
+                        SizedBox(height: 16.h,),
+                        Row(
+                          children: [
+                            SizedBox(width: 16.w,),
+                            Flexible(child: SizedBox(height: 200.h, child: shimmer())),
+                            SizedBox(width: 16.w,),
+                          ],
+                        ),
+                        SizedBox(height: 16.h,),
+                        Row(
+                          children: [
+                            SizedBox(width: 16.w,),
+                            Flexible(child: SizedBox(height: 200.h, child: shimmer())),
+                            SizedBox(width: 16.w,),
+                          ],
+                        ),
+                      ],
+                    );
                   } else {
                     return Column(
                       children: [

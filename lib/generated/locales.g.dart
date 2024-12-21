@@ -528,9 +528,9 @@ class Locales {
     'off': 'OFF',
     'detailled_notification': '詳細通知',
     'delete_account_title': 'アカウントを削除',
-    'delete_account_desc1':
-        '残念ですが、アカウントが削除されると、プロフィールやメンバーデータを含むすべてのコンテンツが永久に削除されます。',
-    'delete_account_desc2': '削除を確認するには、以下に「削除」と入力してください。',
+    'delete_account_desc1': 'アカウトを削除行いますか？',
+    'delete_account_desc2':
+        '本アプリのアカウトを削除しても、ファンクラブ会員アカウントは削除されません！\n\nファンクラブ会員アカウントの削除は、ファンクラブオフィシャルサイトから行ってください。',
     'delete_account_confirmation_title': 'アカウントを削除しますか',
     'delete_account_confirmation_message': 'Blue Sharkアカウントを削除してもよろしいですか？',
     'delete_account_button': 'アカウントを削除',

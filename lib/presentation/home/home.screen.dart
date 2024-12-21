@@ -331,10 +331,11 @@ class HomeScreen extends GetView<MainController> {
                         builder: (context, snapshot) {
                           if (snapshot.connectionState ==
                               ConnectionState.waiting) {
-                            return Padding(
-                              padding: EdgeInsets.only(right: 12.w),
-                              child: shimmer(),
-                            );
+                            return TopicItemViewShimmer();
+                            // return Padding(
+                            //   padding: EdgeInsets.only(right: 12.w),
+                            //   child: TopicItemViewShimmer(),
+                            // );
                           } else if (snapshot.hasError) {
                             return TopicItemView(
                                   () {

@@ -53,9 +53,9 @@ class ListTopicsController extends GetxController {
   void refreshPage() {
     resetValue();
     isLoadingFirstTime.value = true;
-selectedIndex.value = 0;
+// selectedIndex.value = 0;
     pageNumbers.value = {0: 1, 1: 1, 2: 1, 3: 1, 4: 1};
-    getInfo(0);
+    getInfo(selectedIndex.value);
   }
 
   void resetValue() {

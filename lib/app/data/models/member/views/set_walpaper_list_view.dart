@@ -393,8 +393,7 @@ class FilterHeaderDelegate extends SliverPersistentHeaderDelegate {
   FilterHeaderDelegate(this.memberController, this.context);
 
   @override
-  Widget build(
-      BuildContext context, double shrinkOffset, bool overlapsContent) {
+  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
     return Container(
       color: BackgroundColor.primary,
       padding: EdgeInsets.symmetric(vertical: 12.h, horizontal: 16.w),
@@ -403,7 +402,7 @@ class FilterHeaderDelegate extends SliverPersistentHeaderDelegate {
           showPlayerFilterBottomSheet(memberController, context);
         },
         style: ButtonStyle(
-          padding: WidgetStateProperty.all(EdgeInsets.zero),
+          padding: MaterialStateProperty.all(EdgeInsets.zero),
           shape: MaterialStateProperty.all(
             RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(8.r),
@@ -441,12 +440,10 @@ class FilterHeaderDelegate extends SliverPersistentHeaderDelegate {
   }
 
   @override
-  double get maxExtent => 60.h; // Adjust maxExtent to fit the content
-
+  double get maxExtent => 62.3; // Explicit height
   @override
-  double get minExtent => 60.h; // Adjust minExtent if needed
-
+  double get minExtent => 62.3; // Explicit height
   @override
-  bool shouldRebuild(covariant SliverPersistentHeaderDelegate oldDelegate) =>
-      false;
+  bool shouldRebuild(covariant SliverPersistentHeaderDelegate oldDelegate) => false;
 }
+

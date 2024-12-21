@@ -43,6 +43,7 @@ class DeleteAccountConfirmationScreen
           child: Padding(
             padding: EdgeInsets.symmetric(horizontal: 16.w),
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 SizedBox(height: 20.h,),
                 CustomTextView(LocaleKeys.delete_account_desc1.tr,
@@ -56,8 +57,6 @@ class DeleteAccountConfirmationScreen
                       LocaleKeys.delete_account_desc2.tr,
                       type: TDSFontType.labelLarge,
                       color: TextColor.secondary,)),
-                    CustomTextView("*", type: TDSFontType.labelLarge,
-                      color: TextColor.error,),
                   ],
                 ),
                 // TextFormField(
