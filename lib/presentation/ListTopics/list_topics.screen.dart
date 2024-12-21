@@ -22,6 +22,8 @@ class ListTopicsScreen  extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ListTopicsController controller = Get.put(ListTopicsController());
+
+    controller.selectedIndex.value = 0;
     final List<String> tabs = [
       LocaleKeys.all.tr,
       LocaleKeys.notice_tab.tr,
@@ -134,11 +136,17 @@ class ListTopicsScreen  extends StatelessWidget {
                       if (data.isEmpty) {
                         return Column(
                           children: [
-                            shimmer(),
-                            shimmer(),
-                            shimmer(),
-                          ]
+                            TopicItemViewShimmer(),
+                            TopicItemViewShimmer(),
+                          ],
                         );
+                        // return Column(
+                        //   children: [
+                        //     shimmer(),
+                        //     shimmer(),
+                        //     shimmer(),
+                        //   ]
+                        // );
                       } else {
                         return Column(
                           children: [
@@ -152,7 +160,7 @@ class ListTopicsScreen  extends StatelessWidget {
                                   builder: (context, snapshot) {
                                     if (snapshot.connectionState == ConnectionState.waiting) {
                                       // Show shimmer while waiting for the image
-                                      return shimmer();
+                                      return TopicItemViewShimmer();
                                     } else if (snapshot.hasError) {
                                       // Fallback view if there's an error
                                       return TopicItemView(

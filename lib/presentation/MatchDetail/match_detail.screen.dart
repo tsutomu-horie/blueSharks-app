@@ -242,7 +242,7 @@ class MatchDetailScreen extends GetView<MatchDetailController> {
                                 width: 56.w,
                                 height: 32.h,
                                 color:  customField?.game_result?.first != null && customField?.game_result?.first !=
-                                    "試合前" ? BrandColor.background : SuccessColor.main,
+                                    "試合前" ? (customField?.game_result?.first == "LOSE" ? BackgroundColor.muted : BrandColor.background) : SuccessColor.main,
                                 child: Center(
                                   child: CustomTextView(
                                     customField?.game_result?.first != null

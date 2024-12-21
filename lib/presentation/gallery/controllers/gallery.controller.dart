@@ -26,10 +26,10 @@ class GalleryController extends GetxController {
   }
 
   void onRefresh() {
-    selectedIndex.value = 1;
-    selectedName.value = LocaleKeys.game.tr;
-    selectedYear.value = "";
-    onSwitch(1, LocaleKeys.game.toUpperCase().tr);
+    // selectedIndex.value = 1;
+    // selectedName.value = LocaleKeys.game.tr;
+    // selectedYear.value = "";
+    onSwitch(selectedIndex.value, selectedName.value);
   }
 
   void onSwitch(int index, String name) {

@@ -7,6 +7,7 @@ import 'package:intl/intl.dart';
 import 'package:koto_blue_sharks/app/views/views/custom_image_view.dart';
 import 'package:koto_blue_sharks/app/views/views/custom_text_view.dart';
 import 'package:koto_blue_sharks/presentation/detailInfo/detail_info.screen.dart';
+import 'package:koto_blue_sharks/presentation/mypage/mypage.screen.dart';
 import 'package:koto_blue_sharks/utils/Constant.dart';
 import 'package:koto_blue_sharks/utils/app_color.dart';
 
@@ -197,6 +198,94 @@ class TopicItemView extends GetView {
           ),
         ],
       ),
+    );
+  }
+
+  String formatDate(String dateString) {
+    // Parse the incoming date string
+    DateTime parsedDate = DateTime.parse(dateString);
+
+    // Format the parsed date to the desired format
+    DateFormat formatter = DateFormat('yyyy.MM.dd');
+    String formattedDate = formatter.format(parsedDate);
+
+    return formattedDate;
+  }
+}
+
+class TopicItemViewShimmer extends GetView {
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Row(
+          children: [
+            SizedBox(
+              width: 16.w,
+            ),
+            Flexible(
+              child: Container(
+                decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(12.r),
+                    color: const Color(0xFFFAFAFA),
+                    border: Border.all(color: BorderColor.primary)),
+                width: double.infinity,
+                child: Column(
+                  mainAxisSize: MainAxisSize.max,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Padding(
+                      padding: EdgeInsets.symmetric(
+                          vertical: 16.h, horizontal: 12.w),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          SizedBox(
+                            width: double.infinity,
+                            height: 24,
+                            child: shimmer(),
+                          ),
+                          SizedBox(
+                            height: 4.h,
+                          ),
+                          SizedBox(
+                            width: double.infinity,
+                            height: 24,
+                            child: shimmer(),
+                          ),
+                          SizedBox(
+                            height: 2.h,
+                          ),
+                          SizedBox(
+                            width: double.infinity,
+                            height: 24,
+                            child: shimmer(),
+                          ),
+                        ],
+                      ),
+                    ),
+                    AspectRatio(
+                      aspectRatio: 16 / 9,
+                      child: SizedBox(
+                          width: double.infinity,
+                          height: 24.h,
+                          child: shimmer(),
+                      ),
+                    )
+                  ],
+                ),
+              ),
+            ),
+            SizedBox(
+              width: 16.w,
+            ),
+          ],
+        ),
+        SizedBox(
+          height: 8.h,
+        ),
+      ],
     );
   }
 

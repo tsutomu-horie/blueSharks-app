@@ -5,7 +5,7 @@ import 'package:get/get.dart';
 import 'package:koto_blue_sharks/app/data/api/media/media_provider.dart';
 import 'package:koto_blue_sharks/app/views/views/custom_image_view.dart';
 import 'package:koto_blue_sharks/app/views/views/custom_text_view.dart';
-import 'package:koto_blue_sharks/utils/app_color.dart';
+import 'package:koto_blue_sharks/presentation/mypage/mypage.screen.dart';
 import 'package:koto_blue_sharks/utils/match+extensions.dart';
 
 import '../member.dart';
@@ -27,8 +27,8 @@ class PlayerCardView extends GetView {
           "${player.custom_field?.profile_image_1?.first}"),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(
-              child: CircularProgressIndicator()); // Loading indicator
+          return Center(
+              child: shimmer()); // Loading indicator
         } else if (snapshot.hasError) {
           return const Center(child: Text('Error loading data'));
         } else {
@@ -94,8 +94,8 @@ class PlayerCardView extends GetView {
                         maxLines: 2,
                         softWrap: true,
                         style: TextStyle(
-                          fontSize: 14.sp,
-                          fontWeight: FontWeight.w700,
+                          fontSize: 12.sp,
+                          fontWeight: FontWeight.w400,
                           color: Colors.white,
                           overflow: TextOverflow.ellipsis,
                         ),

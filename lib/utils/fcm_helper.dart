@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:awesome_notifications/awesome_notifications.dart';
@@ -7,9 +8,11 @@ import 'package:flutter/material.dart';
 import 'package:koto_blue_sharks/app/data/api/auth/AuthToken.dart';
 import 'package:koto_blue_sharks/app/data/api/auth/auth_provider.dart';
 import 'package:koto_blue_sharks/firebase_options.dart';
+import 'package:koto_blue_sharks/utils/Constant.dart';
 import 'package:koto_blue_sharks/utils/app_color.dart';
 import 'package:koto_blue_sharks/utils/awesome_notifications_helper.dart';
 import 'package:koto_blue_sharks/utils/my_shared_pref.dart';
+import 'package:logger/logger.dart';
 
 class FcmHelper {
   // prevent making instance
@@ -27,15 +30,15 @@ class FcmHelper {
           options: DefaultFirebaseOptions.currentPlatform,
         );
       // } else {
-        AwesomeNotifications().initialize("resource://drawable/notif", [
-          NotificationChannel(
-              channelGroupKey: 'general_channel_group',
-              channelKey: 'general_channel',
-              channelName: 'General Notifications',
-              channelDescription: 'Notification channel for general notifications',
-          )
-        ],
-        );
+      //   AwesomeNotifications().initialize("resource://drawable/notif", [
+      //     NotificationChannel(
+      //         channelGroupKey: 'general_channel_group',
+      //         channelKey: 'general_channel',
+      //         channelName: 'General Notifications',
+      //         channelDescription: 'Notification channel for general notifications',
+      //     )
+      //   ],
+      //   );
       // }
         await AwesomeNotificationsHelper.init();
       await Future.delayed(Duration(seconds: 1));
@@ -117,9 +120,9 @@ class FcmHelper {
       print("find toke $authToken");
 
       if (authToken == null) {
-        messaging.unsubscribeFromTopic("news");
+        messaging.unsubscribeFromTopic(Constants.topic);
 
-        messaging.subscribeToTopic("news").then((_) {
+        messaging.subscribeToTopic(Constants.topic).then((_) {
           print('Subscribed to topic');
         });
       }
@@ -144,7 +147,31 @@ class FcmHelper {
 
   //handle fcm notification when app is open
   static Future<void> _fcmForegroundHandler(RemoteMessage message) async {
-    print('Handling FCM Notification in Foreground: ${message.notification?.title}');
+    // print('Handling FCM Notification in Foreground: ${message.data}');
+    // print('Handling FCM Notification in Foreground: ${message.notification}');
+    // print('Handling FCM Notification in Foreground: ${message.from}');
+
+    final Map<String, dynamic> jsonMapped = {
+      "notification": message.notification != null
+          ? {
+        "title": message.notification?.title,
+        "body": message.notification?.body,
+        "image": message.notification?.android?.imageUrl,
+      }
+          : null,
+      "data": message.data,
+      "from": message.from,
+      "messageId": message.messageId,
+      "collapseKey": message.collapseKey,
+      "sentTime": message.sentTime?.toIso8601String(),
+    };
+
+    // Use JsonEncoder for a pretty-printed JSON string
+    JsonEncoder encoder = JsonEncoder.withIndent('  ');
+
+    // print or debugPrint your object
+    print("debugg");
+    print(encoder.convert(jsonMapped));
 
     if (Platform.isAndroid) {
       AwesomeNotificationsHelper.showNotification(
@@ -152,9 +179,11 @@ class FcmHelper {
         title: message.notification?.title ?? 'Tittle',
         body: message.notification?.body ?? 'Body',
         payload: message.data
-            .cast(), // pass payload to the notification card so you can use it (when user click on notification)
+            .cast(),
+        largeIcon: Platform.isAndroid ? message.notification?.android?.imageUrl : message.notification?.apple?.imageUrl
       );
     }
+
   }
 }
 

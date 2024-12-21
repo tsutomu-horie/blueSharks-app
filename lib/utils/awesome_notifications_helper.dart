@@ -43,18 +43,18 @@ class AwesomeNotificationsHelper {
     await awesomeNotifications.initialize(
         'resource://mipmap/notif_icon',
         [
-          NotificationChannel(
-            channelGroupKey: NotificationChannels.generalChannelGroupKey,
-            channelKey: NotificationChannels.generalChannelKey,
-            channelName: NotificationChannels.generalChannelName,
-            groupKey: NotificationChannels.generalGroupKey,
-            channelDescription: NotificationChannels.generalChannelDescription,
-            defaultColor: Colors.green,
-            ledColor: Colors.white,
-            channelShowBadge: true,
-            playSound: true,
-            importance: NotificationImportance.Max,
-          ),
+          // NotificationChannel(
+          //   channelGroupKey: NotificationChannels.generalChannelGroupKey,
+          //   channelKey: NotificationChannels.generalChannelKey,
+          //   channelName: NotificationChannels.generalChannelName,
+          //   groupKey: NotificationChannels.generalGroupKey,
+          //   channelDescription: NotificationChannels.generalChannelDescription,
+          //   defaultColor: Colors.green,
+          //   ledColor: Colors.white,
+          //   channelShowBadge: true,
+          //   playSound: true,
+          //   importance: NotificationImportance.Max,
+          // ),
           NotificationChannel(
               channelGroupKey: NotificationChannels.chatChannelGroupKey,
               channelKey: NotificationChannels.chatChannelKey,
@@ -69,10 +69,10 @@ class AwesomeNotificationsHelper {
         ],
 
         channelGroups: [
-          NotificationChannelGroup(
-            channelGroupKey: NotificationChannels.generalChannelGroupKey,
-            channelGroupName: NotificationChannels.generalChannelGroupName,
-          ),
+          // NotificationChannelGroup(
+          //   channelGroupKey: NotificationChannels.generalChannelGroupKey,
+          //   channelGroupName: NotificationChannels.generalChannelGroupName,
+          // ),
           NotificationChannelGroup(
             channelGroupKey: NotificationChannels.chatChannelGroupKey,
             channelGroupName: NotificationChannels.chatChannelGroupName,
@@ -97,14 +97,15 @@ class AwesomeNotificationsHelper {
       if (!isAllowed) {
         awesomeNotifications.requestPermissionToSendNotifications();
       } else {
+        print("show large ${largeIcon}");
         // u can show notification
         awesomeNotifications.createNotification(
           content: NotificationContent(
             id: id,
             title: title,
             body: body,
-            groupKey: groupKey ?? NotificationChannels.generalGroupKey,
-            channelKey: channelKey ?? NotificationChannels.generalChannelKey,
+            groupKey: NotificationChannels.chatGroupKey,
+            channelKey: NotificationChannels.chatChannelKey,
             showWhen: true, // Hide/show the time elapsed since notification was displayed
             payload: payload, // data of the notification (it will be used when user clicks on notification)
             notificationLayout: notificationLayout ?? NotificationLayout.Default, // notification shape (message,media player..etc) For ex => NotificationLayout.Messaging
@@ -172,17 +173,17 @@ class NotificationController {
 class NotificationChannels {
   // chat channel (for messages only)
   static String get chatChannelKey => "chat_channel";
-  static String get chatChannelName => "Chat channel";
-  static String get chatGroupKey => "chat group key";
+  static String get chatChannelName => "Bluesharks Notification";
+  static String get chatGroupKey => "Bluesharks Notification Group";
   static String get chatChannelGroupKey => "chat_channel_group";
-  static String get chatChannelGroupName => "Chat notifications channels";
-  static String get chatChannelDescription => "Chat notifications channels";
+  static String get chatChannelGroupName => "Bluesharks channels";
+  static String get chatChannelDescription => "This cannel will shown update about bluesharks news";
 
   // general channel (for all other notifications)
-  static String get generalChannelKey => "general_channel";
-  static String get generalGroupKey => "general group key";
-  static String get generalChannelGroupKey => "general_channel_group";
-  static String get generalChannelGroupName => "general notifications channel";
-  static String get generalChannelName => "general notifications channels";
-  static String get generalChannelDescription => "Notification channel for general notifications";
+  // static String get generalChannelKey => "general_channel";
+  // static String get generalGroupKey => "general group key";
+  // static String get generalChannelGroupKey => "general_channel_group";
+  // static String get generalChannelGroupName => "general notifications channel";
+  // static String get generalChannelName => "general notifications channels";
+  // static String get generalChannelDescription => "Notification channel for general notifications";
 }

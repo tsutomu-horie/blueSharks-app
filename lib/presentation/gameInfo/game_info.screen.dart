@@ -26,9 +26,9 @@ class GameInfoScreen extends GetView<GameInfoController> {
         backgroundColor: BackgroundColor.primary,
         body: RefreshIndicator(
           onRefresh: () async {
-            int currentYear = DateTime.now().year; // Get the current year
-            int nextYear = currentYear + 1; // Calculate the next year
-            gameInfoController.seasonSlug.value = 'season_${currentYear}_${nextYear}'; // Construct the slug for the season
+            // int currentYear = DateTime.now().year; // Get the current year
+            // int nextYear = currentYear + 1; // Calculate the next year
+            // gameInfoController.seasonSlug.value = 'season_${currentYear}_${nextYear}'; // Construct the slug for the season
 
             gameInfoController.fetchMatchResult();
           },

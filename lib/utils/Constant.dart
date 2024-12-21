@@ -1,9 +1,13 @@
 class Constants {
-  static const baseUrl = 'https://blue-sharks.jp/wp-json/wp/v2/';
-  // static const baseUrl = 'https://blue-sharks.donati.jp/wp-json/wp/v2/';
-  // static const baseUrlAuthApi = 'https://app.blue-sharks.jp/api/mobile/v1/';
-  static const baseUrlAuthApi = 'https://dev-blueshark.tmdsite.my.id/api/mobile/v1/';
-  static const baseUrlWeb = 'https://app.blue-sharks.jp/api/';
+
+  static const isRelease = true;
+
+  static const baseUrl = isRelease ? 'https://blue-sharks.jp/wp-json/wp/v2/' : 'https://blue-sharks.donati.jp/wp-json/wp/v2/';
+  static const baseUrlAuthApi = isRelease ? 'https://app.blue-sharks.jp/api/mobile/v1/' : 'https://dev-blueshark.tmdsite.my.id/api/mobile/v1/';
+  static const topic = isRelease ? 'news_prod' : 'news_dev';
+
+
+  static const baseUrlWeb = isRelease ? 'https://app.blue-sharks.jp/api/' : 'https://dev-blueshark.tmdsite.my.id/api';
   static const teamName = 'シャークス';
   static const videoUrl ='https://www.youtube.com/watch?v=JJqanLQ3y0Q';
 
@@ -20,11 +24,11 @@ class Constants {
   static const stadiumDescription = '〒136-0081 東京都江東区夢の島1-1-2\ntel：03-3522-0846';
 
 
-  static const ticketsUrl = 'https://blue-sharks.jp/tickets/';
-  static const fanClubUrl = 'https://blue-sharks.jp/fanclub/';
-  static const shopUrl = 'https://bluesharks.base.shop/';
+  static const ticketsUrl = isRelease ? 'https://blue-sharks.jp/tickets/' : 'https://blue-sharks.donati.jp/tickets/';
+  static const fanClubUrl = isRelease ? 'https://blue-sharks.jp/fanclub/' : 'https://blue-sharks.donati.jp/fanclub/';
+  static const shopUrl = isRelease ? 'https://bluesharks.base.shop/' : 'https://bluesharks.base.shop/';
   static const instagramUrl = 'https://www.instagram.com/shimz.bluesharks/';
   static const xUrl = 'https://x.com/Bluesharks_2020';
-  static const partnerUrl = 'https://blue-sharks.jp/partner/';
-  static const teamUrl = 'https://blue-sharks.jp/team/';
+  static const partnerUrl = isRelease ? 'https://blue-sharks.jp/partner/' : 'https://blue-sharks.donati.jp/partner/';
+  static const teamUrl = isRelease ? 'https://blue-sharks.jp/team/' : 'https://blue-sharks.donati.jp/team/';
 }
