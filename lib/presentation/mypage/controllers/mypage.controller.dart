@@ -35,16 +35,20 @@ class MypageController extends FanClubConfirmationController {
   }
 
   void logout() async {
-    final auth = AuthToken();
-    await auth.deleteToken();
 
-    isLogin.value = false;
-    profileData.value = null;
+     await apiProvider.logoutAccount();
 
-    onInit();
+     final auth = AuthToken();
+     await auth.deleteToken();
 
-    final mainController = Get.find<MainController>();
-    mainController.refreshUnreadMessageCount();
+     isLogin.value = false;
+     profileData.value = null;
+
+      onInit();
+
+      final mainController = Get.find<MainController>();
+      mainController.refreshUnreadMessageCount();
+
   }
 
   void getToken() async {

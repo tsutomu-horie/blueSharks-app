@@ -123,7 +123,7 @@ class FcmHelper {
         messaging.unsubscribeFromTopic(Constants.topic);
 
         messaging.subscribeToTopic(Constants.topic).then((_) {
-          print('Subscribed to topic');
+          print('Subscribed to topic ${Constants.topic}');
         });
       }
 

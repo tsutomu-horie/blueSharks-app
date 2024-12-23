@@ -41,7 +41,9 @@ class SetWalpaperListView extends GetView {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: groupedPlayers.map((group) {
-              return Column(
+              bool hasPlayers = group.playerGroups.any((playerGroup) => playerGroup.players.isNotEmpty);
+
+              return hasPlayers ? Column(
                 key: memberController.groupKeys[group.categoryTitle],
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -67,7 +69,7 @@ class SetWalpaperListView extends GetView {
                       final MemberGroup playerGroup = group.playerGroups[index];
 
                       // Show the position title (e.g. Prop, Scrumhalf, etc.)
-                      return Column(
+                      return playerGroup.players.isNotEmpty  ? Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Container(
@@ -75,7 +77,7 @@ class SetWalpaperListView extends GetView {
                             color: BrandColor.main,
                             padding: EdgeInsets.symmetric(
                                 vertical: 12.h, horizontal: 16.w),
-                            child: Text(
+                            child: CustomTextView(
                               playerGroup.title.toLowerCase() == "number8" ? "No. 8" : playerGroup.title.capitalizeText(),
                               style: TextStyle(
                                 fontSize: 16.sp,
@@ -126,11 +128,11 @@ class SetWalpaperListView extends GetView {
                             ),
                           ),
                         ],
-                      );
+                      ) : const SizedBox.shrink();
                     },
                   ),
                 ],
-              );
+              ) : const SizedBox.shrink();
             }).toList(),
           );
         }),

@@ -128,10 +128,6 @@ class WallpaperSetPlayerScreen extends GetView<WallpaperSetPlayerController> {
                 ],
               ),
             ),
-
-            // The Filter Header Delegate, pinned to the top of the scroll view
-
-
           ],
         ),
       ),
