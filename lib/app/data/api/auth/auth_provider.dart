@@ -362,4 +362,33 @@ class AuthProvider extends GetConnect {
     return response;
   }
 
+  Future<Response> logoutAccount() async {
+    httpClient.baseUrl = Constants.baseUrlAuthApi;
+
+    final url = Uri.parse('logout');
+
+    final auth = AuthToken();
+    final token = await auth.getAccessToken();
+    print("load ${httpClient.baseUrl}${url.toString()} with $token");
+
+    final headers = {
+      'Authorization': 'Bearer $token',
+      'Content-Type': 'application/json', // Optional, depending on the API
+    };
+
+    final response = await post(
+        url.toString(), null, headers: headers // Send the body in the request
+    );
+
+    print("Login notifications , ${response.body}");
+
+    if (response.hasError) {
+      throw Exception('Failed to send fcm token: ${response.statusText}');
+    }
+
+    print("Login successful, received data: ${response.body}");
+
+    return response;
+  }
+
 }
