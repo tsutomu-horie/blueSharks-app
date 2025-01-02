@@ -1,6 +1,5 @@
 import 'package:get/get.dart';
-
-import '../../../../presentation/NotificationList/controllers/notification_list.controller.dart';
+import 'package:koto_blue_sharks/presentation/notification/notification_list/controllers/notification_list.controller.dart';
 
 class NotificationListControllerBinding extends Bindings {
   @override

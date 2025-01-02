@@ -16,7 +16,6 @@ import 'package:koto_blue_sharks/app/views/views/match/views/match_item_view.dar
 import 'package:koto_blue_sharks/app/views/views/other/views/video_thumbnail_view.dart';
 import 'package:koto_blue_sharks/app/views/views/topic/views/topic_item_view.dart';
 import 'package:koto_blue_sharks/generated/locales.g.dart';
-import 'package:koto_blue_sharks/presentation/MatchDetail/match_detail.screen.dart';
 import 'package:koto_blue_sharks/presentation/main/controllers/main.controller.dart';
 import 'package:koto_blue_sharks/utils/app_color.dart';
 import 'package:koto_blue_sharks/utils/date_formatter.dart';
@@ -24,6 +23,8 @@ import 'package:koto_blue_sharks/utils/map_id_to_categories.dart';
 import 'package:koto_blue_sharks/utils/match+extensions.dart';
 import 'package:koto_blue_sharks/utils/utils.dart';
 import 'package:shimmer/shimmer.dart';
+import 'package:koto_blue_sharks/presentation/screens.dart';
+
 
 import 'controllers/home.controller.dart';
 

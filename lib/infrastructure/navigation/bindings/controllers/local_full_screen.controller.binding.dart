@@ -1,12 +1,11 @@
 import 'package:get/get.dart';
+import 'package:koto_blue_sharks/presentation/stadium/controllers/stadium.controller.dart';
 
-import '../../../../presentation/LocalFullScreen/controllers/local_full_screen.controller.dart';
-
-class LocalFullScreenControllerBinding extends Bindings {
+class StadiumImageFullScreenControllerBinding extends Bindings {
   @override
   void dependencies() {
-    Get.lazyPut<LocalFullScreenController>(
-      () => LocalFullScreenController(),
+    Get.lazyPut<StadiumController>(
+      () => StadiumController(),
     );
   }
 }

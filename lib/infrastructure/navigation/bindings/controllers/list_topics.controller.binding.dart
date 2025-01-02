@@ -1,12 +1,11 @@
 import 'package:get/get.dart';
+import 'package:koto_blue_sharks/presentation/menu/info/list_info/controllers/list_info.dart';
 
-import '../../../../presentation/ListTopics/controllers/list_topics.controller.dart';
-
-class ListTopicsControllerBinding extends Bindings {
+class TopicListControllerBinding extends Bindings {
   @override
   void dependencies() {
-    Get.lazyPut<ListTopicsController>(
-      () => ListTopicsController(),
+    Get.lazyPut<TopicListController>(
+      () => TopicListController(),
     );
   }
 }

@@ -2,13 +2,12 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:get/get.dart';
 import 'package:koto_blue_sharks/app/data/api/auth/AuthToken.dart';
 import 'package:koto_blue_sharks/app/data/models/info/post.dart';
-import 'package:koto_blue_sharks/presentation/NotificationList/notification_list.screen.dart';
-import 'package:koto_blue_sharks/presentation/login/login.screen.dart';
 import 'package:koto_blue_sharks/utils/Constant.dart';
-import 'package:koto_blue_sharks/utils/my_shared_pref.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../app/data/api/auth/auth_provider.dart';
+import 'package:koto_blue_sharks/presentation/screens.dart';
+
 
 class MainController extends GetxController {
   var selectedIndex = 0.obs;

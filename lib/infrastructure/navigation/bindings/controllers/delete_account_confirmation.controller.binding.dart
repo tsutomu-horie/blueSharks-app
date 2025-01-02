@@ -1,6 +1,5 @@
 import 'package:get/get.dart';
-
-import '../../../../presentation/DeleteAccountConfirmation/controllers/delete_account_confirmation.controller.dart';
+import 'package:koto_blue_sharks/presentation/profile/delete_account_confirmation/controllers/delete_account_confirmation.controller.dart';
 
 class DeleteAccountConfirmationControllerBinding extends Bindings {
   @override

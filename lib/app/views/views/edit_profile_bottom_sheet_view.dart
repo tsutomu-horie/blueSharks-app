@@ -6,7 +6,7 @@ import 'package:get/get.dart';
 import 'package:koto_blue_sharks/app/views/views/custom_switch_view.dart';
 import 'package:koto_blue_sharks/app/views/views/custom_text_view.dart';
 import 'package:koto_blue_sharks/generated/locales.g.dart';
-import 'package:koto_blue_sharks/presentation/FanClubConfirmation/controllers/fan_club_confirmation.controller.dart';
+import 'package:koto_blue_sharks/presentation/register/fan_club_confirmation/controllers/fan_club_confirmation.controller.dart';
 import 'package:koto_blue_sharks/presentation/screens.dart';
 import 'package:koto_blue_sharks/utils/app_color.dart';
 import 'package:lottie/lottie.dart';
@@ -183,7 +183,7 @@ void editProfileBottomSheet(
                                 OutlinedButton(
                                   onPressed: () {
                                     print("button set wallpaper ${fanclubController.playerLinkController.value}");
-                                    Get.to(() => WallpaperSetPlayerScreen((value, link) {
+                                    Get.to(() => UpdateWallpaperScreen((value, link) {
                                       print("valuenya ${fanclubController.playerLinkController.value}");
                                       fanclubController.playerNameController.value = value;
                                       fanclubController.playerLinkController.value = link;

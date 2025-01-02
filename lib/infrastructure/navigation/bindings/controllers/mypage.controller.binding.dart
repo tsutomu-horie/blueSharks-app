@@ -1,6 +1,6 @@
 import 'package:get/get.dart';
 
-import '../../../../presentation/mypage/controllers/mypage.controller.dart';
+import '../../../../presentation/profile/mypage/controllers/mypage.controller.dart';
 
 class MypageControllerBinding extends Bindings {
   @override

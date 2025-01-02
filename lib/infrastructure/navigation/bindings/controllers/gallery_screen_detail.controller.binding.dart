@@ -1,12 +1,11 @@
 import 'package:get/get.dart';
-
-import '../../../../presentation/GalleryScreenDetail/controllers/gallery_screen_detail.controller.dart';
+import 'package:koto_blue_sharks/presentation/menu/gallery/gallery_detail/controllers/gallery_detail.controller.dart';
 
 class GalleryScreenDetailControllerBinding extends Bindings {
   @override
   void dependencies() {
-    Get.lazyPut<GalleryScreenDetailController>(
-      () => GalleryScreenDetailController(),
+    Get.lazyPut<GalleryDetailController>(
+      () => GalleryDetailController(),
     );
   }
 }

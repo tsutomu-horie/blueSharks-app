@@ -59,7 +59,7 @@ class _MainScreenState extends State<MainScreen> {
         controller.selectedIndex.value =
         1;
       }), // Home page
-      InfoScreen((value) {
+      MenuScreen((value) {
         selectTopic(value);
       }),
       const MypageScreen(),
@@ -229,7 +229,7 @@ class _MainScreenState extends State<MainScreen> {
           ),
           body: controller.selectedTopicId.value == null
               ? _pages[controller.selectedIndex.value]
-              : DetailInfoScreen(() {
+              : InfoDetailScreen(() {
             selectTopic(null);
           }, controller.selectedPost.value),
           // Display the selected page

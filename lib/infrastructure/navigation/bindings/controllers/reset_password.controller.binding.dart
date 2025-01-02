@@ -1,6 +1,6 @@
 import 'package:get/get.dart';
-import 'package:koto_blue_sharks/presentation/reset_password/controllers/reset_password.controller.dart';
-import 'package:koto_blue_sharks/presentation/reset_password/reset_password.screen.dart';
+import 'package:koto_blue_sharks/presentation/register/reset_password/controllers/reset_password.controller.dart';
+import 'package:koto_blue_sharks/presentation/register/reset_password/reset_password.screen.dart';
 
 
 class ResetPasswordControllerBinding extends Bindings {

@@ -1,12 +1,11 @@
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../../../../presentation/info/controllers/info.controller.dart';
-
-class InfoControllerBinding extends Bindings {
+class MenuControllerBinding extends Bindings {
   @override
   void dependencies() {
-    Get.lazyPut<InfoController>(
-      () => InfoController(),
+    Get.lazyPut<MenuController>(
+      () => MenuController(),
     );
   }
 }

@@ -2,10 +2,6 @@ import 'package:flutter/material.dart';
 
 import 'package:get/get.dart';
 
-import 'package:koto_blue_sharks/app/data/models/media/media.dart';
-import 'package:koto_blue_sharks/app/services/AnalyticsService.dart';
-import 'package:koto_blue_sharks/presentation/register/register_member_fanclub/register_member_fanclub.screen.dart';
-
 import '../../config.dart';
 import '../../presentation/screens.dart';
 import 'bindings/controllers/controllers_bindings.dart';
@@ -52,8 +48,8 @@ class Nav {
     ),
     GetPage(
       name: Routes.INFO,
-      page: () => InfoScreen((value) {}),
-      binding: InfoControllerBinding(),
+      page: () => MenuScreen((value) {}),
+      binding: MenuControllerBinding(),
     ),
     GetPage(
       name: Routes.MYPAGE,
@@ -72,20 +68,20 @@ class Nav {
     ),
     GetPage(
       name: Routes.LIST_TOPICS,
-      page: () => ListTopicsScreen(
+      page: () => TopicListScreen(
         onOpenDetail: (value) {},
       ),
-      binding: ListTopicsControllerBinding(),
+      binding: TopicListControllerBinding(),
     ),
     GetPage(
       name: Routes.DETAIL_INFO,
-      page: () => DetailInfoScreen(() {}, null),
-      binding: DetailInfoControllerBinding(),
+      page: () => InfoDetailScreen(() {}, null),
+      binding: InfoDetailControllerBinding(),
     ),
     GetPage(
       name: Routes.GAME_INFO,
-      page: () => const GameInfoScreen(),
-      binding: GameInfoControllerBinding(),
+      page: () => const MatchListScreen(),
+      binding: MatchListControllerBinding(),
     ),
     GetPage(
       name: Routes.MATCH_DETAIL,
@@ -97,18 +93,13 @@ class Nav {
     ),
     GetPage(
       name: Routes.MEMBER,
-      page: () => const MemberScreen(null),
-      binding: MemberControllerBinding(),
+      page: () => const PlayerListScreen(null),
+      binding: PlayerListControllerBinding(),
     ),
     GetPage(
       name: Routes.PLAYER_DETAIL,
-      page: () => const MemberDetailScreen(null),
+      page: () => const PlayerDetailScreen(null),
       binding: PlayerDetailControllerBinding(),
-    ),
-    GetPage(
-      name: Routes.TEAM,
-      page: () => const TeamScreen(),
-      binding: TeamControllerBinding(),
     ),
     GetPage(
       name: Routes.WEBVIEW,
@@ -116,13 +107,8 @@ class Nav {
       binding: WebviewControllerBinding(),
     ),
     GetPage(
-      name: Routes.FANCLUB,
-      page: () => const FanclubScreen(),
-      binding: FanclubControllerBinding(),
-    ),
-    GetPage(
       name: Routes.WALLPAPER_SET_PLAYER,
-      page: () => const WallpaperSetPlayerScreen(null, ""),
+      page: () => const UpdateWallpaperScreen(null, ""),
       binding: WallpaperSetPlayerControllerBinding(),
     ),
     GetPage(
@@ -199,7 +185,7 @@ class Nav {
     ),
     GetPage(
       name: Routes.GALLERY_SCREEN_DETAIL,
-      page: () => const GalleryScreenDetailScreen(null, ""),
+      page: () => const GalleryDetailScreen(null, ""),
       binding: GalleryScreenDetailControllerBinding(),
     ),
     GetPage(
@@ -229,8 +215,8 @@ class Nav {
     ),
     GetPage(
       name: Routes.LOCAL_FULL_SCREEN,
-      page: () => const LocalFullScreenScreen(imageUrl: '',),
-      binding: LocalFullScreenControllerBinding(),
+      page: () => const StadiumImageFullScreen(imageUrl: '',),
+      binding: StadiumImageFullScreenControllerBinding(),
     ),
   ];
 }
