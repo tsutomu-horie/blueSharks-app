@@ -80,6 +80,7 @@ class HomeController extends GetxController {
     print("getwallpaper 1");
 
     final Map<String, dynamic>? data = await getSeasonCategoryId();
+    print("get season is $data");
     if (data != null) {
       final List<MatchResultBySeason> latestMatches =
       await getLatestPosts(data['id'], data['count']);
@@ -107,36 +108,72 @@ class HomeController extends GetxController {
     }
   }
 
-  Future<Map<String, dynamic>?> getSeasonCategoryId() async {
-    int currentYear = DateTime.now().year; // Get the current year
-    int nextYear = currentYear + 1; // Calculate the next year
-    String seasonSlug =
-        'season_${currentYear}_${nextYear}'; // Construct the slug for the season
-    int page = 1; // Start with page 1
+  Future<Map<String, dynamic>?> tryFindSeason(String seasonSlug) async {
+    int page = 1;
 
     while (true) {
       List<Category> response = await apiProvider.getMatch(page: page);
 
-      if (response.isEmpty) {
-        break; // If the page is empty, break the loop
-      }
+      if (response.isEmpty) break;
 
-      // Find the category that matches the season slug
       for (var category in response) {
         if (category.slug == seasonSlug) {
-          // Check if the slug matches
           return {
             'id': category.id,
-            'count': category.count, // Return both id and count
+            'count': category.count,
           };
         }
       }
-
-      // Increment page number to fetch the next page
       page++;
     }
+    return null;
+  }
 
-    return null; // If not found, return null
+  Future<Map<String, dynamic>?> getSeasonCategoryId() async {
+    int currentYear = DateTime.now().year;
+    int nextYear = currentYear + 1;
+
+    // Try current season first
+    String seasonSlug = 'season_${currentYear}_${nextYear}';
+    Map<String, dynamic>? result = await tryFindSeason(seasonSlug);
+
+    // If not found, try previous season
+    if (result == null) {
+      String previousSeasonSlug = 'season_${currentYear-1}_${currentYear}';
+      result = await tryFindSeason(previousSeasonSlug);
+    }
+
+    return result;
+    // int currentYear = DateTime.now().year; // Get the current year
+    // int nextYear = currentYear + 1; // Calculate the next year
+    // String seasonSlug =
+    //     'season_${currentYear}_${nextYear}'; // Construct the slug for the season
+    // int page = 1; // Start with page 1
+    //
+    // while (true) {
+    //   List<Category> response = await apiProvider.getMatch(page: page);
+    //
+    //   print("response data is ${response}");
+    //   if (response.isEmpty) {
+    //     break; // If the page is empty, break the loop
+    //   }
+    //
+    //   // Find the category that matches the season slug
+    //   for (var category in response) {
+    //     if (category.slug == seasonSlug) {
+    //       // Check if the slug matches
+    //       return {
+    //         'id': category.id,
+    //         'count': category.count, // Return both id and count
+    //       };
+    //     }
+    //   }
+    //
+    //   // Increment page number to fetch the next page
+    //   page++;
+    // }
+    //
+    // return null; // If not found, return null
   }
 
   Future<List<MatchResultBySeason>> getLatestPosts(
