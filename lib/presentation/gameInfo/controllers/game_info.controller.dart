@@ -102,32 +102,45 @@ class GameInfoController extends GetxController {
 
   Future<Map<String, dynamic>?> getSeasonCategoryId() async {
     print("get latest getSeasonCategoryId");
-    int page = 1; // Start with page 1
+    int currentYear = DateTime.now().year;
+    int nextYear = currentYear + 1;
+
+    // Try current season first
+    String currentSeasonSlug = 'season_${currentYear}_${nextYear}';
+    Map<String, dynamic>? result = await tryFindSeason(currentSeasonSlug);
+
+    // If not found, try previous season
+    if (result == null) {
+      String previousSeasonSlug = 'season_${currentYear-1}_${currentYear}';
+      seasonSlug.value = previousSeasonSlug;
+      result = await tryFindSeason(previousSeasonSlug);
+    }
+
+    return result;
+  }
+
+  Future<Map<String, dynamic>?> tryFindSeason(String targetSlug) async {
+    int page = 1;
 
     while (true) {
       List<Category> response = await apiProvider.getMatch(page: page);
 
-      if (response.isEmpty) {
-        break; // If the page is empty, break the loop
-      }
+      if (response.isEmpty) break;
 
       matchCategory.value = response;
 
       for (var category in response) {
-        if (category.slug == seasonSlug.value) {
+        if (category.slug == targetSlug) {
           selectedYear.value = category.name;
           return {
             'id': category.id,
-            'count': category.count, // Return both id and count
+            'count': category.count,
           };
         }
       }
-
-      // Increment page number to fetch the next page
       page++;
     }
-
-    return null; // If not found, return null
+    return null;
   }
 
   Future<List<MatchResultBySeason>> getLatestPosts(
