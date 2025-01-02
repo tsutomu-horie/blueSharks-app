@@ -3,7 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:koto_blue_sharks/app/data/api/auth/AuthToken.dart';
 import 'package:koto_blue_sharks/app/data/api/auth/auth_provider.dart';
 import 'package:koto_blue_sharks/app/data/models/info/notification.dart';
-import 'package:koto_blue_sharks/app/services/AnalyticsService.dart';
+import 'package:koto_blue_sharks/app/services/analytics_service.dart';
 import 'package:koto_blue_sharks/infrastructure/navigation/routes.dart';
 import 'package:koto_blue_sharks/presentation/notification/notification_detail/notification_detail.screen.dart';
 

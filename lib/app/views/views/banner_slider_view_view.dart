@@ -93,7 +93,7 @@ class _BannerSliderViewState extends State<BannerSliderView> {
                       child: CachedNetworkImage(
                         imageUrl: imageUrl,
                         fit: BoxFit.cover,
-                        placeholder: (context, url) => SizedBox(width: 50.w, height: 50.h, child: CircularProgressIndicator()),
+                        placeholder: (context, url) => const SizedBox(),
                         errorWidget: (context, url, error) => Icon(Icons.error),
                       ),
                     ),
