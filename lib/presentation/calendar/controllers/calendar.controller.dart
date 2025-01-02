@@ -3,7 +3,7 @@ import 'package:get/get.dart';
 import 'package:googleapis/driveactivity/v2.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
-import 'package:koto_blue_sharks/app/services/AnalyticsService.dart';
+import 'package:koto_blue_sharks/app/services/analytics_service.dart';
 import 'package:koto_blue_sharks/generated/locales.g.dart';
 import 'package:koto_blue_sharks/infrastructure/navigation/routes.dart';
 import 'package:syncfusion_flutter_calendar/calendar.dart';
