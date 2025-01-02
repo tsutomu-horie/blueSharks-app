@@ -1,6 +1,5 @@
 import 'package:get/get.dart';
-
-import '../../../../presentation/forgotPassword/controllers/forgot_password.controller.dart';
+import 'package:koto_blue_sharks/presentation/register/forgot_password/controllers/forgot_password.controller.dart';
 
 class ForgotPasswordControllerBinding extends Bindings {
   @override

@@ -4,19 +4,16 @@ import 'package:flutter_svg/flutter_svg.dart';
 
 import 'package:get/get.dart';
 import 'package:koto_blue_sharks/app/data/models/member/member.dart';
-import 'package:koto_blue_sharks/app/data/models/member/views/player_card_view.dart';
-import 'package:koto_blue_sharks/app/views/views/custom_image_view.dart';
+import 'package:koto_blue_sharks/app/views/views/member/views/player_card_view.dart';
 import 'package:koto_blue_sharks/app/views/views/custom_text_view.dart';
 import 'package:koto_blue_sharks/generated/locales.g.dart';
-import 'package:koto_blue_sharks/presentation/member/controllers/member.controller.dart';
-import 'package:koto_blue_sharks/presentation/mypage/mypage.screen.dart';
-import 'package:koto_blue_sharks/presentation/register/register_email/register_email.screen.dart';
+import 'package:koto_blue_sharks/presentation/menu/player/player_list/controllers/player_list.controller.dart';
+import 'package:koto_blue_sharks/presentation/profile/mypage/mypage.screen.dart';
 import 'package:koto_blue_sharks/utils/app_color.dart';
-import 'package:koto_blue_sharks/utils/match+extensions.dart';
 import 'package:shimmer/shimmer.dart';
 
 class MemberListView extends StatelessWidget {
-  final MemberController memberController;
+  final PlayerListController memberController;
   final bool isSetWallpaper;
   final Function(String, String)? onSet;
   final ScrollController scrollController;
@@ -235,7 +232,7 @@ class MemberListView extends StatelessWidget {
   }
 
   void showPlayerFilterBottomSheet(
-      MemberController memberController, BuildContext context) {
+      PlayerListController memberController, BuildContext context) {
     showModalBottomSheet(
       context: context,
       shape: RoundedRectangleBorder(

@@ -1,6 +1,5 @@
 import 'package:get/get.dart';
-
-import '../../../../presentation/gallery/controllers/gallery.controller.dart';
+import 'package:koto_blue_sharks/presentation/menu/gallery/gallery_list/controllers/gallery.controller.dart';
 
 class GalleryControllerBinding extends Bindings {
   @override

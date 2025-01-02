@@ -1,12 +1,11 @@
 import 'package:get/get.dart';
+import 'package:koto_blue_sharks/presentation/menu/info/detail_info/controllers/detail_info.controller.dart';
 
-import '../../../../presentation/detailInfo/controllers/detail_info.controller.dart';
-
-class DetailInfoControllerBinding extends Bindings {
+class InfoDetailControllerBinding extends Bindings {
   @override
   void dependencies() {
-    Get.lazyPut<DetailInfoController>(
-      () => DetailInfoController(),
+    Get.lazyPut<InfoDetailController>(
+      () => InfoDetailController(),
     );
   }
 }

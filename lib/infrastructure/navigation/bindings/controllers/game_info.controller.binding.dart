@@ -1,12 +1,11 @@
 import 'package:get/get.dart';
+import 'package:koto_blue_sharks/presentation/menu/match/match_list/controllers/match_list_screen.dart';
 
-import '../../../../presentation/gameInfo/controllers/game_info.controller.dart';
-
-class GameInfoControllerBinding extends Bindings {
+class MatchListControllerBinding extends Bindings {
   @override
   void dependencies() {
-    Get.lazyPut<GameInfoController>(
-      () => GameInfoController(),
+    Get.lazyPut<MatchListController>(
+      () => MatchListController(),
     );
   }
 }

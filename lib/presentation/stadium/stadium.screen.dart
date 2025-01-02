@@ -9,7 +9,7 @@ import 'package:koto_blue_sharks/app/views/views/custom_image_view.dart';
 import 'package:koto_blue_sharks/app/views/views/custom_text_view.dart';
 import 'package:koto_blue_sharks/app/views/views/default_header_title_view.dart';
 import 'package:koto_blue_sharks/generated/locales.g.dart';
-import 'package:koto_blue_sharks/presentation/LocalFullScreen/local_full_screen.screen.dart';
+import 'package:koto_blue_sharks/presentation/screens.dart';
 import 'package:koto_blue_sharks/utils/Constant.dart';
 import 'package:koto_blue_sharks/utils/app_color.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -671,6 +671,6 @@ class StadiumScreen extends GetView<StadiumController> {
     //   throw 'Could not launch $googleMapsUrl';
     // }
     
-    Get.to(() => LocalFullScreenScreen(imageUrl: 'assets/images/stadiumImage.jpg'));
+    Get.to(() => const StadiumImageFullScreen(imageUrl: 'assets/images/stadiumImage.jpg'));
   }
 }

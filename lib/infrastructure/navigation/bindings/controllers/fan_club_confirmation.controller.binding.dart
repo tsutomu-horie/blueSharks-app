@@ -1,6 +1,5 @@
 import 'package:get/get.dart';
-
-import '../../../../presentation/FanClubConfirmation/controllers/fan_club_confirmation.controller.dart';
+import 'package:koto_blue_sharks/presentation/register/fan_club_confirmation/controllers/fan_club_confirmation.controller.dart';
 
 class FanClubConfirmationControllerBinding extends Bindings {
   @override

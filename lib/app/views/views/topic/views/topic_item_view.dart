@@ -6,10 +6,10 @@ import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:koto_blue_sharks/app/views/views/custom_image_view.dart';
 import 'package:koto_blue_sharks/app/views/views/custom_text_view.dart';
-import 'package:koto_blue_sharks/presentation/detailInfo/detail_info.screen.dart';
-import 'package:koto_blue_sharks/presentation/mypage/mypage.screen.dart';
-import 'package:koto_blue_sharks/utils/Constant.dart';
+import 'package:koto_blue_sharks/presentation/profile/mypage/mypage.screen.dart';
 import 'package:koto_blue_sharks/utils/app_color.dart';
+import 'package:koto_blue_sharks/presentation/screens.dart';
+
 
 class TopicItemView extends GetView {
   const TopicItemView(this.onTap,

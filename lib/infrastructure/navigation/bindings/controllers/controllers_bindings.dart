@@ -3,8 +3,7 @@ export 'package:koto_blue_sharks/infrastructure/navigation/bindings/controllers/
 export 'package:koto_blue_sharks/infrastructure/navigation/bindings/controllers/detail_info.controller.binding.dart'; 
 export 'package:koto_blue_sharks/infrastructure/navigation/bindings/controllers/edit_password.controller.binding.dart'; 
 export 'package:koto_blue_sharks/infrastructure/navigation/bindings/controllers/fan_club_confirmation.controller.binding.dart'; 
-export 'package:koto_blue_sharks/infrastructure/navigation/bindings/controllers/fanclub.controller.binding.dart'; 
-export 'package:koto_blue_sharks/infrastructure/navigation/bindings/controllers/forgot_password.controller.binding.dart'; 
+export 'package:koto_blue_sharks/infrastructure/navigation/bindings/controllers/forgot_password.controller.binding.dart';
 export 'package:koto_blue_sharks/infrastructure/navigation/bindings/controllers/forgot_password_home.controller.binding.dart'; 
 export 'package:koto_blue_sharks/infrastructure/navigation/bindings/controllers/gallery.controller.binding.dart'; 
 export 'package:koto_blue_sharks/infrastructure/navigation/bindings/controllers/gallery_screen_detail.controller.binding.dart'; 
@@ -29,7 +28,6 @@ export 'package:koto_blue_sharks/infrastructure/navigation/bindings/controllers/
 export 'package:koto_blue_sharks/infrastructure/navigation/bindings/controllers/reset_password.controller.binding.dart';
 export 'package:koto_blue_sharks/infrastructure/navigation/bindings/controllers/splash.controller.binding.dart'; 
 export 'package:koto_blue_sharks/infrastructure/navigation/bindings/controllers/stadium.controller.binding.dart'; 
-export 'package:koto_blue_sharks/infrastructure/navigation/bindings/controllers/team.controller.binding.dart'; 
-export 'package:koto_blue_sharks/infrastructure/navigation/bindings/controllers/wallpaper.controller.binding.dart'; 
+export 'package:koto_blue_sharks/infrastructure/navigation/bindings/controllers/wallpaper.controller.binding.dart';
 export 'package:koto_blue_sharks/infrastructure/navigation/bindings/controllers/wallpaper_set_player.controller.binding.dart'; 
 export 'package:koto_blue_sharks/infrastructure/navigation/bindings/controllers/webview.controller.binding.dart';

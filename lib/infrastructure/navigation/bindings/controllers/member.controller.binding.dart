@@ -1,12 +1,12 @@
 import 'package:get/get.dart';
+import 'package:koto_blue_sharks/presentation/menu/player/player_list/controllers/player_list.controller.dart';
 
-import '../../../../presentation/member/controllers/member.controller.dart';
 
-class MemberControllerBinding extends Bindings {
+class PlayerListControllerBinding extends Bindings {
   @override
   void dependencies() {
-    Get.lazyPut<MemberController>(
-      () => MemberController(),
+    Get.lazyPut<PlayerListController>(
+      () => PlayerListController(),
     );
   }
 }

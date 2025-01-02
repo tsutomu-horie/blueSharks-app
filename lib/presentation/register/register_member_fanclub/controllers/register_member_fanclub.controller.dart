@@ -2,14 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:koto_blue_sharks/app/data/api/auth/AuthToken.dart';
 import 'package:koto_blue_sharks/app/data/api/auth/auth_provider.dart';
-import 'package:koto_blue_sharks/app/data/api/userPreferences/wallpaper_preference.dart';
 import 'package:koto_blue_sharks/app/services/AnalyticsService.dart';
 import 'package:koto_blue_sharks/infrastructure/navigation/routes.dart';
-import 'package:koto_blue_sharks/presentation/FanClubConfirmation/fan_club_confirmation.screen.dart';
 import 'package:koto_blue_sharks/presentation/main/controllers/main.controller.dart';
-import 'package:koto_blue_sharks/presentation/main/main.screen.dart';
 import 'package:koto_blue_sharks/utils/my_shared_pref.dart';
 import 'package:koto_blue_sharks/utils/utils.dart';
+import 'package:koto_blue_sharks/presentation/screens.dart';
 
 class RegisterMemberFanclubController extends GetxController {
   final idTextFieldController = TextEditingController();

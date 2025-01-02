@@ -12,6 +12,6 @@ class WallpaperController extends GetxController {
 
   }
   void onNext() async {
-    Get.off(() => const WallpaperSetPlayerScreen(null, ""));
+    Get.off(() => const UpdateWallpaperScreen(null, ""));
   }
 }
