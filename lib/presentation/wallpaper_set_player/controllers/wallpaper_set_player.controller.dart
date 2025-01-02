@@ -18,7 +18,7 @@ class WallpaperSetPlayerController extends GetxController {
   final isLoading = true.obs;
   final Map<String, materialGlobal.GlobalKey> groupKeys = <String, materialGlobal.GlobalKey>{}.obs;
   final Map<String, int> positionPriority = {
-    'prop': 0,
+    'props': 0,
     'hooker': 1,
     'lock': 2,
     'flanker': 3,
@@ -86,7 +86,7 @@ class WallpaperSetPlayerController extends GetxController {
   }
 
   List<CategorizedPlayerGroup> processWallpaperCategories(List<WallpaperCategory> categories) {
-    const forwardRoles = ["prop", "hooker", "lock", "flanker", "number8"];
+    const forwardRoles = ['props', "hooker", "lock", "flanker", "number8"];
     const backRoles = ["scrumhalf", "standoff", "center", "wing", "fullback"];
     const staffRoles = ["staff"];
 
@@ -153,6 +153,7 @@ class WallpaperSetPlayerController extends GetxController {
       groups.sort((a, b) {
         String slugA = a.title.toLowerCase();
         String slugB = b.title.toLowerCase();
+        print("asjdka $slugA");
         return (positionPriority[slugA] ?? 999).compareTo(positionPriority[slugB] ?? 999);
       });
     }
