@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:get/get.dart';
 import 'package:koto_blue_sharks/app/data/models/media/media.dart';
 import 'package:koto_blue_sharks/utils/Constant.dart';
@@ -37,7 +35,7 @@ class GalleryProvider extends GetConnect {
 
     return (response.body['data'] as List)
         .map((json) => AlbumDetail.fromJson(json as Map<String, dynamic>))
-        .toList();;
+        .toList();
   }
 
   Future<List<WallpaperCategory>> fetchGalleryPlayer(Function onError) async {

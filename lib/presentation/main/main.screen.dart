@@ -308,7 +308,6 @@ class _MainScreenState extends State<MainScreen> {
       child: Column(
         children: [
           icon,
-          //todo:: custom font
           CustomTextView(
             text,
             style: TextStyle(fontSize: 10.sp, color: Colors.white),

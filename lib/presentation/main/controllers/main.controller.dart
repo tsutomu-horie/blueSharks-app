@@ -1,4 +1,5 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:get/get.dart';
 import 'package:koto_blue_sharks/app/data/models/info/post.dart';
 import 'package:koto_blue_sharks/app/providers/auth/auth_provider.dart';
@@ -21,14 +22,14 @@ class MainController extends GetxController {
   void onInit() {
     super.onInit();
 
-    print("saklfajs djsalk $unreadMessage");
+    debugPrint("saklfajs djsalk $unreadMessage");
 
     getUnreadNotificationCount();
     setupFirebaseMessaging();
   }
 
   void refreshUnreadMessageCount() {
-    print("refreshUnreadMessageCount $unreadMessage");
+    debugPrint("refreshUnreadMessageCount $unreadMessage");
 
     getUnreadNotificationCount(); // Call the method to refresh the count
   }
@@ -44,7 +45,7 @@ class MainController extends GetxController {
     final auth = AuthToken();
     final token = await auth.getAccessToken();
 
-    print("get unread isLogin=${token != null}");
+    debugPrint("get unread isLogin=${token != null}");
     if (token != null) {
       unreadMessage.value = await apiProvider.getUnreadNotification();
     } else {

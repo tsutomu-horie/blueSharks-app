@@ -45,7 +45,7 @@ class MatchItemView extends GetView {
   @override
   Widget build(BuildContext context) {
 
-    print("image logo ${opponentLogo} ${opponentName}");
+    debugPrint("image logo ${opponentLogo} ${opponentName}");
     return GestureDetector(
       onTap: (){
         onTap();

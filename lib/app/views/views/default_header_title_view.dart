@@ -62,7 +62,6 @@ class DefaultHeaderTitleView extends GetView {
               SizedBox(
                 width: 16.w,
               ),
-              //todo:: custom font
               Flexible(
                 child: Text(
                   description,

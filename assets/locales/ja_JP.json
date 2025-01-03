@@ -261,5 +261,10 @@
   "failed_verification_title": "会員情報が確認できませんでした",
   "failed_verification_desc": "メールアドレスとIDがファンクラブ会員情報と一致しませんでした。会員情報を変更して再度お試しください。",
   "member_authentication": "会員情報の認証",
-  "check_website_title": "ファンクラブ会員情報の確認・入会はファンクラブホームページよりお願いいたします。"
+  "check_website_title": "ファンクラブ会員情報の確認・入会はファンクラブホームページよりお願いいたします。",
+  "register_finish_title": "会員登録が完了しました.",
+  "register_finish_desc": "マイページにアクセスしてファンクラブの会員認証を行ってください.",
+  "wrong_otp": "入力したOTPコードが間違っています。もう一度お試しください。",
+  "to_many_otp": "OTPの送信回数が多すぎる。",
+  "wrong_email": "メール送信エラー。\nしばらくしてから再度メールを送信してください。"
 }

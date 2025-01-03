@@ -284,6 +284,11 @@ class LocaleKeys {
   static const failed_verification_desc = 'failed_verification_desc';
   static const member_authentication = 'member_authentication';
   static const check_website_title = 'check_website_title';
+  static const register_finish_title = 'register_finish_title';
+  static const register_finish_desc = 'register_finish_desc';
+  static const wrong_otp = 'wrong_otp';
+  static const to_many_otp = 'to_many_otp';
+  static const wrong_email = 'wrong_email';
 }
 
 class Locales {
@@ -569,5 +574,10 @@ class Locales {
         'メールアドレスとIDがファンクラブ会員情報と一致しませんでした。会員情報を変更して再度お試しください。',
     'member_authentication': '会員情報の認証',
     'check_website_title': 'ファンクラブ会員情報の確認・入会はファンクラブホームページよりお願いいたします。',
+    'register_finish_title': '会員登録が完了しました.',
+    'register_finish_desc': 'マイページにアクセスしてファンクラブの会員認証を行ってください.',
+    'wrong_otp': '入力したOTPコードが間違っています。もう一度お試しください。',
+    'to_many_otp': 'OTPの送信回数が多すぎる。',
+    'wrong_email': 'メール送信エラー。\nしばらくしてから再度メールを送信してください。',
   };
 }

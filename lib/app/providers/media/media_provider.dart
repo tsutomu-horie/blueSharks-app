@@ -1,5 +1,4 @@
-import 'dart:convert';
-
+import 'package:flutter/cupertino.dart';
 import 'package:get/get.dart';
 import 'package:koto_blue_sharks/app/data/models/media/media.dart';
 import 'package:koto_blue_sharks/utils/Constant.dart';
@@ -14,12 +13,12 @@ class MediaProvider extends GetConnect {
     httpClient.baseUrl = Constants.baseUrl;
     final response = await get('media/$mediaId');
 
-    print("fetch ${httpClient.baseUrl}media/${mediaId}?_fields={id,media_details,content,custom_field}");
+    debugPrint("fetch ${httpClient.baseUrl}media/$mediaId?_fields={id,media_details,content,custom_field}");
     if (response.hasError) {
       throw Exception('Failed to load media with ID: $mediaId');
     }
 
-    print("finish with ${response.body}");
+    debugPrint("finish with ${response.body}");
 
     return Media.fromJson(response.body);
   }
@@ -29,12 +28,12 @@ class MediaProvider extends GetConnect {
     httpClient.baseUrl = Constants.baseUrl;
     final response = await get('media?parent=$mediaId');
 
-    print("fetch image parent ${httpClient.baseUrl}media?parent=$mediaId");
+    debugPrint("fetch image parent ${httpClient.baseUrl}media?parent=$mediaId");
     if (response.hasError) {
       throw Exception('Failed to load media with ID: $mediaId');
     }
 
-    print("finish with ${response.body}");
+    debugPrint("finish with ${response.body}");
 
     List<dynamic> bodyList = response.body;
 

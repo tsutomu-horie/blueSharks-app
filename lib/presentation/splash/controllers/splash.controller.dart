@@ -30,7 +30,7 @@ class SplashController extends GetxController {
     getAppVersion();
     PackageInfo packageInfo = await PackageInfo.fromPlatform();
     String bundleID = packageInfo.packageName;
-    print("Bundle ID: $bundleID");
+    debugPrint("Bundle ID: $bundleID");
 
     AnalyticsService.logPageView(Routes.SPLASH);
 
@@ -82,10 +82,10 @@ class NotificationService {
       if (!isAllowed) {
         // Prompt the user to enable notifications
         AwesomeNotifications().requestPermissionToSendNotifications();
-        print("notif allowed");
+        debugPrint("notif allowed");
 
       } else {
-        print("notif rejected");
+        debugPrint("notif rejected");
       }
     });
 
@@ -113,7 +113,6 @@ class NotificationService {
     assert(!scheduled || (scheduled && interval != null));
 
 
-    print("show edsksd");
     await AwesomeNotifications().createNotification(
       content: NotificationContent(
         id: 10, // -1 is random id
@@ -148,7 +147,7 @@ class NotificationService {
       body: body,
     );
 
-    print("send notif suksesss");
+    debugPrint("send notif suksesss");
   }
 
   // Show notification with image

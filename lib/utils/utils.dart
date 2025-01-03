@@ -77,10 +77,9 @@ class Utils {
                   fit: BoxFit.cover,
                 ),
                 SizedBox(height: 8.h,),
-                //todo:: move to ja_jp
-                CustomTextView("会員登録が完了しました.", type: TDSFontType.titleMedium, align: TextAlign.center,),
+                CustomTextView(LocaleKeys.register_finish_title.tr, type: TDSFontType.titleMedium, align: TextAlign.center,),
                 SizedBox(height: 8.h,),
-                CustomTextView("マイページにアクセスしてファンクラブの会員認証を行ってください.", type: TDSFontType.bodyTextMedium, align: TextAlign.center,),
+                CustomTextView(LocaleKeys.register_finish_desc.tr, type: TDSFontType.bodyTextMedium, align: TextAlign.center,),
               ],
             ),
           ),

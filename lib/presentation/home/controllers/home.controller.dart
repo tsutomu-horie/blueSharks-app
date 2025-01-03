@@ -1,4 +1,5 @@
 
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:koto_blue_sharks/app/data/models/info/post.dart';
@@ -50,7 +51,7 @@ class HomeController extends GetxController {
   void getBanner() async {
     final response = await mediaProvider.fetchBanner();
 
-    print("Success fetch banner");
+    debugPrint("Success fetch banner");
     setBannerData(response);
   }
 
@@ -62,7 +63,7 @@ class HomeController extends GetxController {
     final wallpaperLink = MySharedPref.getWallpaper();
     final wallpaperName = MySharedPref.getWallpaperName();
 
-    print("getwallpaper 2 $wallpaperName");
+    debugPrint("getwallpaper 2 $wallpaperName");
     if (wallpaperLink != null) {
       selectedWallpaper.value = wallpaperLink;
       selectedWallpaperName.value = wallpaperName ?? "";
@@ -70,17 +71,17 @@ class HomeController extends GetxController {
   }
 
   void getTopics() async {
-    print("get info");
+    debugPrint("get info");
     final List<Post> data = await infoProvider.getNotice();
 
     topicsData.value = data.take(3).toList(); // Update this line
   }
 
   void fetchMatchResult() async {
-    print("getwallpaper 1");
+    debugPrint("getwallpaper 1");
 
     final Map<String, dynamic>? data = await getSeasonCategoryId();
-    print("get season is $data");
+    debugPrint("get season is $data");
     if (data != null) {
       final List<MatchResultBySeason> latestMatches =
       await getLatestPosts(data['id'], data['count']);
@@ -101,10 +102,10 @@ class HomeController extends GetxController {
       threeLatestMatch.value = latestMatches;
       text.value = "${latestMatches.length}";
       for (var match in latestMatches) {
-        print("Match Title: ${match.custom_field.gameDate}");
+        debugPrint("Match Title: ${match.custom_field.gameDate}");
       }
     } else {
-      print("No data found for the current season.");
+      debugPrint("No data found for the current season.");
     }
   }
 
@@ -220,16 +221,16 @@ class HomeController extends GetxController {
       DateTime date = DateFormat('yyyy-MM-dd').parse(formattedDate);
       return DateTime(date.year, date.month, date.day, 0, 0); // Set time to 00:00
     } catch (e) {
-      print("Error parsing game date: $e");
+      debugPrint("Error parsing game date: $e");
       return null;
     }
   }
 
   Future<String> getNewsImage(String mediaId) async {
     final imageData = await mediaProvider.fetchParentMedia(mediaId);
-    print("GET NEWS IMAGE ${imageData}");
-    final image = imageData?.media_details.sizes.thumbnail.source_url;
-    print("GET NEWS IMAGE ${mediaId}, ${image}");
+    debugPrint("GET NEWS IMAGE $imageData");
+    final image = imageData.media_details.sizes.thumbnail.source_url;
+    debugPrint("GET NEWS IMAGE $mediaId, $image");
     return image ?? "";
   }
 
