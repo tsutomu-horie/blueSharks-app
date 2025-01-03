@@ -1,7 +1,7 @@
 import 'package:get/get.dart';
-import 'package:koto_blue_sharks/app/data/api/auth/AuthToken.dart';
 import 'package:koto_blue_sharks/app/data/models/auth/auth.dart';
 import 'package:koto_blue_sharks/app/data/models/info/notification.dart';
+import 'package:koto_blue_sharks/app/services/auth_token.dart';
 import 'package:koto_blue_sharks/utils/Constant.dart';
 
 class AuthProvider extends GetConnect {

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:koto_blue_sharks/app/data/api/auth/auth_provider.dart';
+import 'package:koto_blue_sharks/app/providers/auth/auth_provider.dart';
 import 'package:koto_blue_sharks/app/services/analytics_service.dart';
 import 'package:koto_blue_sharks/generated/locales.g.dart';
 import 'package:koto_blue_sharks/infrastructure/navigation/routes.dart';
@@ -35,7 +35,6 @@ class ResetPasswordController extends GetxController {
     try {
       print("before get data");
       final response = await apiProvider.resetPassword(otpId, newPasswordController.text, confirmNewPasswordController.text, (){
-        //todo:: change error message
         Utils.showError(context, LocaleKeys.error_login_message.tr, null );
       });
 
@@ -44,16 +43,6 @@ class ResetPasswordController extends GetxController {
         Get.back();
         Get.back(result: true);
       }
-      // final response = await apiProvider.login(
-      //   emailTextFieldController.text,
-      //   passwordTextFieldController.text,
-      //       (){
-      //     Utils.showError(context, LocaleKeys.error_login_message.tr, null );
-      //   },
-      // );
-
-      print("get data");
-
     } catch (e) {
       print("catch $e");
     } finally {

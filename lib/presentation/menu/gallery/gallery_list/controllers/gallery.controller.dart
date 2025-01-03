@@ -1,7 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:get/get.dart';
-import 'package:koto_blue_sharks/app/data/api/gallery/gallery_provider.dart';
 import 'package:koto_blue_sharks/app/data/models/media/media.dart';
+import 'package:koto_blue_sharks/app/providers/gallery/gallery_provider.dart';
 import 'package:koto_blue_sharks/app/services/analytics_service.dart';
 import 'package:koto_blue_sharks/generated/locales.g.dart';
 import 'package:koto_blue_sharks/infrastructure/navigation/routes.dart';

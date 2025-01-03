@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:hive/hive.dart';
-import 'package:koto_blue_sharks/app/data/api/media/media_provider.dart';
-import 'package:koto_blue_sharks/app/data/api/member/member_provider.dart';
 import 'package:koto_blue_sharks/app/data/models/match/match_result.dart';
 import 'package:koto_blue_sharks/app/data/models/member/member.dart';
+import 'package:koto_blue_sharks/app/providers/media/media_provider.dart';
+import 'package:koto_blue_sharks/app/providers/member/member_provider.dart';
 import 'package:koto_blue_sharks/app/services/analytics_service.dart';
 import 'package:koto_blue_sharks/generated/locales.g.dart';
 import 'package:koto_blue_sharks/infrastructure/navigation/routes.dart';

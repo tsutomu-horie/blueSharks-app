@@ -1,11 +1,10 @@
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:get/get.dart';
-import 'package:koto_blue_sharks/app/data/api/auth/AuthToken.dart';
-import 'package:koto_blue_sharks/app/data/api/auth/auth_provider.dart';
-import 'package:koto_blue_sharks/app/data/api/userPreferences/notification_preference.dart';
-import 'package:koto_blue_sharks/app/data/api/userPreferences/wallpaper_preference.dart';
 import 'package:koto_blue_sharks/app/data/models/auth/auth.dart';
+import 'package:koto_blue_sharks/app/providers/auth/auth_provider.dart';
 import 'package:koto_blue_sharks/app/services/analytics_service.dart';
+import 'package:koto_blue_sharks/app/services/auth_token.dart';
+import 'package:koto_blue_sharks/app/services/notification_service.dart';
 import 'package:koto_blue_sharks/generated/locales.g.dart';
 import 'package:koto_blue_sharks/infrastructure/navigation/routes.dart';
 import 'package:koto_blue_sharks/presentation/main/controllers/main.controller.dart';
