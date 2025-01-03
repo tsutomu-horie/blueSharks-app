@@ -1,12 +1,12 @@
 
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
-import 'package:koto_blue_sharks/app/data/api/info/info_provider.dart';
-import 'package:koto_blue_sharks/app/data/api/match/match_provider.dart';
-import 'package:koto_blue_sharks/app/data/api/media/media_provider.dart';
 import 'package:koto_blue_sharks/app/data/models/info/post.dart';
 import 'package:koto_blue_sharks/app/data/models/match/match_result.dart';
 import 'package:koto_blue_sharks/app/data/models/media/media.dart';
+import 'package:koto_blue_sharks/app/providers/info/info_provider.dart';
+import 'package:koto_blue_sharks/app/providers/match/match_provider.dart';
+import 'package:koto_blue_sharks/app/providers/media/media_provider.dart';
 import 'package:koto_blue_sharks/utils/my_shared_pref.dart';
 import 'package:url_launcher/url_launcher.dart';
 

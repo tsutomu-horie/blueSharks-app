@@ -1,14 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-
 import 'package:get/get.dart';
-import 'package:koto_blue_sharks/app/data/api/media/media_provider.dart';
+import 'package:koto_blue_sharks/app/data/models/member/member.dart';
+import 'package:koto_blue_sharks/app/providers/media/media_provider.dart';
 import 'package:koto_blue_sharks/app/views/views/custom_image_view.dart';
 import 'package:koto_blue_sharks/app/views/views/custom_text_view.dart';
 import 'package:koto_blue_sharks/presentation/profile/mypage/mypage.screen.dart';
 import 'package:koto_blue_sharks/utils/match+extensions.dart';
-
-import '../../../../data/models/member/member.dart';
 
 class PlayerCardView extends GetView {
   const PlayerCardView(this.player, this.position, this.onSet, this.mediaProvider, this.isSetWallpaper, this.onTap, {super.key});

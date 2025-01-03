@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:koto_blue_sharks/app/data/api/auth/AuthToken.dart';
-import 'package:koto_blue_sharks/app/data/api/auth/auth_provider.dart';
+import 'package:koto_blue_sharks/app/providers/auth/auth_provider.dart';
 import 'package:koto_blue_sharks/app/services/analytics_service.dart';
+import 'package:koto_blue_sharks/app/services/auth_token.dart';
 import 'package:koto_blue_sharks/infrastructure/navigation/routes.dart';
 import 'package:koto_blue_sharks/presentation/main/controllers/main.controller.dart';
 import 'package:koto_blue_sharks/utils/my_shared_pref.dart';

@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:koto_blue_sharks/app/data/api/auth/AuthToken.dart';
-import 'package:koto_blue_sharks/app/data/api/auth/auth_provider.dart';
-import 'package:koto_blue_sharks/app/data/api/otp/otp_provider.dart';
-import 'package:koto_blue_sharks/app/data/api/userPreferences/notification_preference.dart';
-import 'package:koto_blue_sharks/app/data/api/userPreferences/wallpaper_preference.dart';
 import 'package:koto_blue_sharks/app/data/models/auth/auth.dart';
+import 'package:koto_blue_sharks/app/providers/auth/auth_provider.dart';
+import 'package:koto_blue_sharks/app/providers/otp/otp_provider.dart';
 import 'package:koto_blue_sharks/app/services/analytics_service.dart';
+import 'package:koto_blue_sharks/app/services/auth_token.dart';
 import 'package:koto_blue_sharks/generated/locales.g.dart';
 import 'package:koto_blue_sharks/infrastructure/navigation/routes.dart';
 import 'package:koto_blue_sharks/utils/Constant.dart';
@@ -71,13 +69,6 @@ class FanClubConfirmationController extends GetxController {
   }
 
   void updateProfile(Function(String, String, String, String, bool) onSuccess) async {
-    // final notification = NotificationPreference();
-    // final notificationSetting = isSelectNotificaiton.value ? "active" : "inactive" ;
-    // notification.saveNotificationSetting(notificationSetting);
-
-    // final wallpaperPreference = WallpaperPreferences();
-    // wallpaperPreference.saveWallpaper(playerNameController.value);
-    print("update profile ${playerLinkController.value}");
     MySharedPref.setWallpaper(playerLinkController.value);
     MySharedPref.setWallpaperName(playerNameController.value);
     MySharedPref.setNotification(isSelectNotificaiton.value ? LocaleKeys.active.tr : LocaleKeys.inactive.tr);

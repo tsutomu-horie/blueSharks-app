@@ -1,9 +1,9 @@
 /*
   * This Function will return isHome, opponentLogo, opponentName
   * */
-import 'package:koto_blue_sharks/app/data/api/match/match_provider.dart';
-import 'package:koto_blue_sharks/app/data/api/media/media_provider.dart';
 import 'package:koto_blue_sharks/app/data/models/match/match_result.dart';
+import 'package:koto_blue_sharks/app/providers/match/match_provider.dart';
+import 'package:koto_blue_sharks/app/providers/media/media_provider.dart';
 import 'package:koto_blue_sharks/utils/Constant.dart';
 
 Map<String, dynamic> getStatusMatch(CustomField customField) {
