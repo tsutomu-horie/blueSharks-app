@@ -17,7 +17,7 @@ class CustomImageView extends GetView {
 
   @override
   Widget build(BuildContext context) {
-    print("load image ${image.toString()}");
+    debugPrint("load image ${image.toString()}");
     if (image != null && image != "") {
       return ClipRRect(
         borderRadius: BorderRadius.circular(radius != null ? radius! : 20.r),
@@ -25,7 +25,7 @@ class CustomImageView extends GetView {
           imageUrl:  image,
           fit: customFit ?? BoxFit.cover,
           placeholder: (context, url) {
-            print("Loading image from network: $url");
+            debugPrint("Loading image from network: $url");
             return Shimmer.fromColors(
               baseColor: Colors.grey[300]!,
               highlightColor: Colors.grey[100]!,

@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:intl/intl.dart';
 
@@ -5,7 +6,7 @@ Map<String, String> convertJapaneseDate(String japaneseDate) {
   try {
     // Regular expression to extract the date and day of the week
     final RegExp dateRegExp = RegExp(r'(\d{4})年(\d{2})月(\d{2})日（(.+)）');
-    print("convertData to = ${japaneseDate}");
+    debugPrint("convertData to = $japaneseDate");
 
     // Extract year, month, day, and day of the week
     final match = dateRegExp.firstMatch(japaneseDate);

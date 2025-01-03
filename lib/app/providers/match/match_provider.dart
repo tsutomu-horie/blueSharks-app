@@ -13,20 +13,16 @@ class MatchProvider extends GetConnect {
     print("load ${httpClient.baseUrl}${url.toString()}");
 
     final response = await get(url.toString());
-    // if (response.hasError) {
-    //   throw Exception('Failed to load match results because ${response}');
-    // }
-    print("data ${response.body}");
     return (response.body as List).map((e) => Category.fromJson(e)).toList();
   }
 
   Future<Rendered> getMatchStatus(String id) async {
-    final url = Uri.parse('media/${id}?_fields=id,title,content,custom_field');
+    final url = Uri.parse('media/$id?_fields=id,title,content,custom_field');
     print("load getMatchStatus ${httpClient.baseUrl}${url.toString()}");
 
     final response = await get(url.toString());
     if (response.hasError) {
-      throw Exception('Failed to load match results because ${response}');
+      throw Exception('Failed to load match results because $response');
     }
     print("data getMatchStatus ${response.body}");
     return Rendered.fromJson(response.body['title']);

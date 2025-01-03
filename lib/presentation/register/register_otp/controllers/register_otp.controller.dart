@@ -57,13 +57,12 @@ class RegisterOtpController extends GetxController {
       if (fromScreen == "register" || fromScreen == "register_home") {
         final response = await otpProvider.verifyOtp(otp.value, otp_id.value, (errorMessage){
           var newMessage = "";
-          //todo:: move to localization
           if (errorMessage.contains("verify_otp")) {
-            newMessage = "入力したOTPコードが間違っています。もう一度お試しください。";
+            newMessage = LocaleKeys.wrong_otp.tr;
           } else if (errorMessage.contains("otp_max_limit")) {
-            newMessage = "OTPの送信回数が多すぎる。";
+            newMessage = LocaleKeys.to_many_otp.tr;
           } else {
-            newMessage = "メール送信エラー。\nしばらくしてから再度メールを送信してください。";
+            newMessage = LocaleKeys.wrong_email.tr;
           }
 
           Utils.showError(context, "", newMessage);
@@ -95,22 +94,19 @@ class RegisterOtpController extends GetxController {
           print("error on submit otp ");
         });
 
-        if (response != null) {
-          Get.back();
-          Get.to(() => ResetPasswordScreen(otp_id.value, isFromHome: fromScreen == "forgotPasswordHome" ? true : false,));
-        }
+        Get.back();
+        Get.to(() => ResetPasswordScreen(otp_id.value, isFromHome: fromScreen == "forgotPasswordHome" ? true : false,));
 
 
       } else if (fromScreen == "editProfile") {
         final response = await otpProvider.verifyOtp(otp.value, otp_id.value, (errorMessage){
           var newMessage = "";
-          //todo:: move to localization
           if (errorMessage.contains("verify_otp")) {
-            newMessage = "入力したOTPコードが間違っています。もう一度お試しください。";
+            newMessage = LocaleKeys.wrong_otp.tr;
           } else if (errorMessage.contains("otp_max_limit")) {
-            newMessage = "OTPの送信回数が多すぎる。";
+            newMessage = LocaleKeys.to_many_otp.tr;
           } else {
-            newMessage = "メール送信エラー。\nしばらくしてから再度メールを送信してください。";
+            newMessage = LocaleKeys.wrong_email.tr;
           }
 
           Utils.showError(context, "", newMessage);
