@@ -14,6 +14,10 @@ class RegisterMemberFanclubController extends GetxController {
   final passwordTextFieldController = TextEditingController();
   final AuthProvider apiProvider = AuthProvider();
 
+  final isConfirmPasswordHidden = true.obs;
+  final confirmPasswordController = TextEditingController();
+
+
   var isPasswordHidden = true.obs;
 
   @override
@@ -23,6 +27,10 @@ class RegisterMemberFanclubController extends GetxController {
 
     AnalyticsService.logPageView(Routes.REGISTER_MEMBER_FANCLUB);
 
+  }
+
+  void toggleConfirmPasswordVisibility() {
+    isConfirmPasswordHidden.value = !isConfirmPasswordHidden.value;
   }
 
   void togglePasswordVisibility() {

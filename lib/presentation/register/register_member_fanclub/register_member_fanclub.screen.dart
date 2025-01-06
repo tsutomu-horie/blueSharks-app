@@ -169,6 +169,8 @@ class RegisterMemberFanclubScreen
           ),
           SizedBox(height: 24.h),
           _buildPasswordField(controller),
+          SizedBox(height: 24.h),
+          _buildConfirmPasswordField(controller),
         ],
       ),
     );
@@ -208,6 +210,58 @@ class RegisterMemberFanclubScreen
             hintStyle: TextStyle(color: TextColor.placeholder),
             contentPadding: EdgeInsets.only(top: 2.h, left: 16.w),
             hintText: hintText,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildConfirmPasswordField(RegisterMemberFanclubController controller) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            CustomTextView(LocaleKeys.confirm_new_password_edit.tr,
+                type: TDSFontType.labelLarge, color: TextColor.secondary),
+            CustomTextView(" *",
+                type: TDSFontType.labelLarge, color: TextColor.error),
+          ],
+        ),
+        SizedBox(height: 4.h),
+        Obx(
+              () => TextFormField(
+            obscureText: controller.isConfirmPasswordHidden.value,
+            validator: (value) {
+              if (value!.isEmpty) return LocaleKeys.error_password_required.tr;
+              if (value.length < 8) {
+                return LocaleKeys.error_password_must_8_char.tr;
+              }
+              if (value != controller.passwordTextFieldController.text) {
+                return LocaleKeys.error_password_different_new_password.tr;
+              }
+              return null;
+            },
+            controller: controller.confirmPasswordController,
+            decoration: InputDecoration(
+              errorMaxLines: 1,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8.r),
+                borderSide: BorderSide(color: BorderColor.secondary),
+              ),
+              hintStyle: TextStyle(color: TextColor.placeholder),
+              contentPadding: EdgeInsets.only(top: 2.h, left: 16.w),
+              hintText: LocaleKeys.confirm_new_password_edit_placeholder.tr,
+              suffixIcon: IconButton(
+                icon: Icon(
+                  controller.isConfirmPasswordHidden.value
+                      ? Icons.visibility_off
+                      : Icons.visibility,
+                  color: TextColor.placeholder,
+                ),
+                onPressed: controller.toggleConfirmPasswordVisibility,
+              ),
+            ),
           ),
         ),
       ],
