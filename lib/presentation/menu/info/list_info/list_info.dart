@@ -23,7 +23,13 @@ class TopicListScreen  extends StatelessWidget {
   Widget build(BuildContext context) {
     final TopicListController controller = Get.put(TopicListController());
 
-    controller.selectedIndex.value = 0;
+
+    if(controller.allowIndexReset.value) {
+      controller.selectedIndex.value = 0;
+    } else {
+      controller.enableIndexReset();
+    }
+
     final List<String> tabs = [
       LocaleKeys.all.tr,
       LocaleKeys.notice_tab.tr,
@@ -132,7 +138,7 @@ class TopicListScreen  extends StatelessWidget {
                     return Obx(() {
                       final data = controller.getTabData(controller
                           .selectedIndex.value); // Fetch data for the current tab
-        
+
                       if (data.isEmpty) {
                         return Column(
                           children: [
@@ -165,23 +171,25 @@ class TopicListScreen  extends StatelessWidget {
                                       // Fallback view if there's an error
                                       return TopicItemView(
                                             () {
+                                              controller.disableIndexReset();
                                           onOpenDetail(data[itemIndex]);
                                         },
                                         image: null,
                                         date: data[itemIndex].date,
                                         title: data[itemIndex].title.rendered,
-                                        categories: mapCategoryIdsToNames(data[itemIndex].categories),
+                                        categories: controller.selectedIndex.value == 4 ? [LocaleKeys.activites.tr] : mapCategoryIdsToNames(data[itemIndex].categories),
                                       );
                                     } else {
                                       // Display the image when loaded
                                       return TopicItemView(
                                             () {
+                                              controller.disableIndexReset();
                                           onOpenDetail(data[itemIndex]);
                                         },
                                         image: snapshot.data,
                                         date: data[itemIndex].date,
                                         title: data[itemIndex].title.rendered,
-                                        categories: mapCategoryIdsToNames(data[itemIndex].categories),
+                                        categories: controller.selectedIndex.value == 4 ? [LocaleKeys.activites.tr] : mapCategoryIdsToNames(data[itemIndex].categories),
                                       );
                                     }
                                   },

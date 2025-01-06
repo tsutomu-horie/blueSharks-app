@@ -1,17 +1,13 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:awesome_notifications/awesome_notifications.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
-import 'package:flutter/material.dart';
 import 'package:koto_blue_sharks/app/providers/auth/auth_provider.dart';
 import 'package:koto_blue_sharks/firebase_options.dart';
 import 'package:koto_blue_sharks/utils/Constant.dart';
-import 'package:koto_blue_sharks/utils/app_color.dart';
 import 'package:koto_blue_sharks/utils/awesome_notifications_helper.dart';
 import 'package:koto_blue_sharks/utils/my_shared_pref.dart';
-import 'package:logger/logger.dart';
 
 class FcmHelper {
   // prevent making instance

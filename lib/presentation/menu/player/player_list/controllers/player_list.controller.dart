@@ -9,6 +9,7 @@ import 'package:koto_blue_sharks/app/services/analytics_service.dart';
 import 'package:koto_blue_sharks/generated/locales.g.dart';
 import 'package:koto_blue_sharks/infrastructure/navigation/routes.dart';
 import 'package:koto_blue_sharks/presentation/menu/player/player_detail/player_detail.screen.dart';
+import 'package:koto_blue_sharks/utils/match+extensions.dart';
 
 class PlayerListController extends GetxController {
   final selectedPosition = LocaleKeys.all_position.tr.obs;
@@ -24,6 +25,9 @@ class PlayerListController extends GetxController {
 
   final List<String> playerCategory = [LocaleKeys.forward_short.tr, LocaleKeys.back_short.tr, LocaleKeys.staff.tr];
   final List<String> playerCategoryFull = [LocaleKeys.forward.tr, LocaleKeys.back.tr, LocaleKeys.staff.tr];
+
+  final Map<String, String> preloadedImages = <String, String>{}.obs;
+  final isImageLoading = true.obs;
 
   void addGroupKey(String identifier) {
     groupKeys[identifier] = GlobalKey();
@@ -77,34 +81,52 @@ class PlayerListController extends GetxController {
     isLoading.value = true;
     int categoryPage = 1;
     bool hasMoreCategories = true;
-    print("getAllMembers2");
-    try {
-      print("getAllMembers1");
-      // Loop through all category pages
-      while (hasMoreCategories) {
-        print("getAllMembers");
-        final List<Category> categoryList = await memberProvider.getCategories(page: categoryPage);
 
+    try {
+      while (hasMoreCategories) {
+        final List<Category> categoryList = await memberProvider.getCategories(page: categoryPage);
         if (categoryList.isEmpty) {
           hasMoreCategories = false;
-        } else {
-          categories.addAll(categoryList);
-
-          // For each category, fetch players and handle pagination
-          for (Category category in categoryList) {
-            print("getAllMember name ${category.name}");
-            await fetchPlayersForCategory(category.id, category.slug, category.name);
-          }
-
-          categoryPage++;
+          continue;
         }
+
+        // Process one category at a time
+        for (Category category in categoryList) {
+          // 1. Add category
+          categories.add(category);
+
+          // 2. Load players for this category
+          await fetchPlayersForCategory(category.id, category.slug, category.name);
+
+          // 3. Load images for players in this category
+          List<Member> categoryMembers = categoryPlayers[category.id] ?? [];
+          for (var i = 0; i < categoryMembers.length; i += 5) {
+            final batch = categoryMembers.sublist(
+                i,
+                (i + 5) > categoryMembers.length ? categoryMembers.length : (i + 5)
+            );
+
+            await Future.wait(
+                batch.map((player) async {
+                  final imageUrl = "${player.custom_field?.profile_image_1?.first}";
+                  if (!preloadedImages.containsKey(imageUrl)) {
+                    final loadedImage = await getImage(mediaProvider, imageUrl);
+                    preloadedImages[imageUrl] = loadedImage;
+                  }
+                })
+            );
+          }
+        }
+        categoryPage++;
       }
+
     } catch (e) {
       print('Error loading categories and players: $e');
     } finally {
       isLoading.value = false;
     }
   }
+
 
   Future<void> fetchPlayersForCategory(int categoryId, String categorySlug, String categoryName) async {
     int playerPage = 1;
@@ -205,6 +227,25 @@ class PlayerListController extends GetxController {
 
 
     return allPlayers;
+  }
+
+  Future<void> preloadImagesForGroup(CategorizedPlayerGroup group) async {
+    for (var memberGroup in group.playerGroups) {
+      for (var i = 0; i < memberGroup.players.length; i += 10) {
+        final batch = memberGroup.players.sublist(
+            i,
+            (i + 10) > memberGroup.players.length ? memberGroup.players.length : (i + 10)
+        );
+
+        await Future.wait(
+            batch.map((player) async {
+              final imageUrl = "${player.custom_field?.profile_image_1?.first}";
+              final loadedImage = await getImage(mediaProvider, imageUrl);
+              preloadedImages[imageUrl] = loadedImage;
+            })
+        );
+      }
+    }
   }
 
   List<CategorizedPlayerGroup> groupPlayersByCategory(Map<int, List<Member>> categoryPlayers) {

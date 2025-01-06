@@ -126,10 +126,10 @@ void editProfileBottomSheet(
                           ],
                         ),
                         TextFormField(
-                          // keyboardType: TextInputType.number,
-                          // inputFormatters: [
-                          //   FilteringTextInputFormatter.digitsOnly,
-                          // ],
+                          inputFormatters: [
+                            FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9]')),
+                            LengthLimitingTextInputFormatter(10)
+                          ],
                           controller: fanclubController.idController,
                           validator: (value) {
                             if (value == null || value.isEmpty) {
