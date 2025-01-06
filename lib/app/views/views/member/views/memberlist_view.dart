@@ -104,7 +104,7 @@ class MemberListView extends StatelessWidget {
                 .toList();
           }
 
-          if (!memberController.isLoading.value) {
+          if (groupedPlayers.isNotEmpty) {
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: groupedPlayers.map((group) {

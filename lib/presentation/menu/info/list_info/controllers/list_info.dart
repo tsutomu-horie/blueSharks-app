@@ -9,6 +9,7 @@ import 'package:koto_blue_sharks/infrastructure/navigation/routes.dart';
 class TopicListController extends GetxController {
   final InfoProvider apiProvider = InfoProvider();
   final MediaProvider mediaProvider = MediaProvider();
+  final allowIndexReset = true.obs;
 
   PageController pageController = PageController();
   var selectedIndex = 0.obs; // Observable to track the selected tab index
@@ -48,6 +49,14 @@ class TopicListController extends GetxController {
 
     AnalyticsService.logPageView(Routes.LIST_TOPICS);
 
+  }
+
+  void disableIndexReset() {
+    allowIndexReset.value = false;
+  }
+
+  void enableIndexReset() {
+    allowIndexReset.value = true;
   }
 
   void refreshPage() {

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
@@ -192,10 +193,10 @@ class RegisterMemberFanclubScreen
           ],
         ),
         TextFormField(
-          // keyboardType: TextInputType.number,
-          // inputFormatters: [
-          //   FilteringTextInputFormatter.digitsOnly,
-          // ],
+          inputFormatters: [
+            FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9]')),
+            LengthLimitingTextInputFormatter(10)
+          ],
           controller: controller,
           validator: (value) => value!.isEmpty ? hintText : null,
           decoration: InputDecoration(

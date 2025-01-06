@@ -232,12 +232,29 @@ class GalleryScreen extends GetView<GalleryController> {
                                             children: [
                                               AspectRatio(
                                                 aspectRatio: 16 / 9,
-                                                child: CustomImageView(
-                                                    customFit: BoxFit.fitWidth,
-                                                    radius: 12.r,
-                                                    image: galleryController
-                                                            .album[index].photo ??
-                                                        ""),
+                                                child: Stack(
+                                                  children: [
+                                                    SizedBox(
+                                                      width: double.infinity,
+                                                      child: CustomImageView(
+                                                          customFit: BoxFit.fitWidth,
+                                                          radius: 12.r,
+                                                          image: galleryController
+                                                                  .album[index].photo ??
+                                                              ""),
+                                                    ),
+                                                    Container(
+                                                        decoration: const BoxDecoration(
+                                                            gradient: LinearGradient(
+                                                              begin: Alignment.bottomCenter,
+                                                              end: Alignment.topCenter,
+                                                              colors: [
+                                                                Colors.black,
+                                                                Colors.transparent,
+                                                              ],
+                                                            ))),
+                                                  ],
+                                                ),
                                               ),
                                               Positioned(
                                                 bottom: 16.w,

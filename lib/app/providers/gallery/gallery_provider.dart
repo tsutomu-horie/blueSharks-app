@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:koto_blue_sharks/app/data/models/media/media.dart';
 import 'package:koto_blue_sharks/utils/Constant.dart';
@@ -11,12 +12,12 @@ class GalleryProvider extends GetConnect {
   Future<List<Album>> fetchGalleryList(int categoryId, String year, Function onError) async {
     final response = await get('galleries/albums?category_id=$categoryId&year=${year}');
 
-    print('${httpClient.baseUrl}galleries/albums?category_id=$categoryId&year=${year}');
+    debugPrint('${httpClient.baseUrl}galleries/albums?category_id=$categoryId&year=${year}');
     if (response.hasError) {
       throw Exception('Failed to load media with ${response.statusText}');
     }
 
-    print("finish with ${response.body}");
+    debugPrint("finish with ${response.body}");
 
     return (response.body['data'] as List)
         .map((json) => Album.fromJson(json as Map<String, dynamic>))
@@ -25,13 +26,13 @@ class GalleryProvider extends GetConnect {
 
   Future<List<AlbumDetail>> fetchGalleryDetail(int albumId, Function onError) async {
     final response = await get('galleries?album_id=$albumId');
-    print('fetch galleries?albums_id=$albumId');
+    debugPrint('fetch galleries?albums_id=$albumId');
 
     if (response.hasError) {
       throw Exception('Failed to load media with I');
     }
 
-    print("finish with ${response.body}");
+    debugPrint("finish with ${response.body}");
 
     return (response.body['data'] as List)
         .map((json) => AlbumDetail.fromJson(json as Map<String, dynamic>))
@@ -40,13 +41,13 @@ class GalleryProvider extends GetConnect {
 
   Future<List<WallpaperCategory>> fetchGalleryPlayer(Function onError) async {
     final response = await get('wallpapers');
-    print('fetch ${httpClient.baseUrl}wallpapers');
+    debugPrint('fetch ${httpClient.baseUrl}wallpapers');
 
     if (response.hasError) {
       throw Exception('Failed to load media with ${response}');
     }
 
-    print("finish with ${response.body}");
+    debugPrint("finish with ${response.body}");
 
     return (response.body['data'] as List)
         .map((json) => WallpaperCategory.fromJson(json as Map<String, dynamic>))

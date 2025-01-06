@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:koto_blue_sharks/app/data/models/auth/auth.dart';
 import 'package:koto_blue_sharks/app/data/models/info/notification.dart';
@@ -12,7 +13,7 @@ class AuthProvider extends GetConnect {
 
   Future<Auth> login(String username, String password, Function() onError) async {
     final url = Uri.parse('login');
-    print("load ${httpClient.baseUrl}${url.toString()}");
+    debugPrint("load ${httpClient.baseUrl}${url.toString()}");
 
     final Map<String, dynamic> body = {
       "email": username,
@@ -23,21 +24,21 @@ class AuthProvider extends GetConnect {
       url.toString(), body, // Send the body in the request
     );
 
-    print("Login successful2 , ${response.body}");
+    debugPrint("Login successful2 , ${response.body}");
 
     if (response.hasError) {
       onError();
       throw Exception('Failed to login: ${response.statusText}');
     }
 
-    print("Login successful, received data: ${response.body}");
+    debugPrint("Login successful, received data: ${response.body}");
 
     return Auth.fromJson(response.body["data"]);
   }
 
   Future<Auth> register(String acountId, String email, String otpId, String password, Function(String) onError) async {
     final url = Uri.parse('register');
-    print("load ${httpClient.baseUrl}${url.toString()}");
+    debugPrint("load ${httpClient.baseUrl}${url.toString()}");
 
     final Map<String, dynamic> body = {
       "account_id": acountId,
@@ -46,27 +47,27 @@ class AuthProvider extends GetConnect {
       "password": password,
     };
 
-    print("data send ${body}");
+    debugPrint("data send $body");
 
     final response = await post(
       url.toString(), body, // Send the body in the request
     );
 
-    print("Login successful2 , ${response.body}");
+    debugPrint("Login successful2 , ${response.body}");
 
     if (response.hasError) {
       onError("${response.statusText}");
       throw Exception('Failed to login: ${response.statusText}');
     }
 
-    print("Login successful, received data: ${response.body}");
+    debugPrint("Login successful, received data: ${response.body}");
 
     return Auth.fromJson(response.body["data"]);
   }
 
   Future<Response> resetPassword(String otpId, String password, String passwordConfirmation,Function onError) async {
     final url = Uri.parse('reset-password');
-    print("load ${httpClient.baseUrl}${url.toString()}");
+    debugPrint("load ${httpClient.baseUrl}${url.toString()}");
 
     final Map<String, dynamic> body = {
       "otp_id": otpId,
@@ -78,21 +79,21 @@ class AuthProvider extends GetConnect {
       url.toString(), body, // Send the body in the request
     );
 
-    print("Login successful2 , ${response.body}");
+    debugPrint("Login successful2 , ${response.body}");
 
     if (response.hasError) {
       onError();
       throw Exception('Failed to login: ${response.statusText}');
     }
 
-    print("Login successful, received data: ${response.body}");
+    debugPrint("Login successful, received data: ${response.body}");
 
     return response;
   }
 
   Future<Response> updateProfile(String email, String accountId, String gender,Function onError) async {
     final url = Uri.parse('profile');
-    print("load ${httpClient.baseUrl}${url.toString()}");
+    debugPrint("load ${httpClient.baseUrl}${url.toString()}");
 
     final auth = AuthToken();
     final token = await auth.getAccessToken();
@@ -112,14 +113,14 @@ class AuthProvider extends GetConnect {
       url.toString(), body, headers: headers // Send the body in the request
     );
 
-    print("Login successful2 , ${response.body}");
+    debugPrint("Login successful2 , ${response.body}");
 
     if (response.hasError) {
       onError();
       throw Exception('Failed to login: ${response.statusText}');
     }
 
-    print("Login successful, received data: ${response.body}");
+    debugPrint("Login successful, received data: ${response.body}");
 
     return response;
   }
@@ -128,7 +129,7 @@ class AuthProvider extends GetConnect {
     httpClient.baseUrl = Constants.baseUrlAuthApi;
 
     final url = Uri.parse('new-password');
-    print("load ${httpClient.baseUrl}${url.toString()}");
+    debugPrint("load ${httpClient.baseUrl}${url.toString()}");
 
     final auth = AuthToken();
     final token = await auth.getAccessToken();
@@ -148,22 +149,22 @@ class AuthProvider extends GetConnect {
       url.toString(), body, headers: headers // Send the body in the request
     );
 
-    print("Login successful2 , ${response.body}");
+    debugPrint("Login successful2 , ${response.body}");
 
     if (response.hasError) {
-      print("Login successful2 , ${response.body['errors']}");
+      debugPrint("Login successful2 , ${response.body['errors']}");
       onError("${response.body['errors']}", "${response.body['message']}");
       throw Exception('Failed to login: ${response.statusText}');
     }
 
-    print("Login successful, received data: ${response.body}");
+    debugPrint("Login successful, received data: ${response.body}");
 
     return response;
   }
 
   Future<UserData> getProfile(String token, Function onError) async {
     final url = Uri.parse('profile');
-    print("load ${httpClient.baseUrl}${url.toString()}");
+    debugPrint("load ${httpClient.baseUrl}${url.toString()}");
 
     final headers = {
       'Authorization': 'Bearer $token',
@@ -174,21 +175,21 @@ class AuthProvider extends GetConnect {
       url.toString(), headers: headers // Send the body in the request
     );
 
-    print("Login successful2 , ${response.body}");
+    debugPrint("Login successful2 , ${response.body}");
 
     if (response.hasError) {
       onError();
       throw Exception('Failed to login: ${response.statusText}');
     }
 
-    print("Login successful, received data: ${response.body}");
+    debugPrint("Login successful, received data: ${response.body}");
 
     return UserData.fromJson(response.body["data"]);
   }
 
   Future<UserData> refreshProfile(String token, Function onError) async {
     final url = Uri.parse('profile/refresh');
-    print("load ${httpClient.baseUrl}${url.toString()}");
+    debugPrint("load ${httpClient.baseUrl}${url.toString()}");
 
     final headers = {
       'Authorization': 'Bearer $token',
@@ -199,21 +200,21 @@ class AuthProvider extends GetConnect {
         url.toString(), headers: headers // Send the body in the request
     );
 
-    print("Login successful2 , ${response.body}");
+    debugPrint("Login successful2 , ${response.body}");
 
     if (response.hasError) {
       onError();
       throw Exception('Failed to login: ${response.statusText}');
     }
 
-    print("Login successful, received data: ${response.body}");
+    debugPrint("Login successful, received data: ${response.body}");
 
     return UserData.fromJson(response.body["data"]);
   }
 
   Future<Response> deleteProfile(String token, Function onError) async {
     final url = Uri.parse('profile');
-    print("load ${httpClient.baseUrl}${url.toString()}");
+    debugPrint("load ${httpClient.baseUrl}${url.toString()}");
 
     final headers = {
       'Authorization': 'Bearer $token',
@@ -224,14 +225,14 @@ class AuthProvider extends GetConnect {
       url.toString(), headers: headers // Send the body in the request
     );
 
-    print("Login successful2 , ${response.body}");
+    debugPrint("Login successful2 , ${response.body}");
 
     if (response.hasError) {
       onError();
       throw Exception('Failed to login: ${response.statusText}');
     }
 
-    print("Login successful, received data: ${response.body}");
+    debugPrint("Login successful, received data: ${response.body}");
 
     return response;
   }
@@ -240,7 +241,7 @@ class AuthProvider extends GetConnect {
     httpClient.baseUrl = Constants.baseUrlAuthApi;
 
     final url = Uri.parse('notifications/create-fcm');
-    print("load ${httpClient.baseUrl}${url.toString()}");
+    debugPrint("load ${httpClient.baseUrl}${url.toString()}");
 
     final auth = AuthToken();
     final token = await auth.getAccessToken();
@@ -259,13 +260,13 @@ class AuthProvider extends GetConnect {
           url.toString(), body, headers: headers // Send the body in the request
       );
 
-      print("Login successful2 , ${response.body}");
+      debugPrint("Login successful2 , ${response.body}");
 
       if (response.hasError) {
         throw Exception('Failed to send fcm token: ${response.statusText}');
       }
 
-      print("Login successful, received data: ${response}");
+      debugPrint("Login successful, received data: $response");
 
       return response;
     } else {
@@ -277,7 +278,7 @@ class AuthProvider extends GetConnect {
     httpClient.baseUrl = Constants.baseUrlAuthApi;
 
     final url = Uri.parse('notifications');
-    print("load ${httpClient.baseUrl}${url.toString()}");
+    debugPrint("load ${httpClient.baseUrl}${url.toString()}");
 
     final auth = AuthToken();
     final token = await auth.getAccessToken();
@@ -291,13 +292,13 @@ class AuthProvider extends GetConnect {
         url.toString(), headers: headers // Send the body in the request
     );
 
-    print("Login successful2 , ${response.body}");
+    debugPrint("Login successful2 , ${response.body}");
 
     if (response.hasError) {
       throw Exception('Failed to send fcm token: ${response.statusText}');
     }
 
-    print("Login successful, received data: ${response.body}");
+    debugPrint("Login successful, received data: ${response.body}");
 
     return (response.body['data'] as List)
         .map((json) => NotificationItem.fromJson(json as Map<String, dynamic>))
@@ -311,7 +312,7 @@ class AuthProvider extends GetConnect {
 
     final auth = AuthToken();
     final token = await auth.getAccessToken();
-    print("load ${httpClient.baseUrl}${url.toString()} with $token");
+    debugPrint("load ${httpClient.baseUrl}${url.toString()} with $token");
 
     final headers = {
       'Authorization': 'Bearer $token',
@@ -322,13 +323,13 @@ class AuthProvider extends GetConnect {
         url.toString(), headers: headers // Send the body in the request
     );
 
-    print("Login notifications , ${response.body}");
+    debugPrint("Login notifications , ${response.body}");
 
     if (response.hasError) {
       throw Exception('Failed to send fcm token: ${response.statusText}');
     }
 
-    print("Login successful, received data: ${response.body}");
+    debugPrint("Login successful, received data: ${response.body}");
 
     return (response.body['data']['unread']);
   }
@@ -340,7 +341,7 @@ class AuthProvider extends GetConnect {
 
     final auth = AuthToken();
     final token = await auth.getAccessToken();
-    print("load ${httpClient.baseUrl}${url.toString()} with $token");
+    debugPrint("load ${httpClient.baseUrl}${url.toString()} with $token");
 
     final headers = {
       'Authorization': 'Bearer $token',
@@ -351,13 +352,13 @@ class AuthProvider extends GetConnect {
         url.toString(), null, headers: headers // Send the body in the request
     );
 
-    print("read notifications , ${response.body}");
+    debugPrint("read notifications , ${response.body}");
 
     if (response.hasError) {
       throw Exception('Failed to send fcm token: ${response.statusText}');
     }
 
-    print("Login successful, received data: ${response.body}");
+    debugPrint("Login successful, received data: ${response.body}");
 
     return response;
   }
@@ -369,7 +370,7 @@ class AuthProvider extends GetConnect {
 
     final auth = AuthToken();
     final token = await auth.getAccessToken();
-    print("load ${httpClient.baseUrl}${url.toString()} with $token");
+    debugPrint("load ${httpClient.baseUrl}${url.toString()} with $token");
 
     final headers = {
       'Authorization': 'Bearer $token',
@@ -380,13 +381,13 @@ class AuthProvider extends GetConnect {
         url.toString(), null, headers: headers // Send the body in the request
     );
 
-    print("Login notifications , ${response.body}");
+    debugPrint("Login notifications , ${response.body}");
 
     if (response.hasError) {
       throw Exception('Failed to send fcm token: ${response.statusText}');
     }
 
-    print("Login successful, received data: ${response.body}");
+    debugPrint("Login successful, received data: ${response.body}");
 
     return response;
   }

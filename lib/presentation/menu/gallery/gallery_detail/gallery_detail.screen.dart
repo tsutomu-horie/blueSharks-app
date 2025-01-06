@@ -56,10 +56,27 @@ class GalleryDetailScreen extends GetView<GalleryDetailController> {
                             Get.to(() => FullScreenImageView(imageUrl: albumData!.photo!,));
                           }
                         },
-                        child: CustomImageView(
-                            customFit: BoxFit.contain,
-                            radius: 0.r,
-                            image: albumData!.photo ?? ""),
+                        child: Stack(
+                          children: [
+                            SizedBox(
+                              width: double.infinity,
+                              child: CustomImageView(
+                                  customFit: BoxFit.contain,
+                                  radius: 0.r,
+                                  image: albumData!.photo ?? ""),
+                            ),
+                            Container(
+                                decoration: const BoxDecoration(
+                                    gradient: LinearGradient(
+                                      begin: Alignment.bottomCenter,
+                                      end: Alignment.topCenter,
+                                      colors: [
+                                        Colors.black,
+                                        Colors.transparent,
+                                      ],
+                                    ))),
+                          ],
+                        ),
                       ),
                     ),
                     Positioned(
@@ -138,7 +155,7 @@ class GalleryDetailScreen extends GetView<GalleryDetailController> {
                   physics: const NeverScrollableScrollPhysics(),
                   gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: 3,
-                    childAspectRatio: 0.75,
+                    childAspectRatio: 1,
                     mainAxisSpacing: 2.w,
                     crossAxisSpacing: 2.w,
                   ),
