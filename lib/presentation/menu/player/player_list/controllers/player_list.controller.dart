@@ -84,42 +84,33 @@ class PlayerListController extends GetxController {
 
     try {
       while (hasMoreCategories) {
+        // 1. Load one category at a time
         final List<Category> categoryList = await memberProvider.getCategories(page: categoryPage);
         if (categoryList.isEmpty) {
           hasMoreCategories = false;
           continue;
         }
 
-        // Process one category at a time
+        // Process each category sequentially
         for (Category category in categoryList) {
-          // 1. Add category
+          // Add category first
           categories.add(category);
 
-          // 2. Load players for this category
+          // 2. Load players for this specific category
           await fetchPlayersForCategory(category.id, category.slug, category.name);
 
           // 3. Load images for players in this category
           List<Member> categoryMembers = categoryPlayers[category.id] ?? [];
-          for (var i = 0; i < categoryMembers.length; i += 5) {
-            final batch = categoryMembers.sublist(
-                i,
-                (i + 5) > categoryMembers.length ? categoryMembers.length : (i + 5)
-            );
-
-            await Future.wait(
-                batch.map((player) async {
-                  final imageUrl = "${player.custom_field?.profile_image_1?.first}";
-                  if (!preloadedImages.containsKey(imageUrl)) {
-                    final loadedImage = await getImage(mediaProvider, imageUrl);
-                    preloadedImages[imageUrl] = loadedImage;
-                  }
-                })
-            );
+          for (Member player in categoryMembers) {
+            final imageUrl = "${player.custom_field?.profile_image_1?.first}";
+            if (!preloadedImages.containsKey(imageUrl)) {
+              final loadedImage = await getImage(mediaProvider, imageUrl);
+              preloadedImages[imageUrl] = loadedImage;
+            }
           }
         }
         categoryPage++;
       }
-
     } catch (e) {
       print('Error loading categories and players: $e');
     } finally {
