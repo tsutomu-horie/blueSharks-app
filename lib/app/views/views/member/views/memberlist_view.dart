@@ -189,7 +189,7 @@ class MemberListView extends StatelessWidget {
                 );
               }).toList(),
             );
-          } else {
+          } else if (memberController.isLoading.value) {
             return Column(
               children: [
                 SizedBox(height: 70.h, child: shimmer()),
@@ -225,6 +225,8 @@ class MemberListView extends StatelessWidget {
                 ],),
               ],
             );
+          } else {
+            return const SizedBox();
           }
         }),
       ],
