@@ -34,7 +34,7 @@ class PlayerListController extends GetxController {
   }
 
   final Map<String, int> positionPriority = {
-    'props': 0,
+    'prop': 0,
     'hooker': 1,
     'lock': 2,
     'flanker': 3,
@@ -248,7 +248,7 @@ class PlayerListController extends GetxController {
 
     // Filter players based on position type
     List<Member> forwardPlayers = allPlayers.where((p) =>
-        ['props', 'hooker', 'lock', 'flanker', 'no8'].contains(p.categorySlug?.toLowerCase())).toList();
+        ['prop', 'hooker', 'lock', 'flanker', 'no8'].contains(p.categorySlug?.toLowerCase())).toList();
 
     List<Member> backPlayers = allPlayers.where((p) =>
         ['scrumhalf', 'standoff', 'center', 'wing', 'fullback'].contains(p.categorySlug?.toLowerCase())).toList();
@@ -321,8 +321,8 @@ class PlayerListController extends GetxController {
     // Create MemberGroup list and sort it
     List<MemberGroup> groups = [];
 
-    if (groupedPlayers['props']?.isNotEmpty ?? false) {
-      groups.add(MemberGroup(title: "Props", players: groupedPlayers['props']!));
+    if (groupedPlayers['prop']?.isNotEmpty ?? false) {
+      groups.add(MemberGroup(title: 'Prop', players: groupedPlayers['prop']!));
     }
     if (groupedPlayers['hooker']?.isNotEmpty ?? false) {
       groups.add(MemberGroup(title: "Hooker", players: groupedPlayers['hooker']!));
