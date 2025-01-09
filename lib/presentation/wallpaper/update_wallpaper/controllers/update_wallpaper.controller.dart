@@ -17,7 +17,7 @@ class UpdateWallpaperController extends GetxController {
   final isLoading = true.obs;
   final Map<String, materialGlobal.GlobalKey> groupKeys = <String, materialGlobal.GlobalKey>{}.obs;
   final Map<String, int> positionPriority = {
-    'props': 0,
+    'prop': 0,
     'hooker': 1,
     'lock': 2,
     'flanker': 3,
@@ -85,7 +85,7 @@ class UpdateWallpaperController extends GetxController {
   }
 
   List<CategorizedPlayerGroup> processWallpaperCategories(List<WallpaperCategory> categories) {
-    const forwardRoles = ['props', "hooker", "lock", "flanker", "number8"];
+    const forwardRoles = ['prop', "hooker", "lock", "flanker", "number8"];
     const backRoles = ["scrumhalf", "standoff", "center", "wing", "fullback"];
     const staffRoles = ["staff"];
 
