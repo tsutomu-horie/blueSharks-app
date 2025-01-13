@@ -191,6 +191,8 @@ class LocaleKeys {
   static const close_dialog = 'close_dialog';
   static const forgot_password_title = 'forgot_password_title';
   static const forgot_password_header = 'forgot_password_header';
+  static const re_type_password = 're_type_password';
+  static const re_type_password_placeholder = 're_type_password_placeholder';
   static const forgot_password_header_home = 'forgot_password_header_home';
   static const forgot_password_navigation_from_home =
       'forgot_password_navigation_from_home';
@@ -480,6 +482,8 @@ class Locales {
     'close_dialog': '近い',
     'forgot_password_title': 'パスワードをお忘れですか？',
     'forgot_password_header': 'パスワードをお忘れですか',
+    're_type_password': 'パスワード再入力',
+    're_type_password_placeholder': 'パスワードを再入力してください',
     'forgot_password_header_home': 'ワンタイムパスコード',
     'forgot_password_navigation_from_home': 'ここをタップ',
     'forgot_password_page_desc':

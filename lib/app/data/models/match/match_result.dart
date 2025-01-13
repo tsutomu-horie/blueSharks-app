@@ -208,8 +208,10 @@ class CustomField with _$CustomField {
     List<String>? words_localfood,
     @HiveField(67)
     List<String>? youtube_embed_src,
+    @HiveField(68)
+    @JsonKey(name: '_edit_lock')
+    List<String>? editLock,
   }) = _CustomField;
-
   factory CustomField.fromJson(Map<String, dynamic> json) =>
       _$CustomFieldFromJson(json);
 }

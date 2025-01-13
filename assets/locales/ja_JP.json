@@ -174,6 +174,8 @@
   "close_dialog": "近い",
   "forgot_password_title": "パスワードをお忘れですか？",
   "forgot_password_header": "パスワードをお忘れですか",
+  "re_type_password": "パスワード再入力",
+  "re_type_password_placeholder": "パスワードを再入力してください",
   "forgot_password_header_home": "ワンタイムパスコード",
   "forgot_password_navigation_from_home": "ここをタップ",
   "forgot_password_page_desc": "ご登録済みのメールアドレスを入力してください。メールアドレス認証のため、ワンタイムパスワードを送信いたします。\n認証後にパスワード再設定用のリンクを送信いたします。",

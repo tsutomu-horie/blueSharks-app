@@ -61,7 +61,7 @@ class GalleryDetailScreen extends GetView<GalleryDetailController> {
                             SizedBox(
                               width: double.infinity,
                               child: CustomImageView(
-                                  customFit: BoxFit.contain,
+                                  customFit: BoxFit.fitWidth,
                                   radius: 0.r,
                                   image: albumData!.photo ?? ""),
                             ),
@@ -150,6 +150,8 @@ class GalleryDetailScreen extends GetView<GalleryDetailController> {
               SizedBox(height: 8.h,),
 
               Obx(() {
+                final itemCount = controller.album.length > 1 ? controller.album.length - 1 : 0;
+
                 return GridView.builder(
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
@@ -159,9 +161,9 @@ class GalleryDetailScreen extends GetView<GalleryDetailController> {
                     mainAxisSpacing: 2.w,
                     crossAxisSpacing: 2.w,
                   ),
-                  itemCount: controller.album.length,
-                  itemBuilder: (context, playerIndex) {
-                    String imageUrl = controller.album[playerIndex].galleries?.photo ?? "";
+                  itemCount: itemCount,
+                  itemBuilder: (context, index) {
+                    String imageUrl =controller.album[index + 1].galleries.photo ?? "";
 
                     return GestureDetector(
                       onTap: () {

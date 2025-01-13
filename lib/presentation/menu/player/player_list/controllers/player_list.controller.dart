@@ -318,6 +318,9 @@ class PlayerListController extends GetxController {
       groupedPlayers[slug]!.add(player);
     }
 
+    groupedPlayers.forEach((key, value) {
+      value.sort((a, b) => a.modified.compareTo(b.modified));
+    });
     // Create MemberGroup list and sort it
     List<MemberGroup> groups = [];
 

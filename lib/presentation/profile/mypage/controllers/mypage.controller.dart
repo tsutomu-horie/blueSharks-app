@@ -35,7 +35,7 @@ class MypageController extends FanClubConfirmationController {
 
   void logout() async {
 
-     await apiProvider.logoutAccount();
+     // await apiProvider.logoutAccount();
 
      final auth = AuthToken();
      await auth.deleteToken();
