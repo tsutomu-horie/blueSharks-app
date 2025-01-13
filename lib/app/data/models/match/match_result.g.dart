@@ -140,13 +140,14 @@ class CustomFieldAdapter extends TypeAdapter<CustomField> {
       words_favoritefood: (fields[64] as List?)?.cast<String>(),
       words_localfood: (fields[66] as List?)?.cast<String>(),
       youtube_embed_src: (fields[67] as List?)?.cast<String>(),
+      editLock: (fields[68] as List?)?.cast<String>(),
     );
   }
 
   @override
   void write(BinaryWriter writer, CustomField obj) {
     writer
-      ..writeByte(68)
+      ..writeByte(69)
       ..writeByte(0)
       ..write(obj.gameDate)
       ..writeByte(1)
@@ -282,7 +283,9 @@ class CustomFieldAdapter extends TypeAdapter<CustomField> {
       ..writeByte(66)
       ..write(obj.words_localfood)
       ..writeByte(67)
-      ..write(obj.youtube_embed_src);
+      ..write(obj.youtube_embed_src)
+      ..writeByte(68)
+      ..write(obj.editLock);
   }
 
   @override
@@ -592,6 +595,9 @@ _$CustomFieldImpl _$$CustomFieldImplFromJson(Map<String, dynamic> json) =>
       youtube_embed_src: (json['youtube_embed_src'] as List<dynamic>?)
           ?.map((e) => e as String)
           .toList(),
+      editLock: (json['_edit_lock'] as List<dynamic>?)
+          ?.map((e) => e as String)
+          .toList(),
     );
 
 Map<String, dynamic> _$$CustomFieldImplToJson(_$CustomFieldImpl instance) =>
@@ -664,6 +670,7 @@ Map<String, dynamic> _$$CustomFieldImplToJson(_$CustomFieldImpl instance) =>
       'words_favoritefood': instance.words_favoritefood,
       'words_localfood': instance.words_localfood,
       'youtube_embed_src': instance.youtube_embed_src,
+      '_edit_lock': instance.editLock,
     };
 
 _$RenderedImpl _$$RenderedImplFromJson(Map<String, dynamic> json) =>

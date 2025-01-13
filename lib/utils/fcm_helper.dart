@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:awesome_notifications/awesome_notifications.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:koto_blue_sharks/app/providers/auth/auth_provider.dart';
@@ -36,15 +37,19 @@ class FcmHelper {
       //   );
       // }
         await AwesomeNotificationsHelper.init();
-      await Future.delayed(Duration(seconds: 1));
-      // initialize firebase
-      messaging = FirebaseMessaging.instance;
+        await Future.delayed(Duration(seconds: 1));
 
-      // notification settings handler
+          messaging = FirebaseMessaging.instance;
+
       await _setupFcmNotificationSettings();
+        await _generateFcmToken();
 
-      // generate token if it not already generated and store it on shared pref
-      await _generateFcmToken();
+
+        messaging.unsubscribeFromTopic(Constants.topic);
+
+        messaging.subscribeToTopic(Constants.topic).then((_) {
+          print('Subscribed to topic ${Constants.topic}');
+        });
 
       // background and foreground handlers
       FirebaseMessaging.onMessage.listen(_fcmForegroundHandler);
@@ -70,19 +75,20 @@ class FcmHelper {
     //NotificationSettings settings
     if (Platform.isIOS) {
       NotificationSettings settings = await messaging.requestPermission(
-        alert: true,
-        announcement: false,
-        badge: true,
-        carPlay: false,
-        criticalAlert: false,
-        provisional: false,
-        sound: true
+          alert: true,
+          announcement: false,
+          badge: true,
+          carPlay: false,
+          criticalAlert: false,
+          provisional: false,
+          sound: true
       );
 
       print('User granted permission: ${settings.authorizationStatus}');
     }
 
   }
+
 
   /// generate and save fcm token if its not already generated (generate only for 1 time)
   static Future<void> _generateFcmToken() async {
@@ -113,15 +119,6 @@ class FcmHelper {
     if (token != null) {
       final authToken = await auth.updateNotificationToken(token);
       print("find toke $authToken");
-
-      if (authToken == null) {
-        messaging.unsubscribeFromTopic(Constants.topic);
-
-        messaging.subscribeToTopic(Constants.topic).then((_) {
-          print('Subscribed to topic ${Constants.topic}');
-        });
-      }
-
     }
   }
 

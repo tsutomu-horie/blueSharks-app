@@ -222,7 +222,7 @@ class RegisterMemberFanclubScreen
       children: [
         Row(
           children: [
-            CustomTextView(LocaleKeys.confirm_new_password_edit.tr,
+            CustomTextView(LocaleKeys.re_type_password.tr,
                 type: TDSFontType.labelLarge, color: TextColor.secondary),
             CustomTextView(" *",
                 type: TDSFontType.labelLarge, color: TextColor.error),
@@ -251,7 +251,7 @@ class RegisterMemberFanclubScreen
               ),
               hintStyle: TextStyle(color: TextColor.placeholder),
               contentPadding: EdgeInsets.only(top: 2.h, left: 16.w),
-              hintText: LocaleKeys.confirm_new_password_edit_placeholder.tr,
+              hintText: LocaleKeys.re_type_password_placeholder.tr,
               suffixIcon: IconButton(
                 icon: Icon(
                   controller.isConfirmPasswordHidden.value
