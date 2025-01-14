@@ -49,7 +49,7 @@ class TopicListScreen  extends StatelessWidget {
           return notification.depth == 1;
         },
         child: NestedScrollView(
-          controller: controller.matchScrollController,
+          // controller: controller.matchScrollController,
           // Unified scroll controller
           headerSliverBuilder: (BuildContext context, bool innerBoxIsScrolled) {
             return <Widget>[
@@ -131,6 +131,7 @@ class TopicListScreen  extends StatelessWidget {
             ];
           },
           body: CustomScrollView(
+            controller: controller.getScrollController(controller.selectedIndex.value),
             slivers: [
               SliverList(
                 delegate: SliverChildBuilderDelegate(
@@ -156,13 +157,16 @@ class TopicListScreen  extends StatelessWidget {
                       } else {
                         return Column(
                           children: [
+
+
                             ListView.builder(
                               shrinkWrap: true,
                               physics: const NeverScrollableScrollPhysics(),
                               itemCount: data.length,
                               itemBuilder: (context, itemIndex) {
                                 return FutureBuilder<String>(
-                                  future: controller.getNewsImage("${data[itemIndex].id}"),
+                                  // future: controller.getNewsImage("${data[itemIndex].id}"),
+                                  future: controller.getNewsImage(data[itemIndex].content.rendered),
                                   builder: (context, snapshot) {
                                     if (snapshot.connectionState == ConnectionState.waiting && (controller.isTabChanging.value)) {
                                       // Show shimmer while waiting for the image
@@ -197,7 +201,29 @@ class TopicListScreen  extends StatelessWidget {
                               },
                             ),
 
-                            SizedBox(height: 24.h,),
+                            if (controller.isLoading[
+                                    controller.selectedIndex.value] ==
+                                true)
+                              Center(
+                                child: CircularProgressIndicator(
+                                  color: BrandColor.main,
+                                ),
+                              )
+
+                            // if (index == data.length - 1) ...[
+                            //   SizedBox(height: 24.h),
+                            //   Obx(() {
+                            //     if (controller.isLoading[controller.selectedIndex.value] != true) {
+                            //       return Center(
+                            //         child: CircularProgressIndicator(
+                            //           color: BrandColor.main,
+                            //         ),
+                            //       );
+                            //     }
+                            //     return const SizedBox();
+                            //   }),
+                            //   SizedBox(height: 24.h),
+                            // ],
                           ],
                         );
                       }

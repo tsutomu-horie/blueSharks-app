@@ -90,11 +90,12 @@ class TopicItemView extends GetView {
                                     child: Stack(
                                       children: [
                                         SizedBox(
+                                          height: double.infinity,
                                           width: double.infinity,
                                           child: CustomImageView(
                                             image: image!,
                                             radius: 0.r,
-                                            customFit: BoxFit.fitWidth,
+                                            customFit: BoxFit.cover,
                                           ),
                                         ),
                                         Container(

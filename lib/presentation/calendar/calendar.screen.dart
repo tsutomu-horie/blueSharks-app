@@ -162,13 +162,13 @@ class CalendarScreen extends StatelessWidget {
                 },
                 todayHighlightColor: BrandColor.main,
                 onViewChanged: (ViewChangedDetails details) {
-                  // Get the visible date range from the calendar
-                  final DateTime minDate = details.visibleDates.first;
-                  final DateTime maxDate = details.visibleDates.last;
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    // Get the visible date range from the calendar
+                    final DateTime minDate = details.visibleDates.first;
+                    final DateTime maxDate = details.visibleDates.last;
 
-                  controller.changeDisplay(minDate, maxDate);
-                  // Fetch events based on the visible date range
-                  // controller.onChangeFilter(minDate, maxDate);
+                    controller.changeDisplay(minDate, maxDate);
+                  });
                 },
                 dataSource: EventDataSource(controller.publicEvents),
               );
