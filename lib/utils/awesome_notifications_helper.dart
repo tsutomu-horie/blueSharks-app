@@ -154,6 +154,7 @@ class NotificationController {
 
     if (receivedAction.actionType == ActionType.Default) {
       final String? notificationId = receivedAction.payload?['id'];
+      // final String? notificationId = "15";
       print("Notification ID: $notificationId");
 
       // Store the notification ID for later use

@@ -76,6 +76,7 @@ class MypageController extends FanClubConfirmationController {
     });
 
     profileData.value = response;
+
     print("finish profile ${response}");
     isLoading.value = false;
   }

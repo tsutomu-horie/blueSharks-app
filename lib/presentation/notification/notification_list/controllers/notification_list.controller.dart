@@ -16,7 +16,7 @@ class NotificationListController extends GetxController {
   @override
   void onInit() async {
     super.onInit();
-    getNotification();
+    getNotification(true);
 
     AnalyticsService.logPageView(Routes.NOTIFICATION_LIST);
 
@@ -26,26 +26,35 @@ class NotificationListController extends GetxController {
     isLogin.value = token != null;
   }
 
-  void getNotification() async {
+  void getNotification(bool isOnInit) async {
     isLoading.value = true;
     try {
       final response = await apiProvider.getNotificationList();
       notificationList.value = response;
 
-      // Check if we came from a notification
-      final arguments = Get.arguments;
-      if (arguments != null && arguments['from_notification'] == true) {
-        final String? notificationId = arguments['notification_id'];
-        if (notificationId != null) {
-          // Find the notification in the list
-          final notification = notificationList.firstWhereOrNull(
-                  (element) => element.id.toString() == notificationId
-          );
+      print("isoon ${isOnInit}");
+      if (isOnInit) {
+        // Check if we came from a notification
+        final arguments = Get.arguments;
+        print("arguments is $arguments");
+        if (arguments != null && arguments['from_notification'] == true) {
+          final String? notificationId = arguments['notification_id'];
+          if (notificationId != null) {
+            // Find the notification in the list
+            final notification = notificationList.firstWhereOrNull(
+                    (element) => element.data.model_id.toString() == notificationId
+            );
 
-          if (notification != null) {
-            // Navigate to detail after a short delay to ensure list is loaded
-            await Future.delayed(Duration(milliseconds: 100));
-            Get.to(() => NotificationDetailScreen(notification));
+
+            if (notification != null) {
+              // Navigate to detail after a short delay to ensure list is loaded
+              await Future.delayed(Duration(milliseconds: 100));
+              print("naviaget to notif");
+              Get.to(() => NotificationDetailScreen(notification))?.then((_) {
+                // Refresh the unread notification count after returning
+                getNotification(false);
+              });
+            }
           }
         }
       }

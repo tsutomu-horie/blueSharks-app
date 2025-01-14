@@ -164,9 +164,9 @@ class TopicListScreen  extends StatelessWidget {
                                 return FutureBuilder<String>(
                                   future: controller.getNewsImage("${data[itemIndex].id}"),
                                   builder: (context, snapshot) {
-                                    if (snapshot.connectionState == ConnectionState.waiting) {
+                                    if (snapshot.connectionState == ConnectionState.waiting && (controller.isTabChanging.value)) {
                                       // Show shimmer while waiting for the image
-                                      return TopicItemViewShimmer();
+                                        return TopicItemViewShimmer();
                                     } else if (snapshot.hasError) {
                                       // Fallback view if there's an error
                                       return TopicItemView(
@@ -177,9 +177,9 @@ class TopicListScreen  extends StatelessWidget {
                                         image: null,
                                         date: data[itemIndex].date,
                                         title: data[itemIndex].title.rendered,
-                                        categories: controller.selectedIndex.value == 4 ? [LocaleKeys.activites.tr] : mapCategoryIdsToNames(data[itemIndex].categories),
+                                        categories: mapCategoryIdsToNames(data[itemIndex].categories),
                                       );
-                                    } else {
+                                    } else  {
                                       // Display the image when loaded
                                       return TopicItemView(
                                             () {
@@ -189,7 +189,7 @@ class TopicListScreen  extends StatelessWidget {
                                         image: snapshot.data,
                                         date: data[itemIndex].date,
                                         title: data[itemIndex].title.rendered,
-                                        categories: controller.selectedIndex.value == 4 ? [LocaleKeys.activites.tr] : mapCategoryIdsToNames(data[itemIndex].categories),
+                                        categories: mapCategoryIdsToNames(data[itemIndex].categories),
                                       );
                                     }
                                   },

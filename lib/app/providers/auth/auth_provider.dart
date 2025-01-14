@@ -91,7 +91,7 @@ class AuthProvider extends GetConnect {
     return response;
   }
 
-  Future<Response> updateProfile(String email, String accountId, String gender,Function onError) async {
+  Future<Response> updateProfile(String email, String accountId, String gender,Function onError, bool isNotification) async {
     final url = Uri.parse('profile');
     debugPrint("load ${httpClient.baseUrl}${url.toString()}");
 
@@ -107,6 +107,7 @@ class AuthProvider extends GetConnect {
       "email": email,
       "account_id": accountId,
       "gender": "male",
+      "is_notification": isNotification,
     };
 
     final response = await patch(

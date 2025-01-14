@@ -36,6 +36,7 @@ class UserData with _$UserData {
     @JsonKey(name: 'kat_first_name') String? katFirstName,
     @JsonKey(name: 'kat_last_name') String? katLastName,
     @JsonKey(name: 'customer_level') String? customerLevel,
+    @JsonKey(name: 'is_notification') bool? isNotification,
   }) = _UserData;
 
   factory UserData.fromJson(Map<String, dynamic> json) => _$UserDataFromJson(json);

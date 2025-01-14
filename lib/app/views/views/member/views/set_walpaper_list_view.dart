@@ -78,7 +78,7 @@ class SetWalpaperListView extends GetView {
                             padding: EdgeInsets.symmetric(
                                 vertical: 12.h, horizontal: 16.w),
                             child: CustomTextView(
-                              playerGroup.title.toLowerCase() == "number8" ? "No. 8" : playerGroup.title.capitalizeText(),
+                              playerGroup.title.toLowerCase() == "no8" ? "No. 8" : playerGroup.title.capitalizeText(),
                               style: TextStyle(
                                 fontSize: 16.sp,
                                 fontWeight: FontWeight.bold,
