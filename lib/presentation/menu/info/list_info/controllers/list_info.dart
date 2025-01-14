@@ -207,13 +207,33 @@ class TopicListController extends GetxController {
     selectedIndex.value = index;
   }
 
-  Future<String> getNewsImage(String mediaId) async {
+  Future<String> getNewsImage(String content) async {
+    // Define your regex to find the first <img> tag's src
+    final regex = RegExp(r'<img[^>]+src=\"(?<src>[^\"]+)\"[^>]*>');
+    // Search for the first match
+    final match = regex.firstMatch(content);
 
-    final imageData = await mediaProvider.fetchParentMedia(mediaId);
-    print("GET NEWS IMAGE ${imageData}");
-    final image = imageData?.media_details.sizes.thumbnail.source_url;
-    print("GET NEWS IMAGE ${mediaId}, ${image}");
-    return image ?? "";
+    print("get image ${match?.namedGroup('src')}");
+    // If a match is found, extract the 'src' group
+    if (match != null && match.namedGroup('src') != null) {
+      return match.namedGroup('src')!;
+    } else {
+      return "https://blue-sharks.jp/wp-content/themes/blue-sharks/images/common/noimage.webp";
+    }
+
+    // If no match is found, fallback to fetching via mediaProvider
+    final mediaProvider = MediaProvider();
+    final imageData = await mediaProvider.fetchParentMedia("mediaId");
+    return imageData.media_details.sizes.thumbnail.source_url ?? "";
   }
+
+  // Future<String> getNewsImage(String mediaId) async {
+  //
+  //   final imageData = await mediaProvider.fetchParentMedia(mediaId);
+  //   print("GET NEWS IMAGE ${imageData}");
+  //   final image = imageData?.media_details.sizes.thumbnail.source_url;
+  //   print("GET NEWS IMAGE ${mediaId}, ${image}");
+  //   return image ?? "";
+  // }
 
 }

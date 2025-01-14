@@ -14,7 +14,7 @@ class InfoProvider extends GetConnect {
     // final categoryUrl = Uri.parse('categories?parent=15&order=desc');
     // final categoryResponse = await get(categoryUrl.toString());
 
-    List<String> categoryIds = ['1', '34', '39', '38']; // Base categories
+    List<String> categoryIds = ['1', '33', '34', '38']; // Base categories
 
     // if (!categoryResponse.hasError) {
     //   List<dynamic> categories = categoryResponse.body as List;

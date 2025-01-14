@@ -53,7 +53,15 @@ class GalleryDetailScreen extends GetView<GalleryDetailController> {
                       child:  GestureDetector(
                         onTap: () {
                           if (albumData!.photo != null) {
-                            Get.to(() => FullScreenImageView(imageUrl: albumData!.photo!,));
+                            List<String> galleryImages = controller.album.map((item) =>
+                            item.galleries.photo ?? "").toList();
+
+// Update the navigation call
+                            Get.to(() => FullScreenImageView(
+                              imageUrls: galleryImages,
+                              initialIndex: 0,
+                            ));
+                            // Get.to(() => FullScreenImageView(imageUrl: albumData!.photo!,));
                           }
                         },
                         child: Stack(
@@ -167,7 +175,14 @@ class GalleryDetailScreen extends GetView<GalleryDetailController> {
 
                     return GestureDetector(
                       onTap: () {
-                        Get.to(() => FullScreenImageView(imageUrl: imageUrl,));
+                        List<String> galleryImages = controller.album.map((item) =>
+                        item.galleries.photo ?? "").toList();
+
+                        Get.to(() => FullScreenImageView(
+                          imageUrls: galleryImages,
+                          initialIndex: index + 1,
+                        ));
+
                         // // Open the full-screen image on tap
                         // showFullScreenImageWithTransition(
                         //     context,  imageUrl);
