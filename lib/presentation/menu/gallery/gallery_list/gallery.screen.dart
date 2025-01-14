@@ -350,6 +350,7 @@ class GalleryScreen extends GetView<GalleryController> {
                                                       galleryController.album[index]
                                                               .name ??
                                                           "",
+                                                      maxLine: 2,
                                                       type:
                                                           TDSFontType.titleLarge,
                                                       color: Colors.white,

@@ -21,7 +21,7 @@ class UpdateWallpaperController extends GetxController {
     'hooker': 1,
     'lock': 2,
     'flanker': 3,
-    'number8': 4,
+    'no8': 4,
     'scrumhalf': 5,
     'standoff': 6,
     'center': 7,
@@ -85,7 +85,7 @@ class UpdateWallpaperController extends GetxController {
   }
 
   List<CategorizedPlayerGroup> processWallpaperCategories(List<WallpaperCategory> categories) {
-    const forwardRoles = ['prop', "hooker", "lock", "flanker", "number8"];
+    const forwardRoles = ['prop', "hooker", "lock", "flanker", "no8"];
     const backRoles = ["scrumhalf", "standoff", "center", "wing", "fullback"];
     const staffRoles = ["staff"];
 

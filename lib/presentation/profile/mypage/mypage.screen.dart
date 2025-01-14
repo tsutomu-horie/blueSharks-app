@@ -372,7 +372,7 @@ class MypageScreen extends GetView<MypageController> {
                                       vertical: 12.h, horizontal: 16.w),
                                   child: Obx(() {
                                     return CustomTextView(
-                                      controller.isSelectNotificaiton.value
+                                      controller.profileData.value?.isNotification == true
                                           ? LocaleKeys.on.tr
                                           : LocaleKeys.off.tr,
                                       align: TextAlign.start,

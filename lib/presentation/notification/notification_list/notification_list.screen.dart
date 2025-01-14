@@ -42,7 +42,7 @@ class NotificationListScreen extends GetView<NotificationListController> {
       ),
       body: RefreshIndicator(
         onRefresh: () async {
-          controller.getNotification();
+          controller.getNotification(false);
         },
         child: Obx(() {
           if (!controller.isLoading.value) {
@@ -59,7 +59,7 @@ class NotificationListScreen extends GetView<NotificationListController> {
                             await Get.to(() => NotificationDetailScreen(
                                 controller.notificationList[index]))?.then((_) {
                               // Refresh the unread notification count after returning
-                              controller.getNotification();
+                              controller.getNotification(false);
                             });
                             // Get.to(() =>
                             //     NotificationDetailScreen(

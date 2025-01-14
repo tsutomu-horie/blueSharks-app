@@ -7,6 +7,8 @@ import 'package:koto_blue_sharks/app/services/analytics_service.dart';
 import 'package:koto_blue_sharks/infrastructure/navigation/routes.dart';
 
 class TopicListController extends GetxController {
+  var isTabChanging = false.obs;
+
   final InfoProvider apiProvider = InfoProvider();
   final MediaProvider mediaProvider = MediaProvider();
   final allowIndexReset = true.obs;
@@ -76,6 +78,7 @@ class TopicListController extends GetxController {
   }
 
   void getInfo(int tabIndex) async {
+
     if (isLoading[tabIndex]!) return; // Avoid multiple API calls at the same time
 
     isLoading[tabIndex] = true; // Set loading to true
@@ -160,6 +163,8 @@ class TopicListController extends GetxController {
   }
 
   void changeTab(int index) async {
+
+    isTabChanging.value = true;
     selectedIndex.value = index; // Update selected tab index after the delay
 
     selectedIndex.value = index;
@@ -170,6 +175,9 @@ class TopicListController extends GetxController {
     }
 
     isImageLoading[index] = false;
+    Future.delayed(const Duration(milliseconds: 500), () {
+      isTabChanging.value = false;
+    });
   }
 
   RxList<Post> getTabData(int tabIndex) {
@@ -200,6 +208,7 @@ class TopicListController extends GetxController {
   }
 
   Future<String> getNewsImage(String mediaId) async {
+
     final imageData = await mediaProvider.fetchParentMedia(mediaId);
     print("GET NEWS IMAGE ${imageData}");
     final image = imageData?.media_details.sizes.thumbnail.source_url;

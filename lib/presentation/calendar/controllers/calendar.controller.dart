@@ -9,55 +9,65 @@ import 'package:koto_blue_sharks/infrastructure/navigation/routes.dart';
 import 'package:syncfusion_flutter_calendar/calendar.dart';
 
 class CalendarScreenController extends GetxController {
-  final String publicCalendarAllSchedulue = 'bluesharksrugby.official@gmail.com'; // Replace with your public calendar ID
-  final String publicCalendarIdGameSchedulue = '49d1fb0089629f5d035c69511fcd066cca299e022b41cc6ba43ed818090d6631@group.calendar.google.com'; // Replace with your public calendar ID
-  final String publicCalendarIdOpenPractice = '49d1fb0089629f5d035c69511fcd066cca299e022b41cc6ba43ed818090d6631@group.calendar.google.com'; // Replace with your public calendar ID
-  final String publicCalendarIdEvent = '49d1fb0089629f5d035c69511fcd066cca299e022b41cc6ba43ed818090d6631@group.calendar.google.com'; // Replace with your public calendar ID
-  final String publicCalendarIdPlayerBirthday = '49d1fb0089629f5d035c69511fcd066cca299e022b41cc6ba43ed818090d6631@group.calendar.google.com'; // Replace with your public calendar ID
+  // final String publicCalendarAllSchedulue = 'bluesharksrugby.official@gmail.com'; // Replace with your public calendar ID
+  final String publicCalendarIdGameSchedulue = 'bluesharksrugby.official@gmail.com'; // Replace with your public calendar ID
+  final String publicCalendarIdOpenPractice = 'bluesharksrugby.official2@gmail.com'; // Replace with your public calendar ID
+  final String publicCalendarIdEvent = 'bluesharksrugby.official3@gmail.com'; // Replace with your public calendar ID
+  final String publicCalendarIdPlayerBirthday = 'bluesharksrugby.official4@gmail.com'; // Replace with your public calendar ID
   final String apiKey = 'AIzaSyAJMnARaJbvTrp5s9opMyyjFbZVVj0d0xY'; // Replace with your Google API Key
   RxList<CalendarEvent> publicEvents = <CalendarEvent>[].obs;
-  final selectedYear = LocaleKeys.all.tr.obs;
+  final selectedYear = LocaleKeys.game_schedule.tr.obs;
 
   final Rx<DateTime> minDate = DateTime.now().obs;
   final Rx<DateTime> maxDate = DateTime.now().obs;
 
-  final List<String> filterEvent = [LocaleKeys.all.tr, LocaleKeys.game_schedule.tr, LocaleKeys.open_practice_match.tr, LocaleKeys.event.tr, LocaleKeys.player_birthday.tr];
+  final List<String> filterEvent = [LocaleKeys.game_schedule.tr, LocaleKeys.open_practice_match.tr, LocaleKeys.event.tr, LocaleKeys.player_birthday.tr];
 
   var calendarView = CalendarView.month.obs;
 
   @override
   void onInit() {
-
     super.onInit();
     AnalyticsService.logPageView(Routes.CALENDAR);
-
   }
 
   List<String> parseCategories(String title, String description) {
+    print("parseCategory ${title}");
     List<String> categories = [];
 
-    if (title.contains('Meeting') || description.contains('Meeting')) {
-      categories.add('Meeting');
-    }
-    if (title.contains('Workshop') || description.contains('Workshop')) {
-      categories.add('Workshop');
-    }
-    if (title.contains('Conference') || description.contains('Conference')) {
-      categories.add('Conference');
-    } 
+    // if (title.contains('Meeting') || description.contains('Meeting')) {
+    //   categories.add('Meeting');
+    // }
+    // if (title.contains('Workshop') || description.contains('Workshop')) {
+    //   categories.add('Workshop');
+    // }
+    // if (title.contains('Conference') || description.contains('Conference')) {
+    //   categories.add('Conference');
+    // }
 
     // Add more conditions as needed
 
-    print("parse catrgot ${selectedYear.value} ${LocaleKeys.all.tr.toUpperCase()}");
-
+    // if (selectedYear.value == LocaleKeys.game_schedule.tr) {
+    //   categories = [LocaleKeys.game_schedule.tr];
+    // } else if (selectedYear.value == LocaleKeys.open_practice_match.tr) {
+    //   categories = [LocaleKeys.open_practice_match.tr];
+    //
+    // } else if (selectedYear.value == LocaleKeys.event.tr) {
+    //   categories = [LocaleKeys.event.tr];
+    //
+    // } else if (selectedYear.value == LocaleKeys.player_birthday.tr) {
+    //   categories = [LocaleKeys.player_birthday.tr];
+    //
+    // }
     // Filter categories based on selectedYear
-    if (selectedYear.value.toLowerCase() != LocaleKeys.all.tr.toLowerCase()) {
-      categories = categories.where((category) => category == selectedYear.value).toList();
-      print("masuk $categories");
-    } else {
-      categories = filterEvent.where((value) => value != LocaleKeys.all.tr).toList();
-    }
+    // if (selectedYear.value.toLowerCase() != LocaleKeys.game_schedule.tr.toLowerCase()) {
+    //   categories = categories.where((category) => category == selectedYear.value).toList();
+    //   print("masuk $categories");
+    // } else {
+    //   categories = filterEvent.where((value) => value != LocaleKeys.game_schedule.tr).toList();
+    // }
 
+    print("return ${categories}");
     return categories;
   }
 
@@ -89,10 +99,12 @@ class CalendarScreenController extends GetxController {
       minDate = minDate.add(const Duration(days: -1));
     }
 
+    publicEvents.clear();
     print("onCHange ${selectedYear.value}");
-    if (selectedYear.value == LocaleKeys.all.tr) {
-      fetchPublicEvents(minDate, maxDate, publicCalendarAllSchedulue);
-    } else if (selectedYear.value == LocaleKeys.game_schedule.tr) {
+    // if (selectedYear.value == LocaleKeys.all.tr) {
+    //   fetchPublicEvents(minDate, maxDate, publicCalendarAllSchedulue);
+    // } else
+    if (selectedYear.value == LocaleKeys.game_schedule.tr) {
       fetchPublicEvents(minDate, maxDate, publicCalendarIdGameSchedulue);
     } else if (selectedYear.value == LocaleKeys.open_practice_match.tr) {
       fetchPublicEvents(minDate, maxDate, publicCalendarIdOpenPractice);

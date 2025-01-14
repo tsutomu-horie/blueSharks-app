@@ -47,7 +47,9 @@ class FanClubConfirmationController extends GetxController {
       });
 
       profileData.value = response;
-      print("finish profile ${response}");
+      isSelectNotificaiton.value = response.isNotification ?? true;
+
+          print("finish profile ${response}");
       isLoading.value = false;
     }
   }
@@ -63,6 +65,8 @@ class FanClubConfirmationController extends GetxController {
       });
 
       profileData.value = response;
+      isSelectNotificaiton.value = response.isNotification ?? true;
+
       print("finish profile ${response}");
       isLoading.value = false;
     }
@@ -71,11 +75,11 @@ class FanClubConfirmationController extends GetxController {
   void updateProfile(Function(String, String, String, String, bool) onSuccess) async {
     MySharedPref.setWallpaper(playerLinkController.value);
     MySharedPref.setWallpaperName(playerNameController.value);
-    MySharedPref.setNotification(isSelectNotificaiton.value ? LocaleKeys.active.tr : LocaleKeys.inactive.tr);
-
+    // MySharedPref.setNotification(isSelectNotificaiton.value ? LocaleKeys.active.tr : LocaleKeys.inactive.tr);
+    print("isSelect notif ${isSelectNotificaiton.value}");
     final response = apiProvider.updateProfile(emailController.text, idController.text, "male", (){
 
-    });
+    }, isSelectNotificaiton.value);
 
     if (response != null) {
       onSuccess(emailController.text, idController.text, playerLinkController.value, playerNameController.value, isSelectNotificaiton.value);

@@ -373,6 +373,8 @@ mixin _$UserData {
   String? get katLastName => throw _privateConstructorUsedError;
   @JsonKey(name: 'customer_level')
   String? get customerLevel => throw _privateConstructorUsedError;
+  @JsonKey(name: 'is_notification')
+  bool? get isNotification => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
   @JsonKey(ignore: true)
@@ -397,7 +399,8 @@ abstract class $UserDataCopyWith<$Res> {
       @JsonKey(name: 'kan_last_name') String? kanLastName,
       @JsonKey(name: 'kat_first_name') String? katFirstName,
       @JsonKey(name: 'kat_last_name') String? katLastName,
-      @JsonKey(name: 'customer_level') String? customerLevel});
+      @JsonKey(name: 'customer_level') String? customerLevel,
+      @JsonKey(name: 'is_notification') bool? isNotification});
 }
 
 /// @nodoc
@@ -425,6 +428,7 @@ class _$UserDataCopyWithImpl<$Res, $Val extends UserData>
     Object? katFirstName = freezed,
     Object? katLastName = freezed,
     Object? customerLevel = freezed,
+    Object? isNotification = freezed,
   }) {
     return _then(_value.copyWith(
       accountId: null == accountId
@@ -475,6 +479,10 @@ class _$UserDataCopyWithImpl<$Res, $Val extends UserData>
           ? _value.customerLevel
           : customerLevel // ignore: cast_nullable_to_non_nullable
               as String?,
+      isNotification: freezed == isNotification
+          ? _value.isNotification
+          : isNotification // ignore: cast_nullable_to_non_nullable
+              as bool?,
     ) as $Val);
   }
 }
@@ -499,7 +507,8 @@ abstract class _$$UserDataImplCopyWith<$Res>
       @JsonKey(name: 'kan_last_name') String? kanLastName,
       @JsonKey(name: 'kat_first_name') String? katFirstName,
       @JsonKey(name: 'kat_last_name') String? katLastName,
-      @JsonKey(name: 'customer_level') String? customerLevel});
+      @JsonKey(name: 'customer_level') String? customerLevel,
+      @JsonKey(name: 'is_notification') bool? isNotification});
 }
 
 /// @nodoc
@@ -525,6 +534,7 @@ class __$$UserDataImplCopyWithImpl<$Res>
     Object? katFirstName = freezed,
     Object? katLastName = freezed,
     Object? customerLevel = freezed,
+    Object? isNotification = freezed,
   }) {
     return _then(_$UserDataImpl(
       accountId: null == accountId
@@ -575,6 +585,10 @@ class __$$UserDataImplCopyWithImpl<$Res>
           ? _value.customerLevel
           : customerLevel // ignore: cast_nullable_to_non_nullable
               as String?,
+      isNotification: freezed == isNotification
+          ? _value.isNotification
+          : isNotification // ignore: cast_nullable_to_non_nullable
+              as bool?,
     ));
   }
 }
@@ -594,7 +608,8 @@ class _$UserDataImpl implements _UserData {
       @JsonKey(name: 'kan_last_name') this.kanLastName,
       @JsonKey(name: 'kat_first_name') this.katFirstName,
       @JsonKey(name: 'kat_last_name') this.katLastName,
-      @JsonKey(name: 'customer_level') this.customerLevel});
+      @JsonKey(name: 'customer_level') this.customerLevel,
+      @JsonKey(name: 'is_notification') this.isNotification});
 
   factory _$UserDataImpl.fromJson(Map<String, dynamic> json) =>
       _$$UserDataImplFromJson(json);
@@ -632,10 +647,13 @@ class _$UserDataImpl implements _UserData {
   @override
   @JsonKey(name: 'customer_level')
   final String? customerLevel;
+  @override
+  @JsonKey(name: 'is_notification')
+  final bool? isNotification;
 
   @override
   String toString() {
-    return 'UserData(accountId: $accountId, createdAt: $createdAt, email: $email, gender: $gender, id: $id, isVerified: $isVerified, isEitherMatched: $isEitherMatched, kanFirstName: $kanFirstName, kanLastName: $kanLastName, katFirstName: $katFirstName, katLastName: $katLastName, customerLevel: $customerLevel)';
+    return 'UserData(accountId: $accountId, createdAt: $createdAt, email: $email, gender: $gender, id: $id, isVerified: $isVerified, isEitherMatched: $isEitherMatched, kanFirstName: $kanFirstName, kanLastName: $kanLastName, katFirstName: $katFirstName, katLastName: $katLastName, customerLevel: $customerLevel, isNotification: $isNotification)';
   }
 
   @override
@@ -663,7 +681,9 @@ class _$UserDataImpl implements _UserData {
             (identical(other.katLastName, katLastName) ||
                 other.katLastName == katLastName) &&
             (identical(other.customerLevel, customerLevel) ||
-                other.customerLevel == customerLevel));
+                other.customerLevel == customerLevel) &&
+            (identical(other.isNotification, isNotification) ||
+                other.isNotification == isNotification));
   }
 
   @JsonKey(ignore: true)
@@ -681,7 +701,8 @@ class _$UserDataImpl implements _UserData {
       kanLastName,
       katFirstName,
       katLastName,
-      customerLevel);
+      customerLevel,
+      isNotification);
 
   @JsonKey(ignore: true)
   @override
@@ -710,7 +731,8 @@ abstract class _UserData implements UserData {
           @JsonKey(name: 'kan_last_name') final String? kanLastName,
           @JsonKey(name: 'kat_first_name') final String? katFirstName,
           @JsonKey(name: 'kat_last_name') final String? katLastName,
-          @JsonKey(name: 'customer_level') final String? customerLevel}) =
+          @JsonKey(name: 'customer_level') final String? customerLevel,
+          @JsonKey(name: 'is_notification') final bool? isNotification}) =
       _$UserDataImpl;
 
   factory _UserData.fromJson(Map<String, dynamic> json) =
@@ -749,6 +771,9 @@ abstract class _UserData implements UserData {
   @override
   @JsonKey(name: 'customer_level')
   String? get customerLevel;
+  @override
+  @JsonKey(name: 'is_notification')
+  bool? get isNotification;
   @override
   @JsonKey(ignore: true)
   _$$UserDataImplCopyWith<_$UserDataImpl> get copyWith =>
