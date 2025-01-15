@@ -14,6 +14,7 @@ class FullScreenImageView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    debugPrint("fullscreen ${imageUrls}");
     return Scaffold(
       backgroundColor: Colors.black,
       body: Stack(

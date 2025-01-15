@@ -55,4 +55,9 @@ class GalleryController extends GetxController {
     print("index == ${album.length}");
     isLoading.value = false;
   }
+
+  String imageCompressor(String bactchImage){
+    print("compress ${bactchImage}");
+    return "https://wsrv.nl/?url=$bactchImage&dpr=1";
+  }
 }

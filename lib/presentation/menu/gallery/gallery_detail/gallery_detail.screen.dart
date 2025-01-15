@@ -56,7 +56,6 @@ class GalleryDetailScreen extends GetView<GalleryDetailController> {
                             List<String> galleryImages = controller.album.map((item) =>
                             item.galleries.photo ?? "").toList();
 
-// Update the navigation call
                             Get.to(() => FullScreenImageView(
                               imageUrls: galleryImages,
                               initialIndex: 0,
@@ -71,7 +70,7 @@ class GalleryDetailScreen extends GetView<GalleryDetailController> {
                               child: CustomImageView(
                                   customFit: BoxFit.fitWidth,
                                   radius: 0.r,
-                                  image: albumData!.photo ?? ""),
+                                  image: controller.imageCompressor(albumData!.photo ?? "", true)),
                             ),
                             Container(
                                 decoration: const BoxDecoration(
@@ -191,7 +190,7 @@ class GalleryDetailScreen extends GetView<GalleryDetailController> {
                         width: double.infinity,
                         child: CustomImageView(
                           radius: 0.r,
-                          image: imageUrl,
+                          image: controller.imageCompressor(imageUrl, false),
                         ),
                       ),
                     );

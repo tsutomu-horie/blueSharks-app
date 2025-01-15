@@ -8,6 +8,7 @@ import 'package:koto_blue_sharks/app/views/views/custom_text_view.dart';
 import 'package:koto_blue_sharks/presentation/menu/player/player_list/controllers/player_list.controller.dart';
 import 'package:koto_blue_sharks/presentation/profile/mypage/mypage.screen.dart';
 import 'package:koto_blue_sharks/utils/match+extensions.dart';
+import 'package:koto_blue_sharks/utils/utils.dart';
 
 class PlayerCardView extends GetView<PlayerListController> {
   const PlayerCardView(this.player, this.position, this.onSet,
@@ -22,8 +23,10 @@ class PlayerCardView extends GetView<PlayerListController> {
   final Function(String, String) onTap;
 
 
+
   @override
   Widget build(BuildContext context) {
+    print("get player image ${player}");
     final PlayerListController controller = Get.put(PlayerListController());
 
     final imageUrl = "${player.custom_field?.profile_image_1?.first}";
@@ -46,93 +49,74 @@ class PlayerCardView extends GetView<PlayerListController> {
         },
       );
     } else {
-      return FutureBuilder<String>(
-        future: getImage(mediaProvider,
-            "${player.custom_field?.profile_image_1?.first}"),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return Center(
-                child: shimmer()); // Loading indicator
-          } else if (snapshot.hasError) {
-            return const Center(child: Text('Error loading data'));
-          } else {
-            String postImage = "";
-            if (isSetWallpaper) {
-              postImage = player.link;
-            } else {
-              postImage = snapshot.data ?? ''; // Fallback in case of null
-            }
-
-            // Use your CustomImageView with the fetched image URL
-            return InkWell(
-              onTap: () {
-                onTap(postImage, position);
-              },
-              child: Stack(
+      return InkWell(
+        onTap: () {
+          onTap(player.link, position);
+        },
+        child: Stack(
+          children: [
+            player.link != ''
+                ? SizedBox(
+              height: double.infinity,
+              child:
+              CustomImageView(
+                image: controller.imageCompressor(player.link),
+                radius: 4.r,
+                customFit: BoxFit.fitHeight,
+              ),)
+                :
+            Container(
+              height: double.infinity,
+              decoration: BoxDecoration(
+                color: Colors.grey,
+                borderRadius: BorderRadius.circular(4.r),
+              ),
+            ),
+            Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(4.r),
+                gradient: const LinearGradient(
+                  begin: Alignment.bottomCenter,
+                  end: Alignment.center,
+                  colors: [
+                    Colors.black,
+                    Colors.transparent,
+                  ],
+                ),
+              ),
+            ),
+            Positioned(
+              bottom: 8.w,
+              left: 8.w,
+              right: 8.w,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  postImage != ''
-                      ? SizedBox(
-                      height: double.infinity,
-                      child: CustomImageView(
-                        image: postImage,
-                        radius: 4.r,
-                        customFit: BoxFit.fitHeight,
-                      ))
-                      : Container(
-                    height: double.infinity,
-                    decoration: BoxDecoration(
-                      color: Colors.grey,
-                      borderRadius: BorderRadius.circular(4.r),
+                  CustomTextView(
+                    player.playerNameKatakana ?? "",
+                    style: TextStyle(
+                      fontSize: 10.sp,
+                      fontWeight: FontWeight.w400,
+                      color: Colors.white,
                     ),
                   ),
-                  Container(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(4.r),
-                      gradient: const LinearGradient(
-                        begin: Alignment.bottomCenter,
-                        end: Alignment.center,
-                        colors: [
-                          Colors.black,
-                          Colors.transparent,
-                        ],
-                      ),
-                    ),
-                  ),
-                  Positioned(
-                    bottom: 8.w,
-                    left: 8.w,
-                    right: 8.w,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        CustomTextView(
-                          player.playerNameKatakana ?? "",
-                          style: TextStyle(
-                            fontSize: 10.sp,
-                            fontWeight: FontWeight.w400,
-                            color: Colors.white,
-                          ),
-                        ),
-                        Text(
-                          player.title.rendered,
-                          maxLines: 2,
-                          softWrap: true,
-                          style: TextStyle(
-                            fontSize: 12.sp,
-                            fontWeight: FontWeight.w400,
-                            color: Colors.white,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ],
+                  Text(
+                    player.title.rendered,
+                    maxLines: 2,
+                    softWrap: true,
+                    style: TextStyle(
+                      fontSize: 12.sp,
+                      fontWeight: FontWeight.w400,
+                      color: Colors.white,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                 ],
               ),
-            ); // Display image
-          }
-        },
-      );
+            ),
+          ],
+        ),
+      ); // Display image
     }
   }
 
@@ -145,11 +129,12 @@ class PlayerCardView extends GetView<PlayerListController> {
               ? SizedBox(
                   height: double.infinity,
                   child: CustomImageView(
-                    image: postImage,
+                    image: controller.imageCompressor(postImage),
                     radius: 4.r,
                     customFit: BoxFit.fitHeight,
                   ))
-              : Container(
+              :
+          Container(
                   height: double.infinity,
                   decoration: BoxDecoration(
                     color: Colors.grey,

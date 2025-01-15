@@ -239,9 +239,9 @@ class GalleryScreen extends GetView<GalleryController> {
                                                       child: CustomImageView(
                                                           customFit: BoxFit.fitWidth,
                                                           radius: 12.r,
-                                                          image: galleryController
+                                                          image: controller.imageCompressor(galleryController
                                                                   .album[index].photo ??
-                                                              ""),
+                                                              "")),
                                                     ),
                                                     Container(
                                                         decoration: const BoxDecoration(
