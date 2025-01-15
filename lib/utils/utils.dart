@@ -112,5 +112,4 @@ class Utils {
       Utils.showError(context, LocaleKeys.error_login_message.tr, null );
     }
   }
-
 }

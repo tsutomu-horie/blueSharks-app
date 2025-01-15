@@ -133,10 +133,19 @@ class CalendarScreenController extends GetxController {
         print("get data\n ${data}");
         // Map the event data to your CalendarEvent model
         final fetchedEvents = events.map((eventData) {
+          final isAllDayEvent = eventData['start']['date'] != null;
+
+          DateTime startDate = DateTime.parse(eventData['start']['dateTime'] ?? eventData['start']['date']);
+          DateTime endDate = DateTime.parse(eventData['end']['dateTime'] ?? eventData['end']['date']);
+
+          if (isAllDayEvent) {
+            endDate = endDate.subtract(const Duration(days: 1));
+          }
+
           return CalendarEvent(
             title: eventData['summary'] ?? 'No Title',
-            start: DateTime.parse(eventData['start']['dateTime'] ?? eventData['start']['date']),
-            end: DateTime.parse(eventData['end']['dateTime'] ?? eventData['end']['date']),
+            start: startDate,
+            end: endDate,
             description: eventData['description'] ?? '',
           );
         }).toList();

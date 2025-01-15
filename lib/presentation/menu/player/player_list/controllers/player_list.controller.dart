@@ -318,9 +318,9 @@ class PlayerListController extends GetxController {
       groupedPlayers[slug]!.add(player);
     }
 
-    groupedPlayers.forEach((key, value) {
-      value.sort((a, b) => a.modified.compareTo(b.modified));
-    });
+    // groupedPlayers.forEach((key, value) {
+    //   value.sort((a, b) => a.modified.compareTo(b.modified));
+    // });
     // Create MemberGroup list and sort it
     List<MemberGroup> groups = [];
 
@@ -366,5 +366,11 @@ class PlayerListController extends GetxController {
     });
 
     return groups;
+  }
+
+
+  String imageCompressor(String bactchImage){
+    print("compress ${bactchImage}");
+    return "https://wsrv.nl/?url=$bactchImage&dpr=1";
   }
 }

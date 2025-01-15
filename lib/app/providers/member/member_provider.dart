@@ -45,7 +45,7 @@ class MemberProvider extends GetConnect {
 
   // Fetch players by category
   Future<List<Member>> getPlayersByCategory(int categoryId, {int page = 1}) async {
-    final response = await get('posts?categories=$categoryId&page=$page');
+    final response = await get('posts?categories=$categoryId&page=$page&per_page=100&order=asc&orderby=modified');
     if (response.hasError || response.body.isEmpty) {
       return []; // Return an empty list if no data or error occurs
     }
