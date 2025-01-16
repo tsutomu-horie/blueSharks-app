@@ -14,6 +14,7 @@ class Post with _$Post {
     required PostContent content,
     required PostExcerpt excerpt,
     required List<int> categories,
+    required int? featured_media,
   }) = _Post;
 
   factory Post.fromJson(Map<String, dynamic> json) => _$PostFromJson(json);

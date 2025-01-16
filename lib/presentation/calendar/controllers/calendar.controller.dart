@@ -11,7 +11,7 @@ import 'package:syncfusion_flutter_calendar/calendar.dart';
 class CalendarScreenController extends GetxController {
   // final String publicCalendarAllSchedulue = 'bluesharksrugby.official@gmail.com'; // Replace with your public calendar ID
   final String publicCalendarIdGameSchedulue = 'bluesharksrugby.official@gmail.com'; // Replace with your public calendar ID
-  final String publicCalendarIdOpenPractice = 'bluesharksrugby.official2@gmail.com'; // Replace with your public calendar ID
+  final String publicCalendarIdAll = 'bluesharksrugby.official2@gmail.com'; // Replace with your public calendar ID
   final String publicCalendarIdEvent = 'bluesharksrugby.official3@gmail.com'; // Replace with your public calendar ID
   final String publicCalendarIdPlayerBirthday = 'bluesharksrugby.official4@gmail.com'; // Replace with your public calendar ID
   final String apiKey = 'AIzaSyAJMnARaJbvTrp5s9opMyyjFbZVVj0d0xY'; // Replace with your Google API Key
@@ -21,7 +21,7 @@ class CalendarScreenController extends GetxController {
   final Rx<DateTime> minDate = DateTime.now().obs;
   final Rx<DateTime> maxDate = DateTime.now().obs;
 
-  final List<String> filterEvent = [LocaleKeys.game_schedule.tr, LocaleKeys.open_practice_match.tr, LocaleKeys.event.tr, LocaleKeys.player_birthday.tr];
+  final List<String> filterEvent = [ LocaleKeys.all.tr,LocaleKeys.game_schedule.tr, LocaleKeys.event.tr, LocaleKeys.player_birthday.tr];
 
   var calendarView = CalendarView.month.obs;
 
@@ -30,6 +30,70 @@ class CalendarScreenController extends GetxController {
     super.onInit();
     AnalyticsService.logPageView(Routes.CALENDAR);
   }
+
+  Future<void> fetchAllCalendars(DateTime minDate, DateTime maxDate) async {
+    // Clear existing events before fetching
+    publicEvents.clear();
+
+    // Create a list to hold all fetched events
+    List<CalendarEvent> allEvents = [];
+
+    // Fetch events from all calendars concurrently
+    await Future.wait([
+      fetchCalendarEvents(minDate, maxDate, publicCalendarIdGameSchedulue),
+      fetchCalendarEvents(minDate, maxDate, publicCalendarIdEvent),
+      fetchCalendarEvents(minDate, maxDate, publicCalendarIdPlayerBirthday)
+    ]).then((List<List<CalendarEvent>> results) {
+      // Combine all events
+      for (var events in results) {
+        allEvents.addAll(events);
+      }
+      // Update the publicEvents with combined results
+      publicEvents.assignAll(allEvents);
+    });
+  }
+
+// Modified fetch method that returns List<CalendarEvent>
+  Future<List<CalendarEvent>> fetchCalendarEvents(DateTime minDate, DateTime maxDate, String selectedId) async {
+    List<CalendarEvent> events = [];
+
+    try {
+      final url = Uri.parse(
+        'https://www.googleapis.com/calendar/v3/calendars/$selectedId/events?key=$apiKey'
+            '&timeMin=${minDate.toUtc().toIso8601String()}&timeMax=${maxDate.toUtc().toIso8601String()}',
+      );
+
+      final response = await http.get(url);
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        final List<dynamic> eventItems = data['items'];
+
+        events = eventItems.map((eventData) {
+          final isAllDayEvent = eventData['start']['date'] != null;
+
+          DateTime startDate = DateTime.parse(eventData['start']['dateTime'] ?? eventData['start']['date']);
+          DateTime endDate = DateTime.parse(eventData['end']['dateTime'] ?? eventData['end']['date']);
+
+          if (isAllDayEvent) {
+            endDate = endDate.subtract(const Duration(days: 1));
+          }
+
+          return CalendarEvent(
+            title: eventData['summary'] ?? 'No Title',
+            start: startDate,
+            end: endDate,
+            description: eventData['description'] ?? '',
+          );
+        }).toList();
+      }
+    } catch (e) {
+      print("Error fetching calendar events: $e");
+    }
+
+    return events;
+  }
+
 
   List<String> parseCategories(String title, String description) {
     print("parseCategory ${title}");
@@ -91,7 +155,6 @@ class CalendarScreenController extends GetxController {
       maxDate = maxDate.add(const Duration(days: 1));
       minDate = minDate.add(const Duration(days: -1));
     } else if (calendarView.value == CalendarView.month) {
-      // If in month view, add 1 month to the max date and subtract 1 day from the min date
       maxDate = DateTime(maxDate.year, maxDate.month + 1, maxDate.day);
       minDate = DateTime(minDate.year, minDate.month - 1, maxDate.day);
     } else if (calendarView.value == CalendarView.week) {
@@ -99,21 +162,17 @@ class CalendarScreenController extends GetxController {
       minDate = minDate.add(const Duration(days: -1));
     }
 
-    publicEvents.clear();
-    print("onCHange ${selectedYear.value}");
-    // if (selectedYear.value == LocaleKeys.all.tr) {
-    //   fetchPublicEvents(minDate, maxDate, publicCalendarAllSchedulue);
-    // } else
-    if (selectedYear.value == LocaleKeys.game_schedule.tr) {
+    if (selectedYear.value == LocaleKeys.all.tr) {
+      fetchAllCalendars(minDate, maxDate);
+    } else if (selectedYear.value == LocaleKeys.game_schedule.tr) {
       fetchPublicEvents(minDate, maxDate, publicCalendarIdGameSchedulue);
-    } else if (selectedYear.value == LocaleKeys.open_practice_match.tr) {
-      fetchPublicEvents(minDate, maxDate, publicCalendarIdOpenPractice);
     } else if (selectedYear.value == LocaleKeys.event.tr) {
       fetchPublicEvents(minDate, maxDate, publicCalendarIdEvent);
     } else if (selectedYear.value == LocaleKeys.player_birthday.tr) {
       fetchPublicEvents(minDate, maxDate, publicCalendarIdPlayerBirthday);
     }
   }
+
 
   Future<void> fetchPublicEvents(DateTime minDate, DateTime maxDate, String selectedId) async {
     print("finish fetch with data ${minDate} - ${maxDate}");

@@ -28,6 +28,6 @@ class GalleryDetailController extends GetxController {
   }
 
   String imageCompressor(String bactchImage, bool isMainImage){
-    return "https://wsrv.nl/?url=$bactchImage&dpr=1";
+    return "https://wsrv.nl/?url=$bactchImage&dpr=2";
   }
 }

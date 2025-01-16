@@ -28,6 +28,7 @@ mixin _$Post {
   PostContent get content => throw _privateConstructorUsedError;
   PostExcerpt get excerpt => throw _privateConstructorUsedError;
   List<int> get categories => throw _privateConstructorUsedError;
+  int? get featured_media => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
   @JsonKey(ignore: true)
@@ -47,7 +48,8 @@ abstract class $PostCopyWith<$Res> {
       PostTitle title,
       PostContent content,
       PostExcerpt excerpt,
-      List<int> categories});
+      List<int> categories,
+      int? featured_media});
 
   $PostTitleCopyWith<$Res> get title;
   $PostContentCopyWith<$Res> get content;
@@ -75,6 +77,7 @@ class _$PostCopyWithImpl<$Res, $Val extends Post>
     Object? content = null,
     Object? excerpt = null,
     Object? categories = null,
+    Object? featured_media = freezed,
   }) {
     return _then(_value.copyWith(
       id: null == id
@@ -109,6 +112,10 @@ class _$PostCopyWithImpl<$Res, $Val extends Post>
           ? _value.categories
           : categories // ignore: cast_nullable_to_non_nullable
               as List<int>,
+      featured_media: freezed == featured_media
+          ? _value.featured_media
+          : featured_media // ignore: cast_nullable_to_non_nullable
+              as int?,
     ) as $Val);
   }
 
@@ -152,7 +159,8 @@ abstract class _$$PostImplCopyWith<$Res> implements $PostCopyWith<$Res> {
       PostTitle title,
       PostContent content,
       PostExcerpt excerpt,
-      List<int> categories});
+      List<int> categories,
+      int? featured_media});
 
   @override
   $PostTitleCopyWith<$Res> get title;
@@ -180,6 +188,7 @@ class __$$PostImplCopyWithImpl<$Res>
     Object? content = null,
     Object? excerpt = null,
     Object? categories = null,
+    Object? featured_media = freezed,
   }) {
     return _then(_$PostImpl(
       id: null == id
@@ -214,6 +223,10 @@ class __$$PostImplCopyWithImpl<$Res>
           ? _value._categories
           : categories // ignore: cast_nullable_to_non_nullable
               as List<int>,
+      featured_media: freezed == featured_media
+          ? _value.featured_media
+          : featured_media // ignore: cast_nullable_to_non_nullable
+              as int?,
     ));
   }
 }
@@ -229,7 +242,8 @@ class _$PostImpl implements _Post {
       required this.title,
       required this.content,
       required this.excerpt,
-      required final List<int> categories})
+      required final List<int> categories,
+      required this.featured_media})
       : _categories = categories;
 
   factory _$PostImpl.fromJson(Map<String, dynamic> json) =>
@@ -258,8 +272,11 @@ class _$PostImpl implements _Post {
   }
 
   @override
+  final int? featured_media;
+
+  @override
   String toString() {
-    return 'Post(id: $id, date: $date, slug: $slug, link: $link, title: $title, content: $content, excerpt: $excerpt, categories: $categories)';
+    return 'Post(id: $id, date: $date, slug: $slug, link: $link, title: $title, content: $content, excerpt: $excerpt, categories: $categories, featured_media: $featured_media)';
   }
 
   @override
@@ -275,13 +292,24 @@ class _$PostImpl implements _Post {
             (identical(other.content, content) || other.content == content) &&
             (identical(other.excerpt, excerpt) || other.excerpt == excerpt) &&
             const DeepCollectionEquality()
-                .equals(other._categories, _categories));
+                .equals(other._categories, _categories) &&
+            (identical(other.featured_media, featured_media) ||
+                other.featured_media == featured_media));
   }
 
   @JsonKey(ignore: true)
   @override
-  int get hashCode => Object.hash(runtimeType, id, date, slug, link, title,
-      content, excerpt, const DeepCollectionEquality().hash(_categories));
+  int get hashCode => Object.hash(
+      runtimeType,
+      id,
+      date,
+      slug,
+      link,
+      title,
+      content,
+      excerpt,
+      const DeepCollectionEquality().hash(_categories),
+      featured_media);
 
   @JsonKey(ignore: true)
   @override
@@ -306,7 +334,8 @@ abstract class _Post implements Post {
       required final PostTitle title,
       required final PostContent content,
       required final PostExcerpt excerpt,
-      required final List<int> categories}) = _$PostImpl;
+      required final List<int> categories,
+      required final int? featured_media}) = _$PostImpl;
 
   factory _Post.fromJson(Map<String, dynamic> json) = _$PostImpl.fromJson;
 
@@ -326,6 +355,8 @@ abstract class _Post implements Post {
   PostExcerpt get excerpt;
   @override
   List<int> get categories;
+  @override
+  int? get featured_media;
   @override
   @JsonKey(ignore: true)
   _$$PostImplCopyWith<_$PostImpl> get copyWith =>

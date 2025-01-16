@@ -31,6 +31,7 @@ class _BannerSliderViewState extends State<BannerSliderView> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _autoScroll();
     });
+
   }
 
   void _autoScroll() {

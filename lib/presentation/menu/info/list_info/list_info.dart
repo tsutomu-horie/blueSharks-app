@@ -13,18 +13,19 @@ import 'package:shimmer/shimmer.dart';
 
 import 'controllers/list_info.dart';
 
-class TopicListScreen  extends StatelessWidget {
+class TopicListScreen extends StatelessWidget {
   final Rx<int?> selectedTopicId = Rx<int?>(null);
 
-  TopicListScreen({super.key, required this.onOpenDetail}); // Observable to store the selected topic ID
+  TopicListScreen(
+      {super.key,
+      required this.onOpenDetail}); // Observable to store the selected topic ID
   final Function(Post) onOpenDetail;
 
   @override
   Widget build(BuildContext context) {
     final TopicListController controller = Get.put(TopicListController());
 
-
-    if(controller.allowIndexReset.value) {
+    if (controller.allowIndexReset.value) {
       controller.selectedIndex.value = 0;
     } else {
       controller.enableIndexReset();
@@ -66,7 +67,8 @@ class TopicListScreen  extends StatelessWidget {
                     children: [
                       Container(
                         color: const Color(0xFFFAFAFA),
-                        child: DefaultHeaderTitleView(LocaleKeys.topics.tr, LocaleKeys.topics_en.tr.toUpperCase()),
+                        child: DefaultHeaderTitleView(LocaleKeys.topics.tr,
+                            LocaleKeys.topics_en.tr.toUpperCase()),
                       ),
                       Container(
                         color: BorderColor.primary,
@@ -94,7 +96,8 @@ class TopicListScreen  extends StatelessWidget {
                                 highlightColor: Colors.transparent,
                                 onTap: () => controller.changeTab(index),
                                 child: Padding(
-                                  padding: EdgeInsets.symmetric(horizontal: 8.w),
+                                  padding:
+                                      EdgeInsets.symmetric(horizontal: 8.w),
                                   child: Container(
                                     decoration: BoxDecoration(
                                       color: isSelect
@@ -131,14 +134,16 @@ class TopicListScreen  extends StatelessWidget {
             ];
           },
           body: CustomScrollView(
-            controller: controller.getScrollController(controller.selectedIndex.value),
+            controller:
+                controller.getScrollController(controller.selectedIndex.value),
             slivers: [
               SliverList(
                 delegate: SliverChildBuilderDelegate(
                   (BuildContext context, int index) {
                     return Obx(() {
                       final data = controller.getTabData(controller
-                          .selectedIndex.value); // Fetch data for the current tab
+                          .selectedIndex
+                          .value); // Fetch data for the current tab
 
                       if (data.isEmpty) {
                         return Column(
@@ -157,8 +162,6 @@ class TopicListScreen  extends StatelessWidget {
                       } else {
                         return Column(
                           children: [
-
-
                             ListView.builder(
                               shrinkWrap: true,
                               physics: const NeverScrollableScrollPhysics(),
@@ -166,34 +169,43 @@ class TopicListScreen  extends StatelessWidget {
                               itemBuilder: (context, itemIndex) {
                                 return FutureBuilder<String>(
                                   // future: controller.getNewsImage("${data[itemIndex].id}"),
-                                  future: controller.getNewsImage(data[itemIndex].content.rendered),
+                                  future: data[itemIndex].featured_media !=
+                                              null &&
+                                          data[itemIndex].featured_media != 0
+                                      ? controller.getFeaturedImage("${data[itemIndex].featured_media}")
+                                      : controller.getNewsImage(
+                                          data[itemIndex].content.rendered),
                                   builder: (context, snapshot) {
-                                    if (snapshot.connectionState == ConnectionState.waiting && (controller.isTabChanging.value)) {
+                                    if (snapshot.connectionState ==
+                                            ConnectionState.waiting &&
+                                        (controller.isTabChanging.value)) {
                                       // Show shimmer while waiting for the image
-                                        return TopicItemViewShimmer();
+                                      return TopicItemViewShimmer();
                                     } else if (snapshot.hasError) {
                                       // Fallback view if there's an error
                                       return TopicItemView(
-                                            () {
-                                              controller.disableIndexReset();
+                                        () {
+                                          controller.disableIndexReset();
                                           onOpenDetail(data[itemIndex]);
                                         },
                                         image: null,
                                         date: data[itemIndex].date,
                                         title: data[itemIndex].title.rendered,
-                                        categories: mapCategoryIdsToNames(data[itemIndex].categories),
+                                        categories: mapCategoryIdsToNames(
+                                            data[itemIndex].categories),
                                       );
-                                    } else  {
+                                    } else {
                                       // Display the image when loaded
                                       return TopicItemView(
-                                            () {
-                                              controller.disableIndexReset();
+                                        () {
+                                          controller.disableIndexReset();
                                           onOpenDetail(data[itemIndex]);
                                         },
                                         image: snapshot.data,
                                         date: data[itemIndex].date,
                                         title: data[itemIndex].title.rendered,
-                                        categories: mapCategoryIdsToNames(data[itemIndex].categories),
+                                        categories: mapCategoryIdsToNames(
+                                            data[itemIndex].categories),
                                       );
                                     }
                                   },
