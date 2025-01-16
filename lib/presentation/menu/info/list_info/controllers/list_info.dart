@@ -227,13 +227,13 @@ class TopicListController extends GetxController {
     return imageData.media_details.sizes.thumbnail.source_url ?? "";
   }
 
-  // Future<String> getNewsImage(String mediaId) async {
-  //
-  //   final imageData = await mediaProvider.fetchParentMedia(mediaId);
-  //   print("GET NEWS IMAGE ${imageData}");
-  //   final image = imageData?.media_details.sizes.thumbnail.source_url;
-  //   print("GET NEWS IMAGE ${mediaId}, ${image}");
-  //   return image ?? "";
-  // }
+  Future<String> getFeaturedImage(String mediaId) async {
+
+    final imageData = await mediaProvider.fetchMedia(mediaId);
+    print("GET NEWS IMAGE ${imageData}");
+    final image = imageData.media_details.sizes.thumbnail.source_url;
+    print("GET NEWS IMAGE ${mediaId}, ${image}");
+    return image ?? "";
+  }
 
 }

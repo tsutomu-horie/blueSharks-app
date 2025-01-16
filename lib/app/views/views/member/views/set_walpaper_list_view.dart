@@ -106,24 +106,33 @@ class SetWalpaperListView extends GetView {
                               itemCount: playerGroup.players.length,
                               itemBuilder: (context, playerIndex) {
                                 final player = playerGroup.players[playerIndex];
-                                return PlayerCardView(
-                                    player,
-                                    playerGroup.title,
-                                    onSet,
-                                    memberController.mediaProvider,
-                                    true, (postImage, position) {
-                                  showSetWallpaper(
-                                    memberController,
-                                    context,
-                                    postImage,
-                                    player.playerNameKatakana ?? "",
-                                    player.title.rendered,
-                                    position,
-                                    player.link,
-                                    selectedPlayerLink,
-                                    onSet,
-                                  );
-                                });
+                                return Container(
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(8.r),
+                                    border: Border.all(
+                                      color: player.link == selectedPlayerLink ? BrandColor.background : Colors.white,
+                                      width: 5.0,
+                                    )
+                                  ),
+                                  child: PlayerCardView(
+                                      player,
+                                      playerGroup.title,
+                                      onSet,
+                                      memberController.mediaProvider,
+                                      true, (postImage, position) {
+                                    showSetWallpaper(
+                                      memberController,
+                                      context,
+                                      postImage,
+                                      player.playerNameKatakana ?? "",
+                                      player.title.rendered,
+                                      position,
+                                      player.link,
+                                      selectedPlayerLink,
+                                      onSet,
+                                    );
+                                  }),
+                                );
                               },
                             ),
                           ),

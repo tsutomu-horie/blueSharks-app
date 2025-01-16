@@ -58,6 +58,6 @@ class GalleryController extends GetxController {
 
   String imageCompressor(String bactchImage){
     print("compress ${bactchImage}");
-    return "https://wsrv.nl/?url=$bactchImage&dpr=1";
+    return "https://wsrv.nl/?url=$bactchImage&dpr=2";
   }
 }

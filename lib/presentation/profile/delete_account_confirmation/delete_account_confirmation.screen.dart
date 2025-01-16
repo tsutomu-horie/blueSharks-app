@@ -122,6 +122,7 @@ class DeleteAccountConfirmationScreen
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
+      backgroundColor: Colors.white,
       builder: (BuildContext context) {
         return Container(
           padding: EdgeInsets.symmetric(horizontal: 16, vertical: 24),
@@ -200,7 +201,7 @@ class DeleteAccountConfirmationScreen
                           onDelete();
                         },
                         child: CustomTextView(
-                          '消去',
+                          '削除',
                           style: TDSTypography.titleMedium,
                         ),
                       ),

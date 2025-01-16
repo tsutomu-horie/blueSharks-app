@@ -22,7 +22,7 @@ class UpdateWallpaperScreen extends GetView<UpdateWallpaperController> {
   @override
   Widget build(BuildContext context) {
     final UpdateWallpaperController memberController =
-    Get.put(UpdateWallpaperController());
+        Get.put(UpdateWallpaperController());
 
     return Scaffold(
       backgroundColor: BackgroundColor.primary,
@@ -68,40 +68,40 @@ class UpdateWallpaperScreen extends GetView<UpdateWallpaperController> {
       body: SafeArea(
         child: CustomScrollView(
           slivers: [
-        SliverToBoxAdapter(
-          child: Column(
-            children: [
-              SizedBox(height: 12.w),
-              Row(
+            SliverToBoxAdapter(
+              child: Column(
                 children: [
-                  SizedBox(width: 16.w),
-                  Flexible(
-                    child: CustomTextView(
-                      LocaleKeys.set_wallpaper_title.tr,
-                      type: TDSFontType.headlineSmall,
-                      color: BrandColor.main,
-                    ),
+                  SizedBox(height: 12.w),
+                  Row(
+                    children: [
+                      SizedBox(width: 16.w),
+                      Flexible(
+                        child: CustomTextView(
+                          LocaleKeys.set_wallpaper_title.tr,
+                          type: TDSFontType.headlineSmall,
+                          color: BrandColor.main,
+                        ),
+                      ),
+                      SizedBox(width: 16.w),
+                    ],
                   ),
-                  SizedBox(width: 16.w),
+                  SizedBox(height: 8.w),
+                  Row(
+                    children: [
+                      SizedBox(width: 16.w),
+                      Flexible(
+                        child: CustomTextView(
+                          LocaleKeys.set_wallpaper_desc3.tr,
+                          type: TDSFontType.bodyTextMedium,
+                          color: TextColor.secondary,
+                        ),
+                      ),
+                      SizedBox(width: 16.w),
+                    ],
+                  ),
                 ],
               ),
-              SizedBox(height: 8.w),
-              Row(
-                children: [
-                  SizedBox(width: 16.w),
-                  Flexible(
-                    child: CustomTextView(
-                      LocaleKeys.set_wallpaper_desc3.tr,
-                      type: TDSFontType.bodyTextMedium,
-                      color: TextColor.secondary,
-                    ),
-                  ),
-                  SizedBox(width: 16.w),
-                ],
-              ),
-            ],
-          ),
-        ),
+            ),
             SliverPersistentHeader(
               delegate: FilterHeaderDelegate(memberController, context),
               pinned: true, // Pin the filter header at the top
@@ -117,13 +117,14 @@ class UpdateWallpaperScreen extends GetView<UpdateWallpaperController> {
                   Obx(() {
                     return !memberController.isLoading.value
                         ? SetWalpaperListView(
-                      memberController,
-                      isSetWallpaper: true,
-                      onSet: onSet, selectedPlayerLink: wallpaperLink,
-                    )
+                            memberController,
+                            isSetWallpaper: true,
+                            onSet: onSet,
+                            selectedPlayerLink: wallpaperLink,
+                          )
                         : Column(
-                      children: [shimmer(), shimmer(), shimmer()],
-                    );
+                            children: [shimmer(), shimmer(), shimmer()],
+                          );
                   }),
                 ],
               ),
@@ -133,22 +134,22 @@ class UpdateWallpaperScreen extends GetView<UpdateWallpaperController> {
       ),
       bottomNavigationBar: onSet == null
           ? Container(
-        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
-        width: double.infinity,
-        child: OutlinedButton(
-          style: ButtonStyle(
-            side: WidgetStateProperty.all(BorderSide(
-                color: BrandColor.main)), // Set your desired color here
-          ),
-          onPressed: () {
-            Get.to(() => const RegisterEmailScreen("", ""));
-          },
-          child: CustomTextView(
-            LocaleKeys.jump_to.tr,
-            color: BrandColor.main,
-          ),
-        ),
-      )
+              padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
+              width: double.infinity,
+              child: OutlinedButton(
+                style: ButtonStyle(
+                  side: WidgetStateProperty.all(BorderSide(
+                      color: BrandColor.main)), // Set your desired color here
+                ),
+                onPressed: () {
+                  Get.to(() => const RegisterEmailScreen("", ""));
+                },
+                child: CustomTextView(
+                  LocaleKeys.jump_to.tr,
+                  color: BrandColor.main,
+                ),
+              ),
+            )
           : null,
     );
   }

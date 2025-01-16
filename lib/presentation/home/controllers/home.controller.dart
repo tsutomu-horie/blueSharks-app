@@ -43,7 +43,7 @@ class HomeController extends GetxController {
 
 
   void setBannerData(List<CustomBanner> data) {
-    bannerData = data;
+    bannerData = data.reversed.toList();
     // Use update instead of .value assignment
     update(['banner_slider']);  // Update only the banner slider
   }

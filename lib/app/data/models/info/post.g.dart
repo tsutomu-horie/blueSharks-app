@@ -17,6 +17,7 @@ _$PostImpl _$$PostImplFromJson(Map<String, dynamic> json) => _$PostImpl(
       categories: (json['categories'] as List<dynamic>)
           .map((e) => (e as num).toInt())
           .toList(),
+      featured_media: (json['featured_media'] as num?)?.toInt(),
     );
 
 Map<String, dynamic> _$$PostImplToJson(_$PostImpl instance) =>
@@ -29,6 +30,7 @@ Map<String, dynamic> _$$PostImplToJson(_$PostImpl instance) =>
       'content': instance.content,
       'excerpt': instance.excerpt,
       'categories': instance.categories,
+      'featured_media': instance.featured_media,
     };
 
 _$PostTitleImpl _$$PostTitleImplFromJson(Map<String, dynamic> json) =>

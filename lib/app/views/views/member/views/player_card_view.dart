@@ -61,7 +61,7 @@ class PlayerCardView extends GetView<PlayerListController> {
               child:
               CustomImageView(
                 image: controller.imageCompressor(player.link),
-                radius: 4.r,
+                radius: 8.r,
                 customFit: BoxFit.fitHeight,
               ),)
                 :
