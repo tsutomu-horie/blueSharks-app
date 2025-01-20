@@ -136,6 +136,7 @@ class GalleryScreen extends GetView<GalleryController> {
                     );
                   } else {
                     return Column(
+                      mainAxisSize: MainAxisSize.max,
                       children: [
                         Padding(
                           padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
@@ -210,6 +211,27 @@ class GalleryScreen extends GetView<GalleryController> {
                         Padding(
                           padding: EdgeInsets.symmetric(horizontal: 16.w),
                           child: Obx(() {
+                            if (controller.album.isEmpty) {
+                              return SingleChildScrollView(
+                                child: ConstrainedBox(
+                                  constraints: BoxConstraints(
+                                    minHeight: MediaQuery.of(context).size.height/2, // Set minimum height
+                                  ),
+                                  child: const IntrinsicHeight(
+                                    child: Column(
+                                      children: [
+                                        Expanded(
+                                          child: Center(
+                                            child: CustomTextView("表示イメージはございません。"),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              );
+                            }
+
                             return ListView.builder(
                                 shrinkWrap: true,
                                 physics: const NeverScrollableScrollPhysics(),

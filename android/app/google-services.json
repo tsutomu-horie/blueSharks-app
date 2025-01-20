@@ -1,37 +1,26 @@
 {
   "project_info": {
-    "project_number": "450090065927",
-    "firebase_url": "https://fir-backend-demo-2f018-default-rtdb.asia-southeast1.firebasedatabase.app",
-    "project_id": "fir-backend-demo-2f018",
-    "storage_bucket": "fir-backend-demo-2f018.firebasestorage.app"
+    "project_number": "250139958740",
+    "project_id": "bluesharks-906f3",
+    "storage_bucket": "bluesharks-906f3.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:450090065927:android:1e6e0b05775f98282d0aa2",
+        "mobilesdk_app_id": "1:250139958740:android:df7f1f89c7b734e0a00a41",
         "android_client_info": {
           "package_name": "jp.bluesharks.koto_blue_sharks"
         }
       },
-      "oauth_client": [
-        {
-          "client_id": "450090065927-68q6cckc05u7gtvri1lvafthmup6geut.apps.googleusercontent.com",
-          "client_type": 3
-        }
-      ],
+      "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyBXDYI0usyyJxL-hZC_6W2gfvc3Zogn0LE"
+          "current_key": "AIzaSyAuQgnYKCIfNpS9vHwCj4nKOVfUyKkBU7Y"
         }
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": [
-            {
-              "client_id": "450090065927-68q6cckc05u7gtvri1lvafthmup6geut.apps.googleusercontent.com",
-              "client_type": 3
-            }
-          ]
+          "other_platform_oauth_client": []
         }
       }
     }
