@@ -16,12 +16,12 @@ class CalendarScreenController extends GetxController {
   final String publicCalendarIdPlayerBirthday = 'bluesharksrugby.official4@gmail.com'; // Replace with your public calendar ID
   final String apiKey = 'AIzaSyAJMnARaJbvTrp5s9opMyyjFbZVVj0d0xY'; // Replace with your Google API Key
   RxList<CalendarEvent> publicEvents = <CalendarEvent>[].obs;
-  final selectedYear = LocaleKeys.game_schedule.tr.obs;
+  final selectedYear = LocaleKeys.all.tr.obs;
 
   final Rx<DateTime> minDate = DateTime.now().obs;
   final Rx<DateTime> maxDate = DateTime.now().obs;
 
-  final List<String> filterEvent = [ LocaleKeys.all.tr,LocaleKeys.game_schedule.tr, LocaleKeys.event.tr, LocaleKeys.player_birthday.tr];
+  final List<String> filterEvent = [ LocaleKeys.all.tr, LocaleKeys.game_schedule.tr, LocaleKeys.event.tr, LocaleKeys.player_birthday.tr];
 
   var calendarView = CalendarView.month.obs;
 

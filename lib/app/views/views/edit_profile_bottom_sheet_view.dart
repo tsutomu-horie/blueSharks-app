@@ -11,8 +11,7 @@ import 'package:koto_blue_sharks/presentation/screens.dart';
 import 'package:koto_blue_sharks/utils/app_color.dart';
 import 'package:lottie/lottie.dart';
 
-void editProfileBottomSheet(
-    FanClubConfirmationController fanclubController,
+void editProfileBottomSheet(FanClubConfirmationController fanclubController,
     BuildContext context,
     Function(String, String, String, String, bool) onSuccess,
     String oldEmail) {
@@ -38,7 +37,10 @@ void editProfileBottomSheet(
         },
         child: Padding(
           padding: EdgeInsets.only(
-            bottom: MediaQuery.of(context).viewInsets.bottom,
+            bottom: MediaQuery
+                .of(context)
+                .viewInsets
+                .bottom,
             left: 16.w,
             right: 16.w,
             top: 16.w,
@@ -82,7 +84,8 @@ void editProfileBottomSheet(
                             if (value == null || value.isEmpty) {
                               return LocaleKeys.error_email_required.tr;
                             }
-                            if (!RegExp(r'\b[\w.-]+@[\w.-]+\.\w{2,4}\b').hasMatch(value)) {
+                            if (!RegExp(r'\b[\w.-]+@[\w.-]+\.\w{2,4}\b')
+                                .hasMatch(value)) {
                               return LocaleKeys.error_email_invalid.tr;
                             }
                             return null;
@@ -94,14 +97,17 @@ void editProfileBottomSheet(
                             ),
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(8.r),
-                              borderSide: BorderSide(color: BorderColor.secondary),
+                              borderSide: BorderSide(
+                                  color: BorderColor.secondary),
                             ),
                             errorBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(8.r),
                               borderSide: BorderSide(color: TextColor.error),
                             ),
-                            contentPadding: EdgeInsets.only(top: 2.h, left: 16.w),
-                            hintText: LocaleKeys.email_placeholder.trParams({"example": "jack@email.com"}),
+                            contentPadding: EdgeInsets.only(
+                                top: 2.h, left: 16.w),
+                            hintText: LocaleKeys.email_placeholder.trParams(
+                                {"example": "jack@email.com"}),
                           ),
                         ),
                         SizedBox(height: 4.h),
@@ -127,7 +133,8 @@ void editProfileBottomSheet(
                         ),
                         TextFormField(
                           inputFormatters: [
-                            FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9]')),
+                            FilteringTextInputFormatter.allow(
+                                RegExp(r'[a-zA-Z0-9]')),
                             LengthLimitingTextInputFormatter(10)
                           ],
                           controller: fanclubController.idController,
@@ -144,13 +151,15 @@ void editProfileBottomSheet(
                             ),
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(8.r),
-                              borderSide: BorderSide(color: BorderColor.secondary),
+                              borderSide: BorderSide(
+                                  color: BorderColor.secondary),
                             ),
                             errorBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(8.r),
                               borderSide: BorderSide(color: TextColor.error),
                             ),
-                            contentPadding: EdgeInsets.only(top: 2.h, left: 16.w),
+                            contentPadding: EdgeInsets.only(
+                                top: 2.h, left: 16.w),
                             hintText: LocaleKeys.user_id_placeholder.tr,
                           ),
                         ),
@@ -182,25 +191,37 @@ void editProfileBottomSheet(
                               children: [
                                 OutlinedButton(
                                   onPressed: () {
-                                    print("button set wallpaper ${fanclubController.playerLinkController.value}");
-                                    Get.to(() => UpdateWallpaperScreen((value, link) {
-                                      print("valuenya ${fanclubController.playerLinkController.value}");
-                                      fanclubController.playerNameController.value = value;
-                                      fanclubController.playerLinkController.value = link;
-                                      state.didChange(value);
-                                      Get.back();
-                                    }, fanclubController.playerLinkController.value), preventDuplicates: false);
+                                    print(
+                                        "button set wallpaper ${fanclubController
+                                            .playerLinkController.value}");
+                                    Get.to(() =>
+                                        UpdateWallpaperScreen((value, link) {
+                                          print("valuenya ${fanclubController
+                                              .playerLinkController.value}");
+                                          fanclubController.playerNameController
+                                              .value = value;
+                                          fanclubController.playerLinkController
+                                              .value = link;
+                                          state.didChange(value);
+                                          Get.back();
+                                        }, fanclubController
+                                            .playerLinkController.value),
+                                        preventDuplicates: false);
                                   },
                                   style: ButtonStyle(
-                                    padding: WidgetStateProperty.all(EdgeInsets.zero),
+                                    padding: WidgetStateProperty.all(
+                                        EdgeInsets.zero),
                                     shape: MaterialStateProperty.all(
                                       RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(8.r),
+                                        borderRadius: BorderRadius.circular(
+                                            8.r),
                                       ),
                                     ),
                                     side: MaterialStateProperty.all(
                                       BorderSide(
-                                        color: state.hasError ? TextColor.error : BorderColor.secondary,
+                                        color: state.hasError
+                                            ? TextColor.error
+                                            : BorderColor.secondary,
                                       ),
                                     ),
                                   ),
@@ -212,11 +233,17 @@ void editProfileBottomSheet(
                                           width: double.infinity,
                                           child: Obx(() {
                                             return CustomTextView(
-                                              fanclubController.playerNameController.value.isEmpty
-                                                  ? LocaleKeys.wallpaper_placeholder.tr
-                                                  : fanclubController.playerNameController.value,
+                                              fanclubController
+                                                  .playerNameController.value
+                                                  .isEmpty
+                                                  ? LocaleKeys
+                                                  .wallpaper_placeholder.tr
+                                                  : fanclubController
+                                                  .playerNameController.value,
                                               type: TDSFontType.bodyTextMedium,
-                                              color: fanclubController.playerNameController.value.isEmpty
+                                              color: fanclubController
+                                                  .playerNameController.value
+                                                  .isEmpty
                                                   ? TextColor.placeholder
                                                   : TextColor.primary,
                                             );
@@ -224,14 +251,16 @@ void editProfileBottomSheet(
                                         ),
                                       ),
                                       SizedBox(width: 8.w),
-                                      Icon(Icons.keyboard_arrow_down, size: 20.w),
+                                      Icon(Icons.keyboard_arrow_down,
+                                          size: 20.w),
                                       SizedBox(width: 12.w),
                                     ],
                                   ),
                                 ),
                                 if (state.hasError)
                                   Padding(
-                                    padding: EdgeInsets.only(top: 4.h, left: 16.w),
+                                    padding: EdgeInsets.only(
+                                        top: 4.h, left: 16.w),
                                     child: CustomTextView(
                                       state.errorText!,
                                       type: TDSFontType.bodyTextSmall,
@@ -258,10 +287,12 @@ void editProfileBottomSheet(
                                 height: 20.h,
                                 child: Obx(() {
                                   return CustomSwitch(
-                                    value: fanclubController.isSelectNotificaiton.value,
+                                    value: fanclubController
+                                        .isSelectNotificaiton.value,
                                     onChanged: (value) {
                                       print("value $value");
-                                      fanclubController.isSelectNotificaiton.value = value;
+                                      fanclubController.isSelectNotificaiton
+                                          .value = value;
                                     },
                                   );
                                 }),
@@ -277,9 +308,11 @@ void editProfileBottomSheet(
                               backgroundColor: BrandColor.main,
                             ),
                             onPressed: () {
-                              print("trigger button ${formKey.currentState!.validate()}");
+                              print("trigger button ${formKey.currentState!
+                                  .validate()}");
                               if (formKey.currentState!.validate()) {
-                                if (fanclubController.emailController.text == oldEmail) {
+                                if (fanclubController.emailController.text ==
+                                    oldEmail) {
                                   fanclubController.updateProfile(onSuccess);
                                 } else {
                                   fanclubController.sendOtp((id) {
@@ -289,8 +322,10 @@ void editProfileBottomSheet(
                                       "$id",
                                           () {
                                         fanclubController.updateProfile(
-                                              (email, id, playerlink, playername, notification) {
-                                            onSuccess(email, id, playerlink, playername, notification);
+                                              (email, id, playerlink,
+                                              playername, notification) {
+                                            onSuccess(email, id, playerlink,
+                                                playername, notification);
                                           },
                                         );
                                       },
@@ -363,15 +398,17 @@ void showEmailDialog(FanClubConfirmationController registerEmailController,
                   onPressed: () {
                     print("dialog tapped");
                     Get.back();
-                    Get.to(() => RegisterOtpScreen(
-                      isRegister: true,
-                        email: registerEmailController.emailController.text,
-                        fromScreen: "editProfile",
-                        otpId: otpId,
-                        selectedPlayer:
+                    Get.to(() =>
+                        RegisterOtpScreen(
+                            isRegister: true,
+                            email: registerEmailController.emailController.text,
+                            fromScreen: "editProfile",
+                            otpId: otpId,
+                            selectedPlayer:
                             registerEmailController.playerNameController.value,
-                        selectedPlayerName: registerEmailController.playerLinkController.value,
-                        onSuccess: onSuccess), preventDuplicates: false);
+                            selectedPlayerName: registerEmailController
+                                .playerLinkController.value,
+                            onSuccess: onSuccess), preventDuplicates: false);
                   },
                   child: CustomTextView(
                     LocaleKeys.close.tr,
