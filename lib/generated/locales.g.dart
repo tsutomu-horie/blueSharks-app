@@ -537,7 +537,7 @@ class Locales {
     'off': 'OFF',
     'detailled_notification': '詳細通知',
     'delete_account_title': 'アカウントを削除',
-    'delete_account_desc1': 'アカウトを削除行いますか？',
+    'delete_account_desc1': 'アカウントを削除いたしますか？',
     'delete_account_desc2':
         '本アプリのアカウトを削除しても、ファンクラブ会員アカウントは削除されません！\n\nファンクラブ会員アカウントの削除は、ファンクラブオフィシャルサイトから行ってください。',
     'delete_account_confirmation_title': 'アカウントを削除しますか',

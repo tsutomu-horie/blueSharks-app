@@ -307,7 +307,12 @@ class HomeScreen extends GetView<MainController> {
               return Column(
                 children: data.map((element) {
                   return FutureBuilder<String>(
-                    future: homeController.getNewsImage("${element.id}"),
+                    future: element.featured_media !=
+                        null &&
+                        element.featured_media != 0
+                        ? homeController.getFeaturedImage("${element.featured_media}")
+                        : homeController.getNewsImage(
+                        element.content.rendered),
                     builder: (context, snapshot) {
                       if (snapshot.connectionState == ConnectionState.waiting) {
                         return TopicItemViewShimmer();

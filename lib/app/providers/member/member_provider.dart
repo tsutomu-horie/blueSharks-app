@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:get/get.dart';
 import 'package:koto_blue_sharks/app/data/models/match/match_result.dart';
 import 'package:koto_blue_sharks/app/data/models/member/member.dart';
@@ -45,7 +46,9 @@ class MemberProvider extends GetConnect {
 
   // Fetch players by category
   Future<List<Member>> getPlayersByCategory(int categoryId, {int page = 1}) async {
+    httpClient.baseUrl = Constants.baseUrl;
     final response = await get('posts?categories=$categoryId&page=$page&per_page=100&order=asc&orderby=modified');
+    debugPrint("${baseUrl}posts?categories=$categoryId&page=$page&per_page=100&order=asc&orderby=modified");
     if (response.hasError || response.body.isEmpty) {
       return []; // Return an empty list if no data or error occurs
     }
