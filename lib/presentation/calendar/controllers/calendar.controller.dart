@@ -48,6 +48,7 @@ class CalendarScreenController extends GetxController {
       for (var events in results) {
         allEvents.addAll(events);
       }
+
       // Update the publicEvents with combined results
       publicEvents.assignAll(allEvents);
     });
@@ -72,11 +73,17 @@ class CalendarScreenController extends GetxController {
         events = eventItems.map((eventData) {
           final isAllDayEvent = eventData['start']['date'] != null;
 
+          // Parse start & end time
           DateTime startDate = DateTime.parse(eventData['start']['dateTime'] ?? eventData['start']['date']);
           DateTime endDate = DateTime.parse(eventData['end']['dateTime'] ?? eventData['end']['date']);
 
           if (isAllDayEvent) {
             endDate = endDate.subtract(const Duration(days: 1));
+          }
+
+          // 🛠 Fix: Ensure a minimum duration of 30 minutes if the event has no duration
+          if (startDate.isAtSameMomentAs(endDate)) {
+            endDate = startDate.add(const Duration(hours: 23, minutes: 58)); // Set default duration
           }
 
           return CalendarEvent(
@@ -94,49 +101,18 @@ class CalendarScreenController extends GetxController {
     return events;
   }
 
-
   List<String> parseCategories(String title, String description) {
     print("parseCategory ${title}");
     List<String> categories = [];
 
-    // if (title.contains('Meeting') || description.contains('Meeting')) {
-    //   categories.add('Meeting');
-    // }
-    // if (title.contains('Workshop') || description.contains('Workshop')) {
-    //   categories.add('Workshop');
-    // }
-    // if (title.contains('Conference') || description.contains('Conference')) {
-    //   categories.add('Conference');
-    // }
-
-    // Add more conditions as needed
-
-    // if (selectedYear.value == LocaleKeys.game_schedule.tr) {
-    //   categories = [LocaleKeys.game_schedule.tr];
-    // } else if (selectedYear.value == LocaleKeys.open_practice_match.tr) {
-    //   categories = [LocaleKeys.open_practice_match.tr];
-    //
-    // } else if (selectedYear.value == LocaleKeys.event.tr) {
-    //   categories = [LocaleKeys.event.tr];
-    //
-    // } else if (selectedYear.value == LocaleKeys.player_birthday.tr) {
-    //   categories = [LocaleKeys.player_birthday.tr];
-    //
-    // }
-    // Filter categories based on selectedYear
-    // if (selectedYear.value.toLowerCase() != LocaleKeys.game_schedule.tr.toLowerCase()) {
-    //   categories = categories.where((category) => category == selectedYear.value).toList();
-    //   print("masuk $categories");
-    // } else {
-    //   categories = filterEvent.where((value) => value != LocaleKeys.game_schedule.tr).toList();
-    // }
-
-    print("return ${categories}");
     return categories;
   }
 
   void onChangeCalendar(CalendarView value) {
     calendarView.value = value;
+    print("onChange ${minDate.value} - ${maxDate.value}");
+
+    onChangeFilter(minDate.value, maxDate.value);
   }
   void changeDisplay(DateTime _minDate, DateTime _maxDate) {
     minDate.value = _minDate;
@@ -163,6 +139,7 @@ class CalendarScreenController extends GetxController {
     }
 
     if (selectedYear.value == LocaleKeys.all.tr) {
+      print("fetch all ${minDate} - ${maxDate}");
       fetchAllCalendars(minDate, maxDate);
     } else if (selectedYear.value == LocaleKeys.game_schedule.tr) {
       fetchPublicEvents(minDate, maxDate, publicCalendarIdGameSchedulue);
@@ -201,6 +178,7 @@ class CalendarScreenController extends GetxController {
             endDate = endDate.subtract(const Duration(days: 1));
           }
 
+          print("summary ${eventData['summary']}");
           return CalendarEvent(
             title: eventData['summary'] ?? 'No Title',
             start: startDate,
@@ -218,6 +196,7 @@ class CalendarScreenController extends GetxController {
       print("Error fetching public calendar events: $e");
     }
   }
+
 }
 
 class CalendarEvent {

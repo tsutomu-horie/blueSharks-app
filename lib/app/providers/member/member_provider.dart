@@ -12,7 +12,7 @@ class MemberProvider extends GetConnect {
   }
 
   Future<List<Category>> fetchSinglePage({int page = 1}) async {
-    final url = Uri.parse('categories?parent=2&page=$page');
+    final url = Uri.parse('categories?parent=2&page=$page&per_page=100');
     print("Fetching data from ${httpClient.baseUrl}${url.toString()}");
 
     final response = await get(url.toString());
@@ -32,7 +32,7 @@ class MemberProvider extends GetConnect {
     httpClient.baseUrl = Constants.baseUrl;
     print("getaaa \n ${httpClient.baseUrl}categories?parent=2&page=$page");
 
-    final response = await get('categories?parent=2&page=$page');
+    final response = await get('categories?parent=2&page=$page&per_page=100');
 
     if (response.hasError || response.body.isEmpty) {
       print("error because ${response.body}");

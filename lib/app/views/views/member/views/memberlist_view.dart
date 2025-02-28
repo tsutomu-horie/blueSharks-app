@@ -91,144 +91,136 @@ class MemberListView extends StatelessWidget {
 
         Obx(() {
           List<CategorizedPlayerGroup> groupedPlayers = memberController.groupPlayersByCategory(
-              memberController.categoryPlayers);
-
-          for (var group in groupedPlayers) {
-            print("loog group ${group.categoryTitle}");
-            memberController.addGroupKey(group.categoryTitle);
-          }
-
-          if (isSetWallpaper) {
-            groupedPlayers = groupedPlayers
-                .where((group) => group.categoryTitle != LocaleKeys.staff.tr)
-                .toList();
-          }
+            memberController.categoryPlayers,
+          );
 
           if (groupedPlayers.isNotEmpty) {
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: groupedPlayers.map((group) {
-                return Column(
-                  key: memberController.groupKeys[group.categoryTitle],
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      width: double.infinity,
-                      color: BrandColor.background,
-                      padding: EdgeInsets.symmetric(
-                          vertical: 12.h, horizontal: 16.w),
-                      child: CustomTextView(
-                        group.categoryTitle,
-                        style: TextStyle(
-                          fontSize: 18.sp,
-                          fontWeight: FontWeight.w600,
-                          color: TextColor.inverse,
+              children: [
+                ...groupedPlayers.map((group) {
+                  return Column(
+                    key: memberController.groupKeys[group.categoryTitle],
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        width: double.infinity,
+                        color: BrandColor.background,
+                        padding: EdgeInsets.symmetric(vertical: 12.h, horizontal: 16.w),
+                        child: CustomTextView(
+                          group.categoryTitle,
+                          style: TextStyle(
+                            fontSize: 18.sp,
+                            fontWeight: FontWeight.w600,
+                            color: TextColor.inverse,
+                          ),
+                          align: TextAlign.center,
                         ),
-                        align: TextAlign.center,
                       ),
-                    ),
-                    ListView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemCount: group.playerGroups.length,
-                      itemBuilder: (context, index) {
-                        final MemberGroup playerGroup = group
-                            .playerGroups[index];
-                        return Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Container(
-                              width: double.infinity,
-                              color: BrandColor.main,
-                              padding: EdgeInsets.symmetric(
-                                  vertical: 12.h, horizontal: 16.w),
-                              child: Text(
-                                playerGroup.title,
-                                style: TextStyle(
-                                  fontSize: 16.sp,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
+                      ListView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: group.playerGroups.length,
+                        itemBuilder: (context, index) {
+                          final MemberGroup playerGroup = group.playerGroups[index];
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Container(
+                                width: double.infinity,
+                                color: BrandColor.main,
+                                padding: EdgeInsets.symmetric(vertical: 12.h, horizontal: 16.w),
+                                child: Text(
+                                  playerGroup.title,
+                                  style: TextStyle(
+                                    fontSize: 16.sp,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                  ),
                                 ),
                               ),
-                            ),
-                            Padding(
-                              padding: EdgeInsets.symmetric(
-                                  horizontal: 12.w, vertical: 16.h),
-                              child: GridView.builder(
-                                shrinkWrap: true,
-                                physics: const NeverScrollableScrollPhysics(),
-                                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                                  crossAxisCount: 3,
-                                  childAspectRatio: 0.75,
-                                  mainAxisSpacing: 12.w,
-                                  crossAxisSpacing: 12.w,
+                              Padding(
+                                padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 16.h),
+                                child: GridView.builder(
+                                  shrinkWrap: true,
+                                  physics: const NeverScrollableScrollPhysics(),
+                                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                                    crossAxisCount: 3,
+                                    childAspectRatio: 0.75,
+                                    mainAxisSpacing: 12.w,
+                                    crossAxisSpacing: 12.w,
+                                  ),
+                                  itemCount: playerGroup.players.length,
+                                  itemBuilder: (context, playerIndex) {
+                                    final player = playerGroup.players[playerIndex];
+                                    return PlayerCardView(
+                                      player,
+                                      playerGroup.title,
+                                      onSet,
+                                      memberController.mediaProvider,
+                                      false,
+                                          (postImage, position) {
+                                        memberController.navigateToMemberDetail(player);
+                                      },
+                                    );
+                                  },
                                 ),
-                                itemCount: playerGroup.players.length,
-                                itemBuilder: (context, playerIndex) {
-                                  final player = playerGroup
-                                      .players[playerIndex];
-                                  return PlayerCardView(
-                                    player,
-                                    playerGroup.title,
-                                    onSet,
-                                    memberController.mediaProvider,
-                                    false,
-                                        (postImage, position) {
-                                      memberController.navigateToMemberDetail(
-                                          player);
-                                    },
-                                  );
-                                },
                               ),
-                            ),
-                          ],
-                        );
-                      },
-                    ),
-                  ],
-                );
-              }).toList(),
+                            ],
+                          );
+                        },
+                      ),
+                    ],
+                  );
+                }).toList(),
+
+                // ✅ Show a loading indicator **only if more data is still fetching**
+                if (memberController.isLoading.value)
+                  Padding(
+                    padding: EdgeInsets.all(12.h),
+                    child: Center(child: CircularProgressIndicator()),
+                  ),
+              ],
             );
-          } else if (memberController.isLoading.value) {
+          }
+          else if (memberController.isLoading.value) {
+            // ✅ Show full shimmer when no data has loaded yet
             return Column(
               children: [
                 SizedBox(height: 70.h, child: shimmer()),
-                SizedBox(height: 8.h,),
-                Row(children: [
-                  SizedBox(width: 8.w,),
-                  Flexible(child: SizedBox(height: 120.h, child: shimmer())),
-                  SizedBox(width: 8.w,),
-                  Flexible(child: SizedBox(height: 120.h, child: shimmer())),
-                  SizedBox(width: 8.w,),
-                  Flexible(child: SizedBox(height: 120.h, child: shimmer())),
-                  SizedBox(width: 8.w,),
-                ],),
-                SizedBox(height: 8.h,),
-                Row(children: [
-                  SizedBox(width: 8.w,),
-                  Flexible(child: SizedBox(height: 120.h, child: shimmer())),
-                  SizedBox(width: 8.w,),
-                  Flexible(child: SizedBox(height: 120.h, child: shimmer())),
-                  SizedBox(width: 8.w,),
-                  Flexible(child: SizedBox(height: 120.h, child: shimmer())),
-                  SizedBox(width: 8.w,),
-                ],),
-                SizedBox(height: 8.h,),
-                Row(children: [
-                  SizedBox(width: 8.w,),
-                  Flexible(child: SizedBox(height: 120.h, child: shimmer())),
-                  SizedBox(width: 8.w,),
-                  Flexible(child: SizedBox(height: 120.h, child: shimmer())),
-                  SizedBox(width: 8.w,),
-                  Flexible(child: SizedBox(height: 120.h, child: shimmer())),
-                  SizedBox(width: 8.w,),
-                ],),
+                SizedBox(height: 8.h),
+                Row(
+                  children: [
+                    SizedBox(width: 8.w),
+                    Flexible(child: SizedBox(height: 200.h, child: shimmer())),
+                    SizedBox(width: 8.w),
+                    Flexible(child: SizedBox(height: 200.h, child: shimmer())),
+                    SizedBox(width: 8.w),
+                    Flexible(child: SizedBox(height: 200.h, child: shimmer())),
+                    SizedBox(width: 8.w),
+                  ],
+                ),
+                SizedBox(height: 8.h),
+                Row(
+                  children: [
+                    SizedBox(width: 8.w),
+                    Flexible(child: SizedBox(height: 200.h, child: shimmer())),
+                    SizedBox(width: 8.w),
+                    Flexible(child: SizedBox(height: 200.h, child: shimmer())),
+                    SizedBox(width: 8.w),
+                    Flexible(child: SizedBox(height: 200.h, child: shimmer())),
+                    SizedBox(width: 8.w),
+                  ],
+                ),
               ],
             );
-          } else {
-            return const SizedBox();
           }
-        }),
+          else {
+            return Center(child: Text("No Data Available"));
+          }
+        })
+
+
       ],
     );
   }

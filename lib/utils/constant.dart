@@ -9,7 +9,7 @@ class Constants {
 
   static const baseUrlWeb = isRelease ? 'https://app.blue-sharks.jp/api/' : 'https://dev-blueshark.tmdsite.my.id/api';
   static const teamName = 'シャークス';
-  static const videoUrl ='https://www.youtube.com/watch?v=JJqanLQ3y0Q';
+  static const videoUrl ='https://www.youtube.com/watch?v=sqtmPJFaXKg';
 
   static const leagueTitle ='NTTジャパンラグビーリーグ1 2023-24';
   static const division ='Division 2';
