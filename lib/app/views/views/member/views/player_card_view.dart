@@ -34,18 +34,22 @@ class PlayerCardView extends GetView<PlayerListController> {
     if (!isSetWallpaper) {
       final preloadedImage = controller.preloadedImages[imageUrl];
 
-
-      if (preloadedImage != null) {
+      // ✅ If image is already preloaded, return player card directly
+      if (preloadedImage != null && preloadedImage.isNotEmpty) {
         return buildPlayerCard(preloadedImage);
       }
 
+      // ✅ Use FutureBuilder ONLY if the image is not preloaded
       return FutureBuilder<String>(
         future: getImage(mediaProvider, imageUrl),
         builder: (context, snapshot) {
-          if (snapshot.hasData) {
+          if (snapshot.connectionState == ConnectionState.done && snapshot.hasData) {
+            // ✅ Store the loaded image to prevent reloading
+            controller.preloadedImages[imageUrl] = snapshot.data!;
             return buildPlayerCard(snapshot.data!);
+          } else {
+            return Center(child: shimmer()); // ✅ Show shimmer only when loading
           }
-          return Center(child: shimmer());
         },
       );
     } else {

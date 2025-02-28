@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 import 'package:get/get.dart';
 import 'package:koto_blue_sharks/utils/Constant.dart';
@@ -15,8 +16,21 @@ class VideoThumbnailView extends GetView {
         width: double.infinity,
         padding: EdgeInsets.symmetric(vertical: 24.w),
         color: Colors.black,
-        child: Image.asset("assets/images/video_thumbnail.png"),
-      ),
+        child: Stack(
+          alignment: Alignment.center, // Center the icon on the image
+          children: [
+            ClipRRect(
+                borderRadius: BorderRadius.circular(12.r),
+                child: Image.asset("assets/images/video_thumbnail.png")),
+
+            // YouTube Play Icon Overlay
+            Positioned(
+              child: SvgPicture.asset("assets/vectors/ic_youtube.svg", width: 40.w, height: 40.h,)
+            ),
+          ],
+        ),
+      )
+
     );
   }
 

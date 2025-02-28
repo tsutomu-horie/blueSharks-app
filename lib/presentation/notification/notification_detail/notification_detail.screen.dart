@@ -49,7 +49,7 @@ class NotificationDetailScreen extends GetView<NotificationDetailController> {
               Get.back();
             },
             child: CustomTextView(
-              LocaleKeys.select.tr,
+              LocaleKeys.back_to_list.tr,
               type: TDSFontType.labelLarge,
               color: BrandColor.main,
             ))
