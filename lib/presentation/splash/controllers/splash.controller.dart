@@ -105,7 +105,7 @@ class SplashController extends GetxController {
             // Navigate to the app store link
             final url = Platform.isAndroid
                 ? "https://play.google.com/store/apps/details?id=${packageInfo.packageName}"
-                : "https://apps.apple.com/us/app/id<your-app-id>";
+                : "https://apps.apple.com/us/app/id6741193664";
             launchUrl(Uri.parse(url));
           },
           onIgnore: () {
