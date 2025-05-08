@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:awesome_notifications/awesome_notifications.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/material.dart';
 import 'package:koto_blue_sharks/app/providers/auth/auth_provider.dart';
 import 'package:koto_blue_sharks/firebase_options.dart';
 import 'package:koto_blue_sharks/utils/Constant.dart';
@@ -48,7 +49,7 @@ class FcmHelper {
         messaging.unsubscribeFromTopic(Constants.topic);
 
         messaging.subscribeToTopic(Constants.topic).then((_) {
-          print('Subscribed to topic ${Constants.topic}');
+          debugPrint('Subscribed to topic ${Constants.topic}');
         });
 
       // background and foreground handlers
@@ -59,7 +60,7 @@ class FcmHelper {
       // if you are connected to firebase and still get error
       // check the todo up in the function else ignore the error
       // or stop fcm service from main.dart class
-      print("FCM Helper error ${error}");
+      debugPrint("FCM Helper error ${error}");
     }
   }
 
@@ -84,7 +85,7 @@ class FcmHelper {
           sound: true
       );
 
-      print('User granted permission: ${settings.authorizationStatus}');
+      debugPrint('User granted permission: ${settings.authorizationStatus}');
     }
 
   }
@@ -94,7 +95,6 @@ class FcmHelper {
   static Future<void> _generateFcmToken() async {
     try {
       var token = await messaging.getToken();
-      print("token get ${token}");
       if(token != null){
         MySharedPref.setFcmToken(token);
         _sendFcmTokenToServer();
@@ -104,7 +104,7 @@ class FcmHelper {
         _generateFcmToken();
       }
     } catch (error) {
-      print("error generate fcm $error");
+      debugPrint("error generate fcm $error");
     }
   }
 
@@ -114,11 +114,9 @@ class FcmHelper {
     var token = MySharedPref.getFcmToken();
 
     final auth = AuthProvider();
-    print("find toke 2 $token");
 
     if (token != null) {
       final authToken = await auth.updateNotificationToken(token);
-      print("find toke $authToken");
     }
   }
 
@@ -127,7 +125,7 @@ class FcmHelper {
   /// https://stackoverflow.com/a/67083337
   @pragma('vm:entry-point')
   static Future<void> _fcmBackgroundHandler(RemoteMessage message) async {
-    print('Handling FCM Notification in Background: ${message.notification?.title}');
+    debugPrint('Handling FCM Notification in Background: ${message.notification?.title}');
 
     // AwesomeNotificationsHelper.showNotification(
     //   id: 1,
@@ -139,10 +137,6 @@ class FcmHelper {
 
   //handle fcm notification when app is open
   static Future<void> _fcmForegroundHandler(RemoteMessage message) async {
-    // print('Handling FCM Notification in Foreground: ${message.data}');
-    // print('Handling FCM Notification in Foreground: ${message.notification}');
-    // print('Handling FCM Notification in Foreground: ${message.from}');
-
     final Map<String, dynamic> jsonMapped = {
       "notification": message.notification != null
           ? {
@@ -160,10 +154,6 @@ class FcmHelper {
 
     // Use JsonEncoder for a pretty-printed JSON string
     JsonEncoder encoder = JsonEncoder.withIndent('  ');
-
-    // print or debugPrint your object
-    print("debugg");
-    print(encoder.convert(jsonMapped));
 
     if (Platform.isAndroid) {
       AwesomeNotificationsHelper.showNotification(

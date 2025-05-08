@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:googleapis/driveactivity/v2.dart';
 import 'package:http/http.dart' as http;
@@ -95,14 +96,14 @@ class CalendarScreenController extends GetxController {
         }).toList();
       }
     } catch (e) {
-      print("Error fetching calendar events: $e");
+      debugPrint("Error fetching calendar events: $e");
     }
 
     return events;
   }
 
   List<String> parseCategories(String title, String description) {
-    print("parseCategory ${title}");
+    debugPrint("parseCategory ${title}");
     List<String> categories = [];
 
     return categories;
@@ -110,7 +111,7 @@ class CalendarScreenController extends GetxController {
 
   void onChangeCalendar(CalendarView value) {
     calendarView.value = value;
-    print("onChange ${minDate.value} - ${maxDate.value}");
+    debugPrint("onChange ${minDate.value} - ${maxDate.value}");
 
     onChangeFilter(minDate.value, maxDate.value);
   }
@@ -139,7 +140,7 @@ class CalendarScreenController extends GetxController {
     }
 
     if (selectedYear.value == LocaleKeys.all.tr) {
-      print("fetch all ${minDate} - ${maxDate}");
+      debugPrint("fetch all ${minDate} - ${maxDate}");
       fetchAllCalendars(minDate, maxDate);
     } else if (selectedYear.value == LocaleKeys.game_schedule.tr) {
       fetchPublicEvents(minDate, maxDate, publicCalendarIdGameSchedulue);
@@ -152,7 +153,7 @@ class CalendarScreenController extends GetxController {
 
 
   Future<void> fetchPublicEvents(DateTime minDate, DateTime maxDate, String selectedId) async {
-    print("finish fetch with data ${minDate} - ${maxDate}");
+    debugPrint("finish fetch with data ${minDate} - ${maxDate}");
 
     try {
       final url = Uri.parse(
@@ -166,7 +167,7 @@ class CalendarScreenController extends GetxController {
         final data = json.decode(response.body);
         final List<dynamic> events = data['items'];
 
-        print("get data\n ${data}");
+        debugPrint("get data\n ${data}");
         // Map the event data to your CalendarEvent model
         final fetchedEvents = events.map((eventData) {
           final isAllDayEvent = eventData['start']['date'] != null;
@@ -178,7 +179,7 @@ class CalendarScreenController extends GetxController {
             endDate = endDate.subtract(const Duration(days: 1));
           }
 
-          print("summary ${eventData['summary']}");
+          debugPrint("summary ${eventData['summary']}");
           return CalendarEvent(
             title: eventData['summary'] ?? 'No Title',
             start: startDate,
@@ -187,13 +188,13 @@ class CalendarScreenController extends GetxController {
           );
         }).toList();
 
-        print("finish fetch with data ${fetchedEvents}");
+        debugPrint("finish fetch with data ${fetchedEvents}");
         publicEvents.assignAll(fetchedEvents);
       } else {
-        print('Failed to fetch events. Status code: ${response.statusCode}');
+        debugPrint('Failed to fetch events. Status code: ${response.statusCode}');
       }
     } catch (e) {
-      print("Error fetching public calendar events: $e");
+      debugPrint("Error fetching public calendar events: $e");
     }
   }
 

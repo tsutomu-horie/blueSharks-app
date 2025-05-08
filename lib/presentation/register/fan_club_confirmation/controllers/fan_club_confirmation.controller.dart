@@ -40,16 +40,14 @@ class FanClubConfirmationController extends GetxController {
     final auth = AuthToken();
     final token = await auth.getAccessToken();
 
-    print("response token = $token");
     if (token != null) {
       final response = await apiProvider.refreshProfile(token, () {
-        print("error get profile ");
+        debugPrint("error get profile ");
       });
 
       profileData.value = response;
       isSelectNotificaiton.value = response.isNotification ?? true;
 
-          print("finish profile ${response}");
       isLoading.value = false;
     }
   }
@@ -59,15 +57,13 @@ class FanClubConfirmationController extends GetxController {
     final token = await auth.getAccessToken();
 
     if (token != null) {
-      print("response token = $token");
       final response = await apiProvider.getProfile(token, () {
-        print("error get profile ");
+        debugPrint("error get profile ");
       });
 
       profileData.value = response;
       isSelectNotificaiton.value = response.isNotification ?? true;
 
-      print("finish profile ${response}");
       isLoading.value = false;
     }
   }
@@ -76,7 +72,7 @@ class FanClubConfirmationController extends GetxController {
     MySharedPref.setWallpaper(playerLinkController.value);
     MySharedPref.setWallpaperName(playerNameController.value);
     // MySharedPref.setNotification(isSelectNotificaiton.value ? LocaleKeys.active.tr : LocaleKeys.inactive.tr);
-    print("isSelect notif ${isSelectNotificaiton.value}");
+    debugPrint("isSelect notif ${isSelectNotificaiton.value}");
     final response = apiProvider.updateProfile(emailController.text, idController.text, "male", (){
 
     }, isSelectNotificaiton.value);
