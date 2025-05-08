@@ -46,3 +46,12 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 .qodo
+
+# BUCK
+*.jks
+*.keystore
+*.pem
+
+# Firebase config
+android/app/google-services.json
+ios/Runner/GoogleService-Info.plist
