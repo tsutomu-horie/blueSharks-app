@@ -94,6 +94,10 @@ class MemberListView extends StatelessWidget {
             memberController.categoryPlayers,
           );
 
+          for (var group in groupedPlayers) {
+            memberController.addGroupKey(group.categoryTitle);
+          }
+
           if (groupedPlayers.isNotEmpty) {
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,

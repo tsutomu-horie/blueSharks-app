@@ -57,6 +57,7 @@ class PlayerListController extends GetxController {
 
   void scrollToGroup(String groupIdentifier) {
     final groupKey = groupKeys[groupIdentifier];
+    debugPrint("scrollToGroup: ${groupIdentifier}");
     print("groupKey is ${groupKeys} & ${groupIdentifier}");
     if (groupKey != null && groupKey.currentContext != null) {
       Scrollable.ensureVisible(
