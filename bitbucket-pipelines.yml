@@ -1,0 +1,32 @@
+# bitbucket-pipelines.yml
+
+image: atlassian/default-image:3
+
+definitions:
+  caches:
+    sonar: ~/.sonar/cache
+
+  steps:
+    - step: &step-sonar-conditional
+        name: Conditional SonarQube Scan
+        image: sonarsource/sonar-scanner-cli:latest
+        caches:
+          - sonar
+        script:
+          - export SONAR_PROJECT_KEY=$(echo "$BITBUCKET_REPO_SLUG" | tr '/' '-')
+          - >
+            [[ "$BITBUCKET_PR_DESTINATION_BRANCH" == "main" || "$BITBUCKET_PR_DESTINATION_BRANCH" == "staging" || "$BITBUCKET_PR_DESTINATION_BRANCH" == "development" ]] &&
+            sonar-scanner
+            -Dsonar.projectKey=$SONAR_PROJECT_KEY
+            -Dsonar.projectName=$SONAR_PROJECT_KEY
+            -Dsonar.projectVersion=$BITBUCKET_COMMIT
+            -Dsonar.sources=.
+            -Dsonar.host.url=$SONAR_HOST_URL
+            -Dsonar.token=$SONAR_TOKEN
+            -Dsonar.qualitygate.wait=true
+            || echo "Skipping SonarQube scan for branch $BITBUCKET_PR_DESTINATION_BRANCH"
+
+pipelines:
+  pull-requests:
+    '**':
+      - step: *step-sonar-conditional
