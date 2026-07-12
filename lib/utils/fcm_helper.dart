@@ -1,0 +1,171 @@
+import 'dart:convert';
+import 'dart:io';
+
+import 'package:awesome_notifications/awesome_notifications.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/material.dart';
+import 'package:koto_blue_sharks/app/providers/auth/auth_provider.dart';
+import 'package:koto_blue_sharks/firebase_options.dart';
+import 'package:koto_blue_sharks/utils/Constant.dart';
+import 'package:koto_blue_sharks/utils/awesome_notifications_helper.dart';
+import 'package:koto_blue_sharks/utils/my_shared_pref.dart';
+
+class FcmHelper {
+  // prevent making instance
+  FcmHelper._();
+
+  // FCM Messaging
+  static late FirebaseMessaging messaging;
+
+  /// this function will initialize firebase and fcm instance
+  static Future<void> initFcm() async {
+    try {
+      // initialize fcm and firebase core
+      // if (Platform.isAndroid) {
+        await Firebase.initializeApp(
+          options: DefaultFirebaseOptions.currentPlatform,
+        );
+      // } else {
+      //   AwesomeNotifications().initialize("resource://drawable/notif", [
+      //     NotificationChannel(
+      //         channelGroupKey: 'general_channel_group',
+      //         channelKey: 'general_channel',
+      //         channelName: 'General Notifications',
+      //         channelDescription: 'Notification channel for general notifications',
+      //     )
+      //   ],
+      //   );
+      // }
+        await AwesomeNotificationsHelper.init();
+        await Future.delayed(Duration(seconds: 1));
+
+          messaging = FirebaseMessaging.instance;
+
+      await _setupFcmNotificationSettings();
+        await _generateFcmToken();
+
+
+        messaging.unsubscribeFromTopic(Constants.topic);
+
+        messaging.subscribeToTopic(Constants.topic).then((_) {
+          debugPrint('Subscribed to topic ${Constants.topic}');
+        });
+
+      // background and foreground handlers
+      FirebaseMessaging.onMessage.listen(_fcmForegroundHandler);
+      FirebaseMessaging.onBackgroundMessage(_fcmBackgroundHandler);
+
+    } catch (error) {
+      // if you are connected to firebase and still get error
+      // check the todo up in the function else ignore the error
+      // or stop fcm service from main.dart class
+      debugPrint("FCM Helper error ${error}");
+    }
+  }
+
+  ///handle fcm notification settings (sound,badge..etc)
+  static Future<void> _setupFcmNotificationSettings() async {
+    //show notification with sound and badge
+    messaging.setForegroundNotificationPresentationOptions(
+      alert: true,
+      sound: true,
+      badge: true,
+    );
+
+    //NotificationSettings settings
+    if (Platform.isIOS) {
+      NotificationSettings settings = await messaging.requestPermission(
+          alert: true,
+          announcement: false,
+          badge: true,
+          carPlay: false,
+          criticalAlert: false,
+          provisional: false,
+          sound: true
+      );
+
+      debugPrint('User granted permission: ${settings.authorizationStatus}');
+    }
+
+  }
+
+
+  /// generate and save fcm token if its not already generated (generate only for 1 time)
+  static Future<void> _generateFcmToken() async {
+    try {
+      var token = await messaging.getToken();
+      if(token != null){
+        MySharedPref.setFcmToken(token);
+        _sendFcmTokenToServer();
+      }else {
+        // retry generating token
+        await Future.delayed(const Duration(seconds: 5));
+        _generateFcmToken();
+      }
+    } catch (error) {
+      debugPrint("error generate fcm $error");
+    }
+  }
+
+  /// this method will be triggered when the app generate fcm
+  /// token successfully
+  static _sendFcmTokenToServer() async {
+    var token = MySharedPref.getFcmToken();
+
+    final auth = AuthProvider();
+
+    if (token != null) {
+      final authToken = await auth.updateNotificationToken(token);
+    }
+  }
+
+  ///handle fcm notification when app is closed/terminated
+  /// if you are wondering about this annotation read the following
+  /// https://stackoverflow.com/a/67083337
+  @pragma('vm:entry-point')
+  static Future<void> _fcmBackgroundHandler(RemoteMessage message) async {
+    debugPrint('Handling FCM Notification in Background: ${message.notification?.title}');
+
+    // AwesomeNotificationsHelper.showNotification(
+    //   id: 1,
+    //   title: message.notification?.title ?? 'Tittle',
+    //   body: message.notification?.body ?? 'Body',
+    //   payload: message.data.cast(), // pass payload to the notification card so you can use it (when user click on notification)
+    // );
+  }
+
+  //handle fcm notification when app is open
+  static Future<void> _fcmForegroundHandler(RemoteMessage message) async {
+    final Map<String, dynamic> jsonMapped = {
+      "notification": message.notification != null
+          ? {
+        "title": message.notification?.title,
+        "body": message.notification?.body,
+        "image": message.notification?.android?.imageUrl,
+      }
+          : null,
+      "data": message.data,
+      "from": message.from,
+      "messageId": message.messageId,
+      "collapseKey": message.collapseKey,
+      "sentTime": message.sentTime?.toIso8601String(),
+    };
+
+    // Use JsonEncoder for a pretty-printed JSON string
+    JsonEncoder encoder = JsonEncoder.withIndent('  ');
+
+    if (Platform.isAndroid) {
+      AwesomeNotificationsHelper.showNotification(
+        id: 1,
+        title: message.notification?.title ?? 'Tittle',
+        body: message.notification?.body ?? 'Body',
+        payload: message.data
+            .cast(),
+        largeIcon: Platform.isAndroid ? message.notification?.android?.imageUrl : message.notification?.apple?.imageUrl
+      );
+    }
+
+  }
+}
+

@@ -1,0 +1,239 @@
+import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:koto_blue_sharks/app/data/models/info/post.dart';
+import 'package:koto_blue_sharks/app/providers/info/info_provider.dart';
+import 'package:koto_blue_sharks/app/providers/media/media_provider.dart';
+import 'package:koto_blue_sharks/app/services/analytics_service.dart';
+import 'package:koto_blue_sharks/infrastructure/navigation/routes.dart';
+
+class TopicListController extends GetxController {
+  var isTabChanging = false.obs;
+
+  final InfoProvider apiProvider = InfoProvider();
+  final MediaProvider mediaProvider = MediaProvider();
+  final allowIndexReset = true.obs;
+
+  PageController pageController = PageController();
+  var selectedIndex = 0.obs; // Observable to track the selected tab index
+
+  final RxList<Post> matchInformation = RxList<Post>();
+  final RxList<Post> notice = RxList<Post>();
+  final RxList<Post> eventInformation = RxList<Post>();
+  final RxList<Post> activities = RxList<Post>();
+  final RxList<Post> interview = RxList<Post>();
+
+  final ScrollController matchScrollController = ScrollController();
+  final ScrollController noticeScrollController = ScrollController();
+  final ScrollController eventScrollController = ScrollController();
+  final ScrollController activitiesScrollController = ScrollController();
+  final ScrollController interviewScrollController = ScrollController();
+
+  // Track page numbers for pagination
+  final RxMap<int, int> pageNumbers = RxMap<int, int>({0: 1, 1: 1, 2: 1, 3: 1, 4: 1});
+  final RxMap<int, bool> isImageLoading = RxMap<int, bool>({0: true, 1: true, 2: true, 3: true, 4: true});
+
+  // Loading states for each tab
+  final RxMap<int, bool> isLoading = RxMap<int, bool>({0: false, 1: false, 2: false, 3: false, 4: false});
+  final isLoadingFirstTime = false.obs;
+
+  @override
+  void onInit() {
+    super.onInit();
+    apiProvider.onInit();
+    mediaProvider.onInit();
+    getInfo(0);
+
+    matchScrollController.addListener(() => onScroll(0, matchScrollController));
+    noticeScrollController.addListener(() => onScroll(1, noticeScrollController));
+    eventScrollController.addListener(() => onScroll(2, eventScrollController));
+    activitiesScrollController.addListener(() => onScroll(3, activitiesScrollController));
+    interviewScrollController.addListener(() => onScroll(4, interviewScrollController));
+
+    AnalyticsService.logPageView(Routes.LIST_TOPICS);
+
+  }
+
+  void disableIndexReset() {
+    allowIndexReset.value = false;
+  }
+
+  void enableIndexReset() {
+    allowIndexReset.value = true;
+  }
+
+  void refreshPage() {
+    resetValue();
+    isLoadingFirstTime.value = true;
+// selectedIndex.value = 0;
+    pageNumbers.value = {0: 1, 1: 1, 2: 1, 3: 1, 4: 1};
+    getInfo(selectedIndex.value);
+  }
+
+  void resetValue() {
+    matchInformation.value = [];
+    notice.value = [];
+    eventInformation.value = [];
+    activities.value = [];
+    interview.value = [];
+  }
+
+  void getInfo(int tabIndex) async {
+
+    if (isLoading[tabIndex]!) return; // Avoid multiple API calls at the same time
+
+    isLoading[tabIndex] = true; // Set loading to true
+    int page = pageNumbers[tabIndex]!; // Get the current page number for the tab
+
+    try {
+      if (page == 0) {
+        isLoadingFirstTime.value = true;
+      }
+      // Fetch data based on the tab
+      List<Post> newData = await _fetchDataForTab(tabIndex, page);
+
+      // Add data to the corresponding RxList
+      switch (tabIndex) {
+        case 0:
+          matchInformation.addAll(newData);
+          break;
+        case 1:
+          notice.addAll(newData);
+          break;
+        case 2:
+          eventInformation.addAll(newData);
+          break;
+        case 3:
+          activities.addAll(newData);
+          break;
+        case 4:
+          interview.addAll(newData);
+          break;
+      }
+
+      // Increment page number for the next API call
+      pageNumbers[tabIndex] = page + 1;
+    } catch (e) {
+      print('Error fetching data for tab $tabIndex: $e');
+    } finally {
+      isLoading[tabIndex] = false; // Set loading to false
+    }
+  }
+
+// Return the correct ScrollController for each tab
+  ScrollController getScrollController(int index) {
+    switch (index) {
+      case 0:
+        return matchScrollController;
+      case 1:
+        return noticeScrollController;
+      case 2:
+        return eventScrollController;
+      case 3:
+        return activitiesScrollController;
+      case 4:
+        return interviewScrollController;
+      default:
+        return ScrollController(); // Return a default controller
+    }
+  }
+
+
+  // Fetch data for each tab
+  Future<List<Post>> _fetchDataForTab(int tabIndex, int page) async {
+    switch (tabIndex) {
+      case 0:
+        isLoadingFirstTime.value = false;
+        return await apiProvider.getMatchInformation(page: page);
+      case 1:
+        isLoadingFirstTime.value = false;
+        return await apiProvider.getNotice(page: page);
+      case 2:
+        isLoadingFirstTime.value = false;
+        return await apiProvider.getEventInformation(page: page);
+      case 3:
+        isLoadingFirstTime.value = false;
+        return await apiProvider.getActivities(page: page);
+      case 4:
+        isLoadingFirstTime.value = false;
+        return await apiProvider.getInterview(page: page);
+      default:
+        isLoadingFirstTime.value = false;
+        return [];
+    }
+  }
+
+  void changeTab(int index) async {
+
+    isTabChanging.value = true;
+    selectedIndex.value = index; // Update selected tab index after the delay
+
+    selectedIndex.value = index;
+
+    // If the new tab has no data, fetch its data
+    if (getTabData(index).isEmpty) {
+      getInfo(index);
+    }
+
+    isImageLoading[index] = false;
+    Future.delayed(const Duration(milliseconds: 500), () {
+      isTabChanging.value = false;
+    });
+  }
+
+  RxList<Post> getTabData(int tabIndex) {
+    switch (tabIndex) {
+      case 0:
+        return matchInformation;
+      case 1:
+        return notice;
+      case 2:
+        return eventInformation;
+      case 3:
+        return activities;
+      case 4:
+        return interview;
+      default:
+        return RxList<Post>();
+    }
+  }
+
+  void onScroll(int tabIndex, ScrollController controller) {
+    if (controller.position.pixels == controller.position.maxScrollExtent) {
+      getInfo(tabIndex); // Load next page when scrolled to the bottom
+    }
+  }
+  // Method to handle swipe between pages
+  void onPageChanged(int index) {
+    selectedIndex.value = index;
+  }
+
+  Future<String> getNewsImage(String content) async {
+    // Define your regex to find the first <img> tag's src
+    final regex = RegExp(r'<img[^>]+src=\"(?<src>[^\"]+)\"[^>]*>');
+    // Search for the first match
+    final match = regex.firstMatch(content);
+
+    print("get image ${match?.namedGroup('src')}");
+    // If a match is found, extract the 'src' group
+    if (match != null && match.namedGroup('src') != null) {
+      return match.namedGroup('src')!;
+    } else {
+      return "https://blue-sharks.jp/wp-content/themes/blue-sharks/images/common/noimage.webp";
+    }
+
+    // If no match is found, fallback to fetching via mediaProvider
+    final mediaProvider = MediaProvider();
+    final imageData = await mediaProvider.fetchParentMedia("mediaId");
+    return imageData.media_details.sizes.thumbnail.source_url ?? "";
+  }
+
+  Future<String> getFeaturedImage(String mediaId) async {
+
+    final imageData = await mediaProvider.fetchMedia(mediaId);
+    print("GET NEWS IMAGE ${imageData}");
+    final image = imageData.media_details.sizes.thumbnail.source_url;
+    print("GET NEWS IMAGE ${mediaId}, ${image}");
+    return image ?? "";
+  }
+
+}
