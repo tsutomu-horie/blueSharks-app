@@ -1,0 +1,4 @@
+interface:
+  display_name: "Blue Sharks App"
+  short_description: "Flutterアプリの構成調査・実装・検証を支援します"
+  default_prompt: "Use $blue-sharks-app to investigate and explain this Flutter app structure."
