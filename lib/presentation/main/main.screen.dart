@@ -37,7 +37,7 @@ class _MainScreenState extends State<MainScreen> {
     controller.selectedTopicId.value = data?.id;
     if (data?.id != null) {
       controller.selectedIndex.value =
-      1; // Set the bottom nav index to 1 (Topics tab)
+          1; // Set the bottom nav index to 1 (Topics tab)
       controller.selectedPost.value = data;
     }
   }
@@ -56,8 +56,10 @@ class _MainScreenState extends State<MainScreen> {
       HomeScreen((value) {
         selectTopic(value);
       }, () {
-        controller.selectedIndex.value =
-        1;
+        controller.selectedIndex.value = 1;
+      }, () {
+        controller.selectedTopicId.value = null;
+        controller.selectedIndex.value = 5;
       }), // Home page
       MenuScreen((value) {
         selectTopic(value);
@@ -65,6 +67,7 @@ class _MainScreenState extends State<MainScreen> {
       const MypageScreen(),
       const StadiumScreen(),
       CalendarScreen(),
+      const GameGuideListScreen(),
     ];
 
     print("onOpen ${controller.selectedTopicId}");
@@ -136,7 +139,8 @@ class _MainScreenState extends State<MainScreen> {
                         mainAxisSize: MainAxisSize.max,
                         children: [
                           Obx(() {
-                            final unreadMessageCount = controller.unreadMessage.value;
+                            final unreadMessageCount =
+                                controller.unreadMessage.value;
                             return Stack(
                               children: [
                                 toolbarButton(
@@ -145,9 +149,10 @@ class _MainScreenState extends State<MainScreen> {
                                     width: 24.w,
                                     height: 24.h,
                                   ),
-                                  LocaleKeys.news_title.tr, () {
-                                  controller.navigateToNotification();
-                                },
+                                  LocaleKeys.news_title.tr,
+                                  () {
+                                    controller.navigateToNotification();
+                                  },
                                 ),
                                 if (unreadMessageCount > 0)
                                   Positioned(
@@ -157,8 +162,8 @@ class _MainScreenState extends State<MainScreen> {
                                       padding: EdgeInsets.all(2.w),
                                       decoration: BoxDecoration(
                                         color: Colors.red,
-                                        borderRadius: BorderRadius.circular(
-                                            12.w),
+                                        borderRadius:
+                                            BorderRadius.circular(12.w),
                                       ),
                                       constraints: BoxConstraints(
                                         minWidth: 24.w,
@@ -166,7 +171,9 @@ class _MainScreenState extends State<MainScreen> {
                                       ),
                                       child: Center(
                                         child: Text(
-                                          unreadMessageCount > 9 ? '9+' : "$unreadMessageCount",
+                                          unreadMessageCount > 9
+                                              ? '9+'
+                                              : "$unreadMessageCount",
                                           // Replace with dynamic count if needed
                                           style: TextStyle(
                                             color: Colors.white,
@@ -183,7 +190,6 @@ class _MainScreenState extends State<MainScreen> {
                         ],
                       ),
                     ),
-
                     Row(
                       children: [
                         toolbarButton(
@@ -230,8 +236,8 @@ class _MainScreenState extends State<MainScreen> {
           body: controller.selectedTopicId.value == null
               ? _pages[controller.selectedIndex.value]
               : InfoDetailScreen(() {
-            selectTopic(null);
-          }, controller.selectedPost.value),
+                  selectTopic(null);
+                }, controller.selectedPost.value),
           // Display the selected page
           bottomNavigationBar: Obx(() {
             return BottomNavigationBar(
@@ -240,42 +246,51 @@ class _MainScreenState extends State<MainScreen> {
               items: <BottomNavigationBarItem>[
                 BottomNavigationBarItem(
                   icon: _customBottomNavItem(
-                      "assets/vectors/ic_home_${controller.selectedIndex
-                          .value == 0 ? "enabled" : "default"}.svg",
+                      "assets/vectors/ic_home_${controller.selectedIndex.value == 0 ? "enabled" : "default"}.svg",
                       LocaleKeys.home.tr,
                       0),
                   label: '',
                 ),
                 BottomNavigationBarItem(
                   icon: _customBottomNavItem(
-                      "assets/vectors/ic_info_${controller.selectedIndex
-                          .value == 1 ? "enabled" : "default"}.svg",
+                      "assets/vectors/ic_info_${controller.selectedIndex.value == 1 ? "enabled" : "default"}.svg",
                       LocaleKeys.menu_en.tr,
                       1),
                   label: '',
                 ),
                 BottomNavigationBarItem(
                   icon: _customBottomNavItem(
-                      "assets/vectors/ic_member_${controller.selectedIndex
-                          .value == 2 ? "enabled" : "default"}.svg",
+                      "assets/vectors/ic_member_${controller.selectedIndex.value == 2 ? "enabled" : "default"}.svg",
                       LocaleKeys.my_page.tr,
                       2),
                   label: '',
                 ),
                 BottomNavigationBarItem(
                   icon: _customBottomNavItem(
-                      "assets/vectors/ic_stadium_${controller.selectedIndex
-                          .value == 3 ? "enabled" : "default"}.svg",
+                      "assets/vectors/ic_stadium_${controller.selectedIndex.value == 3 ? "enabled" : "default"}.svg",
                       LocaleKeys.stadium.tr,
                       3),
                   label: '',
                 ),
                 BottomNavigationBarItem(
                   icon: _customBottomNavItem(
-                      "assets/vectors/ic_calendar_${controller.selectedIndex
-                          .value == 4 ? "enabled" : "default"}.svg",
+                      "assets/vectors/ic_calendar_${controller.selectedIndex.value == 4 ? "enabled" : "default"}.svg",
                       LocaleKeys.calendar.tr,
                       4),
+                  label: '',
+                ),
+                BottomNavigationBarItem(
+                  icon: _customBottomNavWidget(
+                    Icon(
+                      Icons.menu_book_outlined,
+                      size: 20,
+                      color: controller.selectedIndex.value == 5
+                          ? BrandColor.main
+                          : TextColor.disabled,
+                    ),
+                    '楽しみ方',
+                    5,
+                  ),
                   label: '',
                 ),
               ],
@@ -331,6 +346,25 @@ class _MainScreenState extends State<MainScreen> {
           label,
           style: TextStyle(
             fontSize: 12, // Customize label font size here
+            color: controller.selectedIndex.value == index
+                ? BrandColor.main
+                : TextColor.disabled,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _customBottomNavWidget(Widget icon, String label, int index) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        icon,
+        SizedBox(height: 4.h),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
             color: controller.selectedIndex.value == index
                 ? BrandColor.main
                 : TextColor.disabled,
