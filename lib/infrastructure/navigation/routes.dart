@@ -14,6 +14,8 @@ class Routes {
   static const GALLERY = '/gallery';
   static const GALLERY_SCREEN_DETAIL = '/gallery-screen-detail';
   static const GAME_INFO = '/game-info';
+  static const GAME_GUIDE = '/game-guide';
+  static const GAME_GUIDE_DETAIL = '/game-guide-detail';
   static const HOME = '/home';
   static const INFO = '/info';
   static const LIST_TOPICS = '/list-topics';

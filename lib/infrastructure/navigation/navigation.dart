@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:get/get.dart';
+import 'package:koto_blue_sharks/app/data/models/game_guide/game_guide_post.dart';
 
 import '../../config.dart';
 import '../../presentation/screens.dart';
@@ -28,8 +29,18 @@ class Nav {
   static List<GetPage> routes = [
     GetPage(
       name: Routes.HOME,
-      page: () => HomeScreen((value) {}, () {}),
+      page: () => HomeScreen((value) {}, () {}, () {}),
       binding: HomeControllerBinding(),
+    ),
+    GetPage(
+      name: Routes.GAME_GUIDE,
+      page: () => const GameGuideListScreen(),
+    ),
+    GetPage(
+      name: Routes.GAME_GUIDE_DETAIL,
+      page: () => GameGuideDetailScreen(
+        post: Get.arguments as GameGuidePost,
+      ),
     ),
     GetPage(
       name: Routes.SPLASH,
@@ -215,7 +226,9 @@ class Nav {
     ),
     GetPage(
       name: Routes.LOCAL_FULL_SCREEN,
-      page: () => const StadiumImageFullScreen(imageUrl: '',),
+      page: () => const StadiumImageFullScreen(
+        imageUrl: '',
+      ),
       binding: StadiumImageFullScreenControllerBinding(),
     ),
   ];

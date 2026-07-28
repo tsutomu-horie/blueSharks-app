@@ -24,10 +24,16 @@ import 'package:koto_blue_sharks/presentation/screens.dart';
 import 'controllers/home.controller.dart';
 
 class HomeScreen extends GetView<MainController> {
-  const HomeScreen(this.onOpenDetail, this.navigateToInfoList, {super.key});
+  const HomeScreen(
+    this.onOpenDetail,
+    this.navigateToInfoList,
+    this.navigateToGameGuide, {
+    super.key,
+  });
 
   final Function(Post) onOpenDetail;
   final Function() navigateToInfoList;
+  final VoidCallback navigateToGameGuide;
 
   @override
   Widget build(BuildContext context) {
@@ -61,6 +67,7 @@ class HomeScreen extends GetView<MainController> {
                       );
               }),
             ),
+            _gameGuideEntry(),
             DefaultHeaderTitleView(LocaleKeys.next_match.tr,
                 LocaleKeys.next_match_en.tr.toUpperCase()),
             Obx(() {
@@ -307,12 +314,11 @@ class HomeScreen extends GetView<MainController> {
               return Column(
                 children: data.map((element) {
                   return FutureBuilder<String>(
-                    future: element.featured_media !=
-                        null &&
-                        element.featured_media != 0
-                        ? homeController.getFeaturedImage("${element.featured_media}")
-                        : homeController.getNewsImage(
-                        element.content.rendered),
+                    future: element.featured_media != null &&
+                            element.featured_media != 0
+                        ? homeController
+                            .getFeaturedImage("${element.featured_media}")
+                        : homeController.getNewsImage(element.content.rendered),
                     builder: (context, snapshot) {
                       if (snapshot.connectionState == ConnectionState.waiting) {
                         return TopicItemViewShimmer();
@@ -394,6 +400,66 @@ class HomeScreen extends GetView<MainController> {
         decoration: BoxDecoration(
           color: BorderColor.disabled,
           borderRadius: BorderRadius.all(Radius.circular(4.r)),
+        ),
+      ),
+    );
+  }
+
+  Widget _gameGuideEntry() {
+    return Padding(
+      padding: EdgeInsets.fromLTRB(16.w, 20.h, 16.w, 20.h),
+      child: Material(
+        color: BrandColor.main,
+        borderRadius: BorderRadius.circular(12.r),
+        child: InkWell(
+          onTap: navigateToGameGuide,
+          borderRadius: BorderRadius.circular(12.r),
+          child: Padding(
+            padding: EdgeInsets.symmetric(
+              horizontal: 20.w,
+              vertical: 20.h,
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'HOME GAME GUIDE',
+                        style: TextStyle(
+                          color: PrimaryColor.main,
+                          fontSize: 11.sp,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      SizedBox(height: 6.h),
+                      Text(
+                        'ホームゲームの楽しみ方',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 20.sp,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      SizedBox(height: 6.h),
+                      Text(
+                        '観戦前にチェック',
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.8),
+                          fontSize: 12.sp,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const Icon(
+                  Icons.chevron_right,
+                  color: Colors.white,
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );
