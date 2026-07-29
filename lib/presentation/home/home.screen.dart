@@ -14,6 +14,7 @@ import 'package:koto_blue_sharks/app/views/views/other/views/video_thumbnail_vie
 import 'package:koto_blue_sharks/app/views/views/topic/views/topic_item_view.dart';
 import 'package:koto_blue_sharks/generated/locales.g.dart';
 import 'package:koto_blue_sharks/presentation/main/controllers/main.controller.dart';
+import 'package:koto_blue_sharks/presentation/point/widgets/home_point_card.dart';
 import 'package:koto_blue_sharks/utils/app_color.dart';
 import 'package:koto_blue_sharks/utils/date_formatter.dart';
 import 'package:koto_blue_sharks/utils/map_id_to_categories.dart';
@@ -67,6 +68,7 @@ class HomeScreen extends GetView<MainController> {
                       );
               }),
             ),
+            const HomePointCard(),
             _gameGuideEntry(),
             DefaultHeaderTitleView(LocaleKeys.next_match.tr,
                 LocaleKeys.next_match_en.tr.toUpperCase()),

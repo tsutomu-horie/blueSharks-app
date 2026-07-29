@@ -6,6 +6,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'package:koto_blue_sharks/app/data/models/info/post.dart';
 import 'package:koto_blue_sharks/app/views/views/custom_text_view.dart';
+import 'package:koto_blue_sharks/app/views/views/app_bottom_navigation_bar.dart';
 import 'package:koto_blue_sharks/generated/locales.g.dart';
 import 'package:koto_blue_sharks/presentation/screens.dart';
 import 'package:koto_blue_sharks/utils/app_color.dart';
@@ -239,65 +240,10 @@ class _MainScreenState extends State<MainScreen> {
                   selectTopic(null);
                 }, controller.selectedPost.value),
           // Display the selected page
-          bottomNavigationBar: Obx(() {
-            return BottomNavigationBar(
-              backgroundColor: BackgroundColor.primary,
-              type: BottomNavigationBarType.fixed,
-              items: <BottomNavigationBarItem>[
-                BottomNavigationBarItem(
-                  icon: _customBottomNavItem(
-                      "assets/vectors/ic_home_${controller.selectedIndex.value == 0 ? "enabled" : "default"}.svg",
-                      LocaleKeys.home.tr,
-                      0),
-                  label: '',
-                ),
-                BottomNavigationBarItem(
-                  icon: _customBottomNavItem(
-                      "assets/vectors/ic_info_${controller.selectedIndex.value == 1 ? "enabled" : "default"}.svg",
-                      LocaleKeys.menu_en.tr,
-                      1),
-                  label: '',
-                ),
-                BottomNavigationBarItem(
-                  icon: _customBottomNavItem(
-                      "assets/vectors/ic_member_${controller.selectedIndex.value == 2 ? "enabled" : "default"}.svg",
-                      LocaleKeys.my_page.tr,
-                      2),
-                  label: '',
-                ),
-                BottomNavigationBarItem(
-                  icon: _customBottomNavItem(
-                      "assets/vectors/ic_stadium_${controller.selectedIndex.value == 3 ? "enabled" : "default"}.svg",
-                      LocaleKeys.stadium.tr,
-                      3),
-                  label: '',
-                ),
-                BottomNavigationBarItem(
-                  icon: _customBottomNavItem(
-                      "assets/vectors/ic_calendar_${controller.selectedIndex.value == 4 ? "enabled" : "default"}.svg",
-                      LocaleKeys.calendar.tr,
-                      4),
-                  label: '',
-                ),
-                BottomNavigationBarItem(
-                  icon: _customBottomNavWidget(
-                    Icon(
-                      Icons.menu_book_outlined,
-                      size: 20,
-                      color: controller.selectedIndex.value == 5
-                          ? BrandColor.main
-                          : TextColor.disabled,
-                    ),
-                    '楽しみ方',
-                    5,
-                  ),
-                  label: '',
-                ),
-              ],
-              currentIndex: controller.selectedIndex.value,
-              onTap: _onItemTapped,
-            );
-          }),
+          bottomNavigationBar: AppBottomNavigationBar(
+            selectedIndex: controller.selectedIndex.value,
+            onTap: _onItemTapped,
+          ),
         );
       }),
     );
@@ -329,48 +275,6 @@ class _MainScreenState extends State<MainScreen> {
           )
         ],
       ),
-    );
-  }
-
-  Widget _customBottomNavItem(String icon, String label, int index) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        SvgPicture.asset(
-          icon,
-          width: 20,
-          height: 20,
-        ),
-        SizedBox(height: 4.h), // Space between icon and label
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 12, // Customize label font size here
-            color: controller.selectedIndex.value == index
-                ? BrandColor.main
-                : TextColor.disabled,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _customBottomNavWidget(Widget icon, String label, int index) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        icon,
-        SizedBox(height: 4.h),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 12,
-            color: controller.selectedIndex.value == index
-                ? BrandColor.main
-                : TextColor.disabled,
-          ),
-        ),
-      ],
     );
   }
 }

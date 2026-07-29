@@ -42,4 +42,17 @@ class Routes {
   static const WEBVIEW = '/webview';
   static const YEAR_FILTER_CONTROLLER = '/year-filter-controller';
   static const LOCAL_FULL_SCREEN = '/local-full-screen';
+  static const POINT_TOP = '/points';
+  static const POINT_EXPIRING = '/points/expiring';
+  static const POINT_QR = '/points/qr';
+  static const POINT_QR_PROCESSING = '/points/qr/processing';
+  static const POINT_QR_RESULT = '/points/qr/result';
+  static const POINT_HISTORY = '/points/history';
+  static const POINT_HISTORY_DETAIL = '/points/history/detail';
+  static const POINT_RANKING = '/points/ranking';
+  static const POINT_REWARDS = '/points/rewards';
+  static const POINT_REWARD_DETAIL = '/points/rewards/detail';
+  static const POINT_EXCHANGE_CONFIRM = '/points/exchange/confirm';
+  static const POINT_EXCHANGE_COMPLETE = '/points/exchange/complete';
+  static const POINT_EXCHANGE_RECEIPT = '/points/exchange/receipt';
 }

@@ -231,5 +231,70 @@ class Nav {
       ),
       binding: StadiumImageFullScreenControllerBinding(),
     ),
+    GetPage(
+      name: Routes.POINT_TOP,
+      page: () => const PointTopScreen(),
+      binding: PointControllerBinding(),
+    ),
+    GetPage(
+      name: Routes.POINT_EXPIRING,
+      page: () => const PointExpiringScreen(),
+      binding: PointControllerBinding(),
+    ),
+    GetPage(
+      name: Routes.POINT_QR,
+      page: () => const PointQrScreen(),
+      binding: PointControllerBinding(),
+    ),
+    GetPage(
+      name: Routes.POINT_QR_PROCESSING,
+      page: () => const PointQrProcessingScreen(),
+      binding: PointControllerBinding(),
+    ),
+    GetPage(
+      name: Routes.POINT_QR_RESULT,
+      page: () => const PointQrResultScreen(),
+      binding: PointControllerBinding(),
+    ),
+    GetPage(
+      name: Routes.POINT_HISTORY,
+      page: () => const PointHistoryScreen(),
+      binding: PointControllerBinding(),
+    ),
+    GetPage(
+      name: Routes.POINT_HISTORY_DETAIL,
+      page: () => const PointHistoryDetailScreen(),
+      binding: PointControllerBinding(),
+    ),
+    GetPage(
+      name: Routes.POINT_RANKING,
+      page: () => const PointRankingScreen(),
+      binding: PointControllerBinding(),
+    ),
+    GetPage(
+      name: Routes.POINT_REWARDS,
+      page: () => const PointRewardsScreen(),
+      binding: PointControllerBinding(),
+    ),
+    GetPage(
+      name: Routes.POINT_REWARD_DETAIL,
+      page: () => const PointRewardDetailScreen(),
+      binding: PointControllerBinding(),
+    ),
+    GetPage(
+      name: Routes.POINT_EXCHANGE_CONFIRM,
+      page: () => const PointExchangeConfirmScreen(),
+      binding: PointControllerBinding(),
+    ),
+    GetPage(
+      name: Routes.POINT_EXCHANGE_COMPLETE,
+      page: () => const PointExchangeCompleteScreen(),
+      binding: PointControllerBinding(),
+    ),
+    GetPage(
+      name: Routes.POINT_EXCHANGE_RECEIPT,
+      page: () => const PointExchangeReceiptScreen(),
+      binding: PointControllerBinding(),
+    ),
   ];
 }
