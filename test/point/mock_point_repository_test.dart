@@ -33,6 +33,7 @@ void main() {
       );
       final reward = PointReward(
         id: 'REWARD-TEST',
+        offerId: 'OFFER-TEST',
         name: 'テスト景品',
         description: '',
         requiredPoints: 1000,

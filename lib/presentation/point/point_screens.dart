@@ -225,15 +225,16 @@ class _PointQrScreenState extends State<PointQrScreen> {
               ),
             ),
             SizedBox(height: 12.h),
-            CustomTextView(
-              '会員ID  ${token.maskedMemberId}',
-              align: TextAlign.center,
-              color: TextColor.secondary,
-            ),
+            if (token.maskedMemberId.isNotEmpty)
+              CustomTextView(
+                '会員ID  ${token.maskedMemberId}',
+                align: TextAlign.center,
+                color: TextColor.secondary,
+              ),
             SizedBox(height: 16.h),
-            OutlinedButton(
-              onPressed: () => Get.toNamed(Routes.POINT_QR_PROCESSING),
-              child: const Text('付与処理を確認（モック）'),
+            const CustomTextView(
+              '会場スタッフの読み取り完了後、ポイント履歴を更新してご確認ください。',
+              align: TextAlign.center,
             ),
             TextButton(
               onPressed: () => Get.toNamed(Routes.POINT_HISTORY),
@@ -260,68 +261,25 @@ class PointQrProcessingScreen extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const CircularProgressIndicator(),
+              Icon(Icons.qr_code_scanner, size: 56.w, color: BrandColor.main),
               SizedBox(height: 20.h),
               const CustomTextView(
-                'ポイント付与処理中',
+                '会場端末で読み取り中',
                 type: TDSFontType.titleMedium,
               ),
               SizedBox(height: 8.h),
               const CustomTextView(
-                '画面を閉じずにお待ちください',
+                '読み取り完了後、ポイント履歴で付与結果をご確認ください。',
                 align: TextAlign.center,
               ),
               SizedBox(height: 32.h),
-              OutlinedButton(
-                onPressed: () => _showMockResultSheet(context),
-                child: const Text('付与結果を選択（モック）'),
+              PointPrimaryButton(
+                label: 'ポイント履歴を確認',
+                onPressed: () => Get.offNamed(Routes.POINT_HISTORY),
               ),
             ],
           ),
         ),
-      ),
-    );
-  }
-
-  void _showMockResultSheet(BuildContext context) {
-    showModalBottomSheet<void>(
-      context: context,
-      builder: (_) => SafeArea(
-        child: Wrap(
-          children: [
-            const ListTile(title: Text('動作確認する状態を選択')),
-            ListTile(
-              title: const Text('付与成功'),
-              onTap: () => _openResult(PointQrResult.granted),
-            ),
-            ListTile(
-              title: const Text('すでに獲得済み'),
-              onTap: () => _openResult(
-                PointQrResult.rejected,
-                failureCode: 'already_redeemed',
-              ),
-            ),
-            ListTile(
-              title: const Text('オフライン反映待ち'),
-              onTap: () => _openResult(PointQrResult.awaitingSync),
-            ),
-            ListTile(
-              title: const Text('通信失敗'),
-              onTap: () => _openResult(PointQrResult.failed),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  void _openResult(PointQrResult result, {String? failureCode}) {
-    Get.back();
-    Get.offNamed(
-      Routes.POINT_QR_RESULT,
-      arguments: PointQrResultArguments(
-        result: result,
-        failureCode: failureCode,
       ),
     );
   }
@@ -581,6 +539,13 @@ class _PointRankingScreenState extends State<PointRankingScreen> {
             ),
             if (controller.isLoading.value && data == null)
               const Expanded(child: Center(child: CircularProgressIndicator()))
+            else if (data == null && controller.errorMessage.value != null)
+              Expanded(
+                child: PointErrorView(
+                  message: controller.errorMessage.value!,
+                  onRetry: controller.loadRanking,
+                ),
+              )
             else if (data != null) ...[
               Padding(
                 padding: EdgeInsets.symmetric(vertical: 8.h),
@@ -653,6 +618,19 @@ class _PointRewardsScreenState extends State<PointRewardsScreen> {
                 lifetimeEarned: account.lifetimeEarned,
               ),
             SizedBox(height: 16.h),
+            if (controller.isLoading.value && controller.rewards.isEmpty)
+              const Center(child: CircularProgressIndicator())
+            else if (controller.errorMessage.value != null &&
+                controller.rewards.isEmpty)
+              PointErrorView(
+                message: controller.errorMessage.value!,
+                onRetry: controller.loadRewards,
+              )
+            else if (controller.rewards.isEmpty)
+              const CustomTextView(
+                '現在交換できる景品はありません。',
+                align: TextAlign.center,
+              ),
             ...controller.rewards.map(
               (reward) => Card(
                 margin: EdgeInsets.only(bottom: 12.h),
@@ -790,7 +768,7 @@ class _PointRewardDetailScreenState extends State<PointRewardDetailScreen> {
                   ),
                   _DetailRow(
                     '交換期間',
-                    '${formatPointDate(reward.exchangeStartsAt)}〜${formatPointDate(reward.exchangeEndsAt)}',
+                    _rewardPeriod(reward),
                   ),
                   _DetailRow('受渡場所', reward.pickupLocation),
                   _DetailRow('注意事項', reward.notice),
@@ -987,7 +965,28 @@ class _ExchangeReceiptContent extends StatelessWidget {
                 ),
                 _DetailRow('交換番号', exchange!.exchangeNumber),
                 _DetailRow('履歴ID', exchange!.id),
-                _DetailRow('会員ID', exchange!.maskedMemberId),
+                if (exchange!.maskedMemberId.isNotEmpty)
+                  _DetailRow('会員ID', exchange!.maskedMemberId),
+                if (exchange!.deliveryToken != null) ...[
+                  SizedBox(height: 16.h),
+                  Center(
+                    child: Container(
+                      color: Colors.white,
+                      padding: EdgeInsets.all(12.w),
+                      child: QrImageView(
+                        data: exchange!.deliveryToken!,
+                        version: QrVersions.auto,
+                        size: 180.w,
+                      ),
+                    ),
+                  ),
+                  if (exchange!.deliveryTokenExpiresAt != null)
+                    CustomTextView(
+                      '表示期限：${formatPointDate(exchange!.deliveryTokenExpiresAt!, withTime: true)}',
+                      align: TextAlign.center,
+                      color: TextColor.secondary,
+                    ),
+                ],
                 SizedBox(height: 16.h),
                 const CustomTextView(
                   'この画面をスタッフに見せてください',
@@ -1170,7 +1169,7 @@ class _RankingTile extends StatelessWidget {
       leading: SizedBox(
         width: 40.w,
         child: Text(
-          '${entry.rank}位',
+          entry.rank == null ? '—' : '${entry.rank}位',
           style: const TextStyle(fontWeight: FontWeight.w700),
         ),
       ),
@@ -1224,6 +1223,15 @@ String _rewardStatusLabel(PointRewardStatus status) {
     PointRewardStatus.insufficientPoints => 'ポイント不足',
     PointRewardStatus.ended => '受付終了',
   };
+}
+
+String _rewardPeriod(PointReward reward) {
+  final startsAt = reward.exchangeStartsAt;
+  final endsAt = reward.exchangeEndsAt;
+  if (startsAt == null && endsAt == null) return '期間指定なし';
+  if (startsAt == null) return '〜${formatPointDate(endsAt!)}';
+  if (endsAt == null) return '${formatPointDate(startsAt)}〜';
+  return '${formatPointDate(startsAt)}〜${formatPointDate(endsAt)}';
 }
 
 Color _rewardStatusColor(PointRewardStatus status) {

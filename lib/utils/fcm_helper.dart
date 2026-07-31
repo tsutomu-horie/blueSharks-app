@@ -23,9 +23,9 @@ class FcmHelper {
     try {
       // initialize fcm and firebase core
       // if (Platform.isAndroid) {
-        await Firebase.initializeApp(
-          options: DefaultFirebaseOptions.currentPlatform,
-        );
+      await Firebase.initializeApp(
+        options: DefaultFirebaseOptions.currentPlatform,
+      );
       // } else {
       //   AwesomeNotifications().initialize("resource://drawable/notif", [
       //     NotificationChannel(
@@ -37,25 +37,23 @@ class FcmHelper {
       //   ],
       //   );
       // }
-        await AwesomeNotificationsHelper.init();
-        await Future.delayed(Duration(seconds: 1));
+      await AwesomeNotificationsHelper.init();
+      await Future.delayed(Duration(seconds: 1));
 
-          messaging = FirebaseMessaging.instance;
+      messaging = FirebaseMessaging.instance;
 
       await _setupFcmNotificationSettings();
-        await _generateFcmToken();
+      await _generateFcmToken();
 
+      messaging.unsubscribeFromTopic(Constants.topic);
 
-        messaging.unsubscribeFromTopic(Constants.topic);
-
-        messaging.subscribeToTopic(Constants.topic).then((_) {
-          debugPrint('Subscribed to topic ${Constants.topic}');
-        });
+      messaging.subscribeToTopic(Constants.topic).then((_) {
+        debugPrint('Subscribed to topic ${Constants.topic}');
+      });
 
       // background and foreground handlers
       FirebaseMessaging.onMessage.listen(_fcmForegroundHandler);
       FirebaseMessaging.onBackgroundMessage(_fcmBackgroundHandler);
-
     } catch (error) {
       // if you are connected to firebase and still get error
       // check the todo up in the function else ignore the error
@@ -82,26 +80,23 @@ class FcmHelper {
           carPlay: false,
           criticalAlert: false,
           provisional: false,
-          sound: true
-      );
+          sound: true);
 
       debugPrint('User granted permission: ${settings.authorizationStatus}');
     }
-
   }
-
 
   /// generate and save fcm token if its not already generated (generate only for 1 time)
   static Future<void> _generateFcmToken() async {
     try {
       var token = await messaging.getToken();
-      if(token != null){
+      if (token != null) {
         MySharedPref.setFcmToken(token);
-        _sendFcmTokenToServer();
-      }else {
+        await _sendFcmTokenToServer();
+      } else {
         // retry generating token
         await Future.delayed(const Duration(seconds: 5));
-        _generateFcmToken();
+        await _generateFcmToken();
       }
     } catch (error) {
       debugPrint("error generate fcm $error");
@@ -110,13 +105,19 @@ class FcmHelper {
 
   /// this method will be triggered when the app generate fcm
   /// token successfully
-  static _sendFcmTokenToServer() async {
+  static Future<void> _sendFcmTokenToServer() async {
     var token = MySharedPref.getFcmToken();
 
     final auth = AuthProvider();
 
     if (token != null) {
-      final authToken = await auth.updateNotificationToken(token);
+      try {
+        await auth.updateNotificationToken(token);
+      } catch (error) {
+        // Push-token synchronization is best-effort. A temporary API outage
+        // must not prevent the application from starting.
+        debugPrint('FCM token synchronization deferred: $error');
+      }
     }
   }
 
@@ -125,7 +126,8 @@ class FcmHelper {
   /// https://stackoverflow.com/a/67083337
   @pragma('vm:entry-point')
   static Future<void> _fcmBackgroundHandler(RemoteMessage message) async {
-    debugPrint('Handling FCM Notification in Background: ${message.notification?.title}');
+    debugPrint(
+        'Handling FCM Notification in Background: ${message.notification?.title}');
 
     // AwesomeNotificationsHelper.showNotification(
     //   id: 1,
@@ -140,10 +142,10 @@ class FcmHelper {
     final Map<String, dynamic> jsonMapped = {
       "notification": message.notification != null
           ? {
-        "title": message.notification?.title,
-        "body": message.notification?.body,
-        "image": message.notification?.android?.imageUrl,
-      }
+              "title": message.notification?.title,
+              "body": message.notification?.body,
+              "image": message.notification?.android?.imageUrl,
+            }
           : null,
       "data": message.data,
       "from": message.from,
@@ -157,15 +159,13 @@ class FcmHelper {
 
     if (Platform.isAndroid) {
       AwesomeNotificationsHelper.showNotification(
-        id: 1,
-        title: message.notification?.title ?? 'Tittle',
-        body: message.notification?.body ?? 'Body',
-        payload: message.data
-            .cast(),
-        largeIcon: Platform.isAndroid ? message.notification?.android?.imageUrl : message.notification?.apple?.imageUrl
-      );
+          id: 1,
+          title: message.notification?.title ?? 'Tittle',
+          body: message.notification?.body ?? 'Body',
+          payload: message.data.cast(),
+          largeIcon: Platform.isAndroid
+              ? message.notification?.android?.imageUrl
+              : message.notification?.apple?.imageUrl);
     }
-
   }
 }
-

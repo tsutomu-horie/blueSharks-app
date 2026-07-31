@@ -82,6 +82,7 @@ class MockPointRepository implements PointRepository {
   final List<PointReward> _rewards = [
     PointReward(
       id: 'REWARD-001',
+      offerId: 'OFFER-001',
       name: 'BlueSharks 限定タオル',
       description: '会場限定デザインのオリジナルタオルです。',
       requiredPoints: 1000,
@@ -93,6 +94,7 @@ class MockPointRepository implements PointRepository {
     ),
     PointReward(
       id: 'REWARD-002',
+      offerId: 'OFFER-002',
       name: '選手カード',
       description: '選手の限定ビジュアルカードです。',
       requiredPoints: 2000,
@@ -104,6 +106,7 @@ class MockPointRepository implements PointRepository {
     ),
     PointReward(
       id: 'REWARD-003',
+      offerId: 'OFFER-003',
       name: '限定ステッカー',
       description: 'BlueSharksロゴの限定ステッカーです。',
       requiredPoints: 500,
@@ -244,6 +247,7 @@ class MockPointRepository implements PointRepository {
       spentPoints: reward.requiredPoints,
       requestedAt: now,
       maskedMemberId: 'C-******01',
+      deliveryToken: 'mock-delivery-token',
     );
     final nextBalance = _account.balance - reward.requiredPoints;
     _account = _account.copyWith(
