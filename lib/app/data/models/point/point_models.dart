@@ -96,14 +96,14 @@ class PointTransaction {
 
 class PointRankingEntry {
   const PointRankingEntry({
-    required this.customerId,
-    required this.rank,
+    this.customerId,
+    this.rank,
     required this.nickname,
     required this.points,
   });
 
-  final int customerId;
-  final int rank;
+  final int? customerId;
+  final int? rank;
   final String nickname;
   final int points;
 }
@@ -127,22 +127,24 @@ class PointRanking {
 class PointReward {
   const PointReward({
     required this.id,
+    required this.offerId,
     required this.name,
     required this.description,
     required this.requiredPoints,
-    required this.exchangeStartsAt,
-    required this.exchangeEndsAt,
+    this.exchangeStartsAt,
+    this.exchangeEndsAt,
     required this.pickupLocation,
     required this.notice,
     required this.status,
   });
 
   final String id;
+  final String offerId;
   final String name;
   final String description;
   final int requiredPoints;
-  final DateTime exchangeStartsAt;
-  final DateTime exchangeEndsAt;
+  final DateTime? exchangeStartsAt;
+  final DateTime? exchangeEndsAt;
   final String pickupLocation;
   final String notice;
   final PointRewardStatus status;
@@ -157,6 +159,8 @@ class PointRewardExchange {
     required this.spentPoints,
     required this.requestedAt,
     required this.maskedMemberId,
+    this.deliveryToken,
+    this.deliveryTokenExpiresAt,
   });
 
   final String id;
@@ -166,6 +170,8 @@ class PointRewardExchange {
   final int spentPoints;
   final DateTime requestedAt;
   final String maskedMemberId;
+  final String? deliveryToken;
+  final DateTime? deliveryTokenExpiresAt;
 }
 
 class PointQrToken {

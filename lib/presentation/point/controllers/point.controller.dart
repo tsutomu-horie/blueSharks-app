@@ -1,12 +1,12 @@
 import 'package:get/get.dart';
 import 'package:koto_blue_sharks/app/data/models/point/point_models.dart';
-import 'package:koto_blue_sharks/app/providers/point/mock_point_repository.dart';
+import 'package:koto_blue_sharks/app/providers/point/api_point_repository.dart';
 import 'package:koto_blue_sharks/app/providers/point/point_repository.dart';
 import 'package:koto_blue_sharks/app/services/auth_token.dart';
 
 class PointController extends GetxController {
   PointController({PointRepository? repository})
-      : repository = repository ?? MockPointRepository.instance;
+      : repository = repository ?? ApiPointRepository.instance;
 
   final PointRepository repository;
 
@@ -32,6 +32,8 @@ class PointController extends GetxController {
   String? _transactionRequestId;
   String? _rewardRequestId;
   String? _exchangeRequestId;
+  String? _pendingExchangeKey;
+  String? _pendingExchangeRewardId;
   Future<void>? _initialization;
   int _activeLoadCount = 0;
 
@@ -93,7 +95,10 @@ class PointController extends GetxController {
   }
 
   Future<void> loadRanking([PointRankingType? type]) async {
-    if (type != null) rankingType.value = type;
+    if (type != null && type != rankingType.value) {
+      rankingType.value = type;
+      ranking.value = null;
+    }
     await _run(() async {
       ranking.value = await repository.getRanking(rankingType.value);
     });
@@ -108,6 +113,10 @@ class PointController extends GetxController {
 
   Future<void> loadReward(String id) async {
     _rewardRequestId = id;
+    if (_pendingExchangeRewardId != id) {
+      _pendingExchangeKey = null;
+      _pendingExchangeRewardId = id;
+    }
     selectedReward.value = null;
     await _run(() async {
       final results = await Future.wait([
@@ -128,11 +137,13 @@ class PointController extends GetxController {
     isProcessing.value = true;
     errorMessage.value = null;
     try {
+      _pendingExchangeKey ??=
+          'exchange-${reward.id}-${DateTime.now().microsecondsSinceEpoch}';
       selectedExchange.value = await repository.exchangeReward(
         reward.id,
-        idempotencyKey:
-            'exchange-${reward.id}-${DateTime.now().microsecondsSinceEpoch}',
+        idempotencyKey: _pendingExchangeKey!,
       );
+      _pendingExchangeKey = null;
       account.value = await repository.getAccount();
       transactions.assignAll(await repository.getTransactions());
       return true;
@@ -186,11 +197,6 @@ class PointController extends GetxController {
           transaction.type == PointTransactionType.expire,
       };
     }).toList();
-  }
-
-  void setMockQrResult(PointQrResult result, {String? failureCode}) {
-    qrResult.value = result;
-    qrFailureCode.value = failureCode;
   }
 
   Future<void> _run(Future<void> Function() action) async {
