@@ -43,6 +43,20 @@ class Nav {
       ),
     ),
     GetPage(
+      name: Routes.TRAINING_GAME,
+      page: () => const TrainingGameScreen(),
+      binding: TrainingGameControllerBinding(),
+    ),
+    GetPage(
+      name: Routes.TRAINING_GAME_LAUNCH,
+      page: () => const TrainingGameLaunchScreen(),
+    ),
+    GetPage(
+      name: Routes.TRAINING_GAME_NEW,
+      page: () => const TrainingGameNewGameScreen(),
+      binding: TrainingGameNewGameControllerBinding(),
+    ),
+    GetPage(
       name: Routes.SPLASH,
       page: () => const SplashScreen(),
       binding: SplashControllerBinding(),

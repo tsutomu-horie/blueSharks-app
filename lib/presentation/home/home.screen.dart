@@ -13,6 +13,7 @@ import 'package:koto_blue_sharks/app/views/views/match/views/match_item_view.dar
 import 'package:koto_blue_sharks/app/views/views/other/views/video_thumbnail_view.dart';
 import 'package:koto_blue_sharks/app/views/views/topic/views/topic_item_view.dart';
 import 'package:koto_blue_sharks/generated/locales.g.dart';
+import 'package:koto_blue_sharks/infrastructure/navigation/routes.dart';
 import 'package:koto_blue_sharks/presentation/main/controllers/main.controller.dart';
 import 'package:koto_blue_sharks/presentation/point/widgets/home_point_card.dart';
 import 'package:koto_blue_sharks/utils/app_color.dart';
@@ -70,6 +71,7 @@ class HomeScreen extends GetView<MainController> {
             ),
             const HomePointCard(),
             _gameGuideEntry(),
+            _trainingGameEntry(),
             DefaultHeaderTitleView(LocaleKeys.next_match.tr,
                 LocaleKeys.next_match_en.tr.toUpperCase()),
             Obx(() {
@@ -459,6 +461,42 @@ class HomeScreen extends GetView<MainController> {
                   Icons.chevron_right,
                   color: Colors.white,
                 ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// ホームから育成ゲームへ遷移する入口を表示します。
+  Widget _trainingGameEntry() {
+    return Padding(
+      padding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 20.h),
+      child: Material(
+        color: const Color(0xfffff4df),
+        borderRadius: BorderRadius.circular(12.r),
+        child: InkWell(
+          onTap: () => Get.toNamed(Routes.TRAINING_GAME_LAUNCH),
+          borderRadius: BorderRadius.circular(12.r),
+          child: Padding(
+            padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
+            child: Row(
+              children: [
+                Text('🥚', style: TextStyle(fontSize: 32.sp)),
+                SizedBox(width: 12.w),
+                const Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('TRAINING GAME', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Color(0xffa06a10))),
+                      SizedBox(height: 4),
+                      Text('鮫太朗を育てる', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
+                      Text('行動で未来のポジションが変わる', style: TextStyle(fontSize: 12, color: Color(0xff6b5228))),
+                    ],
+                  ),
+                ),
+                const Icon(Icons.chevron_right),
               ],
             ),
           ),
