@@ -1,6 +1,8 @@
 export 'package:koto_blue_sharks/presentation/calendar/calendar.screen.dart';
 export 'package:koto_blue_sharks/presentation/game_guide/game_guide_detail.screen.dart';
 export 'package:koto_blue_sharks/presentation/game_guide/game_guide_list.screen.dart';
+export 'package:koto_blue_sharks/presentation/training_game/training_game.screen.dart';
+export 'package:koto_blue_sharks/presentation/training_game/training_game_flow.screen.dart';
 export 'package:koto_blue_sharks/presentation/home/home.screen.dart';
 export 'package:koto_blue_sharks/presentation/login/login.screen.dart';
 export 'package:koto_blue_sharks/presentation/main/main.screen.dart';

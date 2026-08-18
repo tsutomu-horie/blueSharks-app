@@ -16,6 +16,9 @@ class Routes {
   static const GAME_INFO = '/game-info';
   static const GAME_GUIDE = '/game-guide';
   static const GAME_GUIDE_DETAIL = '/game-guide-detail';
+  static const TRAINING_GAME = '/training-game';
+  static const TRAINING_GAME_LAUNCH = '/training-game/launch';
+  static const TRAINING_GAME_NEW = '/training-game/new';
   static const HOME = '/home';
   static const INFO = '/info';
   static const LIST_TOPICS = '/list-topics';

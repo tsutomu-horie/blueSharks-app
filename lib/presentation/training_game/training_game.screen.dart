@@ -1,0 +1,947 @@
+import 'dart:async';
+
+import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:get/get.dart';
+import 'package:koto_blue_sharks/infrastructure/navigation/routes.dart';
+
+import 'controllers/training_game.controller.dart';
+import 'models/training_game_models.dart';
+
+/// 参照HTMLのスマートフォン画面部分だけをアプリ用に再現します。
+class TrainingGameScreen extends GetView<TrainingGameController> {
+  /// 育成ゲーム画面を作成します。
+  const TrainingGameScreen({super.key});
+
+  static final Set<TrainingActionType> _helpShown = <TrainingActionType>{};
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.white,
+      body: SafeArea(
+        child: Obx(
+          () => controller.isServerStateReady.value
+              ? controller.evolutionStage.value != null
+                  ? _buildEvolutionFlow()
+                  : controller.ended.value
+                  ? _buildEndingFlow(context)
+                  : Column(
+                  children: [
+                    _buildStatusBar(context),
+                    _buildHud(context),
+                    Expanded(child: _buildRoom(context)),
+                    _buildCareBar(context),
+                  ],
+                )
+              : const Center(child: CircularProgressIndicator()),
+        ),
+      ),
+    );
+  }
+
+  /// ⑧〜⑪の育成完了後フローを表示します。
+  Widget _buildEvolutionFlow() {
+    final stage = controller.currentStage;
+    final visual = switch (controller.evolutionStage.value) {
+      1 => '🐣\n幼少へ進化',
+      2 => '🦈\n育成期へ進化',
+      3 => '🦈\n成長期へ進化',
+      _ => '✨\n進化演出',
+    };
+    return _buildEndingPage(
+      title: '進化',
+      visual: visual,
+      message: '段階「${stage.name}」へ進みました。',
+      buttonLabel: '次へ',
+      onPressed: controller.advanceEvolution,
+    );
+  }
+
+  /// ⑧〜⑪の育成完了後フローを表示します。
+  Widget _buildEndingFlow(BuildContext context) {
+    final isPositive = controller.clearPosition.value != null;
+    final step = controller.endingStep.value;
+    if (step == 0 && isPositive) {
+      return _buildEndingPage(
+        title: '進化',
+        visual: '✨\n進化演出',
+        buttonLabel: '次へ',
+        onPressed: controller.advanceEndingStep,
+      );
+    }
+    if (step == 1 && isPositive) {
+      return _buildEndingPage(
+        title: 'ポジション確定',
+        visual: '🦈\nユニフォーム姿',
+        message: controller.position,
+        buttonLabel: '次へ',
+        onPressed: controller.advanceEndingStep,
+      );
+    }
+    if (step <= 2) {
+      return _buildEndingPage(
+        title: '旅立ち',
+        visual: isPositive ? '🦈\n旅立ち' : '🦈\n引退',
+        message: isPositive ? '育成した鮫太朗が旅立ちます。' : '育成を終え、次の卵へ進みます。',
+        buttonLabel: isPositive ? '図鑑へ登録' : '次の卵へ',
+        onPressed: isPositive ? controller.advanceEndingStep : _openNewEgg,
+      );
+    }
+    return _buildDexPage();
+  }
+
+  /// ⑪図鑑・クリア履歴の5列グリッドを表示します。
+  Widget _buildDexPage() {
+    const positions = [
+      'プロップ', 'フッカー', 'ロック', 'フランカー', 'ナンバーエイト',
+      'スクラムハーフ', 'スタンドオフ', 'ウイング', 'センター', 'フルバック',
+    ];
+    return Padding(
+      padding: EdgeInsets.fromLTRB(12.w, 12.h, 12.w, 16.h),
+      child: Column(
+        children: [
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Text('図鑑・クリア履歴', style: TextStyle(fontSize: 20.sp, fontWeight: FontWeight.w700)),
+          ),
+          SizedBox(height: 12.h),
+          Expanded(
+            child: GridView.builder(
+              itemCount: positions.length,
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 5,
+                crossAxisSpacing: 4,
+                mainAxisSpacing: 4,
+                childAspectRatio: .78,
+              ),
+              itemBuilder: (_, index) {
+                final unlocked = controller.isPositionUnlocked(positions[index]) ||
+                    positions[index] == controller.clearPosition.value;
+                return Container(
+                  padding: EdgeInsets.all(3.w),
+                  decoration: BoxDecoration(
+                    color: unlocked ? Colors.white : const Color(0xfff1f1f1),
+                    border: Border.all(color: const Color(0xffd8d8d8)),
+                    borderRadius: BorderRadius.circular(6.r),
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(unlocked ? '🦈' : '👤', style: TextStyle(fontSize: 26.sp, color: unlocked ? null : Colors.grey)),
+                      SizedBox(height: 2.h),
+                      Text(positions[index], textAlign: TextAlign.center, style: TextStyle(fontSize: 8.sp, color: unlocked ? Colors.black : Colors.grey, fontWeight: unlocked ? FontWeight.w700 : FontWeight.normal)),
+                    ],
+                  ),
+                );
+              },
+            ),
+          ),
+          SizedBox(height: 12.h),
+          SizedBox(
+            width: double.infinity,
+            height: 52.h,
+            child: ElevatedButton(onPressed: _openNewEgg, child: const Text('次の卵へ')),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// 次の育成を開始する前に、卵獲得画面へ遷移します。
+  void _openNewEgg() {
+    // サーバー上の新規育成作成は、卵獲得画面の「はじめる」後に実行します。
+    Get.offNamed(Routes.TRAINING_GAME_NEW);
+  }
+
+  /// 完了後フローの共通画面を作成します。
+  Widget _buildEndingPage({
+    required String title,
+    required String visual,
+    required String buttonLabel,
+    required VoidCallback onPressed,
+    String? message,
+  }) {
+    return Padding(
+      padding: EdgeInsets.all(20.w),
+      child: Column(
+        children: [
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Text(title, style: TextStyle(fontSize: 22.sp, fontWeight: FontWeight.w700)),
+          ),
+          SizedBox(height: 18.h),
+          Expanded(
+            child: Container(
+              width: double.infinity,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: const Color(0xffe2e5e8),
+                borderRadius: BorderRadius.circular(12.r),
+              ),
+              child: Text(visual, textAlign: TextAlign.center, style: TextStyle(fontSize: 30.sp, height: 1.5)),
+            ),
+          ),
+          if (message != null) ...[
+            SizedBox(height: 16.h),
+            Text(message, textAlign: TextAlign.center, style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w700)),
+          ],
+          SizedBox(height: 20.h),
+          SizedBox(
+            width: double.infinity,
+            height: 52.h,
+            child: ElevatedButton(onPressed: onPressed, child: Text(buttonLabel)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// 参照画面上部のステータスバーとホーム戻り操作を表示します。
+  Widget _buildStatusBar(BuildContext context) {
+    return Container(
+      color: const Color(0xffe9e9e9),
+      padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 6.h),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Row(
+            children: [
+              Text(
+                '鮫太朗育成',
+                style: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.w700),
+              ),
+              IconButton(
+                onPressed: () => _showDebugMenu(context),
+                tooltip: 'デバッグコマンド',
+                visualDensity: VisualDensity.compact,
+                padding: EdgeInsets.zero,
+                constraints: BoxConstraints(minWidth: 32.w, minHeight: 32.h),
+                icon: Icon(Icons.bug_report_outlined, size: 18.sp),
+              ),
+            ],
+          ),
+          Row(
+            children: [
+              Text(
+                controller.clockLabel,
+                style: TextStyle(fontSize: 11.sp, fontWeight: FontWeight.w700),
+              ),
+              SizedBox(width: 12.w),
+              Text(
+                '▮▮▮ ᯤ 🔋',
+                style: TextStyle(fontSize: 11.sp, fontWeight: FontWeight.w700),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// 4つの可視パラメータと退出ボタンを表示します。
+  Widget _buildHud(BuildContext context) {
+    return Container(
+      color: const Color(0xfffafafa),
+      padding: EdgeInsets.all(8.w),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: Container(
+              padding: EdgeInsets.all(6.w),
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.black, width: 2),
+                borderRadius: BorderRadius.circular(4.r),
+              ),
+              child: GridView.count(
+                crossAxisCount: 2,
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                childAspectRatio: 2.2,
+                children: const ['食事', '仕事', '清潔', '体調']
+                    .map((name) => _buildMeterByName(name))
+                    .toList(),
+              ),
+            ),
+          ),
+          SizedBox(width: 8.w),
+          SizedBox(
+            width: 52.w,
+            height: 52.w,
+            child: ElevatedButton(
+              onPressed: _returnHomeAfterSync,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xff5ee05e),
+                foregroundColor: Colors.black,
+                padding: EdgeInsets.zero,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(6.r),
+                ),
+              ),
+              child: Text('🚪', style: TextStyle(fontSize: 22.sp)),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// 最新状態の同期完了後にホームへ戻ります。
+  Future<void> _returnHomeAfterSync() async {
+    controller.pauseLocalProgress();
+    await controller.syncNow().then((_) {
+      Get.back<void>();
+    }).catchError((_) {
+      // 通信失敗時も画面を閉じ、次回起動時の再同期へ委ねます。
+      Get.back<void>();
+    });
+  }
+
+  /// メーター1項目を作成します。
+  Widget _buildMeterByName(String name) {
+    return _buildMeter(MapEntry(name, controller.meters[name]!));
+  }
+
+  /// メーター1項目を作成します。
+  Widget _buildMeter(MapEntry<String, double> entry) {
+    final color =
+        entry.key == '体調' ? const Color(0xffeb6834) : const Color(0xff1f6feb);
+    return Row(
+      children: [
+        SizedBox(
+          width: 25.w,
+          child: Text(entry.key, style: TextStyle(fontSize: 10.sp)),
+        ),
+        Expanded(
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(6.r),
+            child: LinearProgressIndicator(
+              value: entry.value.clamp(0, 100).toDouble() / 100,
+              minHeight: 10.h,
+              color: color,
+              backgroundColor: Colors.white,
+            ),
+          ),
+        ),
+        SizedBox(
+          width: 22.w,
+          child: Text(
+            '${entry.value.round()}',
+            textAlign: TextAlign.right,
+            style: TextStyle(fontSize: 10.sp),
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// 壁・床・図鑑・キャラクター・練習ボタンを配置します。
+  Widget _buildRoom(BuildContext context) {
+    final canTrain = controller.stageIndex.value >= 2 && !controller.ended.value;
+    return Stack(
+        children: [
+          Positioned.fill(
+            child: Column(
+              children: [
+                Expanded(child: Container(color: const Color(0xffd8d8d8))),
+                Expanded(child: Container(color: const Color(0xff8a5a2b))),
+              ],
+            ),
+          ),
+          Positioned(
+            top: 70.h,
+            left: 0,
+            right: 0,
+            child: Center(
+              child: Text(
+                '壁',
+                style: TextStyle(
+                  color: const Color(0xff8d8d8d),
+                  fontSize: 15.sp,
+                ),
+              ),
+            ),
+          ),
+          Positioned(
+            top: 235.h,
+            left: 60.w,
+            child: Text(
+              '床',
+              style: TextStyle(
+                color: const Color(0xfff0e3d4),
+                fontSize: 15.sp,
+              ),
+            ),
+          ),
+          Positioned(
+            left: 12.w,
+            bottom: 12.h,
+            child: IconButton(
+              onPressed: () => _showDex(context),
+              icon: Text('📙', style: TextStyle(fontSize: 26.sp)),
+            ),
+          ),
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 126.h,
+            child: Column(
+              children: [
+                _buildCharacterBadge(),
+                Text(
+                  controller.characterLabel,
+                  style: TextStyle(fontSize: controller.characterFontSize.sp),
+                ),
+                Text(
+                  controller.currentStage.name,
+                  style: TextStyle(
+                    fontSize: 10.sp,
+                    color: const Color(0xff0b3a5b),
+                    backgroundColor: Colors.white70,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Positioned(
+            right: 8.w,
+            bottom: 4.h,
+            child: Column(
+              children: [
+                _buildTrainingButton(context, TrainingActionType.tackle, canTrain),
+                SizedBox(height: 5.h),
+                _buildTrainingButton(context, TrainingActionType.passAndRun, canTrain),
+              ],
+            ),
+          ),
+          if (controller.ended.value)
+            Positioned.fill(
+              child: Center(
+                child: Container(
+                  margin: EdgeInsets.all(24.w),
+                  padding: EdgeInsets.all(14.w),
+                  color: Colors.white.withOpacity(.94),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        controller.clearPosition.value == null ? 'ゲームオーバー' : '育成完了',
+                        style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.w700),
+                      ),
+                      SizedBox(height: 8.h),
+                      Text(controller.endingMessage.value, textAlign: TextAlign.center),
+                      SizedBox(height: 10.h),
+                      ElevatedButton(
+                        onPressed: _openNewEgg,
+                        child: const Text('卵からやりなおす'),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+        ],
+      );
+  }
+
+  /// 分岐後の暫定ポジション表示を作成します。
+  Widget _buildCharacterBadge() {
+    final label = controller.stageIndex.value == 0
+        ? 'チュートリアル①（卵）'
+        : controller.stageIndex.value == 1
+            ? 'チュートリアル②（幼少）'
+            : controller.clearPosition.value ?? controller.branch ?? 'ノーマル鮫太朗（分岐前）';
+    final branchColor = switch (controller.branch) {
+      'A フォワード型' => const Color(0xff0ca30c),
+      'B 司令塔型' => const Color(0xff1f6feb),
+      'C バックス型' => const Color(0xffeb6834),
+      _ => const Color(0xff8a8f96),
+    };
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 2.h),
+      decoration: BoxDecoration(
+        color: controller.stageIndex.value < 2
+            ? const Color(0xffb26a00)
+            : branchColor,
+        borderRadius: BorderRadius.circular(5.r),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          color: Colors.white,
+          fontSize: 11.sp,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+    );
+  }
+
+  /// 分岐後の暫定ポジション表示を作成します。
+  Widget _buildPositionBadge() {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 2.h),
+      decoration: BoxDecoration(
+        color: const Color(0xff1f6feb),
+        borderRadius: BorderRadius.circular(5.r),
+      ),
+      child: Text(
+        controller.position,
+        style: TextStyle(
+          color: Colors.white,
+          fontSize: 11.sp,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+    );
+  }
+
+  /// ミニゲーム開始ボタンを作成します。
+  Widget _buildTrainingButton(
+    BuildContext context,
+    TrainingActionType type,
+    bool enabled,
+  ) {
+    final action = TrainingGameController.actions.firstWhere(
+      (item) => item.type == type,
+    );
+    return ElevatedButton(
+      onPressed: enabled ? () => _handleAction(context, action.type) : null,
+      style: ElevatedButton.styleFrom(
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.black,
+        side: const BorderSide(color: Colors.black, width: 2),
+        padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 5.h),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(4.r),
+        ),
+      ),
+      child: Column(
+        children: [
+          Text(
+            action.label,
+            style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w700),
+          ),
+          Text(
+            '練習 / MG',
+            style: TextStyle(fontSize: 9.sp, color: Colors.black54),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// 5種類のお世話ボタンを参照画面と同じ下部配置で表示します。
+  Widget _buildCareBar(BuildContext context) {
+    const careActions = [
+      TrainingActionType.meal,
+      TrainingActionType.clean,
+      TrainingActionType.squat,
+      TrainingActionType.work,
+      TrainingActionType.rest,
+    ];
+    return Container(
+      color: Colors.white,
+      padding: EdgeInsets.symmetric(vertical: 8.h, horizontal: 4.w),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: careActions
+            .map((type) => _buildCareButton(context, type))
+            .toList(),
+      ),
+    );
+  }
+
+  /// お世話ボタン1つを作成します。
+  Widget _buildCareButton(BuildContext context, TrainingActionType type) {
+    final action = TrainingGameController.actions.firstWhere(
+      (item) => item.type == type,
+    );
+    final tutorialActionAllowed = controller.stageIndex.value == 0
+        ? type == TrainingActionType.clean || type == TrainingActionType.rest
+        : controller.stageIndex.value == 1
+            ? type != TrainingActionType.work &&
+                type != TrainingActionType.tackle &&
+                type != TrainingActionType.passAndRun
+            : true;
+    final squatRequirementMet = ['食事', '清潔', '体調']
+        .every((name) => controller.meters[name]! >= 50);
+    final enabled = !controller.ended.value &&
+        tutorialActionAllowed &&
+        !(type == TrainingActionType.squat &&
+            (controller.stageIndex.value < 1 || !squatRequirementMet)) &&
+        !(type == TrainingActionType.work &&
+            controller.stageIndex.value < 2);
+    return TextButton(
+      onPressed: enabled ? () => _handleAction(context, type) : null,
+      style: TextButton.styleFrom(
+        foregroundColor: Colors.black,
+        padding: EdgeInsets.zero,
+      ),
+      child: Column(
+        children: [
+          Container(
+            width: 46.w,
+            height: 46.w,
+            alignment: Alignment.center,
+            decoration: const BoxDecoration(
+              color: Color(0xff7ec8f0),
+              shape: BoxShape.circle,
+            ),
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Text(action.icon, style: TextStyle(fontSize: 23.sp)),
+                if (type == TrainingActionType.squat && controller.stageIndex.value == 1)
+                  Positioned(
+                    right: -8.w,
+                    bottom: -4.h,
+                    child: Container(
+                      padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.h),
+                      decoration: BoxDecoration(
+                        color: const Color(0xffb26a00),
+                        borderRadius: BorderRadius.circular(8.r),
+                      ),
+                      child: Text(
+                        '${controller.trainingCount.value}/15',
+                        style: TextStyle(color: Colors.white, fontSize: 9.sp),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          Text(action.label, style: TextStyle(fontSize: 10.sp)),
+        ],
+      ),
+    );
+  }
+
+  /// 初回実行時だけ参照仕様のアクション説明を表示します。
+  void _handleAction(BuildContext context, TrainingActionType type) {
+    final isFirst = _helpShown.add(type);
+    controller.perform(type);
+    if (!isFirst) return;
+    final action = TrainingGameController.actions.firstWhere((item) => item.type == type);
+    showDialog<void>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: Text('${action.icon} ${action.label}'),
+        content: Text(_helpText(type)),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('閉じる')),
+        ],
+      ),
+    );
+  }
+
+  /// アクションごとの説明文を返します。
+  String _helpText(TrainingActionType type) {
+    switch (type) {
+      case TrainingActionType.clean:
+        return '清潔メーターが回復します。育成期からは、清潔が高いと行動効果が少し上がります。';
+      case TrainingActionType.rest:
+        return '体調メーターが回復します。体調が高すぎる場合は傾向値が加算されません。';
+      case TrainingActionType.meal:
+        return '食事メーターが回復します。食事が高いほど筋トレの効果が上がります。';
+      case TrainingActionType.squat:
+        return '食事・清潔・体調を消費して、フォワードと体格を伸ばします。';
+      case TrainingActionType.work:
+        return '仕事メーターが回復します。仕事は1日1回で、技術を伸ばします。';
+      case TrainingActionType.tackle:
+        return '迫る相手を止める練習です。フォワード傾向に寄与します。';
+      case TrainingActionType.passAndRun:
+        return 'つなぐ・抜く練習です。走力に寄与し、仕事が高いと判断力にも寄与します。';
+    }
+  }
+
+  /// 集約したデバッグコマンドを表示します。
+  void _showDebugMenu(BuildContext context) {
+    showModalBottomSheet<void>(
+      context: context,
+      builder: (_) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Padding(
+              padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 4.h),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  '現在：${controller.day.value}日目　／　${controller.currentStage.name} ${controller.daysInStage.value}/${controller.currentStage.days ?? '-'}日',
+                  style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w700),
+                ),
+              ),
+            ),
+            if (controller.stageIndex.value < 2)
+              ...[
+                ListTile(
+                  leading: const Icon(Icons.pause),
+                  title: const Text('⏸ 停止'),
+                  onTap: () {
+                    controller.setTutorialSpeed(0);
+                    Navigator.pop(context);
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.play_arrow),
+                  title: const Text('▶ ×1'),
+                  onTap: () {
+                    controller.setTutorialSpeed(1);
+                    Navigator.pop(context);
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.fast_forward),
+                  title: const Text('×4'),
+                  onTap: () {
+                    controller.setTutorialSpeed(4);
+                    Navigator.pop(context);
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.double_arrow),
+                  title: const Text('×16'),
+                  onTap: () {
+                    controller.setTutorialSpeed(16);
+                    Navigator.pop(context);
+                  },
+                ),
+              ]
+            else ...[
+              ListTile(
+                leading: const Icon(Icons.schedule),
+                title: const Text('＋1時間'),
+                onTap: () {
+                  Navigator.pop(context);
+                  controller.advanceTime(1);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.calendar_today),
+                title: const Text('＋6時間'),
+                onTap: () {
+                  Navigator.pop(context);
+                  controller.advanceTime(6);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.nights_stay),
+                title: const Text('＋1日'),
+                onTap: () {
+                  Navigator.pop(context);
+                  controller.advanceTime(24);
+                },
+              ),
+            ],
+            ListTile(
+              leading: const Icon(Icons.refresh),
+              title: const Text('🥚 段階1（卵）から開始'),
+              onTap: () {
+                Navigator.pop(context);
+                _helpShown.clear();
+                _openNewEgg();
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.skip_next),
+              title: const Text('段階3（育成期）から開始'),
+              onTap: () {
+                Navigator.pop(context);
+                _helpShown.clear();
+                controller.debugSkipTutorial();
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.close),
+              title: const Text('閉じる'),
+              onTap: () => Navigator.pop(context),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// 10ポジションの図鑑を表示します。
+  void _showDex(BuildContext context) {
+    // 表示時に最新履歴を取得し、完了を待たずダイアログ側をリアクティブ更新します。
+    unawaited(controller.refreshUnlockedPositions().catchError((_) {
+      // 取得に失敗した場合は、Controllerが保持している直近の履歴を表示します。
+    }));
+    showDialog<void>(
+      context: context,
+      barrierColor: Colors.black.withOpacity(.45),
+      builder: (_) => Obx(
+        () => Dialog(
+          backgroundColor: Colors.white,
+          insetPadding: EdgeInsets.symmetric(horizontal: 22.w, vertical: 64.h),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(context).size.height * .8,
+            ),
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(20.w, 18.h, 20.w, 14.h),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        width: 4.w,
+                        height: 22.h,
+                        decoration: BoxDecoration(
+                          color: const Color(0xff1f6feb),
+                          borderRadius: BorderRadius.circular(2.r),
+                        ),
+                      ),
+                      SizedBox(width: 9.w),
+                      Expanded(
+                        child: Text(
+                          '📙 ずかん（${controller.unlockedPositions.length}/10 登録）',
+                          style: TextStyle(fontSize: 15.sp, fontWeight: FontWeight.w700),
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 8.h),
+                  Text(
+                    controller.unlockedPositions.isEmpty
+                        ? '一軍で待っている10のポジション。\nいまはまだすべて未解放です。育て方しだいで、どれか1つに到達します。'
+                        : '一軍で待っている10のポジション。\n解放したポジションは登録済みとして表示されます。',
+                    style: TextStyle(
+                      color: const Color(0xff5b6672),
+                      fontSize: 12.5.sp,
+                      height: 1.75,
+                    ),
+                  ),
+                  SizedBox(height: 8.h),
+                  Expanded(
+                    child: SingleChildScrollView(
+                      child: Column(
+                        children: _dexPositions.map((position) {
+                          final unlocked = controller.isPositionUnlocked(position.name);
+                          return _buildDexCard(position, unlocked);
+                        }).toList(),
+                      ),
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text('閉じる'),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// シミュレータHTMLの図鑑カードと同じ構成でポジションを表示します。
+  Widget _buildDexCard(_DexPosition position, bool unlocked) {
+    final borderColor = unlocked ? const Color(0xff1f6feb) : const Color(0xffdfe4ea);
+    final backgroundColor = unlocked ? const Color(0xffe8f0fe) : const Color(0xfffafbfc);
+    return Opacity(
+      opacity: unlocked ? 1 : .75,
+      child: Container(
+        width: double.infinity,
+        margin: EdgeInsets.symmetric(vertical: 3.h),
+        padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 8.h),
+        decoration: BoxDecoration(
+          color: backgroundColor,
+          border: Border.all(color: borderColor),
+          borderRadius: BorderRadius.circular(8.r),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 1.h),
+                  decoration: BoxDecoration(
+                    color: const Color(0xff8a8f96),
+                    borderRadius: BorderRadius.circular(4.r),
+                  ),
+                  child: Text(
+                    position.number,
+                    style: TextStyle(color: Colors.white, fontSize: 10.5.sp),
+                  ),
+                ),
+                SizedBox(width: 6.w),
+                Expanded(
+                  child: Text(
+                    position.name,
+                    style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w700),
+                  ),
+                ),
+                Text(
+                  unlocked ? '✅ 登録済み' : '🔒 未解放',
+                  style: TextStyle(
+                    color: unlocked ? const Color(0xff1f6feb) : const Color(0xff5b6672),
+                    fontSize: 11.sp,
+                    fontWeight: unlocked ? FontWeight.w700 : FontWeight.normal,
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: 5.h),
+            _buildDexDetail('役割', position.role),
+            _buildDexDetail('資質', position.talent),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// 図鑑カード内の説明行を表示します。
+  Widget _buildDexDetail(String label, String value) {
+    return Padding(
+      padding: EdgeInsets.only(top: 2.h),
+      child: Text.rich(
+        TextSpan(
+          children: [
+            TextSpan(
+              text: '$label  ',
+              style: const TextStyle(color: Color(0xff5b6672)),
+            ),
+            TextSpan(text: value),
+          ],
+        ),
+        style: TextStyle(fontSize: 11.5.sp, height: 1.65),
+      ),
+    );
+  }
+}
+
+/// 図鑑に表示するポジション説明です。
+class _DexPosition {
+  const _DexPosition({
+    required this.number,
+    required this.name,
+    required this.role,
+    required this.talent,
+  });
+
+  final String number;
+  final String name;
+  final String role;
+  final String talent;
+}
+
+/// シミュレータHTMLの10ポジション定義を図鑑表示用に整理します。
+const _dexPositions = <_DexPosition>[
+  _DexPosition(number: '1・3', name: 'プロップ', role: 'スクラム最前列。組み合いを支える土台', talent: '体重と押す力'),
+  _DexPosition(number: '2', name: 'フッカー', role: '最前列の中央。ボールを掻き出す', talent: '正確性と技術'),
+  _DexPosition(number: '4・5', name: 'ロック', role: '第2列。スクラムとラインアウトを支える', talent: '上背とパワー'),
+  _DexPosition(number: '6・7', name: 'フランカー', role: '第3列の両サイド。接点へ最速で到達', talent: '運動量・タックル・スピード'),
+  _DexPosition(number: '8', name: 'ナンバーエイト', role: '第3列の中央。ボールを持ち出す', talent: 'パワーと判断力'),
+  _DexPosition(number: '9', name: 'スクラムハーフ', role: 'フォワードとバックスの接続点', talent: 'テンポ・展開の速さ'),
+  _DexPosition(number: '10', name: 'スタンドオフ', role: '攻撃の司令塔。陣形とテンポを決める', talent: '判断力・状況把握'),
+  _DexPosition(number: '12・13', name: 'センター', role: '中央で突破し、防御では相手を止める', talent: '突進力とコンタクト耐性'),
+  _DexPosition(number: '11・14', name: 'ウイング', role: '最外側のフィニッシャー', talent: '純粋なスピード'),
+  _DexPosition(number: '15', name: 'フルバック', role: '最後尾。攻撃の起点になる', talent: '空中戦・キック処理・広い視野'),
+];

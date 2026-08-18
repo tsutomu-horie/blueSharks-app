@@ -8,6 +8,8 @@ export 'package:koto_blue_sharks/infrastructure/navigation/bindings/controllers/
 export 'package:koto_blue_sharks/infrastructure/navigation/bindings/controllers/gallery.controller.binding.dart'; 
 export 'package:koto_blue_sharks/infrastructure/navigation/bindings/controllers/gallery_screen_detail.controller.binding.dart'; 
 export 'package:koto_blue_sharks/infrastructure/navigation/bindings/controllers/game_info.controller.binding.dart'; 
+export 'package:koto_blue_sharks/infrastructure/navigation/bindings/controllers/training_game.controller.binding.dart';
+export 'package:koto_blue_sharks/infrastructure/navigation/bindings/controllers/training_game_new_game.controller.binding.dart';
 export 'package:koto_blue_sharks/infrastructure/navigation/bindings/controllers/home.controller.binding.dart'; 
 export 'package:koto_blue_sharks/infrastructure/navigation/bindings/controllers/info.controller.binding.dart'; 
 export 'package:koto_blue_sharks/infrastructure/navigation/bindings/controllers/list_topics.controller.binding.dart'; 
