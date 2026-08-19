@@ -10,6 +10,7 @@ enum _TacklePhase {
   waiting,
   approach,
   input,
+  resolution,
   attemptResult,
   gameResult,
 }
@@ -30,11 +31,14 @@ class _TackleGameScreenState extends State<TackleGameScreen>
   final _reactionWatch = Stopwatch();
   final _timers = <Timer>[];
   _TacklePhase _phase = _TacklePhase.waiting;
+  Alignment _playerAlignment = const Alignment(-.82, 0);
+  Duration _playerDuration = Duration.zero;
   Alignment _opponentAlignment = const Alignment(1.25, 0);
   Duration _opponentDuration = Duration.zero;
   Curve _opponentCurve = Curves.linear;
   TackleDirection _actualDirection = TackleDirection.up;
   TackleAttempt? _latestAttempt;
+  bool? _attemptSucceeded;
   DateTime? _phaseStartedAt;
   Duration? _pausedDelay;
   bool _isPaused = false;
@@ -74,8 +78,11 @@ class _TackleGameScreenState extends State<TackleGameScreen>
     _phaseStartedAt = DateTime.now();
     setState(() {
       _latestAttempt = null;
+      _attemptSucceeded = null;
       _phase = _TacklePhase.approach;
       _isPaused = false;
+      _playerAlignment = const Alignment(-.82, 0);
+      _playerDuration = Duration.zero;
       _opponentAlignment = const Alignment(1.25, 0);
       _opponentDuration = Duration.zero;
       _opponentCurve = Curves.linear;
@@ -136,7 +143,16 @@ class _TackleGameScreenState extends State<TackleGameScreen>
 
   /// 上下いずれかのタップを現在セットの結果へ変換します。
   void _handleDirection(TackleDirection direction) {
-    if (_phase != _TacklePhase.input || _isPaused) return;
+    if (_isPaused) return;
+    if (_phase == _TacklePhase.approach) {
+      // 判定開始前のタップは、お手つきとしてこのセットをMISSにします。
+      _finishAttempt(
+        const TackleAttempt(isCorrect: false),
+        tappedDirection: direction,
+      );
+      return;
+    }
+    if (_phase != _TacklePhase.input) return;
     _reactionWatch.stop();
     final reaction = _reactionWatch.elapsed;
     _finishAttempt(
@@ -145,20 +161,51 @@ class _TackleGameScreenState extends State<TackleGameScreen>
             direction == _actualDirection && reaction <= TackleRules.inputLimit,
         reaction: reaction,
       ),
+      tappedDirection: direction,
     );
   }
 
-  /// 1セットを確定し、手動送りの判定画面へ進みます。
-  void _finishAttempt(TackleAttempt? attempt) {
-    if (!mounted || _phase != _TacklePhase.input) return;
+  /// 1セットを確定し、成否に応じた決着演出を再生します。
+  void _finishAttempt(
+    TackleAttempt? attempt, {
+    TackleDirection? tappedDirection,
+  }) {
+    if (!mounted ||
+        (_phase != _TacklePhase.input && _phase != _TacklePhase.approach)) {
+      return;
+    }
     _cancelTimers();
     _reactionWatch.stop();
     final result = attempt ?? const TackleAttempt(isCorrect: false);
+    final success = result.isCorrect;
     setState(() {
       _attempts.add(result);
       _latestAttempt = result;
-      _phase = _TacklePhase.attemptResult;
+      _attemptSucceeded = success;
+      _phase = _TacklePhase.resolution;
+      // 成否にかかわらず、ユーザーがタップした上／下方向へ鮫太朗を移動します。
+      if (tappedDirection != null) {
+        _playerDuration = const Duration(milliseconds: 160);
+        _playerAlignment = Alignment(
+          -.82,
+          tappedDirection == TackleDirection.up ? -.36 : .36,
+        );
+      }
+      // 成功時は鮫太朗の手前で止め、失敗時は左端の画面外まで抜けさせます。
+      _opponentDuration = success
+          ? const Duration(milliseconds: 120)
+          : const Duration(milliseconds: 520);
+      _opponentCurve = success ? Curves.easeOut : Curves.easeIn;
+      _opponentAlignment = Alignment(
+        success ? -.58 : -1.35,
+        _actualDirection == TackleDirection.up ? -.58 : .58,
+      );
     });
+    // 決着演出を確認してから、ユーザーが次セットへ進める判定画面を表示します。
+    _timers.add(Timer(const Duration(milliseconds: 650), () {
+      if (!mounted || _phase != _TacklePhase.resolution) return;
+      setState(() => _phase = _TacklePhase.attemptResult);
+    }));
   }
 
   /// 次セット、または3セット後の総合結果へ進みます。
@@ -255,16 +302,23 @@ class _TackleGameScreenState extends State<TackleGameScreen>
         ],
       ),
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            children: [
-              _buildHeader(),
-              const SizedBox(height: 12),
-              Expanded(child: _buildField()),
-              const SizedBox(height: 12),
-              _buildBottomPanel(),
-            ],
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          // 判定表示後は、下部パネル以外を含む画面全体のタップで次セットへ進めます。
+          onTap: _phase == _TacklePhase.attemptResult
+              ? _advanceAfterAttempt
+              : null,
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              children: [
+                _buildHeader(),
+                const SizedBox(height: 12),
+                Expanded(child: _buildField()),
+                const SizedBox(height: 12),
+                _buildBottomPanel(),
+              ],
+            ),
           ),
         ),
       ),
@@ -306,7 +360,7 @@ class _TackleGameScreenState extends State<TackleGameScreen>
                 Expanded(
                   child: GestureDetector(
                     behavior: HitTestBehavior.opaque,
-                    onTap: () => _handleDirection(TackleDirection.up),
+                    onTap: () => _handleFieldTap(TackleDirection.up),
                     child: const Align(
                       alignment: Alignment.topLeft,
                       child: Padding(
@@ -319,7 +373,7 @@ class _TackleGameScreenState extends State<TackleGameScreen>
                 Expanded(
                   child: GestureDetector(
                     behavior: HitTestBehavior.opaque,
-                    onTap: () => _handleDirection(TackleDirection.down),
+                    onTap: () => _handleFieldTap(TackleDirection.down),
                     child: const Align(
                       alignment: Alignment.bottomLeft,
                       child: Padding(
@@ -332,8 +386,10 @@ class _TackleGameScreenState extends State<TackleGameScreen>
               ],
             ),
           ),
-          const Align(
-            alignment: Alignment(-.82, 0),
+          AnimatedAlign(
+            duration: _playerDuration,
+            curve: Curves.easeOut,
+            alignment: _playerAlignment,
             child: Text('🦈', style: TextStyle(fontSize: 72)),
           ),
           AnimatedAlign(
@@ -342,6 +398,7 @@ class _TackleGameScreenState extends State<TackleGameScreen>
             alignment: _opponentAlignment,
             child: const Text('🏃', style: TextStyle(fontSize: 58)),
           ),
+          if (_phase == _TacklePhase.resolution) _buildResolutionOverlay(),
           if (_phase == _TacklePhase.waiting)
             _buildOverlay(
               title: 'タックル練習',
@@ -352,6 +409,49 @@ class _TackleGameScreenState extends State<TackleGameScreen>
           if (_phase == _TacklePhase.gameResult) _buildResultOverlay(),
           if (_isPaused) _buildPauseOverlay(),
         ],
+      ),
+    );
+  }
+
+  /// 入力中は上下判定、判定表示中は次セットへの進行としてフィールドタップを処理します。
+  void _handleFieldTap(TackleDirection direction) {
+    if (_phase == _TacklePhase.attemptResult) {
+      _advanceAfterAttempt();
+      return;
+    }
+    _handleDirection(direction);
+  }
+
+  /// タックル成立または相手の突破を、決着フェーズとしてフィールド上に表示します。
+  Widget _buildResolutionOverlay() {
+    final succeeded = _attemptSucceeded ?? false;
+    return Positioned.fill(
+      child: IgnorePointer(
+        child: Center(
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              color: (succeeded
+                      ? const Color(0xff14532d)
+                      : const Color(0xff991b1b))
+                  .withValues(alpha: .88),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 20,
+                vertical: 12,
+              ),
+              child: Text(
+                succeeded ? 'TACKLE!' : '突破された！',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 26,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }

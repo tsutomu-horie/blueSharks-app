@@ -6,6 +6,7 @@ import 'package:get/get.dart';
 import 'package:koto_blue_sharks/infrastructure/navigation/routes.dart';
 
 import 'controllers/training_game.controller.dart';
+import 'mini_games/mini_game_selection_thumbnail.dart';
 import 'mini_games/models/mini_game_result.dart';
 import 'mini_games/pass_and_run/pass_and_run_game.screen.dart';
 import 'mini_games/tackle/tackle_game.screen.dart';
@@ -537,24 +538,28 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(
-                'ミニゲームを選ぶ',
-                style: TextStyle(fontSize: 20.sp, fontWeight: FontWeight.w700),
+                'ミニゲームを選ぶ（ルールはここで確認）',
+                style: TextStyle(fontSize: 17.sp, fontWeight: FontWeight.w700),
               ),
               SizedBox(height: 12.h),
               _buildMiniGameCard(
                 context: sheetContext,
                 type: TrainingActionType.tackle,
                 title: '① タックル',
+                tag: 'タイミング・反応系',
+                thumbnailType: MiniGameSelectionThumbnailType.tackle,
                 description:
-                    '踏み込みの反対＝相手が実際に動く方向を、0.5秒以内に上下タップ。全3セットです。',
+                    '踏み込み（フェイント）の反対＝相手が実際に動く方向を、0.5秒以内に上／下タップ。全3セットの平均反応速度でスコア化。',
               ),
               SizedBox(height: 10.h),
               _buildMiniGameCard(
                 context: sheetContext,
                 type: TrainingActionType.passAndRun,
                 title: '② パス＆ラン',
+                tag: 'フリック・パス回し系',
+                thumbnailType: MiniGameSelectionThumbnailType.passAndRun,
                 description:
-                    '仲間の現在位置へフリック。方向±10°以内で成功し、方向ミスは2秒間パスできません。15秒×往復2セットです。',
+                    '縦2レーンを上下に並走。仲間のいる方向へフリックし、方向±10°以内で成功。方向ミスは2秒間パス不可。15秒×往復2セットです。',
               ),
             ],
           ),
@@ -570,13 +575,15 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
     required BuildContext context,
     required TrainingActionType type,
     required String title,
+    required String tag,
+    required MiniGameSelectionThumbnailType thumbnailType,
     required String description,
   }) {
     return InkWell(
       onTap: () => Navigator.pop(context, type),
       borderRadius: BorderRadius.circular(10.r),
       child: Container(
-        padding: EdgeInsets.all(14.w),
+        padding: EdgeInsets.all(12.w),
         decoration: BoxDecoration(
           color: const Color(0xfff5f7fa),
           border: Border.all(color: const Color(0xffc8d0d9)),
@@ -585,12 +592,35 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              title,
-              style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w700),
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    title,
+                    style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.w800),
+                  ),
+                ),
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
+                  decoration: BoxDecoration(
+                    color: const Color(0xfff6f2ff),
+                    border: Border.all(color: const Color(0xffc9bfe0)),
+                    borderRadius: BorderRadius.circular(20.r),
+                  ),
+                  child: Text(
+                    tag,
+                    style: TextStyle(fontSize: 11.sp, color: const Color(0xff6b5aa0)),
+                  ),
+                ),
+              ],
             ),
             SizedBox(height: 6.h),
-            Text(description, style: TextStyle(fontSize: 12.sp, height: 1.5)),
+            MiniGameSelectionThumbnail(type: thumbnailType),
+            SizedBox(height: 10.h),
+            Text(
+              description,
+              style: TextStyle(fontSize: 14.sp, height: 1.55, fontWeight: FontWeight.w600),
+            ),
           ],
         ),
       ),

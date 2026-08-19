@@ -497,14 +497,6 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
                   bottom: 16,
                   child: const _LaneLine(),
                 ),
-                if (_phase == _PassGamePhase.playing)
-                  CustomPaint(
-                    size: constraints.biggest,
-                    painter: _PassDirectionPainter(
-                      start: player,
-                      end: mate,
-                    ),
-                  ),
                 if (_dragStart != null && _dragCurrent != null)
                   CustomPaint(
                     key: const Key('pass-flick-guide'),
@@ -699,37 +691,6 @@ class _DashedLinePainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _DashedLinePainter oldDelegate) => false;
-}
-
-/// 現在狙うべき仲間方向を矢印で表示します。
-class _PassDirectionPainter extends CustomPainter {
-  const _PassDirectionPainter({
-    required this.start,
-    required this.end,
-  });
-
-  final Offset start;
-  final Offset end;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = const Color(0xff8f2fd0)
-      ..strokeWidth = 4
-      ..strokeCap = StrokeCap.round;
-    canvas.drawLine(start, end, paint);
-    final direction = end - start;
-    final normalized = direction / direction.distance;
-    final perpendicular = Offset(-normalized.dy, normalized.dx);
-    final arrowBase = end - normalized * 18;
-    canvas.drawLine(end, arrowBase + perpendicular * 9, paint);
-    canvas.drawLine(end, arrowBase - perpendicular * 9, paint);
-  }
-
-  @override
-  bool shouldRepaint(covariant _PassDirectionPainter oldDelegate) {
-    return start != oldDelegate.start || end != oldDelegate.end;
-  }
 }
 
 /// フリックの開始位置と現在の入力方向を、操作中だけ重ねて表示します。
