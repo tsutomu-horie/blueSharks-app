@@ -132,6 +132,9 @@ class TrainingGameController extends GetxController with WidgetsBindingObserver 
   /// 現在の段階定義を返します。
   TrainingStageDefinition get currentStage => stages[stageIndex.value];
 
+  /// 当日の仕事が未実施で、仕事のお世話を開始できるかを返します。
+  bool get canWorkToday => _lastWorkDay != day.value;
+
   /// 参照HTMLと同じ形式で現在時刻を表示します。
   String get clockLabel {
     if (stageIndex.value < 2) {

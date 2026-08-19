@@ -6,6 +6,7 @@ import 'package:get/get.dart';
 import 'package:koto_blue_sharks/infrastructure/navigation/routes.dart';
 
 import 'controllers/training_game.controller.dart';
+import 'training_game_care_action.screen.dart';
 import 'mini_games/mini_game_selection_thumbnail.dart';
 import 'mini_games/models/mini_game_result.dart';
 import 'mini_games/pass_and_run/pass_and_run_game.screen.dart';
@@ -16,8 +17,6 @@ import 'models/training_game_models.dart';
 class TrainingGameScreen extends GetView<TrainingGameController> {
   /// 育成ゲーム画面を作成します。
   const TrainingGameScreen({super.key});
-
-  static final Set<TrainingActionType> _helpShown = <TrainingActionType>{};
 
   @override
   Widget build(BuildContext context) {
@@ -713,7 +712,7 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
     );
   }
 
-  /// お世話は即時実行し、ミニゲームはプレイ完了後に結果を反映します。
+  /// お世話は専用画面の完了操作後、ミニゲームはプレイ結果の受領後に反映します。
   Future<void> _handleAction(
     BuildContext context,
     TrainingActionType type,
@@ -731,40 +730,18 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
       }
       return;
     }
-    final isFirst = _helpShown.add(type);
-    controller.perform(type);
-    if (!isFirst) return;
-    final action = TrainingGameController.actions.firstWhere((item) => item.type == type);
-    showDialog<void>(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: Text('${action.icon} ${action.label}'),
-        content: Text(_helpText(type)),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('閉じる')),
-        ],
+    if (type == TrainingActionType.work && !controller.canWorkToday) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('仕事は1日1回までです。')),
+      );
+      return;
+    }
+    final completed = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(
+        builder: (_) => TrainingGameCareActionScreen(actionType: type),
       ),
     );
-  }
-
-  /// アクションごとの説明文を返します。
-  String _helpText(TrainingActionType type) {
-    switch (type) {
-      case TrainingActionType.clean:
-        return '清潔メーターが回復します。育成期からは、清潔が高いと行動効果が少し上がります。';
-      case TrainingActionType.rest:
-        return '体調メーターが回復します。体調が高すぎる場合は傾向値が加算されません。';
-      case TrainingActionType.meal:
-        return '食事メーターが回復します。食事が高いほど筋トレの効果が上がります。';
-      case TrainingActionType.squat:
-        return '食事・清潔・体調を消費して、フォワードと体格を伸ばします。';
-      case TrainingActionType.work:
-        return '仕事メーターが回復します。仕事は1日1回で、技術を伸ばします。';
-      case TrainingActionType.tackle:
-        return '迫る相手を止める練習です。フォワード傾向に寄与します。';
-      case TrainingActionType.passAndRun:
-        return 'つなぐ・抜く練習です。走力に寄与し、仕事が高いと判断力にも寄与します。';
-    }
+    if (completed == true) controller.perform(type);
   }
 
   /// 集約したデバッグコマンドを表示します。
@@ -851,7 +828,6 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
               title: const Text('🥚 段階1（卵）から開始'),
               onTap: () {
                 Navigator.pop(context);
-                _helpShown.clear();
                 _openNewEgg();
               },
             ),
@@ -860,7 +836,6 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
               title: const Text('段階3（育成期）から開始'),
               onTap: () {
                 Navigator.pop(context);
-                _helpShown.clear();
                 controller.debugSkipTutorial();
               },
             ),
