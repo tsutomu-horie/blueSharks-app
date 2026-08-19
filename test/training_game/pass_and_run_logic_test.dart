@@ -45,5 +45,23 @@ void main() {
       );
       expect(PassAndRunRules.isFlick(shortInput), isFalse);
     });
+
+    test('指を離す瞬間の速度ではなくフリック軌跡で方向を判定する', () {
+      const flick = PassFlick(
+        deltaX: 100,
+        deltaY: 0,
+        velocityX: 0,
+        velocityY: 700,
+      );
+
+      expect(
+        PassAndRunRules.isAccurate(
+          flick: flick,
+          targetDeltaX: 100,
+          targetDeltaY: 0,
+        ),
+        isTrue,
+      );
+    });
   });
 }

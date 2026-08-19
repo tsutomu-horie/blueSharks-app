@@ -21,8 +21,8 @@ class PassFlick {
   /// 指を離した時点の速度です。
   double get speed => math.sqrt(velocityX * velocityX + velocityY * velocityY);
 
-  /// フリック方向をラジアンで返します。
-  double get angle => math.atan2(velocityY, velocityX);
+  /// 画面上のフリック軌跡から、入力方向をラジアンで返します。
+  double get angle => math.atan2(deltaY, deltaX);
 }
 
 /// パス＆ランの確定値と方向判定を集約します。
