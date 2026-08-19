@@ -6,6 +6,9 @@ import 'package:get/get.dart';
 import 'package:koto_blue_sharks/infrastructure/navigation/routes.dart';
 
 import 'controllers/training_game.controller.dart';
+import 'mini_games/models/mini_game_result.dart';
+import 'mini_games/pass_and_run/pass_and_run_game.screen.dart';
+import 'mini_games/tackle/tackle_game.screen.dart';
 import 'models/training_game_models.dart';
 
 /// 参照HTMLのスマートフォン画面部分だけをアプリ用に再現します。
@@ -407,13 +410,7 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
           Positioned(
             right: 8.w,
             bottom: 4.h,
-            child: Column(
-              children: [
-                _buildTrainingButton(context, TrainingActionType.tackle, canTrain),
-                SizedBox(height: 5.h),
-                _buildTrainingButton(context, TrainingActionType.passAndRun, canTrain),
-              ],
-            ),
+            child: _buildTrainingMenuButton(context, canTrain),
           ),
           if (controller.ended.value)
             Positioned.fill(
@@ -496,17 +493,13 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
     );
   }
 
-  /// ミニゲーム開始ボタンを作成します。
-  Widget _buildTrainingButton(
+  /// ⑤ミニゲーム選択画面を開く練習ボタンを作成します。
+  Widget _buildTrainingMenuButton(
     BuildContext context,
-    TrainingActionType type,
     bool enabled,
   ) {
-    final action = TrainingGameController.actions.firstWhere(
-      (item) => item.type == type,
-    );
     return ElevatedButton(
-      onPressed: enabled ? () => _handleAction(context, action.type) : null,
+      onPressed: enabled ? () => _showMiniGameSelection(context) : null,
       style: ElevatedButton.styleFrom(
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
@@ -519,7 +512,7 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
       child: Column(
         children: [
           Text(
-            action.label,
+            '練習',
             style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w700),
           ),
           Text(
@@ -527,6 +520,79 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
             style: TextStyle(fontSize: 9.sp, color: Colors.black54),
           ),
         ],
+      ),
+    );
+  }
+
+  /// 2種のルールを集約した⑤ミニゲーム選択画面を表示します。
+  Future<void> _showMiniGameSelection(BuildContext context) async {
+    final selected = await showModalBottomSheet<TrainingActionType>(
+      context: context,
+      isScrollControlled: true,
+      builder: (sheetContext) => SafeArea(
+        child: Padding(
+          padding: EdgeInsets.fromLTRB(16.w, 18.h, 16.w, 24.h),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                'ミニゲームを選ぶ',
+                style: TextStyle(fontSize: 20.sp, fontWeight: FontWeight.w700),
+              ),
+              SizedBox(height: 12.h),
+              _buildMiniGameCard(
+                context: sheetContext,
+                type: TrainingActionType.tackle,
+                title: '① タックル',
+                description:
+                    '踏み込みの反対＝相手が実際に動く方向を、0.5秒以内に上下タップ。全3セットです。',
+              ),
+              SizedBox(height: 10.h),
+              _buildMiniGameCard(
+                context: sheetContext,
+                type: TrainingActionType.passAndRun,
+                title: '② パス＆ラン',
+                description:
+                    '仲間の現在位置へフリック。方向±10°以内で成功し、方向ミスは2秒間パスできません。15秒×往復2セットです。',
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+    if (selected == null || !context.mounted) return;
+    await _handleAction(context, selected);
+  }
+
+  /// ミニゲーム選択画面のルールカードを作成します。
+  Widget _buildMiniGameCard({
+    required BuildContext context,
+    required TrainingActionType type,
+    required String title,
+    required String description,
+  }) {
+    return InkWell(
+      onTap: () => Navigator.pop(context, type),
+      borderRadius: BorderRadius.circular(10.r),
+      child: Container(
+        padding: EdgeInsets.all(14.w),
+        decoration: BoxDecoration(
+          color: const Color(0xfff5f7fa),
+          border: Border.all(color: const Color(0xffc8d0d9)),
+          borderRadius: BorderRadius.circular(10.r),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              title,
+              style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w700),
+            ),
+            SizedBox(height: 6.h),
+            Text(description, style: TextStyle(fontSize: 12.sp, height: 1.5)),
+          ],
+        ),
       ),
     );
   }
@@ -617,8 +683,24 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
     );
   }
 
-  /// 初回実行時だけ参照仕様のアクション説明を表示します。
-  void _handleAction(BuildContext context, TrainingActionType type) {
+  /// お世話は即時実行し、ミニゲームはプレイ完了後に結果を反映します。
+  Future<void> _handleAction(
+    BuildContext context,
+    TrainingActionType type,
+  ) async {
+    if (type == TrainingActionType.tackle ||
+        type == TrainingActionType.passAndRun) {
+      final screen = type == TrainingActionType.tackle
+          ? const TackleGameScreen()
+          : const PassAndRunGameScreen();
+      final result = await Navigator.of(context).push<MiniGameResult>(
+        MaterialPageRoute(builder: (_) => screen),
+      );
+      if (result != null) {
+        controller.completeMiniGame(type, result);
+      }
+      return;
+    }
     final isFirst = _helpShown.add(type);
     controller.perform(type);
     if (!isFirst) return;

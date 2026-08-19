@@ -4,6 +4,7 @@ import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
 import 'package:koto_blue_sharks/app/providers/training_game/training_game_provider.dart';
 
+import '../mini_games/models/mini_game_result.dart';
 import '../models/training_game_models.dart';
 
 /// 育成ゲームの進行状態と行動結果を管理します。
@@ -450,8 +451,19 @@ class TrainingGameController extends GetxController with WidgetsBindingObserver 
         TrainingActionType.passAndRun: 'pass_run',
       }[type]!;
 
+  /// 完了したミニゲームの結果を、育成アクション1回分として反映します。
+  void completeMiniGame(TrainingActionType type, MiniGameResult result) {
+    if (type != TrainingActionType.tackle &&
+        type != TrainingActionType.passAndRun) return;
+    final expectedType = type == TrainingActionType.tackle
+        ? MiniGameType.tackle
+        : MiniGameType.passAndRun;
+    if (result.type != expectedType) return;
+    perform(type, miniGameResult: result);
+  }
+
   /// 指定した行動を実行し、メーターと傾向値を更新します。
-  void perform(TrainingActionType type) {
+  void perform(TrainingActionType type, {MiniGameResult? miniGameResult}) {
     if (ended.value || evolutionStage.value != null) return;
     final isMiniGame = type == TrainingActionType.tackle ||
         type == TrainingActionType.passAndRun;
@@ -475,6 +487,8 @@ class TrainingGameController extends GetxController with WidgetsBindingObserver 
     }
 
     final wasOverfed = meters['食事']! > 100;
+    final miniGameMultiplier = miniGameResult?.effectMultiplier ?? 1.0;
+    final workBeforeAction = meters['仕事']!;
 
     switch (type) {
       case TrainingActionType.meal:
@@ -500,15 +514,31 @@ class TrainingGameController extends GetxController with WidgetsBindingObserver 
         _changeMeter('清潔', -12);
         _changeMeter('体調', -12);
         _changeMeter('食事', -8);
-        _addTrend('FW', 5, '体調', sourceOffset: 12, training: true);
-        _addTrend('BULK', 1, '体調', sourceOffset: 12, training: true);
+        _changeMeter('仕事', 10 * miniGameMultiplier);
+        _addTrend('FW', 5 * miniGameMultiplier, '体調', sourceOffset: 12, training: true);
+        _addTrend('BULK', 1 * miniGameMultiplier, '体調', sourceOffset: 12, training: true);
         break;
       case TrainingActionType.passAndRun:
         _changeMeter('清潔', -10);
         _changeMeter('体調', -10);
         _changeMeter('食事', -10);
-        _addTrend('RUN', meters['仕事']! >= 80 ? 2 : 5, '体調', sourceOffset: 10, training: true);
-        if (meters['仕事']! >= 80) _addTrend('CMD', 6, '体調', sourceOffset: 10, training: true);
+        _changeMeter('仕事', 10 * miniGameMultiplier);
+        _addTrend(
+          'RUN',
+          (workBeforeAction >= 80 ? 2 : 5) * miniGameMultiplier,
+          '体調',
+          sourceOffset: 10,
+          training: true,
+        );
+        if (workBeforeAction >= 80) {
+          _addTrend(
+            'CMD',
+            6 * miniGameMultiplier,
+            '体調',
+            sourceOffset: 10,
+            training: true,
+          );
+        }
         break;
       case TrainingActionType.work:
         _changeMeter('食事', -10);
@@ -522,7 +552,12 @@ class TrainingGameController extends GetxController with WidgetsBindingObserver 
       _changeTrend('BULK', 1);
       _changeTrend('RUN', -.5);
     }
-    logs.insert(0, '${_labelFor(type)}を実行しました。');
+    logs.insert(
+      0,
+      miniGameResult == null
+          ? '${_labelFor(type)}を実行しました。'
+          : '${miniGameResult.summary}／育成結果へ反映しました。',
+    );
     actionsToday.value++;
     // 参照HTMLと同じく、行動後に4メーターが整っていれば当日の達成状態を保持します。
     if (_isCared) _dayCared = true;
