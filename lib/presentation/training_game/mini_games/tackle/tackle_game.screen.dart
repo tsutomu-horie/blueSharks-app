@@ -178,6 +178,11 @@ class _TackleGameScreenState extends State<TackleGameScreen>
     _reactionWatch.stop();
     final result = attempt ?? const TackleAttempt(isCorrect: false);
     final success = result.isCorrect;
+    // 接近中のタップはお手付きなので、相手はプレイヤーの逆方向へ退場します。
+    final isFalseStart = _phase == _TacklePhase.approach;
+    final opponentExitDirection = isFalseStart && tappedDirection != null
+        ? _oppositeDirection(tappedDirection)
+        : _actualDirection;
     setState(() {
       _attempts.add(result);
       _latestAttempt = result;
@@ -198,7 +203,7 @@ class _TackleGameScreenState extends State<TackleGameScreen>
       _opponentCurve = success ? Curves.easeOut : Curves.easeIn;
       _opponentAlignment = Alignment(
         success ? -.58 : -1.35,
-        _actualDirection == TackleDirection.up ? -.58 : .58,
+        opponentExitDirection == TackleDirection.up ? -.58 : .58,
       );
     });
     // 決着演出を確認してから、ユーザーが次セットへ進める判定画面を表示します。
@@ -206,6 +211,13 @@ class _TackleGameScreenState extends State<TackleGameScreen>
       if (!mounted || _phase != _TacklePhase.resolution) return;
       setState(() => _phase = _TacklePhase.attemptResult);
     }));
+  }
+
+  /// 指定されたタップ方向と反対側の方向を返します。
+  TackleDirection _oppositeDirection(TackleDirection direction) {
+    return direction == TackleDirection.up
+        ? TackleDirection.down
+        : TackleDirection.up;
   }
 
   /// 次セット、または3セット後の総合結果へ進みます。
