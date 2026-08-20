@@ -43,10 +43,15 @@ class TrainingGameProvider extends GetConnect {
   Future<Map<String, dynamic>> start({
     required String stageCode,
     required Map<String, double> parameters,
+    bool forceRestart = false,
   }) async {
     final response = await post(
       'game/start',
-      {'stage_code': stageCode, 'parameters': parameters},
+      {
+        'stage_code': stageCode,
+        'parameters': parameters,
+        if (forceRestart) 'force_restart': true,
+      },
       headers: await _headers(),
     );
     return _data(response) ?? <String, dynamic>{};

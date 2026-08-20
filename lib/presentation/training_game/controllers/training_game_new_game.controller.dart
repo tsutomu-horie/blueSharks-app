@@ -1,5 +1,6 @@
 import 'package:get/get.dart';
 import 'package:koto_blue_sharks/app/providers/training_game/training_game_provider.dart';
+import 'package:koto_blue_sharks/utils/my_shared_pref.dart';
 
 /// 卵獲得画面から新しい育成サイクルを開始します。
 class TrainingGameNewGameController extends GetxController {
@@ -12,7 +13,7 @@ class TrainingGameNewGameController extends GetxController {
   final TrainingGameProvider _provider = TrainingGameProvider();
 
   /// 卵獲得画面の初期値で新しい育成サイクルを作成します。
-  Future<Map<String, dynamic>?> startNewGame() {
+  Future<Map<String, dynamic>?> startNewGame({bool forceRestart = false}) {
     if (isStarting.value) return Future<Map<String, dynamic>?>.value();
     isStarting.value = true;
     errorMessage.value = '';
@@ -29,8 +30,12 @@ class TrainingGameNewGameController extends GetxController {
             'tendency_command': 0,
             'tendency_backs': 0,
           },
+          forceRestart: forceRestart,
         )
-        .then<Map<String, dynamic>?>((data) {
+        .then<Map<String, dynamic>?>((data) async {
+          // 新しいサイクルでは、前サイクルのデバッグ加算を引き継ぎません。
+          await MySharedPref.clearTrainingGameDebugElapsedSeconds();
+          await MySharedPref.clearTrainingGameLocalState();
           if (!isClosed) isStarting.value = false;
           return data;
         })

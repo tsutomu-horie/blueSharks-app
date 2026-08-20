@@ -16,6 +16,10 @@ class MySharedPref {
   static const String _saveGameGuideArticles = 'saveGameGuideArticles';
   static const String _gameGuideArticlesCache = 'gameGuideArticlesCache';
   static const String _gameGuideArticlesCachedAt = 'gameGuideArticlesCachedAt';
+  static const String _trainingGameStartedAt = 'trainingGameStartedAt';
+  static const String _trainingGameDebugElapsedSeconds =
+      'trainingGameDebugElapsedSeconds';
+  static const String _trainingGameLocalState = 'trainingGameLocalState';
 
   /// init get storage services
   static Future<void> init() async {
@@ -87,6 +91,43 @@ class MySharedPref {
     return value == null ? null : DateTime.tryParse(value);
   }
 
+  /// 現在の育成サイクル開始日時を保存します。
+  static Future<void> setTrainingGameStartedAt(DateTime value) =>
+      _sharedPreferences.setString(
+        _trainingGameStartedAt,
+        value.toIso8601String(),
+      );
+
+  /// 保存済みの育成サイクル開始日時を取得します。
+  static DateTime? getTrainingGameStartedAt() {
+    final value = _sharedPreferences.getString(_trainingGameStartedAt);
+    return value == null ? null : DateTime.tryParse(value);
+  }
+
+  /// デバッグで加算した育成経過秒数を保存します。
+  static Future<void> setTrainingGameDebugElapsedSeconds(int value) =>
+      _sharedPreferences.setInt(_trainingGameDebugElapsedSeconds, value);
+
+  /// 保存済みのデバッグ加算秒数を取得します。
+  static int getTrainingGameDebugElapsedSeconds() =>
+      _sharedPreferences.getInt(_trainingGameDebugElapsedSeconds) ?? 0;
+
+  /// デバッグ加算秒数を新しい育成サイクル開始前に削除します。
+  static Future<void> clearTrainingGameDebugElapsedSeconds() =>
+      _sharedPreferences.remove(_trainingGameDebugElapsedSeconds);
+
+  /// サーバーに保持しない育成途中の進行状態を保存します。
+  static Future<void> setTrainingGameLocalState(String value) =>
+      _sharedPreferences.setString(_trainingGameLocalState, value);
+
+  /// 保存済みの育成途中の進行状態を取得します。
+  static String? getTrainingGameLocalState() =>
+      _sharedPreferences.getString(_trainingGameLocalState);
+
+  /// 新規育成サイクル開始時に以前の進行状態を削除します。
+  static Future<void> clearTrainingGameLocalState() =>
+      _sharedPreferences.remove(_trainingGameLocalState);
+
   static Future<void> clearGameGuideArticlesCache() async {
     await _sharedPreferences.remove(_gameGuideArticlesCache);
     await _sharedPreferences.remove(_gameGuideArticlesCachedAt);
@@ -100,6 +141,9 @@ class MySharedPref {
     await _sharedPreferences.remove(_currentWallpaperName);
     await _sharedPreferences.remove(_notificationKey);
     await _sharedPreferences.remove(_saveGameGuideArticles);
+    await _sharedPreferences.remove(_trainingGameStartedAt);
+    await _sharedPreferences.remove(_trainingGameDebugElapsedSeconds);
+    await _sharedPreferences.remove(_trainingGameLocalState);
     await clearGameGuideArticlesCache();
   }
 }

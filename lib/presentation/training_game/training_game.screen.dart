@@ -28,15 +28,15 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
               ? controller.evolutionStage.value != null
                   ? _buildEvolutionFlow()
                   : controller.ended.value
-                  ? _buildEndingFlow(context)
-                  : Column(
-                  children: [
-                    _buildStatusBar(context),
-                    _buildHud(context),
-                    Expanded(child: _buildRoom(context)),
-                    _buildCareBar(context),
-                  ],
-                )
+                      ? _buildEndingFlow(context)
+                      : Column(
+                          children: [
+                            _buildStatusBar(context),
+                            _buildHud(context),
+                            Expanded(child: _buildRoom(context)),
+                            _buildCareBar(context),
+                          ],
+                        )
               : const Center(child: CircularProgressIndicator()),
         ),
       ),
@@ -97,8 +97,16 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
   /// ⑪図鑑・クリア履歴の5列グリッドを表示します。
   Widget _buildDexPage() {
     const positions = [
-      'プロップ', 'フッカー', 'ロック', 'フランカー', 'ナンバーエイト',
-      'スクラムハーフ', 'スタンドオフ', 'ウイング', 'センター', 'フルバック',
+      'プロップ',
+      'フッカー',
+      'ロック',
+      'フランカー',
+      'ナンバーエイト',
+      'スクラムハーフ',
+      'スタンドオフ',
+      'ウイング',
+      'センター',
+      'フルバック',
     ];
     return Padding(
       padding: EdgeInsets.fromLTRB(12.w, 12.h, 12.w, 16.h),
@@ -106,7 +114,8 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
         children: [
           Align(
             alignment: Alignment.centerLeft,
-            child: Text('図鑑・クリア履歴', style: TextStyle(fontSize: 20.sp, fontWeight: FontWeight.w700)),
+            child: Text('図鑑・クリア履歴',
+                style: TextStyle(fontSize: 20.sp, fontWeight: FontWeight.w700)),
           ),
           SizedBox(height: 12.h),
           Expanded(
@@ -119,8 +128,9 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
                 childAspectRatio: .78,
               ),
               itemBuilder: (_, index) {
-                final unlocked = controller.isPositionUnlocked(positions[index]) ||
-                    positions[index] == controller.clearPosition.value;
+                final unlocked =
+                    controller.isPositionUnlocked(positions[index]) ||
+                        positions[index] == controller.clearPosition.value;
                 return Container(
                   padding: EdgeInsets.all(3.w),
                   decoration: BoxDecoration(
@@ -131,9 +141,19 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Text(unlocked ? '🦈' : '👤', style: TextStyle(fontSize: 26.sp, color: unlocked ? null : Colors.grey)),
+                      Text(unlocked ? '🦈' : '👤',
+                          style: TextStyle(
+                              fontSize: 26.sp,
+                              color: unlocked ? null : Colors.grey)),
                       SizedBox(height: 2.h),
-                      Text(positions[index], textAlign: TextAlign.center, style: TextStyle(fontSize: 8.sp, color: unlocked ? Colors.black : Colors.grey, fontWeight: unlocked ? FontWeight.w700 : FontWeight.normal)),
+                      Text(positions[index],
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                              fontSize: 8.sp,
+                              color: unlocked ? Colors.black : Colors.grey,
+                              fontWeight: unlocked
+                                  ? FontWeight.w700
+                                  : FontWeight.normal)),
                     ],
                   ),
                 );
@@ -144,7 +164,8 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
           SizedBox(
             width: double.infinity,
             height: 52.h,
-            child: ElevatedButton(onPressed: _openNewEgg, child: const Text('次の卵へ')),
+            child: ElevatedButton(
+                onPressed: _openNewEgg, child: const Text('次の卵へ')),
           ),
         ],
       ),
@@ -152,9 +173,18 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
   }
 
   /// 次の育成を開始する前に、卵獲得画面へ遷移します。
-  void _openNewEgg() {
+  void _openNewEgg() => _openEgg(debugRestart: false);
+
+  /// デバッグ用に現在の育成を卵から再開始します。
+  void _openDebugEgg() => _openEgg(debugRestart: true);
+
+  /// 卵獲得画面へ遷移し、必要に応じてデバッグ再開始を引き渡します。
+  void _openEgg({required bool debugRestart}) {
     // サーバー上の新規育成作成は、卵獲得画面の「はじめる」後に実行します。
-    Get.offNamed(Routes.TRAINING_GAME_NEW);
+    Get.offNamed(
+      Routes.TRAINING_GAME_NEW,
+      arguments: {'debugRestart': debugRestart},
+    );
   }
 
   /// 完了後フローの共通画面を作成します。
@@ -171,7 +201,8 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
         children: [
           Align(
             alignment: Alignment.centerLeft,
-            child: Text(title, style: TextStyle(fontSize: 22.sp, fontWeight: FontWeight.w700)),
+            child: Text(title,
+                style: TextStyle(fontSize: 22.sp, fontWeight: FontWeight.w700)),
           ),
           SizedBox(height: 18.h),
           Expanded(
@@ -182,18 +213,23 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
                 color: const Color(0xffe2e5e8),
                 borderRadius: BorderRadius.circular(12.r),
               ),
-              child: Text(visual, textAlign: TextAlign.center, style: TextStyle(fontSize: 30.sp, height: 1.5)),
+              child: Text(visual,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 30.sp, height: 1.5)),
             ),
           ),
           if (message != null) ...[
             SizedBox(height: 16.h),
-            Text(message, textAlign: TextAlign.center, style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w700)),
+            Text(message,
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w700)),
           ],
           SizedBox(height: 20.h),
           SizedBox(
             width: double.infinity,
             height: 52.h,
-            child: ElevatedButton(onPressed: onPressed, child: Text(buttonLabel)),
+            child:
+                ElevatedButton(onPressed: onPressed, child: Text(buttonLabel)),
           ),
         ],
       ),
@@ -341,105 +377,110 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
 
   /// 壁・床・図鑑・キャラクター・練習ボタンを配置します。
   Widget _buildRoom(BuildContext context) {
-    final canTrain = controller.stageIndex.value >= 2 && !controller.ended.value;
+    final canTrain =
+        controller.stageIndex.value >= 2 && !controller.ended.value;
     return Stack(
-        children: [
-          Positioned.fill(
-            child: Column(
-              children: [
-                Expanded(child: Container(color: const Color(0xffd8d8d8))),
-                Expanded(child: Container(color: const Color(0xff8a5a2b))),
-              ],
-            ),
+      children: [
+        Positioned.fill(
+          child: Column(
+            children: [
+              Expanded(child: Container(color: const Color(0xffd8d8d8))),
+              Expanded(child: Container(color: const Color(0xff8a5a2b))),
+            ],
           ),
-          Positioned(
-            top: 70.h,
-            left: 0,
-            right: 0,
-            child: Center(
-              child: Text(
-                '壁',
-                style: TextStyle(
-                  color: const Color(0xff8d8d8d),
-                  fontSize: 15.sp,
-                ),
-              ),
-            ),
-          ),
-          Positioned(
-            top: 235.h,
-            left: 60.w,
+        ),
+        Positioned(
+          top: 70.h,
+          left: 0,
+          right: 0,
+          child: Center(
             child: Text(
-              '床',
+              '壁',
               style: TextStyle(
-                color: const Color(0xfff0e3d4),
+                color: const Color(0xff8d8d8d),
                 fontSize: 15.sp,
               ),
             ),
           ),
-          Positioned(
-            left: 12.w,
-            bottom: 12.h,
-            child: IconButton(
-              onPressed: () => _showDex(context),
-              icon: Text('📙', style: TextStyle(fontSize: 26.sp)),
+        ),
+        Positioned(
+          top: 235.h,
+          left: 60.w,
+          child: Text(
+            '床',
+            style: TextStyle(
+              color: const Color(0xfff0e3d4),
+              fontSize: 15.sp,
             ),
           ),
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: 126.h,
-            child: Column(
-              children: [
-                _buildCharacterBadge(),
-                Text(
-                  controller.characterLabel,
-                  style: TextStyle(fontSize: controller.characterFontSize.sp),
-                ),
-                Text(
-                  controller.currentStage.name,
-                  style: TextStyle(
-                    fontSize: 10.sp,
-                    color: const Color(0xff0b3a5b),
-                    backgroundColor: Colors.white70,
-                  ),
-                ),
-              ],
-            ),
+        ),
+        Positioned(
+          left: 12.w,
+          bottom: 12.h,
+          child: IconButton(
+            onPressed: () => _showDex(context),
+            icon: Text('📙', style: TextStyle(fontSize: 26.sp)),
           ),
-          Positioned(
-            right: 8.w,
-            bottom: 4.h,
-            child: _buildTrainingMenuButton(context, canTrain),
+        ),
+        Positioned(
+          left: 0,
+          right: 0,
+          bottom: 126.h,
+          child: Column(
+            children: [
+              _buildCharacterBadge(),
+              Text(
+                controller.characterLabel,
+                style: TextStyle(fontSize: controller.characterFontSize.sp),
+              ),
+              Text(
+                controller.currentStage.name,
+                style: TextStyle(
+                  fontSize: 10.sp,
+                  color: const Color(0xff0b3a5b),
+                  backgroundColor: Colors.white70,
+                ),
+              ),
+            ],
           ),
-          if (controller.ended.value)
-            Positioned.fill(
-              child: Center(
-                child: Container(
-                  margin: EdgeInsets.all(24.w),
-                  padding: EdgeInsets.all(14.w),
-                  color: Colors.white.withOpacity(.94),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        controller.clearPosition.value == null ? 'ゲームオーバー' : '育成完了',
-                        style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.w700),
-                      ),
-                      SizedBox(height: 8.h),
-                      Text(controller.endingMessage.value, textAlign: TextAlign.center),
-                      SizedBox(height: 10.h),
-                      ElevatedButton(
-                        onPressed: _openNewEgg,
-                        child: const Text('卵からやりなおす'),
-                      ),
-                    ],
-                  ),
+        ),
+        Positioned(
+          right: 8.w,
+          bottom: 4.h,
+          child: _buildTrainingMenuButton(context, canTrain),
+        ),
+        if (controller.ended.value)
+          Positioned.fill(
+            child: Center(
+              child: Container(
+                margin: EdgeInsets.all(24.w),
+                padding: EdgeInsets.all(14.w),
+                color: Colors.white.withOpacity(.94),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      controller.clearPosition.value == null
+                          ? 'ゲームオーバー'
+                          : '育成完了',
+                      style: TextStyle(
+                          fontSize: 18.sp, fontWeight: FontWeight.w700),
+                    ),
+                    SizedBox(height: 8.h),
+                    Text(controller.endingMessage.value,
+                        textAlign: TextAlign.center),
+                    SizedBox(height: 10.h),
+                    ElevatedButton(
+                      onPressed: _openNewEgg,
+                      child: const Text('卵からやりなおす'),
+                    ),
+                  ],
                 ),
               ),
             ),
-        ],
-      );
+          ),
+      ],
+    );
   }
 
   /// 分岐後の暫定ポジション表示を作成します。
@@ -448,7 +489,9 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
         ? 'チュートリアル①（卵）'
         : controller.stageIndex.value == 1
             ? 'チュートリアル②（幼少）'
-            : controller.clearPosition.value ?? controller.branch ?? 'ノーマル鮫太朗（分岐前）';
+            : controller.clearPosition.value ??
+                controller.branch ??
+                'ノーマル鮫太朗（分岐前）';
     final branchColor = switch (controller.branch) {
       'A フォワード型' => const Color(0xff0ca30c),
       'B 司令塔型' => const Color(0xff1f6feb),
@@ -537,7 +580,7 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(
-                'ミニゲームを選ぶ（ルールはここで確認）',
+                'ミニゲームを選ぶ',
                 style: TextStyle(fontSize: 17.sp, fontWeight: FontWeight.w700),
               ),
               SizedBox(height: 12.h),
@@ -596,11 +639,13 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
                 Expanded(
                   child: Text(
                     title,
-                    style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.w800),
+                    style:
+                        TextStyle(fontSize: 18.sp, fontWeight: FontWeight.w800),
                   ),
                 ),
                 Container(
-                  padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
+                  padding:
+                      EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
                   decoration: BoxDecoration(
                     color: const Color(0xfff6f2ff),
                     border: Border.all(color: const Color(0xffc9bfe0)),
@@ -608,7 +653,8 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
                   ),
                   child: Text(
                     tag,
-                    style: TextStyle(fontSize: 11.sp, color: const Color(0xff6b5aa0)),
+                    style: TextStyle(
+                        fontSize: 11.sp, color: const Color(0xff6b5aa0)),
                   ),
                 ),
               ],
@@ -618,7 +664,8 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
             SizedBox(height: 10.h),
             Text(
               description,
-              style: TextStyle(fontSize: 14.sp, height: 1.55, fontWeight: FontWeight.w600),
+              style: TextStyle(
+                  fontSize: 14.sp, height: 1.55, fontWeight: FontWeight.w600),
             ),
           ],
         ),
@@ -640,9 +687,8 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
       padding: EdgeInsets.symmetric(vertical: 8.h, horizontal: 4.w),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: careActions
-            .map((type) => _buildCareButton(context, type))
-            .toList(),
+        children:
+            careActions.map((type) => _buildCareButton(context, type)).toList(),
       ),
     );
   }
@@ -659,14 +705,13 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
                 type != TrainingActionType.tackle &&
                 type != TrainingActionType.passAndRun
             : true;
-    final squatRequirementMet = ['食事', '清潔', '体調']
-        .every((name) => controller.meters[name]! >= 50);
+    final squatRequirementMet =
+        ['食事', '清潔', '体調'].every((name) => controller.meters[name]! >= 50);
     final enabled = !controller.ended.value &&
         tutorialActionAllowed &&
         !(type == TrainingActionType.squat &&
             (controller.stageIndex.value < 1 || !squatRequirementMet)) &&
-        !(type == TrainingActionType.work &&
-            controller.stageIndex.value < 2);
+        !(type == TrainingActionType.work && controller.stageIndex.value < 2);
     return TextButton(
       onPressed: enabled ? () => _handleAction(context, type) : null,
       style: TextButton.styleFrom(
@@ -687,12 +732,14 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
               clipBehavior: Clip.none,
               children: [
                 Text(action.icon, style: TextStyle(fontSize: 23.sp)),
-                if (type == TrainingActionType.squat && controller.stageIndex.value == 1)
+                if (type == TrainingActionType.squat &&
+                    controller.stageIndex.value == 1)
                   Positioned(
                     right: -8.w,
                     bottom: -4.h,
                     child: Container(
-                      padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.h),
+                      padding:
+                          EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.h),
                       decoration: BoxDecoration(
                         color: const Color(0xffb26a00),
                         borderRadius: BorderRadius.circular(8.r),
@@ -748,56 +795,101 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
   void _showDebugMenu(BuildContext context) {
     showModalBottomSheet<void>(
       context: context,
-      builder: (_) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
+      isScrollControlled: true,
+      builder: (sheetContext) => SafeArea(
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.of(sheetContext).size.height * .85,
+          ),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
             Padding(
               padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 4.h),
               child: Align(
                 alignment: Alignment.centerLeft,
                 child: Text(
                   '現在：${controller.day.value}日目　／　${controller.currentStage.name} ${controller.daysInStage.value}/${controller.currentStage.days ?? '-'}日',
-                  style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w700),
+                  style:
+                      TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w700),
                 ),
               ),
             ),
-            if (controller.stageIndex.value < 2)
-              ...[
-                ListTile(
-                  leading: const Icon(Icons.pause),
-                  title: const Text('⏸ 停止'),
-                  onTap: () {
-                    controller.setTutorialSpeed(0);
-                    Navigator.pop(context);
-                  },
-                ),
-                ListTile(
-                  leading: const Icon(Icons.play_arrow),
-                  title: const Text('▶ ×1'),
-                  onTap: () {
-                    controller.setTutorialSpeed(1);
-                    Navigator.pop(context);
-                  },
-                ),
-                ListTile(
-                  leading: const Icon(Icons.fast_forward),
-                  title: const Text('×4'),
-                  onTap: () {
-                    controller.setTutorialSpeed(4);
-                    Navigator.pop(context);
-                  },
-                ),
-                ListTile(
-                  leading: const Icon(Icons.double_arrow),
-                  title: const Text('×16'),
-                  onTap: () {
-                    controller.setTutorialSpeed(16);
-                    Navigator.pop(context);
-                  },
-                ),
-              ]
-            else ...[
+            if (controller.stageIndex.value < 2) ...[
+              ListTile(
+                leading: const Icon(Icons.pause),
+                title: const Text('⏸ 停止'),
+                onTap: () {
+                  controller.setTimeSpeed(0);
+                  Navigator.pop(context);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.play_arrow),
+                title: const Text('▶ ×1'),
+                onTap: () {
+                  controller.setTimeSpeed(1);
+                  Navigator.pop(context);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.fast_forward),
+                title: const Text('×4'),
+                onTap: () {
+                  controller.setTimeSpeed(4);
+                  Navigator.pop(context);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.double_arrow),
+                title: const Text('×16'),
+                onTap: () {
+                  controller.setTimeSpeed(16);
+                  Navigator.pop(context);
+                },
+              ),
+            ] else ...[
+              ListTile(
+                leading: const Icon(Icons.pause),
+                title: const Text('⏸ 停止'),
+                onTap: () {
+                  controller.setTimeSpeed(0);
+                  Navigator.pop(context);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.play_arrow),
+                title: const Text('▶ ×1'),
+                onTap: () {
+                  controller.setTimeSpeed(1);
+                  Navigator.pop(context);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.fast_forward),
+                title: const Text('×4'),
+                onTap: () {
+                  controller.setTimeSpeed(4);
+                  Navigator.pop(context);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.double_arrow),
+                title: const Text('×16'),
+                onTap: () {
+                  controller.setTimeSpeed(16);
+                  Navigator.pop(context);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.edit_calendar),
+                title: const Text('経過時間を指定'),
+                onTap: () {
+                  Navigator.pop(context);
+                  unawaited(_showAdvanceTimeDialog(context));
+                },
+              ),
               ListTile(
                 leading: const Icon(Icons.schedule),
                 title: const Text('＋1時間'),
@@ -828,7 +920,7 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
               title: const Text('🥚 段階1（卵）から開始'),
               onTap: () {
                 Navigator.pop(context);
-                _openNewEgg();
+                _openDebugEgg();
               },
             ),
             ListTile(
@@ -836,7 +928,7 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
               title: const Text('段階3（育成期）から開始'),
               onTap: () {
                 Navigator.pop(context);
-                controller.debugSkipTutorial();
+                controller.debugStartAtTraining();
               },
             ),
             ListTile(
@@ -844,10 +936,21 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
               title: const Text('閉じる'),
               onTap: () => Navigator.pop(context),
             ),
-          ],
+              ],
+            ),
+          ),
         ),
       ),
     );
+  }
+
+  /// デバッグ用に指定した分数だけ本編時間を進めます。
+  Future<void> _showAdvanceTimeDialog(BuildContext context) async {
+    final minutes = await showDialog<int>(
+      context: context,
+      builder: (_) => const _AdvanceTimeDialog(),
+    );
+    if (minutes != null) controller.advanceTimeMinutes(minutes);
   }
 
   /// 10ポジションの図鑑を表示します。
@@ -863,7 +966,8 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
         () => Dialog(
           backgroundColor: Colors.white,
           insetPadding: EdgeInsets.symmetric(horizontal: 22.w, vertical: 64.h),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
           child: ConstrainedBox(
             constraints: BoxConstraints(
               maxHeight: MediaQuery.of(context).size.height * .8,
@@ -887,7 +991,8 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
                       Expanded(
                         child: Text(
                           '📙 ずかん（${controller.unlockedPositions.length}/10 登録）',
-                          style: TextStyle(fontSize: 15.sp, fontWeight: FontWeight.w700),
+                          style: TextStyle(
+                              fontSize: 15.sp, fontWeight: FontWeight.w700),
                         ),
                       ),
                     ],
@@ -908,7 +1013,8 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
                     child: SingleChildScrollView(
                       child: Column(
                         children: _dexPositions.map((position) {
-                          final unlocked = controller.isPositionUnlocked(position.name);
+                          final unlocked =
+                              controller.isPositionUnlocked(position.name);
                           return _buildDexCard(position, unlocked);
                         }).toList(),
                       ),
@@ -929,8 +1035,10 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
 
   /// シミュレータHTMLの図鑑カードと同じ構成でポジションを表示します。
   Widget _buildDexCard(_DexPosition position, bool unlocked) {
-    final borderColor = unlocked ? const Color(0xff1f6feb) : const Color(0xffdfe4ea);
-    final backgroundColor = unlocked ? const Color(0xffe8f0fe) : const Color(0xfffafbfc);
+    final borderColor =
+        unlocked ? const Color(0xff1f6feb) : const Color(0xffdfe4ea);
+    final backgroundColor =
+        unlocked ? const Color(0xffe8f0fe) : const Color(0xfffafbfc);
     return Opacity(
       opacity: unlocked ? 1 : .75,
       child: Container(
@@ -962,13 +1070,16 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
                 Expanded(
                   child: Text(
                     position.name,
-                    style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w700),
+                    style:
+                        TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w700),
                   ),
                 ),
                 Text(
                   unlocked ? '✅ 登録済み' : '🔒 未解放',
                   style: TextStyle(
-                    color: unlocked ? const Color(0xff1f6feb) : const Color(0xff5b6672),
+                    color: unlocked
+                        ? const Color(0xff1f6feb)
+                        : const Color(0xff5b6672),
                     fontSize: 11.sp,
                     fontWeight: unlocked ? FontWeight.w700 : FontWeight.normal,
                   ),
@@ -1004,6 +1115,66 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
   }
 }
 
+/// デバッグ用の経過時間入力ダイアログです。
+class _AdvanceTimeDialog extends StatefulWidget {
+  /// 経過時間入力ダイアログを作成します。
+  const _AdvanceTimeDialog();
+
+  @override
+  State<_AdvanceTimeDialog> createState() => _AdvanceTimeDialogState();
+}
+
+/// 経過時間入力欄のライフサイクルを管理します。
+class _AdvanceTimeDialogState extends State<_AdvanceTimeDialog> {
+  late final TextEditingController _minutesController;
+
+  @override
+  void initState() {
+    super.initState();
+    _minutesController = TextEditingController(text: '60');
+  }
+
+  @override
+  void dispose() {
+    // ダイアログのWidget破棄後に入力欄を破棄し、親画面の再描画と競合させません。
+    _minutesController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('経過時間を指定'),
+      content: TextField(
+        controller: _minutesController,
+        autofocus: true,
+        keyboardType: TextInputType.number,
+        decoration: const InputDecoration(
+          labelText: '加算する分数',
+          suffixText: '分',
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('キャンセル'),
+        ),
+        FilledButton(
+          onPressed: _submit,
+          child: const Text('加算'),
+        ),
+      ],
+    );
+  }
+
+  /// 入力値を検証し、育成画面へ指定分数を返します。
+  void _submit() {
+    final value = int.tryParse(_minutesController.text.trim());
+    if (value == null || value <= 0) return;
+    Navigator.pop(context, value);
+  }
+}
+
 /// 図鑑に表示するポジション説明です。
 class _DexPosition {
   const _DexPosition({
@@ -1021,14 +1192,45 @@ class _DexPosition {
 
 /// シミュレータHTMLの10ポジション定義を図鑑表示用に整理します。
 const _dexPositions = <_DexPosition>[
-  _DexPosition(number: '1・3', name: 'プロップ', role: 'スクラム最前列。組み合いを支える土台', talent: '体重と押す力'),
-  _DexPosition(number: '2', name: 'フッカー', role: '最前列の中央。ボールを掻き出す', talent: '正確性と技術'),
-  _DexPosition(number: '4・5', name: 'ロック', role: '第2列。スクラムとラインアウトを支える', talent: '上背とパワー'),
-  _DexPosition(number: '6・7', name: 'フランカー', role: '第3列の両サイド。接点へ最速で到達', talent: '運動量・タックル・スピード'),
-  _DexPosition(number: '8', name: 'ナンバーエイト', role: '第3列の中央。ボールを持ち出す', talent: 'パワーと判断力'),
-  _DexPosition(number: '9', name: 'スクラムハーフ', role: 'フォワードとバックスの接続点', talent: 'テンポ・展開の速さ'),
-  _DexPosition(number: '10', name: 'スタンドオフ', role: '攻撃の司令塔。陣形とテンポを決める', talent: '判断力・状況把握'),
-  _DexPosition(number: '12・13', name: 'センター', role: '中央で突破し、防御では相手を止める', talent: '突進力とコンタクト耐性'),
-  _DexPosition(number: '11・14', name: 'ウイング', role: '最外側のフィニッシャー', talent: '純粋なスピード'),
-  _DexPosition(number: '15', name: 'フルバック', role: '最後尾。攻撃の起点になる', talent: '空中戦・キック処理・広い視野'),
+  _DexPosition(
+      number: '1・3',
+      name: 'プロップ',
+      role: 'スクラム最前列。組み合いを支える土台',
+      talent: '体重と押す力'),
+  _DexPosition(
+      number: '2', name: 'フッカー', role: '最前列の中央。ボールを掻き出す', talent: '正確性と技術'),
+  _DexPosition(
+      number: '4・5',
+      name: 'ロック',
+      role: '第2列。スクラムとラインアウトを支える',
+      talent: '上背とパワー'),
+  _DexPosition(
+      number: '6・7',
+      name: 'フランカー',
+      role: '第3列の両サイド。接点へ最速で到達',
+      talent: '運動量・タックル・スピード'),
+  _DexPosition(
+      number: '8', name: 'ナンバーエイト', role: '第3列の中央。ボールを持ち出す', talent: 'パワーと判断力'),
+  _DexPosition(
+      number: '9',
+      name: 'スクラムハーフ',
+      role: 'フォワードとバックスの接続点',
+      talent: 'テンポ・展開の速さ'),
+  _DexPosition(
+      number: '10',
+      name: 'スタンドオフ',
+      role: '攻撃の司令塔。陣形とテンポを決める',
+      talent: '判断力・状況把握'),
+  _DexPosition(
+      number: '12・13',
+      name: 'センター',
+      role: '中央で突破し、防御では相手を止める',
+      talent: '突進力とコンタクト耐性'),
+  _DexPosition(
+      number: '11・14', name: 'ウイング', role: '最外側のフィニッシャー', talent: '純粋なスピード'),
+  _DexPosition(
+      number: '15',
+      name: 'フルバック',
+      role: '最後尾。攻撃の起点になる',
+      talent: '空中戦・キック処理・広い視野'),
 ];
