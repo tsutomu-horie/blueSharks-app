@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+
 class Constants {
   static const isRelease = true;
 
@@ -5,14 +7,30 @@ class Constants {
   // ローカル確認が終わったら必ずfalseに戻すこと。
   static const useLocalAuthApi = true;
 
+  // Android実機などからLAN内のローカルAPIへ接続するためのホスト指定です。
+  // 例: --dart-define=LOCAL_AUTH_API_HOST=192.168.1.10
+  static const _localAuthApiHost = String.fromEnvironment(
+    'LOCAL_AUTH_API_HOST',
+  );
+
   static const baseUrl = isRelease
       ? 'https://blue-sharks.jp/wp-json/wp/v2/'
       : 'https://blue-sharks.donati.jp/wp-json/wp/v2/';
-  static const baseUrlAuthApi = useLocalAuthApi
-      ? 'http://127.0.0.1:8000/api/mobile/v1/'
-      : (isRelease
+  /// 実行端末から到達できる認証APIのURLを返します。
+  static String get baseUrlAuthApi {
+    if (!useLocalAuthApi) {
+      return isRelease
           ? 'https://app.blue-sharks.jp/api/mobile/v1/'
-          : 'https://dev-blueshark.tmdsite.my.id/api/mobile/v1/');
+          : 'https://dev-blueshark.tmdsite.my.id/api/mobile/v1/';
+    }
+    // 指定がない場合は、既存どおりAndroidエミュレーター用アドレスを使用します。
+    final host = _localAuthApiHost.isNotEmpty
+        ? _localAuthApiHost
+        : defaultTargetPlatform == TargetPlatform.android
+        ? '10.0.2.2'
+        : '127.0.0.1';
+    return 'http://$host:8000/api/mobile/v1/';
+  }
   static const topic = isRelease ? 'news_prod' : 'news_dev';
 
   static const baseUrlWeb = isRelease

@@ -13,6 +13,10 @@ import '../models/training_game_position_classifier.dart';
 /// 育成ゲームの進行状態と行動結果を管理します。
 class TrainingGameController extends GetxController
     with WidgetsBindingObserver {
+  /// 回数上限を設けず、連打だけを抑制するための暫定クールタイムです。
+  /// 仕様では秒数が調整項目のため、正式値確定時にここだけ変更します。
+  static const careCooldown = Duration(seconds: 60);
+
   /// 育成期におけるゲーム内1日の経過時間です。
   static const mainDayHours = 4;
 
@@ -88,6 +92,13 @@ class TrainingGameController extends GetxController
     ),
   ];
 
+  /// 仕様上、通常のクールタイム対象となる行動かを返します。
+  static bool isCooldownAction(TrainingActionType type) =>
+      type == TrainingActionType.meal ||
+      type == TrainingActionType.clean ||
+      type == TrainingActionType.rest ||
+      type == TrainingActionType.squat;
+
   final meters = <String, double>{
     '食事': 100,
     '清潔': 50,
@@ -117,6 +128,16 @@ class TrainingGameController extends GetxController
   final secondsInStage = 0.obs;
   final daysInStage = 0.obs;
   final actionsToday = 0.obs;
+  final cooldownTick = 0.obs;
+  final cooldownEnabled = <TrainingActionType, bool>{
+    TrainingActionType.meal: true,
+    TrainingActionType.clean: true,
+    TrainingActionType.rest: true,
+    TrainingActionType.squat: true,
+    TrainingActionType.work: false,
+    TrainingActionType.tackle: false,
+    TrainingActionType.passAndRun: false,
+  }.obs;
   final trainingCount = 0.obs;
   final timeSpeed = 1.obs;
   final isServerStateReady = false.obs;
@@ -125,6 +146,7 @@ class TrainingGameController extends GetxController
   bool _dayCared = false;
   final _zeroHours = <String, int>{'食事': 0, '清潔': 0, '体調': 0, '仕事': 0};
   final _overHours = <String, int>{'食事': 0, '清潔': 0, '体調': 0, '仕事': 0};
+  final _cooldownUntil = <TrainingActionType, DateTime>{};
   final _tutorialZeroSeconds = <String, int>{'食事': 0, '清潔': 0, '体調': 0};
   Timer? _tutorialTimer;
   Timer? _mainTimer;
@@ -138,6 +160,8 @@ class TrainingGameController extends GetxController
   TrainingActionType? _queuedAction;
   bool _syncRequested = false;
   bool _syncRunning = false;
+  bool _hasUnsyncedLocalState = false;
+  int _localStateRevision = 0;
   bool _isDisposed = false;
   final TrainingGameProvider _serverProvider = TrainingGameProvider();
   int? _serverPlayerId;
@@ -148,6 +172,40 @@ class TrainingGameController extends GetxController
 
   /// 当日の仕事が未実施で、仕事のお世話を開始できるかを返します。
   bool get canWorkToday => _lastWorkDay != day.value;
+
+  /// 指定行動のクールタイムが終了しているかを返します。
+  bool canPerform(TrainingActionType type) {
+    cooldownTick.value;
+    if (!isCooldownEnabled(type)) return true;
+    final until = _cooldownUntil[type];
+    return until == null || !DateTime.now().isBefore(until);
+  }
+
+  /// 指定行動のクールタイム設定を返します。
+  bool isCooldownEnabled(TrainingActionType type) =>
+      cooldownEnabled[type] ?? false;
+
+  /// デバッグメニューから指定行動のクールタイムを切り替えます。
+  void setCooldownEnabled(TrainingActionType type, bool enabled) {
+    cooldownEnabled[type] = enabled;
+    if (!enabled) _cooldownUntil.remove(type);
+    cooldownTick.value++;
+  }
+
+  /// 指定行動の残りクールタイムを返します。
+  Duration cooldownRemaining(TrainingActionType type) {
+    cooldownTick.value;
+    final until = _cooldownUntil[type];
+    if (until == null) return Duration.zero;
+    final remaining = until.difference(DateTime.now());
+    return remaining.isNegative ? Duration.zero : remaining;
+  }
+
+  /// 画面に表示するクールタイムを返します。
+  String cooldownLabel(TrainingActionType type) {
+    final seconds = cooldownRemaining(type).inSeconds;
+    return seconds <= 0 ? '' : '${seconds + 1}秒待ち';
+  }
 
   /// 参照HTMLと同じ形式で現在時刻を表示します。
   String get clockLabel {
@@ -222,6 +280,7 @@ class TrainingGameController extends GetxController
       unawaited(_restoreServerState());
     }
     _tutorialTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      cooldownTick.value++;
       if (isServerStateReady.value &&
           !_isAppInBackground &&
           evolutionStage.value == null &&
@@ -232,6 +291,7 @@ class TrainingGameController extends GetxController
       }
     });
     _mainTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      cooldownTick.value++;
       if (isServerStateReady.value && !_isAppInBackground) {
         _mainClockTick.value++;
         if (stageIndex.value >= 2) {
@@ -289,8 +349,7 @@ class TrainingGameController extends GetxController
     }
     if (state == AppLifecycleState.resumed) {
       _isAppInBackground = false;
-      _updateElapsedTimeFromStart();
-      _advanceMainProgressToNow();
+      // オフライン中の精算はサーバー状態の再取得へ一元化し、端末側の二重減衰を防ぎます。
       unawaited(_restoreServerState());
     }
   }
@@ -394,14 +453,28 @@ class TrainingGameController extends GetxController
     final localState = Map<String, dynamic>.from(decodedState);
     if (localState['player_id'] != _serverPlayerId) return;
 
-    // APIに未対応の補助傾向だけをローカル値で補い、サーバー値を優先します。
+    _hasUnsyncedLocalState = localState['has_unsynced_state'] == true;
+    // 同期未完了のスナップショットだけは、通信失敗した行動結果を失わないよう復元します。
     final serverParameters = serverData['parameters'];
     final serverHasBulk =
         serverParameters is Map && serverParameters.containsKey('tendency_bulk');
     final serverHasTech =
         serverParameters is Map && serverParameters.containsKey('tendency_tech');
-    if (!serverHasBulk) _restoreDoubleValue(localState, 'bulk', 'BULK');
-    if (!serverHasTech) _restoreDoubleValue(localState, 'tech', 'TECH');
+    if (_hasUnsyncedLocalState) {
+      _restoreDoubleValue(localState, 'hunger', '食事', target: meters);
+      _restoreDoubleValue(localState, 'cleanliness', '清潔', target: meters);
+      _restoreDoubleValue(localState, 'condition', '体調', target: meters);
+      _restoreDoubleValue(localState, 'work', '仕事', target: meters);
+      _restoreDoubleValue(localState, 'fw', 'FW');
+      _restoreDoubleValue(localState, 'command', 'CMD');
+      _restoreDoubleValue(localState, 'run', 'RUN');
+      _restoreDoubleValue(localState, 'bulk', 'BULK');
+      _restoreDoubleValue(localState, 'tech', 'TECH');
+    } else {
+      // APIが未対応の補助傾向だけは、最後に保存したローカル値で補います。
+      if (!serverHasBulk) _restoreDoubleValue(localState, 'bulk', 'BULK');
+      if (!serverHasTech) _restoreDoubleValue(localState, 'tech', 'TECH');
+    }
 
     elapsedHours.value = _localInt(localState, 'elapsed_hours', elapsedHours.value);
     totalElapsedSeconds.value =
@@ -421,6 +494,7 @@ class TrainingGameController extends GetxController
     _lowConditionTraining =
         _localInt(localState, 'low_condition_training', _lowConditionTraining);
     _dayCared = localState['day_cared'] == true;
+    _restoreCooldowns(localState['cooldowns']);
     _restoreCounters(localState['zero_hours'], _zeroHours);
     _restoreCounters(localState['over_hours'], _overHours);
     _restoreCounters(localState['tutorial_zero_seconds'], _tutorialZeroSeconds);
@@ -447,10 +521,15 @@ class TrainingGameController extends GetxController
     }
   }
 
-  /// ローカルスナップショットの数値を傾向値へ反映します。
-  void _restoreDoubleValue(Map<String, dynamic> state, String stateKey, String trendKey) {
+  /// ローカルスナップショットの数値を指定したパラメータ集合へ反映します。
+  void _restoreDoubleValue(
+    Map<String, dynamic> state,
+    String stateKey,
+    String targetKey, {
+    Map<String, double>? target,
+  }) {
     final value = state[stateKey];
-    if (value is num) trends[trendKey] = value.toDouble();
+    if (value is num) (target ?? trends)[targetKey] = value.toDouble();
   }
 
   /// ローカルスナップショットからカウンターを復元します。
@@ -459,6 +538,20 @@ class TrainingGameController extends GetxController
     for (final key in target.keys) {
       final value = rawCounters[key];
       if (value is num) target[key] = value.toInt();
+    }
+  }
+
+  /// ローカルスナップショットから行動別クールタイムを復元します。
+  void _restoreCooldowns(Object? rawCooldowns) {
+    if (rawCooldowns is! Map) return;
+    for (final entry in rawCooldowns.entries) {
+      final type = _actionTypeFromCode(entry.key.toString());
+      final value = entry.value;
+      if (type == null || value is! String) continue;
+      final until = DateTime.tryParse(value);
+      if (until != null && DateTime.now().isBefore(until)) {
+        _cooldownUntil[type] = until;
+      }
     }
   }
 
@@ -529,6 +622,8 @@ class TrainingGameController extends GetxController
     // 連続操作中は最新状態と最後の行動だけを保持し、古い同期を捨てます。
     _queuedAction = action ?? _queuedAction;
     _syncRequested = true;
+    _hasUnsyncedLocalState = true;
+    _localStateRevision++;
     if (_syncRunning) return;
     _syncRunning = true;
     _syncChain = _drainSyncQueue().catchError((_) {
@@ -563,8 +658,11 @@ class TrainingGameController extends GetxController
       await _startServerState();
       return;
     }
+    // 後続の行動と区別できるよう、この通信が受け取る状態世代を記録します。
+    final syncingRevision = _localStateRevision;
     // APIに未保存の進行カウンターも、通信失敗時に失わないよう先に保持します。
-    unawaited(_saveLocalGameState());
+    _hasUnsyncedLocalState = true;
+    await _saveLocalGameState();
     final isPositiveEnd = clearPosition.value != null;
     final data = await _serverProvider.sync(
       stageCode: _stageCode,
@@ -581,6 +679,9 @@ class TrainingGameController extends GetxController
     );
     _serverLockVersion =
         (data['lock_version'] as num?)?.toInt() ?? _serverLockVersion;
+    // 後続行動がなければサーバー優先へ戻し、ある場合は未送信状態を保持します。
+    _hasUnsyncedLocalState = syncingRevision != _localStateRevision;
+    await _saveLocalGameState();
     // 図鑑はポジティブ終了時だけ再取得し、通常同期の余分な通信を省きます。
     if (isPositiveEnd && !_isDisposed) await refreshUnlockedPositions();
   }
@@ -591,6 +692,14 @@ class TrainingGameController extends GetxController
     if (playerId == null) return Future<void>.value();
     return MySharedPref.setTrainingGameLocalState(jsonEncode({
       'player_id': playerId,
+      'has_unsynced_state': _hasUnsyncedLocalState,
+      'hunger': meters['食事'],
+      'cleanliness': meters['清潔'],
+      'condition': meters['体調'],
+      'work': meters['仕事'],
+      'fw': trends['FW'],
+      'command': trends['CMD'],
+      'run': trends['RUN'],
       'bulk': trends['BULK'],
       'tech': trends['TECH'],
       'elapsed_hours': elapsedHours.value,
@@ -607,6 +716,11 @@ class TrainingGameController extends GetxController
       'zero_hours': _zeroHours,
       'over_hours': _overHours,
       'tutorial_zero_seconds': _tutorialZeroSeconds,
+      'cooldowns': {
+        for (final entry in _cooldownUntil.entries)
+          if (DateTime.now().isBefore(entry.value))
+            _actionCode(entry.key): entry.value.toIso8601String(),
+      },
       'ended': ended.value,
       'ending_step': endingStep.value,
       'ending_message': endingMessage.value,
@@ -663,6 +777,17 @@ class TrainingGameController extends GetxController
         TrainingActionType.passAndRun: 'pass_run',
       }[type]!;
 
+  /// 保存済みコードを行動種別へ戻します。
+  TrainingActionType? _actionTypeFromCode(String code) => const {
+        'meal': TrainingActionType.meal,
+        'clean': TrainingActionType.clean,
+        'rest': TrainingActionType.rest,
+        'training': TrainingActionType.squat,
+        'work': TrainingActionType.work,
+        'tackle': TrainingActionType.tackle,
+        'pass_run': TrainingActionType.passAndRun,
+      }[code];
+
   /// 完了したミニゲームの結果を、育成アクション1回分として反映します。
   void completeMiniGame(TrainingActionType type, MiniGameResult result) {
     if (type != TrainingActionType.tackle &&
@@ -677,6 +802,10 @@ class TrainingGameController extends GetxController
   /// 指定した行動を実行し、メーターと傾向値を更新します。
   void perform(TrainingActionType type, {MiniGameResult? miniGameResult}) {
     if (ended.value || evolutionStage.value != null) return;
+    if (!canPerform(type)) {
+      logs.insert(0, '${_labelFor(type)}はクールタイム中です。');
+      return;
+    }
     final isMiniGame = type == TrainingActionType.tackle ||
         type == TrainingActionType.passAndRun;
     if (isMiniGame && stageIndex.value < 2) {
@@ -693,12 +822,15 @@ class TrainingGameController extends GetxController
     }
 
     if (stageIndex.value < 2) {
-      _performTutorialAction(type);
+      if (!_performTutorialAction(type)) return;
+      _startCooldown(type);
       _syncServer(action: type);
       return;
     }
 
     final wasOverfed = meters['食事']! > 100;
+    final wasCleanNoop =
+        type == TrainingActionType.clean && meters['清潔']! >= 100;
     final miniGameMultiplier = miniGameResult?.effectMultiplier ?? 1.0;
     final workBeforeAction = meters['仕事']!;
 
@@ -708,8 +840,11 @@ class TrainingGameController extends GetxController
         _changeMeter('清潔', -3);
         break;
       case TrainingActionType.clean:
-        _changeMeter('清潔', 40);
-        _addTrend('TECH', 2, '体調');
+        // 清潔度100以上では掃除を空振り扱いにし、行動回数だけ消費します。
+        if (!wasCleanNoop) {
+          _changeMeter('清潔', 40);
+          _addTrend('TECH', 2, '体調');
+        }
         break;
       case TrainingActionType.rest:
         _changeMeter('体調', 40);
@@ -729,7 +864,7 @@ class TrainingGameController extends GetxController
         _changeMeter('仕事', 10 * miniGameMultiplier);
         _addTrend('FW', 5 * miniGameMultiplier, '体調',
             sourceOffset: 12, training: true);
-        _addTrend('TECH', 1 * miniGameMultiplier, '体調',
+        _addTrend('BULK', 1 * miniGameMultiplier, '体調',
             sourceOffset: 12, training: true);
         break;
       case TrainingActionType.passAndRun:
@@ -768,11 +903,14 @@ class TrainingGameController extends GetxController
     }
     logs.insert(
       0,
-      miniGameResult == null
+      wasCleanNoop
+          ? '掃除をしましたが、部屋は汚れていないため効果はありません。'
+          : miniGameResult == null
           ? '${_labelFor(type)}を実行しました。'
           : '${miniGameResult.summary}／育成結果へ反映しました。',
     );
     actionsToday.value++;
+    _startCooldown(type);
     // 参照HTMLと同じく、行動後に4メーターが整っていれば当日の達成状態を保持します。
     if (_isCared) _dayCared = true;
     if (_isTraining(type) && meters['体調']! < 20) {
@@ -823,6 +961,7 @@ class TrainingGameController extends GetxController
     _zeroHours.updateAll((key, value) => 0);
     _overHours.updateAll((key, value) => 0);
     _tutorialZeroSeconds.updateAll((key, value) => 0);
+    _cooldownUntil.clear();
     ended.value = false;
     endingMessage.value = '';
     clearPosition.value = null;
@@ -843,6 +982,12 @@ class TrainingGameController extends GetxController
   /// メーターを範囲内に収めて更新します。
   void _changeMeter(String name, double amount) {
     meters[name] = (meters[name]! + amount).clamp(0, 150).toDouble();
+  }
+
+  /// 行動完了時点からクールタイムを開始します。
+  void _startCooldown(TrainingActionType type) {
+    if (!isCooldownEnabled(type)) return;
+    _cooldownUntil[type] = DateTime.now().add(careCooldown);
   }
 
   /// 傾向値を0未満にならないよう更新します。
@@ -881,13 +1026,15 @@ class TrainingGameController extends GetxController
   }
 
   /// チュートリアルの制限と回復量を適用します。
-  void _performTutorialAction(TrainingActionType type) {
+  bool _performTutorialAction(TrainingActionType type) {
     if (stageIndex.value == 0 &&
         type != TrainingActionType.clean &&
-        type != TrainingActionType.rest) return;
+        type != TrainingActionType.rest) return false;
     if (stageIndex.value == 1 &&
         type == TrainingActionType.squat &&
-        !['食事', '清潔', '体調'].every((name) => meters[name]! >= 50)) return;
+        !['食事', '清潔', '体調'].every((name) => meters[name]! >= 50)) {
+      return false;
+    }
 
     final activeMeters =
         stageIndex.value == 0 ? ['清潔', '体調'] : ['食事', '清潔', '体調'];
@@ -897,7 +1044,7 @@ class TrainingGameController extends GetxController
       TrainingActionType.rest: {'体調': 40, '食事': -5},
       TrainingActionType.squat: {'食事': -12, '清潔': -8, '体調': -6},
     }[type];
-    if (effects == null) return;
+    if (effects == null) return false;
 
     effects.forEach((name, amount) {
       if (activeMeters.contains(name)) {
@@ -914,6 +1061,7 @@ class TrainingGameController extends GetxController
     if (type == TrainingActionType.squat) trainingCount.value++;
     actionsToday.value++;
     _advanceTutorialIfNeeded();
+    return true;
   }
 
   /// チュートリアルを参照HTMLと同じ秒単位で進めます。

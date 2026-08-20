@@ -23,14 +23,24 @@ class OtpProvider extends GetConnect {
 
     print("ertur ${response.body}");
 
-    if (response.hasError) {
-      onError("${response.body["errors"]}");
+    final body = response.body;
+    if (response.hasError || body is! Map) {
+      // 接続失敗時はbodyがnullになるため、レスポンス形状を確認してから参照します。
+      final message = body is Map
+          ? (body['errors'] ?? body['message'] ?? response.statusText)
+          : (response.statusText ?? '認証サーバーから応答がありません。');
+      onError(message.toString());
       throw Exception('Failed to login: ${response.statusText}');
     }
 
     print("Login successful, received data: ${response.body}");
 
-    return Otp.fromJson(response.body["data"]);
+    final data = body['data'];
+    if (data is! Map) {
+      onError('OTPレスポンスの形式が不正です。');
+      throw Exception('Invalid OTP response.');
+    }
+    return Otp.fromJson(Map<String, dynamic>.from(data));
   }
 
   Future<Otp> forgotPasswordOtp(String address, String? otpId,  Function onError) async {
