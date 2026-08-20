@@ -65,12 +65,21 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
   bool get _isOutbound => _roundIndex == 0;
   bool get _isPenalized =>
       _penaltyUntil != null && DateTime.now().isBefore(_penaltyUntil!);
-  bool get _canPass =>
-      _phase == _PassGamePhase.playing &&
-      !_isPaused &&
-      !_isPenalized &&
-      !_passInFlight &&
-      (_passReadyAt == null || !DateTime.now().isBefore(_passReadyAt!));
+  /// ラウンド終了時刻を過ぎていない場合だけ、新しいパスを受け付けます。
+  bool get _canPass {
+    final roundStartedAt = _roundStartedAt;
+    if (roundStartedAt == null ||
+        !DateTime.now().isBefore(
+          roundStartedAt.add(PassAndRunRules.roundDuration),
+        )) {
+      return false;
+    }
+    return _phase == _PassGamePhase.playing &&
+        !_isPaused &&
+        !_isPenalized &&
+        !_passInFlight &&
+        (_passReadyAt == null || !DateTime.now().isBefore(_passReadyAt!));
+  }
   int get _totalScore => _roundScores.fold(0, (sum, score) => sum + score);
 
   @override
@@ -240,8 +249,11 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
       setState(() {});
       return;
     }
+    // 判定・発射・捕球の基準座標を同じ瞬間に固定し、移動中のズレを防ぎます。
     final player = _playerOffset;
     final mate = _mateOffset;
+    final playerBall = _playerBallOffsetAt(player);
+    final mateCatch = _mateCatchOffsetAt(mate);
     final succeeded = PassAndRunRules.isAccurate(
       flick: flick,
       // 指の開始位置ではなく、画面上のプレイヤーから目標への方向を判定します。
@@ -258,15 +270,15 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
     _isBallLost = false;
     _pendingPassRoundIndex = _roundIndex;
     _passStartedAt = now;
-    _passStartOffset = _playerBallOffset;
+    _passStartOffset = playerBall;
     _passTargetOffset = succeeded
-        ? _mateCatchOffset
+        ? mateCatch
         : _flickExitOffset(start: start, current: current);
     _passReturnStartOffset = null;
     _passReturnTargetOffset = null;
     // 成功パスの速度を基準に、失敗時は移動距離に応じて到達時間を延長します。
     // これにより、画面外へ抜ける失敗ボールだけが不自然に加速しません。
-    final successfulDistance = (_mateCatchOffset - _playerBallOffset).distance;
+    final successfulDistance = (mateCatch - playerBall).distance;
     final actualDistance = (_passTargetOffset! - _passStartOffset!).distance;
     _passOutboundDistance = successfulDistance;
     _passTravelDuration = successfulDistance == 0
@@ -332,21 +344,27 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
 
   Offset get _mateOffset => _mateOffsetAt(_motionSeconds);
 
-  /// 鮫太朗が保持しているときのボール表示位置です。
-  Offset get _playerBallOffset =>
-      _playerOffset +
+  /// 指定したプレイヤー座標に対応するボール表示位置を返します。
+  Offset _playerBallOffsetAt(Offset playerOffset) =>
+      playerOffset +
       Offset(
         _isOutbound ? 24 : -24,
         4,
       );
 
-  /// 仲間が受け取るときのボール表示位置です。
-  Offset get _mateCatchOffset =>
-      _mateOffset +
+  /// 指定した相手座標に対応する捕球位置を返します。
+  Offset _mateCatchOffsetAt(Offset mateOffset) =>
+      mateOffset +
       Offset(
-        _isOutbound ? -20 : 20,
-        4,
+        _isOutbound ? -28 : 28,
+        0,
       );
+
+  /// 鮫太朗が保持しているときの現在のボール表示位置です。
+  Offset get _playerBallOffset => _playerBallOffsetAt(_playerOffset);
+
+  /// 仲間が受け取るときの現在のボール表示位置です。
+  Offset get _mateCatchOffset => _mateCatchOffsetAt(_mateOffset);
 
   /// 一時停止を考慮した現在のパス経過時間を返します。
   Duration get _passElapsed {
