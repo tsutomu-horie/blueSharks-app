@@ -1,14 +1,21 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
 import 'package:koto_blue_sharks/app/providers/training_game/training_game_provider.dart';
+import 'package:koto_blue_sharks/utils/my_shared_pref.dart';
 
 import '../mini_games/models/mini_game_result.dart';
 import '../models/training_game_models.dart';
+import '../models/training_game_position_classifier.dart';
 
 /// 育成ゲームの進行状態と行動結果を管理します。
-class TrainingGameController extends GetxController with WidgetsBindingObserver {
+class TrainingGameController extends GetxController
+    with WidgetsBindingObserver {
+  /// 育成期におけるゲーム内1日の経過時間です。
+  static const mainDayHours = 4;
+
   /// 各段階の表示定義です。
   static const stages = <TrainingStageDefinition>[
     TrainingStageDefinition(
@@ -96,6 +103,8 @@ class TrainingGameController extends GetxController with WidgetsBindingObserver 
   }.obs;
   final stageIndex = 0.obs;
   final elapsedHours = 0.obs;
+  final totalElapsedSeconds = 0.obs;
+  final mainElapsedSeconds = 0.obs;
   final day = 1.obs;
   final selectedSpeed = 1.obs;
   final logs = <String>[].obs;
@@ -109,7 +118,7 @@ class TrainingGameController extends GetxController with WidgetsBindingObserver 
   final daysInStage = 0.obs;
   final actionsToday = 0.obs;
   final trainingCount = 0.obs;
-  final tutorialSpeed = 1.obs;
+  final timeSpeed = 1.obs;
   final isServerStateReady = false.obs;
   int _lastWorkDay = 0;
   int _lowConditionTraining = 0;
@@ -118,6 +127,11 @@ class TrainingGameController extends GetxController with WidgetsBindingObserver 
   final _overHours = <String, int>{'食事': 0, '清潔': 0, '体調': 0, '仕事': 0};
   final _tutorialZeroSeconds = <String, int>{'食事': 0, '清潔': 0, '体調': 0};
   Timer? _tutorialTimer;
+  Timer? _mainTimer;
+  DateTime? _mainStartedAt;
+  DateTime? _mainProgressAt;
+  int _elapsedTimeOffsetSeconds = 0;
+  final _mainClockTick = 0.obs;
   bool _isAppInBackground = false;
   Future<void> _syncChain = Future<void>.value();
   Future<void> _restoreChain = Future<void>.value();
@@ -137,13 +151,19 @@ class TrainingGameController extends GetxController with WidgetsBindingObserver 
 
   /// 参照HTMLと同じ形式で現在時刻を表示します。
   String get clockLabel {
-    if (stageIndex.value < 2) {
-      final minutes = (secondsInStage.value ~/ 60).toString().padLeft(2, '0');
-      final seconds = (secondsInStage.value % 60).toString().padLeft(2, '0');
-      return '$minutes:$seconds';
-    }
-    final hour = (elapsedHours.value % 24).toString().padLeft(2, '0');
-    return '$hour:00';
+    _mainClockTick.value;
+    final elapsedSeconds = _mainStartedAt == null
+        ? totalElapsedSeconds.value
+        : mainElapsedSeconds.value;
+    final elapsedDays = elapsedSeconds ~/ Duration.secondsPerDay;
+    final daySeconds = elapsedSeconds % Duration.secondsPerDay;
+    final hours =
+        (daySeconds ~/ Duration.secondsPerHour).toString().padLeft(2, '0');
+    final minutes = ((daySeconds % Duration.secondsPerHour) ~/ 60)
+        .toString()
+        .padLeft(2, '0');
+    final seconds = (daySeconds % 60).toString().padLeft(2, '0');
+    return '経過 ${elapsedDays}日 $hours:$minutes:$seconds';
   }
 
   /// 現在の育成キャラクター表示名を返します。
@@ -158,9 +178,15 @@ class TrainingGameController extends GetxController with WidgetsBindingObserver 
   /// 成長期以降に表示する大別コードを返します。
   String? get branch {
     if (stageIndex.value < 3) return null;
-    final main = {'FW': trends['FW']!, 'CMD': trends['CMD']!, 'RUN': trends['RUN']!};
-    if (main.values.every((value) => value == 0) && trends['BULK'] == 0) return null;
-    final top = main.entries.toList()..sort((a, b) => b.value.compareTo(a.value));
+    final main = {
+      'FW': trends['FW']!,
+      'CMD': trends['CMD']!,
+      'RUN': trends['RUN']!
+    };
+    if (main.values.every((value) => value == 0) && trends['BULK'] == 0)
+      return null;
+    final top = main.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
     return {'FW': 'A フォワード型', 'CMD': 'B 司令塔型', 'RUN': 'C バックス型'}[top.first.key];
   }
 
@@ -179,25 +205,7 @@ class TrainingGameController extends GetxController with WidgetsBindingObserver 
   /// 最も高い傾向から暫定ポジションを判定します。
   String get position {
     if (stageIndex.value < 3) return '判定前';
-    final main = {'FW': trends['FW']!, 'CMD': trends['CMD']!, 'RUN': trends['RUN']!};
-    final ordered = main.entries.toList()..sort((a, b) => b.value.compareTo(a.value));
-    final total = main.values.reduce((a, b) => a + b);
-    if (total == 0 && trends['BULK'] == 0) return '判定前';
-    final top = ordered.first.key;
-    final second = ordered[1].key;
-    final purity = total == 0 ? 0 : ordered.first.value / total;
-    final ratio = ordered.first.value == 0 ? 0 : ordered[1].value / ordered.first.value;
-    final techBulk = trends['BULK'] == 0 ? 99 : trends['TECH']! / trends['BULK']!;
-    final floor = main.values.reduce((a, b) => a < b ? a : b);
-    if (purity < .5 && floor >= 30) return 'フルバック';
-    if (top == 'FW' && second == 'RUN' && ratio >= .55) {
-      return trends['TECH']! >= trends['BULK']! ? 'フランカー' : 'ナンバーエイト';
-    }
-    if (top == 'FW' && techBulk >= 1) return 'フッカー';
-    if (top == 'FW' && techBulk >= .35) return 'ロック';
-    if (top == 'FW') return 'プロップ';
-    if (top == 'CMD') return ratio >= .4 ? 'スクラムハーフ' : 'スタンドオフ';
-    return second == 'FW' && ratio >= .55 ? 'センター' : 'ウイング';
+    return TrainingGamePositionClassifier.classify(trends);
   }
 
   /// 初期表示用のログを準備します。
@@ -219,7 +227,19 @@ class TrainingGameController extends GetxController with WidgetsBindingObserver 
           evolutionStage.value == null &&
           stageIndex.value < 2 &&
           !ended.value) {
-        tickTutorial(tutorialSpeed.value);
+        _advanceTutorialClock(timeSpeed.value);
+        tickTutorial(timeSpeed.value);
+      }
+    });
+    _mainTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (isServerStateReady.value && !_isAppInBackground) {
+        _mainClockTick.value++;
+        if (stageIndex.value >= 2) {
+          _advanceMainClock(timeSpeed.value);
+        } else {
+          _updateElapsedTimeFromStart();
+        }
+        _advanceMainProgressToNow();
       }
     });
   }
@@ -231,6 +251,7 @@ class TrainingGameController extends GetxController with WidgetsBindingObserver 
     _isDisposed = true;
     WidgetsBinding.instance.removeObserver(this);
     _tutorialTimer?.cancel();
+    _mainTimer?.cancel();
     // 画面終了直前の最新状態だけを、既存の同期処理の後ろへ追加します。
     _queueSync(force: true);
     super.onClose();
@@ -244,6 +265,11 @@ class TrainingGameController extends GetxController with WidgetsBindingObserver 
   /// 段階上昇時の進化演出を完了し、育成画面へ戻します。
   void advanceEvolution() {
     evolutionStage.value = null;
+    if (stageIndex.value >= 2) {
+      _mainProgressAt = DateTime.now();
+      _updateElapsedTimeFromStart();
+      _mainClockTick.value++;
+    }
   }
 
   /// 育成画面を離れる前にローカルのリアルタイム進行を停止します。
@@ -263,6 +289,8 @@ class TrainingGameController extends GetxController with WidgetsBindingObserver 
     }
     if (state == AppLifecycleState.resumed) {
       _isAppInBackground = false;
+      _updateElapsedTimeFromStart();
+      _advanceMainProgressToNow();
       unawaited(_restoreServerState());
     }
   }
@@ -312,13 +340,38 @@ class TrainingGameController extends GetxController with WidgetsBindingObserver 
 
   /// APIレスポンスの状態を画面状態へ反映します。
   void _applyServerState(Map<String, dynamic> data) {
+    final startedAt = _parseServerDateTime(data['started_at']) ??
+        MySharedPref.getTrainingGameStartedAt();
+    if (startedAt != null) {
+      _mainStartedAt = startedAt;
+      // サーバー状態を再取得しても、同じ育成サイクルのデバッグ加算を復元します。
+      _elapsedTimeOffsetSeconds =
+          MySharedPref.getTrainingGameDebugElapsedSeconds();
+      unawaited(MySharedPref.setTrainingGameStartedAt(startedAt));
+      _updateElapsedTimeFromStart();
+    }
     final stage = data['stage_code'] as String?;
     final stageMap = {'egg': 0, 'child': 1, 'training': 2, 'growth': 3};
-    if (stage != null && stageMap.containsKey(stage)) stageIndex.value = stageMap[stage]!;
+    if (stage != null && stageMap.containsKey(stage))
+      stageIndex.value = stageMap[stage]!;
+    if (stageIndex.value >= 2 && _mainProgressAt == null) {
+      _mainProgressAt = DateTime.now();
+    }
     final parameters = data['parameters'];
     if (parameters is Map) {
-      const displayMap = {'hunger': '食事', 'cleanliness': '清潔', 'condition': '体調', 'work': '仕事'};
-      const tendencyMap = {'tendency_fw': 'FW', 'tendency_command': 'CMD', 'tendency_backs': 'RUN'};
+      const displayMap = {
+        'hunger': '食事',
+        'cleanliness': '清潔',
+        'condition': '体調',
+        'work': '仕事'
+      };
+      const tendencyMap = {
+        'tendency_fw': 'FW',
+        'tendency_command': 'CMD',
+        'tendency_backs': 'RUN',
+        'tendency_bulk': 'BULK',
+        'tendency_tech': 'TECH',
+      };
       for (final entry in parameters.entries) {
         final value = (entry.value as num?)?.toDouble();
         if (value == null) continue;
@@ -328,7 +381,106 @@ class TrainingGameController extends GetxController with WidgetsBindingObserver 
         if (tendencyName != null) trends[tendencyName] = value;
       }
     }
+    _restoreLocalGameState(data);
+    _restoreEndedState(data);
   }
+
+  /// サーバーに未保存の途中進行を、同じ育成サイクルに限って復元します。
+  void _restoreLocalGameState(Map<String, dynamic> serverData) {
+    final encodedState = MySharedPref.getTrainingGameLocalState();
+    if (encodedState == null || _serverPlayerId == null) return;
+    final decodedState = jsonDecode(encodedState);
+    if (decodedState is! Map) return;
+    final localState = Map<String, dynamic>.from(decodedState);
+    if (localState['player_id'] != _serverPlayerId) return;
+
+    // APIに未対応の補助傾向だけをローカル値で補い、サーバー値を優先します。
+    final serverParameters = serverData['parameters'];
+    final serverHasBulk =
+        serverParameters is Map && serverParameters.containsKey('tendency_bulk');
+    final serverHasTech =
+        serverParameters is Map && serverParameters.containsKey('tendency_tech');
+    if (!serverHasBulk) _restoreDoubleValue(localState, 'bulk', 'BULK');
+    if (!serverHasTech) _restoreDoubleValue(localState, 'tech', 'TECH');
+
+    elapsedHours.value = _localInt(localState, 'elapsed_hours', elapsedHours.value);
+    totalElapsedSeconds.value =
+        _localInt(localState, 'total_elapsed_seconds', totalElapsedSeconds.value);
+    mainElapsedSeconds.value =
+        _localInt(localState, 'main_elapsed_seconds', mainElapsedSeconds.value);
+    day.value = _localInt(localState, 'day', day.value);
+    secondsInStage.value =
+        _localInt(localState, 'seconds_in_stage', secondsInStage.value);
+    daysInStage.value =
+        _localInt(localState, 'days_in_stage', daysInStage.value);
+    actionsToday.value =
+        _localInt(localState, 'actions_today', actionsToday.value);
+    trainingCount.value =
+        _localInt(localState, 'training_count', trainingCount.value);
+    _lastWorkDay = _localInt(localState, 'last_work_day', _lastWorkDay);
+    _lowConditionTraining =
+        _localInt(localState, 'low_condition_training', _lowConditionTraining);
+    _dayCared = localState['day_cared'] == true;
+    _restoreCounters(localState['zero_hours'], _zeroHours);
+    _restoreCounters(localState['over_hours'], _overHours);
+    _restoreCounters(localState['tutorial_zero_seconds'], _tutorialZeroSeconds);
+    ended.value = localState['ended'] == true;
+    endingStep.value = _localInt(localState, 'ending_step', endingStep.value);
+    endingMessage.value = localState['ending_message'] as String? ?? endingMessage.value;
+    clearPosition.value = localState['clear_position'] as String?;
+  }
+
+  /// サーバーが返す終了状態をローカル表示へ反映します。
+  void _restoreEndedState(Map<String, dynamic> data) {
+    final status = data['status'] as String?;
+    if (status == 'positive_end') {
+      ended.value = true;
+      endingStep.value = 0;
+      clearPosition.value = _positionNameFromCode(data['position_code']) ?? position;
+      endingMessage.value = '育成完了。${clearPosition.value}として図鑑に登録されました。';
+      return;
+    }
+    if (status == 'negative_end') {
+      ended.value = true;
+      endingStep.value = 2;
+      endingMessage.value = '育成は終了しました。卵からやりなおしてください。';
+    }
+  }
+
+  /// ローカルスナップショットの数値を傾向値へ反映します。
+  void _restoreDoubleValue(Map<String, dynamic> state, String stateKey, String trendKey) {
+    final value = state[stateKey];
+    if (value is num) trends[trendKey] = value.toDouble();
+  }
+
+  /// ローカルスナップショットからカウンターを復元します。
+  void _restoreCounters(Object? rawCounters, Map<String, int> target) {
+    if (rawCounters is! Map) return;
+    for (final key in target.keys) {
+      final value = rawCounters[key];
+      if (value is num) target[key] = value.toInt();
+    }
+  }
+
+  /// ローカルスナップショットの整数値を安全に読み取ります。
+  int _localInt(Map<String, dynamic> state, String key, int fallback) {
+    final value = state[key];
+    return value is num ? value.toInt() : fallback;
+  }
+
+  /// サーバーのポジションコードを画面表示用の名称へ変換します。
+  String? _positionNameFromCode(Object? code) => const {
+        'prop': 'プロップ',
+        'hooker': 'フッカー',
+        'lock': 'ロック',
+        'flanker': 'フランカー',
+        'number_eight': 'ナンバーエイト',
+        'scrum_half': 'スクラムハーフ',
+        'stand_off': 'スタンドオフ',
+        'center': 'センター',
+        'wing': 'ウイング',
+        'fullback': 'フルバック',
+      }[code];
 
   /// 専用APIから取得した解放済みポジションを画面状態へ反映します。
   Future<void> refreshUnlockedPositions() async {
@@ -346,7 +498,12 @@ class TrainingGameController extends GetxController with WidgetsBindingObserver 
   }
 
   /// サーバーが受け付ける段階コードを返します。
-  String get _stageCode => ['egg', 'child', 'training', 'growth'][stageIndex.value.clamp(0, 3).toInt()];
+  String get _stageCode => [
+        'egg',
+        'child',
+        'training',
+        'growth'
+      ][stageIndex.value.clamp(0, 3).toInt()];
 
   /// DB設計のパラメータコードへ変換します。
   Map<String, double> get _serverParameters => {
@@ -357,6 +514,8 @@ class TrainingGameController extends GetxController with WidgetsBindingObserver 
         'tendency_fw': trends['FW']!,
         'tendency_command': trends['CMD']!,
         'tendency_backs': trends['RUN']!,
+        'tendency_bulk': trends['BULK']!,
+        'tendency_tech': trends['TECH']!,
       };
 
   /// 現在状態をサーバーへ同期します。
@@ -404,6 +563,8 @@ class TrainingGameController extends GetxController with WidgetsBindingObserver 
       await _startServerState();
       return;
     }
+    // APIに未保存の進行カウンターも、通信失敗時に失わないよう先に保持します。
+    unawaited(_saveLocalGameState());
     final isPositiveEnd = clearPosition.value != null;
     final data = await _serverProvider.sync(
       stageCode: _stageCode,
@@ -418,24 +579,68 @@ class TrainingGameController extends GetxController with WidgetsBindingObserver 
               ? 'negative_end'
               : 'playing',
     );
-    _serverLockVersion = (data['lock_version'] as num?)?.toInt() ?? _serverLockVersion;
+    _serverLockVersion =
+        (data['lock_version'] as num?)?.toInt() ?? _serverLockVersion;
     // 図鑑はポジティブ終了時だけ再取得し、通常同期の余分な通信を省きます。
     if (isPositiveEnd && !_isDisposed) await refreshUnlockedPositions();
   }
 
+  /// 同じ育成サイクルだけを対象に、途中進行のローカル復元情報を保存します。
+  Future<void> _saveLocalGameState() {
+    final playerId = _serverPlayerId;
+    if (playerId == null) return Future<void>.value();
+    return MySharedPref.setTrainingGameLocalState(jsonEncode({
+      'player_id': playerId,
+      'bulk': trends['BULK'],
+      'tech': trends['TECH'],
+      'elapsed_hours': elapsedHours.value,
+      'total_elapsed_seconds': totalElapsedSeconds.value,
+      'main_elapsed_seconds': mainElapsedSeconds.value,
+      'day': day.value,
+      'seconds_in_stage': secondsInStage.value,
+      'days_in_stage': daysInStage.value,
+      'actions_today': actionsToday.value,
+      'training_count': trainingCount.value,
+      'last_work_day': _lastWorkDay,
+      'low_condition_training': _lowConditionTraining,
+      'day_cared': _dayCared,
+      'zero_hours': _zeroHours,
+      'over_hours': _overHours,
+      'tutorial_zero_seconds': _tutorialZeroSeconds,
+      'ended': ended.value,
+      'ending_step': endingStep.value,
+      'ending_message': endingMessage.value,
+      'clear_position': clearPosition.value,
+    }));
+  }
+
   /// ポジション名をDBコードへ変換します。
   String? get _positionCode => const {
-        'プロップ': 'prop', 'フッカー': 'hooker', 'ロック': 'lock', 'フランカー': 'flanker',
-        'ナンバーエイト': 'number_eight', 'スクラムハーフ': 'scrum_half', 'スタンドオフ': 'stand_off',
-        'センター': 'center', 'ウイング': 'wing', 'フルバック': 'fullback',
+        'プロップ': 'prop',
+        'フッカー': 'hooker',
+        'ロック': 'lock',
+        'フランカー': 'flanker',
+        'ナンバーエイト': 'number_eight',
+        'スクラムハーフ': 'scrum_half',
+        'スタンドオフ': 'stand_off',
+        'センター': 'center',
+        'ウイング': 'wing',
+        'フルバック': 'fullback',
       }[position];
 
   /// 図鑑に登録済みかを返します。
   bool isPositionUnlocked(String positionName) {
     final code = const {
-      'プロップ': 'prop', 'フッカー': 'hooker', 'ロック': 'lock', 'フランカー': 'flanker',
-      'ナンバーエイト': 'number_eight', 'スクラムハーフ': 'scrum_half', 'スタンドオフ': 'stand_off',
-      'センター': 'center', 'ウイング': 'wing', 'フルバック': 'fullback',
+      'プロップ': 'prop',
+      'フッカー': 'hooker',
+      'ロック': 'lock',
+      'フランカー': 'flanker',
+      'ナンバーエイト': 'number_eight',
+      'スクラムハーフ': 'scrum_half',
+      'スタンドオフ': 'stand_off',
+      'センター': 'center',
+      'ウイング': 'wing',
+      'フルバック': 'fullback',
     }[positionName];
     return code != null && unlockedPositions.contains(code);
   }
@@ -449,8 +654,12 @@ class TrainingGameController extends GetxController with WidgetsBindingObserver 
 
   /// 行動種別をDBコードへ変換します。
   String _actionCode(TrainingActionType type) => const {
-        TrainingActionType.meal: 'meal', TrainingActionType.clean: 'clean', TrainingActionType.rest: 'rest',
-        TrainingActionType.squat: 'training', TrainingActionType.work: 'work', TrainingActionType.tackle: 'tackle',
+        TrainingActionType.meal: 'meal',
+        TrainingActionType.clean: 'clean',
+        TrainingActionType.rest: 'rest',
+        TrainingActionType.squat: 'training',
+        TrainingActionType.work: 'work',
+        TrainingActionType.tackle: 'tackle',
         TrainingActionType.passAndRun: 'pass_run',
       }[type]!;
 
@@ -518,8 +727,10 @@ class TrainingGameController extends GetxController with WidgetsBindingObserver 
         _changeMeter('体調', -12);
         _changeMeter('食事', -8);
         _changeMeter('仕事', 10 * miniGameMultiplier);
-        _addTrend('FW', 5 * miniGameMultiplier, '体調', sourceOffset: 12, training: true);
-        _addTrend('BULK', 1 * miniGameMultiplier, '体調', sourceOffset: 12, training: true);
+        _addTrend('FW', 5 * miniGameMultiplier, '体調',
+            sourceOffset: 12, training: true);
+        _addTrend('TECH', 1 * miniGameMultiplier, '体調',
+            sourceOffset: 12, training: true);
         break;
       case TrainingActionType.passAndRun:
         _changeMeter('清潔', -10);
@@ -575,27 +786,38 @@ class TrainingGameController extends GetxController with WidgetsBindingObserver 
 
   /// 指定時間を進め、自然減衰と段階移行を処理します。
   void advanceTime(int hours) {
-    if (ended.value || evolutionStage.value != null) return;
-    for (var index = 0; index < hours; index++) {
-      _tickMainHour();
-      if (ended.value) return;
-    }
-    logs.insert(0, '${hours}時間経過。メーターが自然に減少しました。');
-    _syncServer();
+    advanceTimeMinutes(hours * 60);
   }
 
-  /// デバッグ操作としてチュートリアルを省略し、本編の初期状態にします。
-  void debugSkipTutorial() {
+  /// 指定した分数を進め、自然減衰と段階移行を処理します。
+  void advanceTimeMinutes(int minutes) {
+    if (minutes <= 0 || ended.value || evolutionStage.value != null) return;
+    // デバッグ加算分も表示用の経過時間へ反映し、内部進行と時計を一致させます。
+    _elapsedTimeOffsetSeconds += minutes * 60;
+    unawaited(MySharedPref.setTrainingGameDebugElapsedSeconds(
+        _elapsedTimeOffsetSeconds));
+    final progressAt = _mainProgressAt ??= DateTime.now();
+    _mainProgressAt = progressAt.subtract(Duration(minutes: minutes));
+    _mainClockTick.value++;
+    _advanceMainProgressToNow();
+    logs.insert(0, '${minutes}分経過。メーターが自然に減少しました。');
+    if (!_isDisposed) _syncServer();
+  }
+
+  /// デバッグ操作として育成期の初期状態にします。
+  void debugStartAtTraining() {
     stageIndex.value = 2;
     meters.assignAll({'食事': 20, '清潔': 20, '体調': 20, '仕事': 20});
     trends.assignAll({'FW': 0, 'CMD': 0, 'RUN': 0, 'BULK': 0, 'TECH': 0});
     elapsedHours.value = 0;
+    totalElapsedSeconds.value = 0;
+    mainElapsedSeconds.value = 0;
     day.value = 1;
     secondsInStage.value = 0;
     daysInStage.value = 0;
     actionsToday.value = 0;
     trainingCount.value = 0;
-    tutorialSpeed.value = 1;
+    timeSpeed.value = 1;
     _dayCared = false;
     _lowConditionTraining = 0;
     _zeroHours.updateAll((key, value) => 0);
@@ -606,6 +828,15 @@ class TrainingGameController extends GetxController with WidgetsBindingObserver 
     clearPosition.value = null;
     endingStep.value = 0;
     evolutionStage.value = null;
+    // デバッグ開始を仮想サイクルの開始時刻とし、実運用のstarted_atと同じ経路で計測します。
+    _mainStartedAt = DateTime.now();
+    _mainProgressAt = DateTime.now();
+    _elapsedTimeOffsetSeconds = 0;
+    unawaited(MySharedPref.clearTrainingGameDebugElapsedSeconds());
+    unawaited(MySharedPref.setTrainingGameStartedAt(_mainStartedAt!));
+    _updateElapsedTimeFromStart();
+    // デバッグ開始直後から本編のリアルタイム時計を再描画します。
+    _mainClockTick.value++;
     _syncServer();
   }
 
@@ -658,9 +889,8 @@ class TrainingGameController extends GetxController with WidgetsBindingObserver 
         type == TrainingActionType.squat &&
         !['食事', '清潔', '体調'].every((name) => meters[name]! >= 50)) return;
 
-    final activeMeters = stageIndex.value == 0
-        ? ['清潔', '体調']
-        : ['食事', '清潔', '体調'];
+    final activeMeters =
+        stageIndex.value == 0 ? ['清潔', '体調'] : ['食事', '清潔', '体調'];
     final effects = <TrainingActionType, Map<String, double>>{
       TrainingActionType.meal: {'食事': 35, '清潔': -3},
       TrainingActionType.clean: {'清潔': 40},
@@ -694,10 +924,10 @@ class TrainingGameController extends GetxController with WidgetsBindingObserver 
         : {'食事': .2, '清潔': .2, '体調': .2};
     decay.forEach((name, amount) => _changeMeter(name, -amount * seconds));
     secondsInStage.value += seconds;
+    totalElapsedSeconds.value += seconds;
     for (final name in decay.keys) {
-      _tutorialZeroSeconds[name] = meters[name]! <= 0
-          ? _tutorialZeroSeconds[name]! + seconds
-          : 0;
+      _tutorialZeroSeconds[name] =
+          meters[name]! <= 0 ? _tutorialZeroSeconds[name]! + seconds : 0;
       if (_tutorialZeroSeconds[name]! >= 30) {
         ended.value = true;
         // チュートリアル失敗時は進化演出を挟まず、引退画面へ直接進みます。
@@ -710,8 +940,8 @@ class TrainingGameController extends GetxController with WidgetsBindingObserver 
   }
 
   /// チュートリアルのリアルタイム速度を設定します。
-  void setTutorialSpeed(int speed) {
-    tutorialSpeed.value = speed;
+  void setTimeSpeed(int speed) {
+    timeSpeed.value = speed;
   }
 
   /// チュートリアルの段階移行条件を判定します。
@@ -734,6 +964,7 @@ class TrainingGameController extends GetxController with WidgetsBindingObserver 
   /// 本編を1時間進め、日単位の進行条件を更新します。
   void _tickMainHour() {
     elapsedHours.value++;
+    totalElapsedSeconds.value += Duration.secondsPerHour;
     _changeMeter('食事', meters['食事']! > 100 ? -8.4 : -4.2);
     _changeMeter('清潔', meters['清潔']! > 100 ? -2.8 : -1.4);
     _changeMeter('体調', meters['体調']! > 100 ? -4.2 : -2.1);
@@ -741,9 +972,9 @@ class TrainingGameController extends GetxController with WidgetsBindingObserver 
     _zeroHours.updateAll((name, hours) => meters[name]! <= 0 ? hours + 1 : 0);
     _overHours.updateAll((name, hours) => meters[name]! > 100 ? hours + 1 : 0);
     _dayCared = _dayCared ||
-        ['食事', '清潔', '体調', '仕事']
-            .every((name) => meters[name]! >= 20);
-    if (elapsedHours.value % 24 == 0) {
+        ['食事', '清潔', '体調', '仕事'].every((name) => meters[name]! >= 20);
+    // 育成期は実時間4時間をゲーム内の1日として扱います。
+    if (elapsedHours.value % mainDayHours == 0) {
       day.value++;
       if (_dayCared) daysInStage.value++;
       _dayCared = false;
@@ -752,6 +983,68 @@ class TrainingGameController extends GetxController with WidgetsBindingObserver 
       _advanceMainStageIfNeeded();
     }
     _checkGameOver();
+  }
+
+  /// 本編開始後に実時間で経過した時間を反映します。
+  void _advanceMainProgressToNow() {
+    if (stageIndex.value < 2 || ended.value || evolutionStage.value != null)
+      return;
+    final progressAt = _mainProgressAt ??= DateTime.now();
+    final elapsedSeconds = DateTime.now().difference(progressAt).inSeconds;
+    if (elapsedSeconds < 0) {
+      // 端末時計が巻き戻された場合、過去の基準時刻を待たず現在から進行を再開します。
+      _mainProgressAt = DateTime.now();
+      _updateElapsedTimeFromStart();
+      return;
+    }
+    // 卵段階と同じく、鮫になった後も毎秒の実時間を画面状態へ反映します。
+    _updateElapsedTimeFromStart();
+    final elapsedHours = elapsedSeconds ~/ Duration.secondsPerHour;
+    if (elapsedHours <= 0) return;
+    for (var index = 0; index < elapsedHours; index++) {
+      _tickMainHour();
+      if (ended.value || evolutionStage.value != null) break;
+    }
+    _mainProgressAt = progressAt.add(Duration(hours: elapsedHours));
+    _updateElapsedTimeFromStart();
+    _syncServer();
+  }
+
+  /// サーバーの育成開始日時を基準に、画面へ表示する経過秒数を更新します。
+  void _updateElapsedTimeFromStart() {
+    final startedAt = _mainStartedAt;
+    if (startedAt == null) return;
+    final elapsedSeconds = DateTime.now().difference(startedAt).inSeconds;
+    final currentElapsedSeconds =
+        (elapsedSeconds < 0 ? 0 : elapsedSeconds) + _elapsedTimeOffsetSeconds;
+    // 端末時計の巻き戻しで表示中の経過時間が減少しないよう維持します。
+    if (currentElapsedSeconds >= mainElapsedSeconds.value) {
+      mainElapsedSeconds.value = currentElapsedSeconds;
+    }
+  }
+
+  /// チュートリアルの倍速設定を時計へ反映します。
+  void _advanceTutorialClock(int speed) {
+    // 実時間との差分を補正し、停止・倍速でも表示とメーターの進行を一致させます。
+    _elapsedTimeOffsetSeconds += speed - 1;
+    _updateElapsedTimeFromStart();
+  }
+
+  /// 育成期・成長期の倍速設定を時計と本編進行へ反映します。
+  void _advanceMainClock(int speed) {
+    _elapsedTimeOffsetSeconds += speed - 1;
+    final progressAt = _mainProgressAt;
+    if (progressAt != null) {
+      // 基準時刻をずらし、次の本編更新でも同じ倍率の経過時間を扱います。
+      _mainProgressAt = progressAt.subtract(Duration(seconds: speed - 1));
+    }
+    _updateElapsedTimeFromStart();
+  }
+
+  /// APIのISO日時を端末のローカル時刻へ変換します。
+  DateTime? _parseServerDateTime(Object? value) {
+    if (value is! String || value.isEmpty) return null;
+    return DateTime.tryParse(value)?.toLocal();
   }
 
   /// 「世話が行き届いた日」7日で本編段階を進めます。
@@ -763,6 +1056,12 @@ class TrainingGameController extends GetxController with WidgetsBindingObserver 
       _showEvolutionForCurrentStage();
       daysInStage.value = 0;
       logs.insert(0, '成長しました。段階「${currentStage.name}」へ進みます。');
+      return;
+    }
+    if (position == '判定前') {
+      // 傾向未成立のまま図鑑登録せず、次の世話・練習で再判定できる状態を維持します。
+      daysInStage.value = requiredDays - 1;
+      logs.insert(0, 'ポジション判定には練習による傾向値の獲得が必要です。');
       return;
     }
     ended.value = true;
@@ -784,8 +1083,8 @@ class TrainingGameController extends GetxController with WidgetsBindingObserver 
   }
 
   /// 本編の「世話が行き届いた」判定を返します。
-  bool get _isCared => ['食事', '清潔', '体調', '仕事']
-      .every((name) => meters[name]! >= 20);
+  bool get _isCared =>
+      ['食事', '清潔', '体調', '仕事'].every((name) => meters[name]! >= 20);
 
   /// 体調が尽きた場合のゲームオーバーを判定します。
   void _checkGameOver() {
@@ -794,7 +1093,8 @@ class TrainingGameController extends GetxController with WidgetsBindingObserver 
     final overLimit = <String, int>{'食事': 72, '仕事': 72};
     final zeroTarget = _findExceeded(_zeroHours, zeroLimit);
     final overTarget = _findExceeded(_overHours, overLimit);
-    if (zeroTarget == null && overTarget == null && _lowConditionTraining < 15) return;
+    if (zeroTarget == null && overTarget == null && _lowConditionTraining < 15)
+      return;
     ended.value = true;
     endingStep.value = 2;
     endingMessage.value = zeroTarget != null

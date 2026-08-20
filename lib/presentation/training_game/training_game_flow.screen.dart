@@ -110,7 +110,9 @@ class TrainingGameNewGameScreen extends GetView<TrainingGameNewGameController> {
 
   /// 開始APIの成功後にだけ育成画面へ遷移します。
   void _startGame() {
-    controller.startNewGame().then((startedState) {
+    final arguments = Get.arguments;
+    final forceRestart = arguments is Map && arguments['debugRestart'] == true;
+    controller.startNewGame(forceRestart: forceRestart).then((startedState) {
       if (startedState == null) return;
       // 開始APIのレスポンスを引き渡し、画面表示時の再取得を省略します。
       Get.offNamed(Routes.TRAINING_GAME, arguments: startedState);

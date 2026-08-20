@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 
 import '../models/mini_game_result.dart';
 import 'pass_and_run_logic.dart';
@@ -25,9 +26,12 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
     with WidgetsBindingObserver {
   static const _passArrivalDuration = Duration(milliseconds: 220);
   static const _passCycleDuration = Duration(milliseconds: 400);
+  static const _passReturnDelay = Duration(milliseconds: 120);
 
   _PassGamePhase _phase = _PassGamePhase.waiting;
   final _roundScores = <int>[0, 0];
+  final _fieldTick = ValueNotifier<int>(0);
+  late final Ticker _fieldTicker;
   Timer? _clockTimer;
   DateTime? _roundStartedAt;
   DateTime? _penaltyUntil;
@@ -36,6 +40,11 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
   DateTime? _passReadyAt;
   Offset? _passStartOffset;
   Offset? _passTargetOffset;
+  Duration _passTravelDuration = _passArrivalDuration;
+  Duration _passReturnDuration = _passArrivalDuration;
+  double _passOutboundDistance = 0;
+  Offset? _passReturnStartOffset;
+  Offset? _passReturnTargetOffset;
   Offset? _dragStart;
   Offset? _dragCurrent;
   Size _fieldSize = Size.zero;
@@ -68,12 +77,17 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    _fieldTicker = Ticker((_) {
+      if (mounted) _fieldTick.value++;
+    });
   }
 
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     _clockTimer?.cancel();
+    _fieldTicker.dispose();
+    _fieldTick.dispose();
     super.dispose();
   }
 
@@ -107,6 +121,10 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
     _passArrivalAt = null;
     _passStartOffset = null;
     _passTargetOffset = null;
+    _passReturnDuration = _passArrivalDuration;
+    _passOutboundDistance = 0;
+    _passReturnStartOffset = null;
+    _passReturnTargetOffset = null;
     _passInFlight = false;
     _passScoreConfirmed = false;
     _isFailedPass = false;
@@ -123,17 +141,25 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
 
   /// 現在の残り時間から計測と位置入替を開始します。
   void _startRoundTimers() {
+    _fieldTicker
+      ..stop()
+      ..start();
     _clockTimer = Timer.periodic(const Duration(milliseconds: 50), (_) {
       if (!mounted || _roundStartedAt == null) return;
       final now = DateTime.now();
-      _updatePassCycle(now);
+      final previousRemainingDeciseconds = _remainingMilliseconds ~/ 100;
+      final cycleChanged = _updatePassCycle(now);
       final elapsed = now.difference(_roundStartedAt!);
       final remaining = PassAndRunRules.roundDuration - elapsed;
       if (remaining <= Duration.zero) {
         _finishRound();
         return;
       }
-      setState(() => _remainingMilliseconds = remaining.inMilliseconds);
+      _remainingMilliseconds = remaining.inMilliseconds;
+      if (cycleChanged ||
+          previousRemainingDeciseconds != _remainingMilliseconds ~/ 100) {
+        setState(() {});
+      }
     });
   }
 
@@ -141,6 +167,7 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
   void _finishRound() {
     _updatePassCycle(DateTime.now());
     _clockTimer?.cancel();
+    _fieldTicker.stop();
     _passInFlight = false;
     _passScoreConfirmed = false;
     _isFailedPass = false;
@@ -151,6 +178,8 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
     _passReadyAt = null;
     _passStartOffset = null;
     _passTargetOffset = null;
+    _passReturnStartOffset = null;
+    _passReturnTargetOffset = null;
     _dragStart = null;
     _dragCurrent = null;
     if (_roundIndex == 0) {
@@ -215,6 +244,8 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
     final mate = _mateOffset;
     final succeeded = PassAndRunRules.isAccurate(
       flick: flick,
+      // 指の開始位置ではなく、画面上のプレイヤーから目標への方向を判定します。
+      // プレイヤーの中心から外れてフリックしても、正しいパス方向なら成功させます。
       targetDeltaX: mate.dx - player.dx,
       targetDeltaY: mate.dy - player.dy,
     );
@@ -227,12 +258,32 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
     _isBallLost = false;
     _pendingPassRoundIndex = _roundIndex;
     _passStartedAt = now;
-    _passArrivalAt = now.add(_passArrivalDuration);
-    _passReadyAt = now.add(_passCycleDuration);
     _passStartOffset = _playerBallOffset;
     _passTargetOffset = succeeded
         ? _mateCatchOffset
         : _flickExitOffset(start: start, current: current);
+    _passReturnStartOffset = null;
+    _passReturnTargetOffset = null;
+    // 成功パスの速度を基準に、失敗時は移動距離に応じて到達時間を延長します。
+    // これにより、画面外へ抜ける失敗ボールだけが不自然に加速しません。
+    final successfulDistance = (_mateCatchOffset - _playerBallOffset).distance;
+    final actualDistance = (_passTargetOffset! - _passStartOffset!).distance;
+    _passOutboundDistance = successfulDistance;
+    _passTravelDuration = successfulDistance == 0
+        ? _passArrivalDuration
+        : Duration(
+            microseconds: (_passArrivalDuration.inMicroseconds *
+                    actualDistance /
+                    successfulDistance)
+                .round(),
+          );
+    final passCompletionDuration = succeeded
+        ? _passTravelDuration + _passReturnDelay + _passReturnDuration
+        : (_passTravelDuration > _passCycleDuration
+            ? _passTravelDuration
+            : _passCycleDuration);
+    _passArrivalAt = now.add(_passTravelDuration);
+    _passReadyAt = now.add(passCompletionDuration);
     if (!succeeded) {
       _penaltyUntil = DateTime.now().add(PassAndRunRules.missPenalty);
     }
@@ -260,22 +311,26 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
     return DateTime.now().difference(startedAt).inMilliseconds / 1000;
   }
 
-  Offset get _playerOffset {
-    final y = .5 + .28 * math.sin(_motionSeconds * math.pi * 2 / 2.6);
+  Offset _playerOffsetAt(double seconds) {
+    final y = .5 + .28 * math.sin(seconds * math.pi * 2 / 2.6);
     return Offset(
       _fieldSize.width * (_isOutbound ? .25 : .75),
       _fieldSize.height * y,
     );
   }
 
-  Offset get _mateOffset {
-    final y = .5 +
-        .28 * math.sin(_motionSeconds * math.pi * 2 / 2.05 + math.pi * .65);
+  Offset _mateOffsetAt(double seconds) {
+    final y =
+        .5 + .28 * math.sin(seconds * math.pi * 2 / 2.05 + math.pi * .65);
     return Offset(
       _fieldSize.width * (_isOutbound ? .75 : .25),
       _fieldSize.height * y,
     );
   }
+
+  Offset get _playerOffset => _playerOffsetAt(_motionSeconds);
+
+  Offset get _mateOffset => _mateOffsetAt(_motionSeconds);
 
   /// 鮫太朗が保持しているときのボール表示位置です。
   Offset get _playerBallOffset =>
@@ -309,36 +364,39 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
       return _playerBallOffset;
     }
     final elapsed = _passElapsed;
-    if (elapsed <= _passArrivalDuration) {
+    if (elapsed <= _passTravelDuration) {
       final progress =
-          elapsed.inMicroseconds / _passArrivalDuration.inMicroseconds;
+          elapsed.inMicroseconds / _passTravelDuration.inMicroseconds;
       return Offset.lerp(start, target, progress.clamp(0, 1).toDouble())!;
     }
     if (_isFailedPass) return target;
-    final returnDuration = _passCycleDuration - _passArrivalDuration;
-    final returnElapsed = elapsed - _passArrivalDuration;
+    final returnStart = _passReturnStartOffset ?? target;
+    final returnTarget = _passReturnTargetOffset ?? _playerBallOffset;
+    final returnElapsed = elapsed - _passTravelDuration - _passReturnDelay;
+    if (returnElapsed.isNegative) return returnStart;
     final progress =
-        returnElapsed.inMicroseconds / returnDuration.inMicroseconds;
+        returnElapsed.inMicroseconds / _passReturnDuration.inMicroseconds;
     return Offset.lerp(
-      target,
-      _playerBallOffset,
+      returnStart,
+      returnTarget,
       progress.clamp(0, 1).toDouble(),
     )!;
   }
 
   /// 軌跡残像の始点を、パス往路・返球に応じて返します。
   Offset get _ballTrailStart {
-    if (_isFailedPass || _passElapsed <= _passArrivalDuration) {
+    if (_isFailedPass || _passElapsed <= _passTravelDuration) {
       return _passStartOffset ?? _playerOffset;
     }
-    return _passTargetOffset ?? _mateOffset;
+    return _passReturnStartOffset ?? _passTargetOffset ?? _mateOffset;
   }
 
   /// ボール到達時の得点確定と、返球完了後の次入力解放を更新します。
-  void _updatePassCycle(DateTime now) {
+  bool _updatePassCycle(DateTime now) {
     if (!_passInFlight || _isPaused || _pendingPassRoundIndex != _roundIndex) {
-      return;
+      return false;
     }
+    var changed = false;
     // ラウンド終了後のタイマー更新で、遅れて到達したボールを得点化しないようにします。
     final roundDeadline = _roundStartedAt?.add(PassAndRunRules.roundDuration);
     if (!_isFailedPass &&
@@ -349,12 +407,37 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
         !now.isBefore(_passArrivalAt!)) {
       _roundScores[_roundIndex]++;
       _passScoreConfirmed = true;
+      // 目標の現在位置を返球の起点にし、返球完了時のプレイヤー位置を先読みします。
+      // 固定した発射時の座標へ戻すと、移動中のキャラクターからボールが曲がって見えます。
+      _passReturnStartOffset = _mateCatchOffset;
+      final initialReturnSeconds = _motionSeconds +
+          (_passReturnDelay + _passTravelDuration).inMilliseconds / 1000;
+      final initialReturnTarget = _playerOffsetAt(initialReturnSeconds) +
+          Offset(_isOutbound ? 24 : -24, 4);
+      final returnDistance =
+          (initialReturnTarget - _passReturnStartOffset!).distance;
+      _passReturnDuration = _passOutboundDistance == 0
+          ? _passTravelDuration
+          : Duration(
+              microseconds: (_passArrivalDuration.inMicroseconds *
+                      returnDistance /
+                      _passOutboundDistance)
+                  .round(),
+            );
+      // 同じ速度で返球しつつ、返球時間に合わせてプレイヤーの到達位置も先読みします。
+      final returnSeconds = _motionSeconds +
+          (_passReturnDelay + _passReturnDuration).inMilliseconds / 1000;
+      _passReturnTargetOffset = _playerOffsetAt(returnSeconds) +
+          Offset(_isOutbound ? 24 : -24, 4);
+      _passReadyAt = now.add(_passReturnDelay + _passReturnDuration);
+      changed = true;
     }
     if (_isFailedPass &&
         _passArrivalAt != null &&
         !now.isBefore(_passArrivalAt!)) {
       // 画面外へ抜けた失敗ボールを、ペナルティ中は再表示しません。
       _isBallLost = true;
+      changed = true;
     }
     if (_passReadyAt != null && !now.isBefore(_passReadyAt!)) {
       _passInFlight = false;
@@ -365,8 +448,14 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
       _passReadyAt = null;
       _passStartOffset = null;
       _passTargetOffset = null;
+      _passReturnDuration = _passArrivalDuration;
+      _passOutboundDistance = 0;
+      _passReturnStartOffset = null;
+      _passReturnTargetOffset = null;
       _isFailedPass = false;
+      changed = true;
     }
+    return changed;
   }
 
   /// ミニゲーム結果を育成画面へ返します。
@@ -394,6 +483,7 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
     _pausedPassElapsed =
         _passStartedAt == null ? null : now.difference(_passStartedAt!);
     _clockTimer?.cancel();
+    _fieldTicker.stop();
     setState(() => _isPaused = true);
   }
 
@@ -412,7 +502,7 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
         _pausedPassRemaining == null ? null : now.add(_pausedPassRemaining!);
     if (_passInFlight && _pausedPassElapsed != null) {
       _passStartedAt = now.subtract(_pausedPassElapsed!);
-      _passArrivalAt = _passStartedAt!.add(_passArrivalDuration);
+      _passArrivalAt = _passStartedAt!.add(_passTravelDuration);
     }
     setState(() => _isPaused = false);
     _startRoundTimers();
@@ -456,7 +546,12 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
                 ],
               ),
               const SizedBox(height: 12),
-              Expanded(child: _buildField()),
+              Expanded(
+                child: ValueListenableBuilder<int>(
+                  valueListenable: _fieldTick,
+                  builder: (context, _, child) => _buildField(),
+                ),
+              ),
               const SizedBox(height: 12),
               _buildStatusPanel(),
             ],

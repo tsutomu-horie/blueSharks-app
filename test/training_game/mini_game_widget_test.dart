@@ -162,8 +162,8 @@ void main() {
 
     expect(find.byKey(const Key('pass-ball-trail')), findsOneWidget);
     expect(find.text('MISS　2秒間パス不可'), findsOneWidget);
-    // 失敗パスは返球されず、画面外へ抜けた後はペナルティ中に表示しません。
-    await tester.pump(const Duration(milliseconds: 250));
-    expect(find.byKey(const Key('pass-ball')), findsNothing);
+    // 失敗パスも画面外へ抜けた後にプレイヤーへ返球されます。
+    await tester.pump(const Duration(milliseconds: 1200));
+    expect(find.byKey(const Key('pass-ball')), findsOneWidget);
   });
 }
