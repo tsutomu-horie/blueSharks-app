@@ -709,6 +709,7 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
         ['食事', '清潔', '体調'].every((name) => controller.meters[name]! >= 50);
     final enabled = !controller.ended.value &&
         tutorialActionAllowed &&
+        controller.canPerform(type) &&
         !(type == TrainingActionType.squat &&
             (controller.stageIndex.value < 1 || !squatRequirementMet)) &&
         !(type == TrainingActionType.work && controller.stageIndex.value < 2);
@@ -754,6 +755,11 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
             ),
           ),
           Text(action.label, style: TextStyle(fontSize: 10.sp)),
+          if (controller.cooldownLabel(type).isNotEmpty)
+            Text(
+              controller.cooldownLabel(type),
+              style: TextStyle(fontSize: 9.sp, color: Colors.redAccent),
+            ),
         ],
       ),
     );
@@ -915,6 +921,34 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
                 },
               ),
             ],
+            // デバッグ時だけ、行動ごとのクールタイム適用状態を切り替えます。
+            Obx(
+              () => Column(
+                children: [
+                  const ListTile(
+                    leading: Icon(Icons.timer),
+                    title: Text('行動別クールタイム'),
+                    subtitle: Text('正式値調整用。既定値はお世話のみ有効です。'),
+                  ),
+                  ...TrainingGameController.actions.map(
+                    (action) => SwitchListTile(
+                      dense: true,
+                      title: Text(action.label),
+                      subtitle: Text(
+                        TrainingGameController.isCooldownAction(action.type)
+                            ? '${TrainingGameController.careCooldown.inSeconds}秒'
+                            : '通常は無効（デバッグで変更可能）',
+                      ),
+                      value: controller.isCooldownEnabled(action.type),
+                      onChanged: (enabled) => controller.setCooldownEnabled(
+                        action.type,
+                        enabled,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
             ListTile(
               leading: const Icon(Icons.refresh),
               title: const Text('🥚 段階1（卵）から開始'),

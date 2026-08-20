@@ -111,29 +111,29 @@ class _PassAndRunGamePreview extends StatelessWidget {
   }
 }
 
-/// タックルの切り返しと上下入力方向を描画します。
+/// タックルの接近と、上下の入力方向を描画します。
 class _TackleGuidePainter extends CustomPainter {
   const _TackleGuidePainter();
 
   @override
   void paint(Canvas canvas, Size size) {
-    final opponent = Offset(size.width * .79, size.height * .36);
-    final approach = Offset(size.width * .62, size.height * .5);
-    final avoid = Offset(size.width * .66, size.height * .75);
-    final guidePaint = _arrowPaint(const Color(0xff8f2fd0));
-    final approachPaint = _arrowPaint(const Color(0xff94a3b8));
+    final approachStart = Offset(size.width * .82, size.height * .38);
+    final approachEnd = Offset(size.width * .58, size.height * .38);
+    final inputOrigin = Offset(size.width * .48, size.height * .5);
+    final inputUp = Offset(size.width * .48, size.height * .16);
+    final inputDown = Offset(size.width * .48, size.height * .84);
+    final inputPaint = _arrowPaint(const Color(0xff8f2fd0));
 
-    // 相手の踏み込みと反対方向の切り返しを、実ゲームと同じ色で示します。
-    _drawArrow(canvas, opponent, approach, approachPaint);
-    _drawArrow(canvas, approach, avoid, guidePaint);
-    canvas.drawCircle(
-      Offset(size.width * .2, size.height * .76),
-      9,
-      Paint()
-        ..color = const Color(0xff2563eb)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 2,
+    // 本編の接近演出に合わせ、相手が右から左へ進む水平矢印を描きます。
+    _drawArrow(
+      canvas,
+      approachStart,
+      approachEnd,
+      _arrowPaint(const Color(0xff94a3b8)),
     );
+    // 相手のフェイント後に選択する上下2方向を、同じ始点から描きます。
+    _drawArrow(canvas, inputOrigin, inputUp, inputPaint);
+    _drawArrow(canvas, inputOrigin, inputDown, inputPaint);
   }
 
   @override
