@@ -104,6 +104,10 @@ class MySharedPref {
     return value == null ? null : DateTime.tryParse(value);
   }
 
+  /// 保存済みの育成サイクル開始日時を削除します。
+  static Future<void> clearTrainingGameStartedAt() =>
+      _sharedPreferences.remove(_trainingGameStartedAt);
+
   /// デバッグで加算した育成経過秒数を保存します。
   static Future<void> setTrainingGameDebugElapsedSeconds(int value) =>
       _sharedPreferences.setInt(_trainingGameDebugElapsedSeconds, value);

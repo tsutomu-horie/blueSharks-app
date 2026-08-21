@@ -18,19 +18,25 @@ class TrainingGameNewGameController extends GetxController {
     isStarting.value = true;
     errorMessage.value = '';
 
-    return _provider
-        .start(
-          stageCode: 'egg',
-          parameters: const {
-            'hunger': 100,
-            'cleanliness': 50,
-            'condition': 50,
-            'work': 0,
-            'tendency_fw': 0,
-            'tendency_command': 0,
-            'tendency_backs': 0,
-          },
-          forceRestart: forceRestart,
+    // 直前の育成サイクルの終了同期が完了してから開始し、旧状態との競合を防ぎます。
+    return TrainingGameProvider.waitForPendingSync()
+        .then(
+          (_) => _provider.start(
+            stageCode: 'egg',
+            parameters: const {
+              // 段階1はシミュレータで確定したチュートリアル用初期値を使用します。
+              'hunger': 100,
+              'cleanliness': 50,
+              'condition': 50,
+              'work': 0,
+              'tendency_fw': 0,
+              'tendency_command': 0,
+              'tendency_backs': 0,
+              'tendency_bulk': 0,
+              'tendency_tech': 0,
+            },
+            forceRestart: forceRestart,
+          ),
         )
         .then<Map<String, dynamic>?>((data) async {
           // 新しいサイクルでは、前サイクルのデバッグ加算を引き継ぎません。

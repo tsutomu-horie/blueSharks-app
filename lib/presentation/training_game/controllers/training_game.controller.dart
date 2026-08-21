@@ -100,6 +100,7 @@ class TrainingGameController extends GetxController
       type == TrainingActionType.squat;
 
   final meters = <String, double>{
+    // 段階1のチュートリアル用初期値を、サーバー応答前にも表示します。
     '食事': 100,
     '清潔': 50,
     '体調': 50,
@@ -141,11 +142,11 @@ class TrainingGameController extends GetxController
   final trainingCount = 0.obs;
   final timeSpeed = 1.obs;
   final isServerStateReady = false.obs;
+  final serverErrorMessage = ''.obs;
   int _lastWorkDay = 0;
   int _lowConditionTraining = 0;
   bool _dayCared = false;
   final _zeroHours = <String, int>{'食事': 0, '清潔': 0, '体調': 0, '仕事': 0};
-  final _overHours = <String, int>{'食事': 0, '清潔': 0, '体調': 0, '仕事': 0};
   final _cooldownUntil = <TrainingActionType, DateTime>{};
   final _tutorialZeroSeconds = <String, int>{'食事': 0, '清潔': 0, '体調': 0};
   Timer? _tutorialTimer;
@@ -161,6 +162,7 @@ class TrainingGameController extends GetxController
   bool _syncRequested = false;
   bool _syncRunning = false;
   bool _hasUnsyncedLocalState = false;
+  bool _skipFinalSync = false;
   int _localStateRevision = 0;
   bool _isDisposed = false;
   final TrainingGameProvider _serverProvider = TrainingGameProvider();
@@ -313,8 +315,56 @@ class TrainingGameController extends GetxController
     _tutorialTimer?.cancel();
     _mainTimer?.cancel();
     // 画面終了直前の最新状態だけを、既存の同期処理の後ろへ追加します。
-    _queueSync(force: true);
+    if (!_skipFinalSync) _queueSync(force: true);
     super.onClose();
+  }
+
+  /// デバッグ用に、サーバー・端末の育成データを初期パラメータ付きで初期化します。
+  Future<Map<String, dynamic>?> resetDebugGame() {
+    if (_isDisposed) return Future<Map<String, dynamic>?>.value();
+    // 先行する同期を完了させてから削除し、古い状態の再保存を防ぎます。
+    return TrainingGameProvider.waitForPendingSync()
+        .then((_) => _serverProvider.resetDebugState())
+        .then<Map<String, dynamic>?>((initialState) async {
+      _skipFinalSync = true;
+      await MySharedPref.clearTrainingGameStartedAt();
+      await MySharedPref.clearTrainingGameDebugElapsedSeconds();
+      await MySharedPref.clearTrainingGameLocalState();
+      // 画面遷移を挟まず、APIが返した初期状態を現在のControllerへ反映します。
+      _resetLocalProgressForNewCycle();
+      _initializeServerState(initialState);
+      _skipFinalSync = false;
+      return initialState;
+    }, onError: (_, __) {
+      // 初期化失敗時は現在のゲームを維持し、誤って画面遷移しないようにします。
+      return null;
+    });
+  }
+
+  /// 初期化前サイクルのローカル進行状態を破棄します。
+  void _resetLocalProgressForNewCycle() {
+    elapsedHours.value = 0;
+    totalElapsedSeconds.value = 0;
+    mainElapsedSeconds.value = 0;
+    day.value = 1;
+    secondsInStage.value = 0;
+    daysInStage.value = 0;
+    actionsToday.value = 0;
+    trainingCount.value = 0;
+    _lastWorkDay = 0;
+    _lowConditionTraining = 0;
+    _dayCared = false;
+    _zeroHours.updateAll((key, value) => 0);
+    _tutorialZeroSeconds.updateAll((key, value) => 0);
+    _cooldownUntil.clear();
+    ended.value = false;
+    endingStep.value = 0;
+    endingMessage.value = '';
+    clearPosition.value = null;
+    evolutionStage.value = null;
+    _mainStartedAt = null;
+    _mainProgressAt = null;
+    _elapsedTimeOffsetSeconds = 0;
   }
 
   /// 育成完了後の演出フローを次へ進めます。
@@ -356,6 +406,7 @@ class TrainingGameController extends GetxController
 
   /// サーバーに保存された育成状態を復元し、なければ新規作成します。
   Future<void> _restoreServerState() async {
+    serverErrorMessage.value = '';
     // 復帰イベントが短時間に複数回発生しても、取得処理を直列化します。
     _restoreChain = _restoreChain.then((_) async {
       if (_isDisposed) return;
@@ -370,10 +421,19 @@ class TrainingGameController extends GetxController
       }
       isServerStateReady.value = true;
     }).catchError((_) {
-      // オフライン時は既存のローカル進行を維持します。
-      if (!_isDisposed) isServerStateReady.value = true;
+      // 仕様どおり、通信不可時はローカル状態だけでプレイを継続しません。
+      if (!_isDisposed) {
+        isServerStateReady.value = false;
+        serverErrorMessage.value = '通信状態を確認して、もう一度お試しください。';
+      }
     });
     await _restoreChain;
+  }
+
+  /// 通信エラー画面からサーバー状態の取得を再試行します。
+  void retryRestoreServerState() {
+    if (_isDisposed) return;
+    unawaited(_restoreServerState());
   }
 
   /// 初期状態をサーバーへ保存します。
@@ -436,8 +496,13 @@ class TrainingGameController extends GetxController
         if (value == null) continue;
         final displayName = displayMap[entry.key];
         final tendencyName = tendencyMap[entry.key];
-        if (displayName != null) meters[displayName] = value;
-        if (tendencyName != null) trends[tendencyName] = value;
+        // サーバー値も画面・次回同期で仕様範囲を超えないよう正規化します。
+        if (displayName != null) {
+          meters[displayName] = value.clamp(0, 150).toDouble();
+        }
+        if (tendencyName != null) {
+          trends[tendencyName] = value.clamp(0, 999).toDouble();
+        }
       }
     }
     _restoreLocalGameState(data);
@@ -496,7 +561,6 @@ class TrainingGameController extends GetxController
     _dayCared = localState['day_cared'] == true;
     _restoreCooldowns(localState['cooldowns']);
     _restoreCounters(localState['zero_hours'], _zeroHours);
-    _restoreCounters(localState['over_hours'], _overHours);
     _restoreCounters(localState['tutorial_zero_seconds'], _tutorialZeroSeconds);
     ended.value = localState['ended'] == true;
     endingStep.value = _localInt(localState, 'ending_step', endingStep.value);
@@ -714,7 +778,6 @@ class TrainingGameController extends GetxController
       'low_condition_training': _lowConditionTraining,
       'day_cared': _dayCared,
       'zero_hours': _zeroHours,
-      'over_hours': _overHours,
       'tutorial_zero_seconds': _tutorialZeroSeconds,
       'cooldowns': {
         for (final entry in _cooldownUntil.entries)
@@ -829,8 +892,6 @@ class TrainingGameController extends GetxController
     }
 
     final wasOverfed = meters['食事']! > 100;
-    final wasCleanNoop =
-        type == TrainingActionType.clean && meters['清潔']! >= 100;
     final miniGameMultiplier = miniGameResult?.effectMultiplier ?? 1.0;
     final workBeforeAction = meters['仕事']!;
 
@@ -840,11 +901,8 @@ class TrainingGameController extends GetxController
         _changeMeter('清潔', -3);
         break;
       case TrainingActionType.clean:
-        // 清潔度100以上では掃除を空振り扱いにし、行動回数だけ消費します。
-        if (!wasCleanNoop) {
-          _changeMeter('清潔', 40);
-          _addTrend('TECH', 2, '体調');
-        }
+        _changeMeter('清潔', 40);
+        _addTrend('TECH', 2, '体調');
         break;
       case TrainingActionType.rest:
         _changeMeter('体調', 40);
@@ -903,9 +961,7 @@ class TrainingGameController extends GetxController
     }
     logs.insert(
       0,
-      wasCleanNoop
-          ? '掃除をしましたが、部屋は汚れていないため効果はありません。'
-          : miniGameResult == null
+      miniGameResult == null
           ? '${_labelFor(type)}を実行しました。'
           : '${miniGameResult.summary}／育成結果へ反映しました。',
     );
@@ -959,7 +1015,6 @@ class TrainingGameController extends GetxController
     _dayCared = false;
     _lowConditionTraining = 0;
     _zeroHours.updateAll((key, value) => 0);
-    _overHours.updateAll((key, value) => 0);
     _tutorialZeroSeconds.updateAll((key, value) => 0);
     _cooldownUntil.clear();
     ended.value = false;
@@ -981,6 +1036,7 @@ class TrainingGameController extends GetxController
 
   /// メーターを範囲内に収めて更新します。
   void _changeMeter(String name, double amount) {
+    // 可視パラメータは仕様どおり整数相当の0〜100で保持します。
     meters[name] = (meters[name]! + amount).clamp(0, 150).toDouble();
   }
 
@@ -992,6 +1048,7 @@ class TrainingGameController extends GetxController
 
   /// 傾向値を0未満にならないよう更新します。
   void _changeTrend(String name, double amount) {
+    // 育成傾向も仕様上の上限100を超えないようにします。
     trends[name] = (trends[name]! + amount).clamp(0, 999).toDouble();
   }
 
@@ -1003,7 +1060,6 @@ class TrainingGameController extends GetxController
     double sourceOffset = 0,
     bool training = false,
   }) {
-    if (meters['体調']! > 100) return;
     final sourceValue = meters[source]! + sourceOffset;
     var coefficient = sourceValue >= 80
         ? 1.4
@@ -1012,6 +1068,7 @@ class TrainingGameController extends GetxController
             : sourceValue >= 20
                 ? .6
                 : .2;
+    if (meters['体調']! > 100) return;
     coefficient *= meters['清潔']! > 100
         ? .8
         : meters['清潔']! >= 80
@@ -1102,6 +1159,7 @@ class TrainingGameController extends GetxController
             ['食事', '清潔', '体調'].every((name) => meters[name]! >= 60);
     if (!ready) return;
     stageIndex.value++;
+    // チュートリアルから本編へは、シミュレータ仕様どおり表示値を引き継ぎます。
     _showEvolutionForCurrentStage();
     secondsInStage.value = 0;
     trainingCount.value = 0;
@@ -1118,7 +1176,6 @@ class TrainingGameController extends GetxController
     _changeMeter('体調', meters['体調']! > 100 ? -4.2 : -2.1);
     _changeMeter('仕事', meters['仕事']! > 100 ? -8.4 : -4.2);
     _zeroHours.updateAll((name, hours) => meters[name]! <= 0 ? hours + 1 : 0);
-    _overHours.updateAll((name, hours) => meters[name]! > 100 ? hours + 1 : 0);
     _dayCared = _dayCared ||
         ['食事', '清潔', '体調', '仕事'].every((name) => meters[name]! >= 20);
     // 育成期は実時間4時間をゲーム内の1日として扱います。
@@ -1238,18 +1295,13 @@ class TrainingGameController extends GetxController
   void _checkGameOver() {
     if (ended.value) return;
     final zeroLimit = <String, int>{'食事': 48, '体調': 48, '清潔': 72};
-    final overLimit = <String, int>{'食事': 72, '仕事': 72};
     final zeroTarget = _findExceeded(_zeroHours, zeroLimit);
-    final overTarget = _findExceeded(_overHours, overLimit);
-    if (zeroTarget == null && overTarget == null && _lowConditionTraining < 15)
-      return;
+    if (zeroTarget == null && _lowConditionTraining < 15) return;
     ended.value = true;
     endingStep.value = 2;
     endingMessage.value = zeroTarget != null
         ? '${zeroTarget.key}が0のまま${zeroTarget.value}時間経過しました。'
-        : overTarget != null
-            ? '${overTarget.key}が過剰のまま${overTarget.value}時間経過しました。'
-            : '体調20未満での練習が15回になりました。';
+        : '体調20未満での練習が15回になりました。';
     logs.insert(0, 'ゲームオーバー：体調が0になりました。');
   }
 
