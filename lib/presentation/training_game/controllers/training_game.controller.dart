@@ -228,7 +228,7 @@ class TrainingGameController extends GetxController
 
   /// 現在の育成キャラクター表示名を返します。
   String get characterLabel {
-    if (ended.value) return '🦈';
+    // 引退後も終了状態ではなく、最後に到達した育成段階の見た目を維持します。
     if (stageIndex.value == 0) return '🥚';
     if (stageIndex.value == 1) return '🐣';
     if (stageIndex.value == 2) return '🦈';
