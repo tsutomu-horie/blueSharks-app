@@ -43,6 +43,8 @@ class _TackleGameScreenState extends State<TackleGameScreen>
   Duration? _pausedDelay;
   bool _isPaused = false;
   bool _restartInputOnResume = false;
+  // 判定演出が終わるまでは、入力イベントから次セットへ進めません。
+  bool _canAdvanceAfterAttempt = false;
 
   int get _setNumber => (_attempts.length + 1).clamp(1, TackleRules.setCount);
 
@@ -79,6 +81,7 @@ class _TackleGameScreenState extends State<TackleGameScreen>
     setState(() {
       _latestAttempt = null;
       _attemptSucceeded = null;
+      _canAdvanceAfterAttempt = false;
       _phase = _TacklePhase.approach;
       _isPaused = false;
       _playerAlignment = const Alignment(-.82, 0);
@@ -187,6 +190,7 @@ class _TackleGameScreenState extends State<TackleGameScreen>
       _attempts.add(result);
       _latestAttempt = result;
       _attemptSucceeded = success;
+      _canAdvanceAfterAttempt = false;
       _phase = _TacklePhase.resolution;
       // 成否にかかわらず、ユーザーがタップした上／下方向へ鮫太朗を移動します。
       if (tappedDirection != null) {
@@ -209,7 +213,11 @@ class _TackleGameScreenState extends State<TackleGameScreen>
     // 決着演出を確認してから、ユーザーが次セットへ進める判定画面を表示します。
     _timers.add(Timer(const Duration(milliseconds: 650), () {
       if (!mounted || _phase != _TacklePhase.resolution) return;
-      setState(() => _phase = _TacklePhase.attemptResult);
+      setState(() {
+        _phase = _TacklePhase.attemptResult;
+        // 決着演出を見終えてから、初めて次セットへの操作を有効にします。
+        _canAdvanceAfterAttempt = true;
+      });
     }));
   }
 
@@ -222,6 +230,11 @@ class _TackleGameScreenState extends State<TackleGameScreen>
 
   /// 次セット、または3セット後の総合結果へ進みます。
   void _advanceAfterAttempt() {
+    if (_phase != _TacklePhase.attemptResult || !_canAdvanceAfterAttempt) {
+      return;
+    }
+    // 同じタップや重複したコールバックで、2セット進まないようにします。
+    _canAdvanceAfterAttempt = false;
     if (_attempts.length >= TackleRules.setCount) {
       setState(() => _phase = _TacklePhase.gameResult);
       return;
