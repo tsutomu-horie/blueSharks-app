@@ -108,9 +108,13 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
       );
     }
     if (step <= 2) {
+      // 引退時は固定の鮫ではなく、現在の育成段階に対応する見た目を表示します。
+      final endingVisual = isPositive
+          ? '🦈\n旅立ち'
+          : '${controller.characterLabel}\n引退';
       return _buildEndingPage(
         title: '旅立ち',
-        visual: isPositive ? '🦈\n旅立ち' : '🦈\n引退',
+        visual: endingVisual,
         message: isPositive ? '育成した鮫太朗が旅立ちます。' : '育成を終え、次の卵へ進みます。',
         buttonLabel: isPositive ? '図鑑へ登録' : '次の卵へ',
         onPressed: isPositive ? controller.advanceEndingStep : _openNewEgg,
