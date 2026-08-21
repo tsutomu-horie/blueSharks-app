@@ -417,14 +417,12 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
                     ),
                     if (overageWidth > 0)
                       Positioned(
-                        // 超過値は専用ゲージとして左端から表示します。
+                        // 超過値は斜線を使わず、赤色のゲージとして左端から表示します。
                         left: 0,
                         top: 0,
                         bottom: 0,
                         width: overageWidth,
-                        child: const CustomPaint(
-                          painter: _OverageMeterPainter(),
-                        ),
+                        child: const ColoredBox(color: Color(0xffd03b3b)),
                       ),
                   ],
                 ),
@@ -1361,28 +1359,3 @@ const _dexPositions = <_DexPosition>[
       role: '最後尾。攻撃の起点になる',
       talent: '空中戦・キック処理・広い視野'),
 ];
-
-/// シミュレータの過剰メーターを表す赤・淡赤の斜線パターンを描画します。
-class _OverageMeterPainter extends CustomPainter {
-  /// 超過値の塗りつぶしと斜線を描画するPainterを作成します。
-  const _OverageMeterPainter();
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final basePaint = Paint()..color = const Color(0xffd03b3b);
-    final stripePaint = Paint()
-      ..color = const Color(0xffffd0d0)
-      ..strokeWidth = 2;
-    canvas.drawRect(Offset.zero & size, basePaint);
-    for (var offset = -size.height; offset < size.width; offset += 6) {
-      canvas.drawLine(
-        Offset(offset, size.height),
-        Offset(offset + size.height, 0),
-        stripePaint,
-      );
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant _OverageMeterPainter oldDelegate) => false;
-}
