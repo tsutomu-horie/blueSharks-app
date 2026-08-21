@@ -57,6 +57,13 @@ class TrainingGameProvider extends GetConnect {
     return _data(response) ?? <String, dynamic>{};
   }
 
+  /// デバッグ用に、ログイン会員の育成ゲームデータを初回状態へ削除します。
+  Future<Map<String, dynamic>> resetDebugState() async {
+    await _pendingWrite;
+    final response = await post('game/debug/reset', null, headers: await _headers());
+    return _data(response) ?? <String, dynamic>{};
+  }
+
   /// ローカルで確定した状態とアクションをサーバーへ同期します。
   Future<Map<String, dynamic>> sync({
     required String stageCode,

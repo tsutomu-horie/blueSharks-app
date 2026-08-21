@@ -37,7 +37,32 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
                             _buildCareBar(context),
                           ],
                         )
-              : const Center(child: CircularProgressIndicator()),
+              : controller.serverErrorMessage.value.isEmpty
+                  ? const Center(child: CircularProgressIndicator())
+                  : _buildConnectionError(),
+        ),
+      ),
+    );
+  }
+
+  /// 通信必須の育成ゲームで、接続失敗時に再試行を案内します。
+  Widget _buildConnectionError() {
+    return Center(
+      child: Padding(
+        padding: EdgeInsets.all(24.w),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              controller.serverErrorMessage.value,
+              textAlign: TextAlign.center,
+            ),
+            SizedBox(height: 16.h),
+            ElevatedButton(
+              onPressed: controller.retryRestoreServerState,
+              child: const Text('再試行'),
+            ),
+          ],
         ),
       ),
     );
@@ -344,8 +369,20 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
 
   /// メーター1項目を作成します。
   Widget _buildMeter(MapEntry<String, double> entry) {
-    final color =
-        entry.key == '体調' ? const Color(0xffeb6834) : const Color(0xff1f6feb);
+    const normalMeterMaximum = 100.0;
+    const overageMeterMaximum = 50.0;
+    final value = entry.value;
+    // 通常メーターと超過メーターを、それぞれ左端から右へ伸ばします。
+    final normalValue = value.clamp(0, normalMeterMaximum).toDouble();
+    final overageValue =
+        (value - normalMeterMaximum).clamp(0, overageMeterMaximum).toDouble();
+    final color = value <= 19
+        ? const Color(0xffd03b3b)
+        : value < 50
+            ? const Color(0xffeda100)
+            : value < 80
+                ? const Color(0xff7ec8f0)
+                : const Color(0xff5ee05e);
     return Row(
       children: [
         SizedBox(
@@ -353,14 +390,46 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
           child: Text(entry.key, style: TextStyle(fontSize: 10.sp)),
         ),
         Expanded(
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(6.r),
-            child: LinearProgressIndicator(
-              value: entry.value.clamp(0, 100).toDouble() / 100,
-              minHeight: 10.h,
-              color: color,
-              backgroundColor: Colors.white,
-            ),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              // それぞれの上限を基準に、ゲージの実幅へ変換します。
+              final normalWidth =
+                  constraints.maxWidth * (normalValue / normalMeterMaximum);
+              final overageWidth =
+                  constraints.maxWidth * (overageValue / overageMeterMaximum);
+              return Container(
+                height: 12.h,
+                clipBehavior: Clip.antiAlias,
+                decoration: BoxDecoration(
+                  color: const Color(0xffedf0f2),
+                  border: Border.all(color: const Color(0xff252a2e)),
+                  borderRadius: BorderRadius.circular(6.r),
+                ),
+                child: Stack(
+                  children: [
+                    // 通常値は0〜100をゲージ左端から表示します。
+                    Positioned(
+                      left: 0,
+                      top: 0,
+                      bottom: 0,
+                      width: normalWidth,
+                      child: ColoredBox(color: color),
+                    ),
+                    if (overageWidth > 0)
+                      Positioned(
+                        // 超過値は専用ゲージとして左端から表示します。
+                        left: 0,
+                        top: 0,
+                        bottom: 0,
+                        width: overageWidth,
+                        child: const CustomPaint(
+                          painter: _OverageMeterPainter(),
+                        ),
+                      ),
+                  ],
+                ),
+              );
+            },
           ),
         ),
         SizedBox(
@@ -958,6 +1027,15 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
               },
             ),
             ListTile(
+              leading: const Icon(Icons.delete_forever),
+              title: const Text('初回プレイ状態へ初期化'),
+              subtitle: const Text('サーバー・端末の履歴を削除して、初期パラメータで開始します'),
+              onTap: () {
+                Navigator.pop(context);
+                unawaited(_resetDebugGame(context));
+              },
+            ),
+            ListTile(
               leading: const Icon(Icons.skip_next),
               title: const Text('段階3（育成期）から開始'),
               onTap: () {
@@ -975,6 +1053,21 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
           ),
         ),
       ),
+    );
+  }
+
+  /// デバッグ対象を初期パラメータで再作成し、現在の育成画面へ反映します。
+  Future<void> _resetDebugGame(BuildContext context) async {
+    final initialState = await controller.resetDebugGame();
+    if (initialState == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('初期化に失敗しました。通信状態を確認してください。')),
+      );
+      return;
+    }
+    // Controllerへ初期状態を反映済みのため、同一画面の表示を継続します。
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('初回プレイ状態へ初期化しました。')),
     );
   }
 
@@ -1268,3 +1361,28 @@ const _dexPositions = <_DexPosition>[
       role: '最後尾。攻撃の起点になる',
       talent: '空中戦・キック処理・広い視野'),
 ];
+
+/// シミュレータの過剰メーターを表す赤・淡赤の斜線パターンを描画します。
+class _OverageMeterPainter extends CustomPainter {
+  /// 超過値の塗りつぶしと斜線を描画するPainterを作成します。
+  const _OverageMeterPainter();
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final basePaint = Paint()..color = const Color(0xffd03b3b);
+    final stripePaint = Paint()
+      ..color = const Color(0xffffd0d0)
+      ..strokeWidth = 2;
+    canvas.drawRect(Offset.zero & size, basePaint);
+    for (var offset = -size.height; offset < size.width; offset += 6) {
+      canvas.drawLine(
+        Offset(offset, size.height),
+        Offset(offset + size.height, 0),
+        stripePaint,
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _OverageMeterPainter oldDelegate) => false;
+}
