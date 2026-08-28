@@ -3,31 +3,21 @@ import 'package:koto_blue_sharks/presentation/training_game/mini_games/pass_and_
 
 void main() {
   group('PassAndRunRules', () {
-    test('仲間方向から10度以内のフリックを成功にする', () {
-      const flick = PassFlick(
-        deltaX: 100,
-        deltaY: 0,
-        velocityX: 700,
-        velocityY: 0,
-      );
-
+    test('ボールと仲間の当たり判定が重なれば成功にする', () {
       expect(
-        PassAndRunRules.isAccurate(
-          flick: flick,
-          targetDeltaX: 100,
-          targetDeltaY: 10,
-        ),
+        PassAndRunRules.hasCollided(ballDeltaX: 30, ballDeltaY: 20),
         isTrue,
       );
     });
 
-    test('10度を超える方向ミスと短い入力を失敗にする', () {
-      const wrongDirection = PassFlick(
-        deltaX: 100,
-        deltaY: 0,
-        velocityX: 700,
-        velocityY: 0,
+    test('当たり判定が重ならないボールは成功にしない', () {
+      expect(
+        PassAndRunRules.hasCollided(ballDeltaX: 40, ballDeltaY: 40),
+        isFalse,
       );
+    });
+
+    test('短い入力はフリックとして扱わない', () {
       const shortInput = PassFlick(
         deltaX: 10,
         deltaY: 0,
@@ -35,33 +25,7 @@ void main() {
         velocityY: 0,
       );
 
-      expect(
-        PassAndRunRules.isAccurate(
-          flick: wrongDirection,
-          targetDeltaX: 100,
-          targetDeltaY: 50,
-        ),
-        isFalse,
-      );
       expect(PassAndRunRules.isFlick(shortInput), isFalse);
-    });
-
-    test('指を離す瞬間の速度ではなくフリック軌跡で方向を判定する', () {
-      const flick = PassFlick(
-        deltaX: 100,
-        deltaY: 0,
-        velocityX: 0,
-        velocityY: 700,
-      );
-
-      expect(
-        PassAndRunRules.isAccurate(
-          flick: flick,
-          targetDeltaX: 100,
-          targetDeltaY: 0,
-        ),
-        isTrue,
-      );
     });
   });
 }
