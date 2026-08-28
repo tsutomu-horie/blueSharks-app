@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 
 import '../models/mini_game_result.dart';
 import 'tackle_game_logic.dart';
+import '../../models/training_game_clock.dart';
 
 enum _TacklePhase {
   waiting,
@@ -77,7 +78,7 @@ class _TackleGameScreenState extends State<TackleGameScreen>
   /// ゲーム開始または次セットの接近演出を開始します。
   void _startAttempt() {
     _cancelTimers();
-    _phaseStartedAt = DateTime.now();
+    _phaseStartedAt = TrainingGameClock.now();
     setState(() {
       _latestAttempt = null;
       _attemptSucceeded = null;
@@ -118,7 +119,7 @@ class _TackleGameScreenState extends State<TackleGameScreen>
     _actualDirection = feintDirection == TackleDirection.up
         ? TackleDirection.down
         : TackleDirection.up;
-    _phaseStartedAt = DateTime.now();
+    _phaseStartedAt = TrainingGameClock.now();
     _reactionWatch
       ..reset()
       ..start();
@@ -273,7 +274,7 @@ class _TackleGameScreenState extends State<TackleGameScreen>
     }
     final elapsed = _phaseStartedAt == null
         ? Duration.zero
-        : DateTime.now().difference(_phaseStartedAt!);
+        : TrainingGameClock.now().difference(_phaseStartedAt!);
     final limit = _phase == _TacklePhase.approach
         ? const Duration(milliseconds: 1350)
         : TackleRules.inputLimit;
@@ -296,7 +297,7 @@ class _TackleGameScreenState extends State<TackleGameScreen>
     final limit = _phase == _TacklePhase.approach
         ? const Duration(milliseconds: 1350)
         : TackleRules.inputLimit;
-    _phaseStartedAt = DateTime.now().subtract(limit - delay);
+    _phaseStartedAt = TrainingGameClock.now().subtract(limit - delay);
     setState(() {
       _isPaused = false;
       _opponentDuration = delay;

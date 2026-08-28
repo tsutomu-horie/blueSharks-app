@@ -9,10 +9,14 @@ import 'package:koto_blue_sharks/utils/my_shared_pref.dart';
 import '../mini_games/models/mini_game_result.dart';
 import '../models/training_game_models.dart';
 import '../models/training_game_position_classifier.dart';
+import '../models/training_game_clock.dart';
 
 /// 育成ゲームの進行状態と行動結果を管理します。
 class TrainingGameController extends GetxController
     with WidgetsBindingObserver {
+  final _monotonicClock = Stopwatch()..start();
+  DateTime _deviceIndependentNow() =>
+      TrainingGameClock.now();
   /// 回数上限を設けず、連打だけを抑制するための暫定クールタイムです。
   /// 仕様では秒数が調整項目のため、正式値確定時にここだけ変更します。
   static const careCooldown = Duration(seconds: 60);
@@ -221,7 +225,7 @@ class TrainingGameController extends GetxController
     cooldownTick.value;
     if (!isCooldownEnabled(type)) return true;
     final until = _cooldownUntil[type];
-    return until == null || !DateTime.now().isBefore(until);
+    return until == null || !_deviceIndependentNow().isBefore(until);
   }
 
   /// 指定行動のクールタイム設定を返します。
@@ -240,7 +244,7 @@ class TrainingGameController extends GetxController
     cooldownTick.value;
     final until = _cooldownUntil[type];
     if (until == null) return Duration.zero;
-    final remaining = until.difference(DateTime.now());
+    final remaining = until.difference(_deviceIndependentNow());
     return remaining.isNegative ? Duration.zero : remaining;
   }
 
@@ -653,7 +657,7 @@ class TrainingGameController extends GetxController
       final value = entry.value;
       if (type == null || value is! String) continue;
       final until = DateTime.tryParse(value);
-      if (until != null && DateTime.now().isBefore(until)) {
+      if (until != null && TrainingGameClock.now().isBefore(until)) {
         _cooldownUntil[type] = until;
       }
     }
@@ -862,7 +866,7 @@ class TrainingGameController extends GetxController
       'tutorial_zero_seconds': _tutorialZeroSeconds,
       'cooldowns': {
         for (final entry in _cooldownUntil.entries)
-          if (DateTime.now().isBefore(entry.value))
+          if (_deviceIndependentNow().isBefore(entry.value))
             _actionCode(entry.key): entry.value.toIso8601String(),
       },
       'ended': ended.value,
@@ -1154,7 +1158,7 @@ class TrainingGameController extends GetxController
   /// 行動完了時点からクールタイムを開始します。
   void _startCooldown(TrainingActionType type) {
     if (!isCooldownEnabled(type)) return;
-    _cooldownUntil[type] = DateTime.now().add(careCooldown);
+    _cooldownUntil[type] = _deviceIndependentNow().add(careCooldown);
   }
 
   /// 傾向値を0未満にならないよう更新します。
