@@ -672,7 +672,7 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
                 tag: 'フリック・パス回し系',
                 thumbnailType: MiniGameSelectionThumbnailType.passAndRun,
                 description:
-                    '縦2レーンを上下に並走。仲間のいる方向へフリックし、方向±10°以内で成功。方向ミスは2秒間パス不可。15秒×往復2セットです。',
+                    '縦2レーンを上下に並走。仲間にボールを当てると成功。外れたボールは2秒間パス不可。15秒×往復2セットです。',
               ),
             ],
           ),

@@ -39,24 +39,25 @@ abstract final class PassAndRunRules {
   /// フリックとして扱う最低速度です。
   static const minimumVelocity = 400.0;
 
-  /// 仲間方向から許容する角度差です。
-  static const toleranceDegrees = 10.0;
+  /// 表示上のボール半径です。
+  static const ballCollisionRadius = 15.0;
+
+  /// 表示上の仲間キャラクターを覆う当たり判定の半径です。
+  static const mateCollisionRadius = 24.0;
 
   /// 入力が成立するフリックかを返します。
   static bool isFlick(PassFlick flick) {
     return flick.distance >= minimumDistance && flick.speed >= minimumVelocity;
   }
 
-  /// フリック方向が仲間の方向から±10度以内かを返します。
-  static bool isAccurate({
-    required PassFlick flick,
-    required double targetDeltaX,
-    required double targetDeltaY,
+  /// ボール中心と仲間の中心が、画面上の当たり判定で重なっているかを返します。
+  static bool hasCollided({
+    required double ballDeltaX,
+    required double ballDeltaY,
   }) {
-    if (!isFlick(flick)) return false;
-    final targetAngle = math.atan2(targetDeltaY, targetDeltaX);
-    var difference = (flick.angle - targetAngle).abs();
-    if (difference > math.pi) difference = math.pi * 2 - difference;
-    return difference <= toleranceDegrees * math.pi / 180;
+    // 中心間距離の二乗で比較し、毎フレームの平方根計算を避けます。
+    final collisionDistance = ballCollisionRadius + mateCollisionRadius;
+    final distanceSquared = ballDeltaX * ballDeltaX + ballDeltaY * ballDeltaY;
+    return distanceSquared <= collisionDistance * collisionDistance;
   }
 }

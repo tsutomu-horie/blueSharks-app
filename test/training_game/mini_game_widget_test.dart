@@ -148,7 +148,7 @@ void main() {
     await gesture.up();
   });
 
-  testWidgets('パス＆ランは方向ミスでもボールを発射する', (tester) async {
+  testWidgets('パス＆ランは仲間に当たらない場合もボールを発射する', (tester) async {
     await tester.pumpWidget(
       const MaterialApp(home: PassAndRunGameScreen()),
     );
@@ -156,14 +156,17 @@ void main() {
     await tester.pump();
 
     final player = tester.getCenter(find.text('🦈'));
-    // 仲間と反対へ十分な速度でフリックし、方向ミスを発生させます。
+    // 仲間と反対へ十分な速度でフリックし、衝突しないパスを発生させます。
     await tester.flingFrom(player, const Offset(-100, 0), 1200);
     await tester.pump(const Duration(milliseconds: 20));
 
     expect(find.byKey(const Key('pass-ball-trail')), findsOneWidget);
+    // 成否は発射時の方向ではなく、ボールが仲間に当たるかで判定されます。
+    expect(find.text('ボール移動中…'), findsOneWidget);
+    await tester.pump(const Duration(milliseconds: 400));
     expect(find.text('MISS　2秒間パス不可'), findsOneWidget);
-    // 失敗パスも画面外へ抜けた後にプレイヤーへ返球されます。
-    await tester.pump(const Duration(milliseconds: 1200));
+    // 失敗パスは画面外へ抜けた後、ペナルティ終了時にプレイヤーへ戻ります。
+    await tester.pump(const Duration(milliseconds: 2100));
     expect(find.byKey(const Key('pass-ball')), findsOneWidget);
   });
 }
