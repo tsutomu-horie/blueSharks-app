@@ -64,6 +64,20 @@ class TrainingGameProvider extends GetConnect {
     return _data(response) ?? <String, dynamic>{};
   }
 
+  /// デバッグ用に、現在の育成サイクルの日次アクション利用履歴をリセットします。
+  Future<Map<String, dynamic>> resetDebugDailyActionUsage() async {
+    final write = _pendingWrite.then((_) async {
+      final response = await post(
+        'game/debug/reset-daily-actions',
+        null,
+        headers: await _headers(),
+      );
+      return _data(response) ?? <String, dynamic>{};
+    });
+    _pendingWrite = write.then<void>((_) {}, onError: (_, __) {});
+    return write;
+  }
+
   /// ローカルで確定した状態とアクションをサーバーへ同期します。
   Future<Map<String, dynamic>> sync({
     required String stageCode,

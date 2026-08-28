@@ -672,7 +672,7 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
                 tag: 'フリック・パス回し系',
                 thumbnailType: MiniGameSelectionThumbnailType.passAndRun,
                 description:
-                    '縦2レーンを上下に並走。仲間のいる方向へフリックし、方向±10°以内で成功。方向ミスは2秒間パス不可。15秒×往復2セットです。',
+                    '縦2レーンを上下に並走。仲間にボールを当てると成功。外れたボールは2秒間パス不可。15秒×往復2セットです。',
               ),
             ],
           ),
@@ -854,17 +854,38 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
       }
       return;
     }
-    if (type == TrainingActionType.work && !controller.canWorkToday) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('仕事は1日1回までです。')),
-      );
-      return;
+    if (type == TrainingActionType.work) {
+      if (controller.isWorkPreparationPending) return;
+      final canWork = await controller.prepareWork();
+      if (!context.mounted) {
+        controller.finishWorkPreparation();
+        return;
+      }
+      if (!canWork) {
+        final messenger = ScaffoldMessenger.of(context);
+        messenger.clearSnackBars();
+        messenger.showSnackBar(
+          SnackBar(
+            content: Text(
+              controller.workAvailabilityError.value.isNotEmpty
+                  ? controller.workAvailabilityError.value
+                  : '仕事は1日1回までです。',
+            ),
+          ),
+        );
+        return;
+      }
     }
-    final completed = await Navigator.of(context).push<bool>(
-      MaterialPageRoute(
-        builder: (_) => TrainingGameCareActionScreen(actionType: type),
-      ),
-    );
+    bool? completed;
+    try {
+      completed = await Navigator.of(context).push<bool>(
+        MaterialPageRoute(
+          builder: (_) => TrainingGameCareActionScreen(actionType: type),
+        ),
+      );
+    } finally {
+      if (type == TrainingActionType.work) controller.finishWorkPreparation();
+    }
     if (completed == true) controller.perform(type);
   }
 

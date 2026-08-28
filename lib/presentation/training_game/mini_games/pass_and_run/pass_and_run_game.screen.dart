@@ -25,7 +25,6 @@ class PassAndRunGameScreen extends StatefulWidget {
 class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
     with WidgetsBindingObserver {
   static const _passArrivalDuration = Duration(milliseconds: 220);
-  static const _passCycleDuration = Duration(milliseconds: 400);
   static const _passReturnDelay = Duration(milliseconds: 120);
 
   _PassGamePhase _phase = _PassGamePhase.waiting;
@@ -87,7 +86,10 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _fieldTicker = Ticker((_) {
-      if (mounted) _fieldTick.value++;
+      if (!mounted) return;
+      // 描画フレームごとに確認し、移動中の仲間との衝突を取りこぼさないようにします。
+      if (_updatePassCycle(DateTime.now())) setState(() {});
+      _fieldTick.value++;
     });
   }
 
@@ -157,7 +159,6 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
       if (!mounted || _roundStartedAt == null) return;
       final now = DateTime.now();
       final previousRemainingDeciseconds = _remainingMilliseconds ~/ 100;
-      final cycleChanged = _updatePassCycle(now);
       final elapsed = now.difference(_roundStartedAt!);
       final remaining = PassAndRunRules.roundDuration - elapsed;
       if (remaining <= Duration.zero) {
@@ -165,8 +166,7 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
         return;
       }
       _remainingMilliseconds = remaining.inMilliseconds;
-      if (cycleChanged ||
-          previousRemainingDeciseconds != _remainingMilliseconds ~/ 100) {
+      if (previousRemainingDeciseconds != _remainingMilliseconds ~/ 100) {
         setState(() {});
       }
     });
@@ -225,7 +225,7 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
     });
   }
 
-  /// 指を離した時点で距離・速度・仲間方向との角度差を判定します。
+  /// 指を離した時点でフリックを受け取り、ボールの移動を開始します。
   void _handlePanEnd(DragEndDetails details) {
     final start = _dragStart;
     final current = _dragCurrent;
@@ -249,66 +249,58 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
       setState(() {});
       return;
     }
-    // 判定・発射・捕球の基準座標を同じ瞬間に固定し、移動中のズレを防ぎます。
+    // 発射位置を固定し、フリック方向へボールを飛ばします。
     final player = _playerOffset;
-    final mate = _mateOffset;
     final playerBall = _playerBallOffsetAt(player);
-    final mateCatch = _mateCatchOffsetAt(mate);
-    final succeeded = PassAndRunRules.isAccurate(
-      flick: flick,
-      // 指の開始位置ではなく、画面上のプレイヤーから目標への方向を判定します。
-      // プレイヤーの中心から外れてフリックしても、正しいパス方向なら成功させます。
-      targetDeltaX: mate.dx - player.dx,
-      targetDeltaY: mate.dy - player.dy,
-    );
-    // 成否にかかわらず、フリックとして成立した入力はボールを発射します。
-    // 失敗時はフリック先まで飛ばし、得点を加算せずペナルティだけを適用します。
+    // 成否は発射時には決めず、移動中にボールと仲間が衝突した時点で確定します。
     final now = DateTime.now();
     _passInFlight = true;
     _passScoreConfirmed = false;
-    _isFailedPass = !succeeded;
+    _isFailedPass = false;
     _isBallLost = false;
     _pendingPassRoundIndex = _roundIndex;
     _passStartedAt = now;
     _passStartOffset = playerBall;
-    _passTargetOffset = succeeded
-        ? mateCatch
-        : _flickExitOffset(start: start, current: current);
+    _passTargetOffset = _flickExitOffset(start: start, current: current);
     _passReturnStartOffset = null;
     _passReturnTargetOffset = null;
-    // 成功パスの速度を基準に、失敗時は移動距離に応じて到達時間を延長します。
-    // これにより、画面外へ抜ける失敗ボールだけが不自然に加速しません。
-    final successfulDistance = (mateCatch - playerBall).distance;
+    // 基準速度を保つため、フリック先までの距離に応じて移動時間を延長します。
     final actualDistance = (_passTargetOffset! - _passStartOffset!).distance;
-    _passOutboundDistance = successfulDistance;
-    _passTravelDuration = successfulDistance == 0
+    final standardPassDistance = _fieldSize.width * .5;
+    _passOutboundDistance = actualDistance;
+    _passTravelDuration = standardPassDistance == 0
         ? _passArrivalDuration
         : Duration(
             microseconds: (_passArrivalDuration.inMicroseconds *
                     actualDistance /
-                    successfulDistance)
+                    standardPassDistance)
                 .round(),
           );
-    final passCompletionDuration = succeeded
-        ? _passTravelDuration + _passReturnDelay + _passReturnDuration
-        : (_passTravelDuration > _passCycleDuration
-            ? _passTravelDuration
-            : _passCycleDuration);
     _passArrivalAt = now.add(_passTravelDuration);
-    _passReadyAt = now.add(passCompletionDuration);
-    if (!succeeded) {
-      _penaltyUntil = DateTime.now().add(PassAndRunRules.missPenalty);
-    }
-    setState(() => _lastPassSucceeded = succeeded);
+    _passReadyAt = _passArrivalAt;
+    setState(() => _lastPassSucceeded = false);
   }
 
   /// 失敗時にボールが画面外へ抜ける位置を、フリック方向から求めます。
   Offset _flickExitOffset({required Offset start, required Offset current}) {
     final direction = current - start;
     if (direction.distance == 0) return _playerBallOffset;
-    // ClipRRectで切り取られる位置まで飛ばし、失敗パスの返球を発生させません。
-    final exitDistance = math.max(_fieldSize.width, _fieldSize.height) * 2;
-    return _playerBallOffset + direction / direction.distance * exitDistance;
+    final origin = _playerBallOffset;
+    final normalizedDirection = direction / direction.distance;
+    const ballRadius = PassAndRunRules.ballCollisionRadius;
+    // ボール半径ぶんだけ画面外に出す距離を求め、表示から消えた時点でミスを確定します。
+    final horizontalDistance = normalizedDirection.dx > 0
+        ? (_fieldSize.width + ballRadius - origin.dx) / normalizedDirection.dx
+        : normalizedDirection.dx < 0
+            ? (-ballRadius - origin.dx) / normalizedDirection.dx
+            : double.infinity;
+    final verticalDistance = normalizedDirection.dy > 0
+        ? (_fieldSize.height + ballRadius - origin.dy) / normalizedDirection.dy
+        : normalizedDirection.dy < 0
+            ? (-ballRadius - origin.dy) / normalizedDirection.dy
+            : double.infinity;
+    final exitDistance = math.min(horizontalDistance, verticalDistance);
+    return origin + normalizedDirection * exitDistance;
   }
 
   /// 2人が異なる速度で上下し、追いつき・追い越しが起きる現在位置を返します。
@@ -352,19 +344,17 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
         4,
       );
 
-  /// 指定した相手座標に対応する捕球位置を返します。
-  Offset _mateCatchOffsetAt(Offset mateOffset) =>
-      mateOffset +
-      Offset(
-        _isOutbound ? -28 : 28,
-        0,
-      );
-
   /// 鮫太朗が保持しているときの現在のボール表示位置です。
   Offset get _playerBallOffset => _playerBallOffsetAt(_playerOffset);
 
-  /// 仲間が受け取るときの現在のボール表示位置です。
-  Offset get _mateCatchOffset => _mateCatchOffsetAt(_mateOffset);
+  /// 表示中のボールが、現在位置の仲間に衝突しているかを返します。
+  bool _hasCollidedWithMate(Offset ball) {
+    final mate = _mateOffset;
+    return PassAndRunRules.hasCollided(
+      ballDeltaX: ball.dx - mate.dx,
+      ballDeltaY: ball.dy - mate.dy,
+    );
+  }
 
   /// 一時停止を考慮した現在のパス経過時間を返します。
   Duration get _passElapsed {
@@ -409,52 +399,28 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
     return _passReturnStartOffset ?? _passTargetOffset ?? _mateOffset;
   }
 
-  /// ボール到達時の得点確定と、返球完了後の次入力解放を更新します。
+  /// ボールの衝突・画面外到達・返球完了に応じて、パスの状態を更新します。
   bool _updatePassCycle(DateTime now) {
     if (!_passInFlight || _isPaused || _pendingPassRoundIndex != _roundIndex) {
       return false;
     }
     var changed = false;
-    // ラウンド終了後のタイマー更新で、遅れて到達したボールを得点化しないようにします。
+    // ラウンド終了後のタイマー更新で、遅れて発生した衝突を得点化しないようにします。
     final roundDeadline = _roundStartedAt?.add(PassAndRunRules.roundDuration);
-    if (!_isFailedPass &&
-        !_passScoreConfirmed &&
-        _passArrivalAt != null &&
+    if (!_passScoreConfirmed &&
         roundDeadline != null &&
-        !_passArrivalAt!.isAfter(roundDeadline) &&
-        !now.isBefore(_passArrivalAt!)) {
-      _roundScores[_roundIndex]++;
-      _passScoreConfirmed = true;
-      // 目標の現在位置を返球の起点にし、返球完了時のプレイヤー位置を先読みします。
-      // 固定した発射時の座標へ戻すと、移動中のキャラクターからボールが曲がって見えます。
-      _passReturnStartOffset = _mateCatchOffset;
-      final initialReturnSeconds = _motionSeconds +
-          (_passReturnDelay + _passTravelDuration).inMilliseconds / 1000;
-      final initialReturnTarget = _playerOffsetAt(initialReturnSeconds) +
-          Offset(_isOutbound ? 24 : -24, 4);
-      final returnDistance =
-          (initialReturnTarget - _passReturnStartOffset!).distance;
-      _passReturnDuration = _passOutboundDistance == 0
-          ? _passTravelDuration
-          : Duration(
-              microseconds: (_passArrivalDuration.inMicroseconds *
-                      returnDistance /
-                      _passOutboundDistance)
-                  .round(),
-            );
-      // 同じ速度で返球しつつ、返球時間に合わせてプレイヤーの到達位置も先読みします。
-      final returnSeconds = _motionSeconds +
-          (_passReturnDelay + _passReturnDuration).inMilliseconds / 1000;
-      _passReturnTargetOffset = _playerOffsetAt(returnSeconds) +
-          Offset(_isOutbound ? 24 : -24, 4);
-      _passReadyAt = now.add(_passReturnDelay + _passReturnDuration);
+        !now.isAfter(roundDeadline) &&
+        _hasCollidedWithMate(_ballOffset)) {
+      _confirmPassSuccess(now);
       changed = true;
     }
-    if (_isFailedPass &&
+    if (!_passScoreConfirmed &&
         _passArrivalAt != null &&
         !now.isBefore(_passArrivalAt!)) {
       // 画面外へ抜けた失敗ボールを、ペナルティ中は再表示しません。
+      _isFailedPass = true;
       _isBallLost = true;
+      _penaltyUntil = now.add(PassAndRunRules.missPenalty);
       changed = true;
     }
     if (_passReadyAt != null && !now.isBefore(_passReadyAt!)) {
@@ -474,6 +440,41 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
       changed = true;
     }
     return changed;
+  }
+
+  /// 仲間との衝突位置を返球の始点として、得点と返球処理を確定します。
+  void _confirmPassSuccess(DateTime now) {
+    final collisionOffset = _ballOffset;
+    _roundScores[_roundIndex]++;
+    _passScoreConfirmed = true;
+    _lastPassSucceeded = true;
+    _passTargetOffset = collisionOffset;
+    _passTravelDuration = _passElapsed;
+    _passArrivalAt = now;
+    _passReturnStartOffset = collisionOffset;
+    // 衝突時までのボール速度を保ったまま、仲間からプレイヤーへ返球します。
+    final outboundStart = _passStartOffset ?? collisionOffset;
+    _passOutboundDistance = (_passReturnStartOffset! - outboundStart).distance;
+    final initialReturnSeconds = _motionSeconds +
+        (_passReturnDelay + _passTravelDuration).inMilliseconds / 1000;
+    final initialReturnTarget = _playerOffsetAt(initialReturnSeconds) +
+        Offset(_isOutbound ? 24 : -24, 4);
+    final returnDistance =
+        (initialReturnTarget - _passReturnStartOffset!).distance;
+    _passReturnDuration = _passOutboundDistance == 0
+        ? _passArrivalDuration
+        : Duration(
+            microseconds: (_passArrivalDuration.inMicroseconds *
+                    returnDistance /
+                    _passOutboundDistance)
+                .round(),
+          );
+    // 返球時間に合わせ、移動中のプレイヤーが受け取る位置を先読みします。
+    final returnSeconds = _motionSeconds +
+        (_passReturnDelay + _passReturnDuration).inMilliseconds / 1000;
+    _passReturnTargetOffset = _playerOffsetAt(returnSeconds) +
+        Offset(_isOutbound ? 24 : -24, 4);
+    _passReadyAt = now.add(_passReturnDelay + _passReturnDuration);
   }
 
   /// ミニゲーム結果を育成画面へ返します。
