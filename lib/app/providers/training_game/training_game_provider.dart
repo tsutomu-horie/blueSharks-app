@@ -4,6 +4,7 @@ import 'package:koto_blue_sharks/utils/Constant.dart';
 
 /// 育成ゲームのサーバー同期APIを担当します。
 class TrainingGameProvider extends GetConnect {
+  static final _clock = Stopwatch()..start();
   static Future<void> _pendingSync = Future<void>.value();
 
   /// 画面遷移中に実行中の同期完了を登録します。
@@ -103,7 +104,7 @@ class TrainingGameProvider extends GetConnect {
           if (actionCode != null)
             'action': {
               'code': actionCode,
-              'idempotency_key': '${DateTime.now().microsecondsSinceEpoch}-$actionCode',
+              'idempotency_key': '${_clock.elapsedMicroseconds}-$actionCode',
               'result_code': 'completed',
               if (actionScore != null) 'score': actionScore,
               if (actionEffectMultiplier != null) 'effect_multiplier': actionEffectMultiplier,
