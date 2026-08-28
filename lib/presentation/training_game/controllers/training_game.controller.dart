@@ -162,7 +162,7 @@ class TrainingGameController extends GetxController
   bool _isAppInBackground = false;
   Future<void> _syncChain = Future<void>.value();
   Future<void> _restoreChain = Future<void>.value();
-  TrainingActionType? _queuedAction;
+  final _queuedActions = <TrainingActionType>[];
   bool _syncRequested = false;
   bool _syncRunning = false;
   Future<void>? _debugTimeSync;
@@ -723,8 +723,8 @@ class TrainingGameController extends GetxController
   /// 同期を順番に実行し、同時更新競合を防ぎます。
   void _queueSync({TrainingActionType? action, bool force = false}) {
     if ((_isDisposed && !force) || _syncBlockedUntilServerRestore) return;
-    // 連続操作中は最新状態と最後の行動だけを保持し、古い同期を捨てます。
-    _queuedAction = action ?? _queuedAction;
+    // 連続操作中も各アクションを順番に保持し、効果を失わないようにします。
+    if (action != null) _queuedActions.add(action);
     _syncRequested = true;
     _hasUnsyncedLocalState = true;
     _localStateRevision++;
@@ -740,10 +740,9 @@ class TrainingGameController extends GetxController
   /// 保留中の同期要求を1回の通信へ集約します。
   Future<void> _drainSyncQueue() async {
     try {
-      while (_syncRequested) {
+      while (_syncRequested || _queuedActions.isNotEmpty) {
         _syncRequested = false;
-        final action = _queuedAction;
-        _queuedAction = null;
+        final action = _queuedActions.isEmpty ? null : _queuedActions.removeAt(0);
         await syncNow(action: action);
       }
     } finally {
