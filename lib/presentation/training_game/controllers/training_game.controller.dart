@@ -161,6 +161,7 @@ class TrainingGameController extends GetxController
   int? _activeMainProgressBaseSeconds;
   int _processedActiveMainHours = 0;
   bool _waitingForServerRestore = false;
+  bool _restoreLocalCountersOnNextServerState = true;
   final _mainClockTick = 0.obs;
   bool _isAppInBackground = false;
   Future<void> _syncChain = Future<void>.value();
@@ -410,6 +411,7 @@ class TrainingGameController extends GetxController
     _activeMainProgressBaseSeconds = null;
     _processedActiveMainHours = 0;
     _waitingForServerRestore = false;
+    _restoreLocalCountersOnNextServerState = true;
   }
 
   /// 育成完了後の演出フローを次へ進めます。
@@ -430,6 +432,7 @@ class TrainingGameController extends GetxController
     _isAppInBackground = true;
     _waitingForServerRestore = true;
     _activeMainProgressBaseSeconds = null;
+    _restoreLocalCountersOnNextServerState = true;
   }
 
   /// アプリがバックグラウンドへ移る前に育成状態を保存します。
@@ -442,6 +445,7 @@ class TrainingGameController extends GetxController
       _isAppInBackground = true;
       _waitingForServerRestore = true;
       _activeMainProgressBaseSeconds = null;
+      _restoreLocalCountersOnNextServerState = true;
       _queueSync();
     }
     if (state == AppLifecycleState.resumed) {
@@ -564,7 +568,12 @@ class TrainingGameController extends GetxController
         }
       }
     }
-    _restoreLocalGameState(data);
+    final restoreLocalCounters = _restoreLocalCountersOnNextServerState;
+    _restoreLocalGameState(
+      data,
+      restoreProgressCounters: restoreLocalCounters,
+    );
+    _restoreLocalCountersOnNextServerState = false;
     final serverActionsToday = (data['actions_today'] as num?)?.toInt();
     if (serverActionsToday != null) {
       actionsToday.value = serverActionsToday;
@@ -575,7 +584,10 @@ class TrainingGameController extends GetxController
   }
 
   /// サーバーに未保存の途中進行を、同じ育成サイクルに限って復元します。
-  void _restoreLocalGameState(Map<String, dynamic> serverData) {
+  void _restoreLocalGameState(
+    Map<String, dynamic> serverData, {
+    required bool restoreProgressCounters,
+  }) {
     final encodedState = MySharedPref.getTrainingGameLocalState();
     if (encodedState == null || _serverPlayerId == null) return;
     final decodedState = jsonDecode(encodedState);
@@ -584,6 +596,7 @@ class TrainingGameController extends GetxController
     if (localState['player_id'] != _serverPlayerId) return;
 
     _hasUnsyncedLocalState = localState['has_unsynced_state'] == true;
+    restoreProgressCounters = restoreProgressCounters || _hasUnsyncedLocalState;
     // 同期未完了のスナップショットだけは、通信失敗した行動結果を失わないよう復元します。
     final serverParameters = serverData['parameters'];
     final serverHasBulk =
@@ -610,36 +623,42 @@ class TrainingGameController extends GetxController
     // サーバー状態を巻き戻さないようにします。
     // サーバーが返さない本編の日次カウンターは、同じ育成サイクルの
     // ローカル状態から復元します。経過秒そのものは上でサーバー値を反映済みです。
-    elapsedHours.value =
-        _localInt(localState, 'elapsed_hours', elapsedHours.value);
-    day.value = _localInt(localState, 'day', day.value);
-    secondsInStage.value = _localInt(
-      localState,
-      'seconds_in_stage',
-      secondsInStage.value,
-    );
-    daysInStage.value = _localInt(
-      localState,
-      'days_in_stage',
-      daysInStage.value,
-    );
-    actionsToday.value =
-        _localInt(localState, 'actions_today', actionsToday.value);
-    trainingCount.value =
-        _localInt(localState, 'training_count', trainingCount.value);
-    _lowConditionTraining = _localInt(
-      localState,
-      'low_condition_training',
-      _lowConditionTraining,
-    );
-    _dayCared = localState['day_cared'] == true;
-    _restoreCooldowns(localState['cooldowns']);
-    _restoreCounters(localState['zero_hours'], _zeroHours);
-    _restoreCounters(localState['tutorial_zero_seconds'], _tutorialZeroSeconds);
-    ended.value = localState['ended'] == true;
-    endingStep.value = _localInt(localState, 'ending_step', endingStep.value);
-    endingMessage.value = localState['ending_message'] as String? ?? endingMessage.value;
-    clearPosition.value = localState['clear_position'] as String?;
+    if (restoreProgressCounters) {
+      elapsedHours.value =
+          _localInt(localState, 'elapsed_hours', elapsedHours.value);
+      day.value = _localInt(localState, 'day', day.value);
+      secondsInStage.value = _localInt(
+        localState,
+        'seconds_in_stage',
+        secondsInStage.value,
+      );
+      daysInStage.value = _localInt(
+        localState,
+        'days_in_stage',
+        daysInStage.value,
+      );
+      actionsToday.value =
+          _localInt(localState, 'actions_today', actionsToday.value);
+      trainingCount.value =
+          _localInt(localState, 'training_count', trainingCount.value);
+      _lowConditionTraining = _localInt(
+        localState,
+        'low_condition_training',
+        _lowConditionTraining,
+      );
+      _dayCared = localState['day_cared'] == true;
+      _restoreCooldowns(localState['cooldowns']);
+      _restoreCounters(localState['zero_hours'], _zeroHours);
+      _restoreCounters(
+        localState['tutorial_zero_seconds'],
+        _tutorialZeroSeconds,
+      );
+      ended.value = localState['ended'] == true;
+      endingStep.value = _localInt(localState, 'ending_step', endingStep.value);
+      endingMessage.value =
+          localState['ending_message'] as String? ?? endingMessage.value;
+      clearPosition.value = localState['clear_position'] as String?;
+    }
   }
 
   /// APIレスポンスに含まれる、サーバー時刻基準の仕事可否を反映します。
