@@ -18,6 +18,25 @@ class ServerTimeClock {
     _elapsedSinceSync = Stopwatch()..start();
   }
 
+  /// APIがserver_timeを返さない場合も、サーバーが返した開始日時と経過秒から同期します。
+  void synchronizeFromPayload(Map<String, dynamic> data) {
+    final directServerTime = data['server_time'];
+    final serverTime = directServerTime is String
+        ? DateTime.tryParse(directServerTime)
+        : null;
+    if (serverTime != null) {
+      synchronize(serverTime);
+      return;
+    }
+
+    final startedAt = data['started_at'];
+    final elapsedSeconds = data['elapsed_seconds'];
+    if (startedAt is! String || elapsedSeconds is! num) return;
+    final parsedStartedAt = DateTime.tryParse(startedAt);
+    if (parsedStartedAt == null) return;
+    synchronize(parsedStartedAt.add(Duration(seconds: elapsedSeconds.toInt())));
+  }
+
   /// 最後に同期したサーバー時刻からの経過時間です。
   Duration get elapsedSinceSync => _elapsedSinceSync?.elapsed ?? Duration.zero;
 
