@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 
 import '../models/mini_game_result.dart';
+import '../../models/training_game_clock.dart';
 import 'pass_and_run_logic.dart';
 
 enum _PassGamePhase {
@@ -63,12 +64,12 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
 
   bool get _isOutbound => _roundIndex == 0;
   bool get _isPenalized =>
-      _penaltyUntil != null && DateTime.now().isBefore(_penaltyUntil!);
+      _penaltyUntil != null && TrainingGameClock.now().isBefore(_penaltyUntil!);
   /// ラウンド終了時刻を過ぎていない場合だけ、新しいパスを受け付けます。
   bool get _canPass {
     final roundStartedAt = _roundStartedAt;
     if (roundStartedAt == null ||
-        !DateTime.now().isBefore(
+        !TrainingGameClock.now().isBefore(
           roundStartedAt.add(PassAndRunRules.roundDuration),
         )) {
       return false;
@@ -77,7 +78,7 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
         !_isPaused &&
         !_isPenalized &&
         !_passInFlight &&
-        (_passReadyAt == null || !DateTime.now().isBefore(_passReadyAt!));
+        (_passReadyAt == null || !TrainingGameClock.now().isBefore(_passReadyAt!));
   }
   int get _totalScore => _roundScores.fold(0, (sum, score) => sum + score);
 
@@ -88,7 +89,7 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
     _fieldTicker = Ticker((_) {
       if (!mounted) return;
       // 描画フレームごとに確認し、移動中の仲間との衝突を取りこぼさないようにします。
-      if (_updatePassCycle(DateTime.now())) setState(() {});
+      if (_updatePassCycle(TrainingGameClock.now())) setState(() {});
       _fieldTick.value++;
     });
   }
@@ -124,9 +125,9 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
   /// 現在の片道15秒を開始します。
   void _startRound({Duration carryPenalty = Duration.zero}) {
     _clockTimer?.cancel();
-    _roundStartedAt = DateTime.now();
+    _roundStartedAt = TrainingGameClock.now();
     _penaltyUntil =
-        carryPenalty > Duration.zero ? DateTime.now().add(carryPenalty) : null;
+      carryPenalty > Duration.zero ? TrainingGameClock.now().add(carryPenalty) : null;
     _passReadyAt = null;
     _passStartedAt = null;
     _passArrivalAt = null;
@@ -157,7 +158,7 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
       ..start();
     _clockTimer = Timer.periodic(const Duration(milliseconds: 50), (_) {
       if (!mounted || _roundStartedAt == null) return;
-      final now = DateTime.now();
+      final now = TrainingGameClock.now();
       final previousRemainingDeciseconds = _remainingMilliseconds ~/ 100;
       final elapsed = now.difference(_roundStartedAt!);
       final remaining = PassAndRunRules.roundDuration - elapsed;
@@ -174,7 +175,7 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
 
   /// 往路から復路、または復路から結果画面へ進みます。
   void _finishRound() {
-    _updatePassCycle(DateTime.now());
+    _updatePassCycle(TrainingGameClock.now());
     _clockTimer?.cancel();
     _fieldTicker.stop();
     _passInFlight = false;
@@ -194,7 +195,7 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
     if (_roundIndex == 0) {
       // 確定仕様に従い、往路終了時のペナルティ残時間を復路へ持ち越します。
       final carryPenalty = _isPenalized
-          ? _penaltyUntil!.difference(DateTime.now())
+          ? _penaltyUntil!.difference(TrainingGameClock.now())
           : Duration.zero;
       _roundIndex = 1;
       _startRound(carryPenalty: carryPenalty);
@@ -253,7 +254,7 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
     final player = _playerOffset;
     final playerBall = _playerBallOffsetAt(player);
     // 成否は発射時には決めず、移動中にボールと仲間が衝突した時点で確定します。
-    final now = DateTime.now();
+    final now = TrainingGameClock.now();
     _passInFlight = true;
     _passScoreConfirmed = false;
     _isFailedPass = false;
@@ -312,7 +313,7 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
               .inMilliseconds /
           1000;
     }
-    return DateTime.now().difference(startedAt).inMilliseconds / 1000;
+    return TrainingGameClock.now().difference(startedAt).inMilliseconds / 1000;
   }
 
   Offset _playerOffsetAt(double seconds) {
@@ -361,7 +362,7 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
     if (_isPaused && _pausedPassElapsed != null) return _pausedPassElapsed!;
     final startedAt = _passStartedAt;
     if (startedAt == null) return Duration.zero;
-    return DateTime.now().difference(startedAt);
+    return TrainingGameClock.now().difference(startedAt);
   }
 
   /// 成功時は往路と返球、失敗時は画面外へ抜ける現在のボール位置を返します。
@@ -490,7 +491,7 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
   /// 手動操作またはOS割り込みで、残り時間を保持したまま停止します。
   void _pauseGame() {
     if (_phase != _PassGamePhase.playing || _isPaused) return;
-    final now = DateTime.now();
+    final now = TrainingGameClock.now();
     _pausedRoundRemaining = Duration(milliseconds: _remainingMilliseconds);
     _pausedPenaltyRemaining =
         _penaltyUntil != null && now.isBefore(_penaltyUntil!)
@@ -512,7 +513,7 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
     if (_phase != _PassGamePhase.playing || !_isPaused || remaining == null) {
       return;
     }
-    final now = DateTime.now();
+    final now = TrainingGameClock.now();
     _roundStartedAt = now.subtract(PassAndRunRules.roundDuration - remaining);
     _penaltyUntil = _pausedPenaltyRemaining == null
         ? null

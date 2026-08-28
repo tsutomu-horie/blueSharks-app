@@ -4,6 +4,7 @@ import 'package:koto_blue_sharks/utils/Constant.dart';
 
 /// 育成ゲームのサーバー同期APIを担当します。
 class TrainingGameProvider extends GetConnect {
+  static final _clock = Stopwatch()..start();
   static Future<void> _pendingSync = Future<void>.value();
 
   /// 画面遷移中に実行中の同期完了を登録します。
@@ -64,6 +65,20 @@ class TrainingGameProvider extends GetConnect {
     return _data(response) ?? <String, dynamic>{};
   }
 
+  /// デバッグ用に、現在の育成サイクルの日次アクション利用履歴をリセットします。
+  Future<Map<String, dynamic>> resetDebugDailyActionUsage() async {
+    final write = _pendingWrite.then((_) async {
+      final response = await post(
+        'game/debug/reset-daily-actions',
+        null,
+        headers: await _headers(),
+      );
+      return _data(response) ?? <String, dynamic>{};
+    });
+    _pendingWrite = write.then<void>((_) {}, onError: (_, __) {});
+    return write;
+  }
+
   /// ローカルで確定した状態とアクションをサーバーへ同期します。
   Future<Map<String, dynamic>> sync({
     required String stageCode,
@@ -72,6 +87,8 @@ class TrainingGameProvider extends GetConnect {
     String? positionCode,
     String? branchCode,
     String? actionCode,
+    double? actionScore,
+    double? actionEffectMultiplier,
     String status = 'playing',
   }) async {
     final write = _pendingWrite.then((_) async {
@@ -87,8 +104,10 @@ class TrainingGameProvider extends GetConnect {
           if (actionCode != null)
             'action': {
               'code': actionCode,
-              'idempotency_key': '${DateTime.now().microsecondsSinceEpoch}-$actionCode',
+              'idempotency_key': '${_clock.elapsedMicroseconds}-$actionCode',
               'result_code': 'completed',
+              if (actionScore != null) 'score': actionScore,
+              if (actionEffectMultiplier != null) 'effect_multiplier': actionEffectMultiplier,
             },
         },
         headers: await _headers(),

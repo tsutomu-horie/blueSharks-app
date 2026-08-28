@@ -9,10 +9,14 @@ import 'package:koto_blue_sharks/utils/my_shared_pref.dart';
 import '../mini_games/models/mini_game_result.dart';
 import '../models/training_game_models.dart';
 import '../models/training_game_position_classifier.dart';
+import '../models/training_game_clock.dart';
 
 /// 育成ゲームの進行状態と行動結果を管理します。
 class TrainingGameController extends GetxController
     with WidgetsBindingObserver {
+  final _monotonicClock = Stopwatch()..start();
+  DateTime _deviceIndependentNow() =>
+      TrainingGameClock.now();
   /// 回数上限を設けず、連打だけを抑制するための暫定クールタイムです。
   /// 仕様では秒数が調整項目のため、正式値確定時にここだけ変更します。
   static const careCooldown = Duration(seconds: 60);
@@ -143,7 +147,11 @@ class TrainingGameController extends GetxController
   final timeSpeed = 1.obs;
   final isServerStateReady = false.obs;
   final serverErrorMessage = ''.obs;
-  int _lastWorkDay = 0;
+  final workAvailabilityError = ''.obs;
+  // 仕事の実施可否は端末時計ではなく、APIが返すサーバー判定だけを使用します。
+  bool _isWorkAvailable = false;
+  bool _isWorkSyncPending = false;
+  bool _isWorkPreparationPending = false;
   int _lowConditionTraining = 0;
   bool _dayCared = false;
   final _zeroHours = <String, int>{'食事': 0, '清潔': 0, '体調': 0, '仕事': 0};
@@ -152,15 +160,17 @@ class TrainingGameController extends GetxController
   Timer? _tutorialTimer;
   Timer? _mainTimer;
   DateTime? _mainStartedAt;
-  DateTime? _mainProgressAt;
+  int _serverElapsedSeconds = 0;
   int _elapsedTimeOffsetSeconds = 0;
   final _mainClockTick = 0.obs;
   bool _isAppInBackground = false;
   Future<void> _syncChain = Future<void>.value();
   Future<void> _restoreChain = Future<void>.value();
-  TrainingActionType? _queuedAction;
+  final _queuedActions = <({TrainingActionType type, MiniGameResult? result})>[];
   bool _syncRequested = false;
   bool _syncRunning = false;
+  Future<void>? _debugTimeSync;
+  bool _syncBlockedUntilServerRestore = false;
   bool _hasUnsyncedLocalState = false;
   bool _skipFinalSync = false;
   int _localStateRevision = 0;
@@ -172,15 +182,50 @@ class TrainingGameController extends GetxController
   /// 現在の段階定義を返します。
   TrainingStageDefinition get currentStage => stages[stageIndex.value];
 
-  /// 当日の仕事が未実施で、仕事のお世話を開始できるかを返します。
-  bool get canWorkToday => _lastWorkDay != day.value;
+  /// サーバー時刻で当日の仕事が未実施かを返します。
+  bool get canWorkToday => _isWorkAvailable && !_isWorkSyncPending;
+
+  /// 仕事の可否照会または専用画面への遷移中かを返します。
+  bool get isWorkPreparationPending => _isWorkPreparationPending;
+
+  /// 仕事画面を開く直前に、サーバー時刻による実施可否を取得します。
+  Future<bool> prepareWork() async {
+    final debugTimeSync = _debugTimeSync;
+    if (debugTimeSync != null) await debugTimeSync;
+    if (_isWorkPreparationPending || _isWorkSyncPending || _isDisposed) {
+      return false;
+    }
+    _isWorkPreparationPending = true;
+    var prepared = false;
+    workAvailabilityError.value = '';
+    try {
+      final data = await _serverProvider.fetchCurrent();
+      if (data == null || _isDisposed) return false;
+      // 可否と同じ応答に含まれるlock_version・パラメータも更新し、
+      // 他端末操作後に古い状態で仕事を送信しないようにします。
+      _initializeServerState(data);
+      prepared = canWorkToday;
+      return prepared;
+    } catch (_) {
+      if (!_isDisposed) {
+        workAvailabilityError.value = '仕事の実施可否を確認できませんでした。通信状態を確認してください。';
+        logs.insert(0, '仕事の実施可否を確認できませんでした。通信状態を確認してください。');
+      }
+      return false;
+    } finally {
+      if (!prepared) _isWorkPreparationPending = false;
+    }
+  }
+
+  /// 仕事の専用画面を閉じた後、次の仕事開始を可能にします。
+  void finishWorkPreparation() => _isWorkPreparationPending = false;
 
   /// 指定行動のクールタイムが終了しているかを返します。
   bool canPerform(TrainingActionType type) {
     cooldownTick.value;
     if (!isCooldownEnabled(type)) return true;
     final until = _cooldownUntil[type];
-    return until == null || !DateTime.now().isBefore(until);
+    return until == null || !_deviceIndependentNow().isBefore(until);
   }
 
   /// 指定行動のクールタイム設定を返します。
@@ -199,7 +244,7 @@ class TrainingGameController extends GetxController
     cooldownTick.value;
     final until = _cooldownUntil[type];
     if (until == null) return Duration.zero;
-    final remaining = until.difference(DateTime.now());
+    final remaining = until.difference(_deviceIndependentNow());
     return remaining.isNegative ? Duration.zero : remaining;
   }
 
@@ -296,12 +341,8 @@ class TrainingGameController extends GetxController
       cooldownTick.value++;
       if (isServerStateReady.value && !_isAppInBackground) {
         _mainClockTick.value++;
-        if (stageIndex.value >= 2) {
-          _advanceMainClock(timeSpeed.value);
-        } else {
-          _updateElapsedTimeFromStart();
-        }
-        _advanceMainProgressToNow();
+        // パラメータ減衰はサーバー精算だけで確定し、端末時計には依存しません。
+        if (_mainClockTick.value % 60 == 0) unawaited(_restoreServerState());
       }
     });
   }
@@ -351,7 +392,9 @@ class TrainingGameController extends GetxController
     daysInStage.value = 0;
     actionsToday.value = 0;
     trainingCount.value = 0;
-    _lastWorkDay = 0;
+    _isWorkAvailable = false;
+    _isWorkSyncPending = false;
+    _isWorkPreparationPending = false;
     _lowConditionTraining = 0;
     _dayCared = false;
     _zeroHours.updateAll((key, value) => 0);
@@ -363,7 +406,6 @@ class TrainingGameController extends GetxController
     clearPosition.value = null;
     evolutionStage.value = null;
     _mainStartedAt = null;
-    _mainProgressAt = null;
     _elapsedTimeOffsetSeconds = 0;
   }
 
@@ -375,11 +417,8 @@ class TrainingGameController extends GetxController
   /// 段階上昇時の進化演出を完了し、育成画面へ戻します。
   void advanceEvolution() {
     evolutionStage.value = null;
-    if (stageIndex.value >= 2) {
-      _mainProgressAt = DateTime.now();
-      _updateElapsedTimeFromStart();
-      _mainClockTick.value++;
-    }
+    _updateElapsedTimeFromStart();
+    _mainClockTick.value++;
   }
 
   /// 育成画面を離れる前にローカルのリアルタイム進行を停止します。
@@ -450,6 +489,7 @@ class TrainingGameController extends GetxController
 
   /// 取得済みのサーバー状態を初期表示へ反映します。
   void _initializeServerState(Map<String, dynamic> data) {
+    _syncBlockedUntilServerRestore = false;
     _serverPlayerId = (data['id'] as num?)?.toInt();
     _serverLockVersion = (data['lock_version'] as num?)?.toInt() ?? 0;
     _applyServerState(data);
@@ -459,6 +499,9 @@ class TrainingGameController extends GetxController
 
   /// APIレスポンスの状態を画面状態へ反映します。
   void _applyServerState(Map<String, dynamic> data) {
+    _restoreWorkAvailability(data);
+    final elapsedSeconds = (data['elapsed_seconds'] as num?)?.toInt();
+    if (elapsedSeconds != null) _serverElapsedSeconds = elapsedSeconds;
     final startedAt = _parseServerDateTime(data['started_at']) ??
         MySharedPref.getTrainingGameStartedAt();
     if (startedAt != null) {
@@ -473,9 +516,6 @@ class TrainingGameController extends GetxController
     final stageMap = {'egg': 0, 'child': 1, 'training': 2, 'growth': 3};
     if (stage != null && stageMap.containsKey(stage))
       stageIndex.value = stageMap[stage]!;
-    if (stageIndex.value >= 2 && _mainProgressAt == null) {
-      _mainProgressAt = DateTime.now();
-    }
     final parameters = data['parameters'];
     if (parameters is Map) {
       const displayMap = {
@@ -555,7 +595,6 @@ class TrainingGameController extends GetxController
         _localInt(localState, 'actions_today', actionsToday.value);
     trainingCount.value =
         _localInt(localState, 'training_count', trainingCount.value);
-    _lastWorkDay = _localInt(localState, 'last_work_day', _lastWorkDay);
     _lowConditionTraining =
         _localInt(localState, 'low_condition_training', _lowConditionTraining);
     _dayCared = localState['day_cared'] == true;
@@ -566,6 +605,11 @@ class TrainingGameController extends GetxController
     endingStep.value = _localInt(localState, 'ending_step', endingStep.value);
     endingMessage.value = localState['ending_message'] as String? ?? endingMessage.value;
     clearPosition.value = localState['clear_position'] as String?;
+  }
+
+  /// APIレスポンスに含まれる、サーバー時刻基準の仕事可否を反映します。
+  void _restoreWorkAvailability(Map<String, dynamic> data) {
+    _isWorkAvailable = data['work_available'] == true;
   }
 
   /// サーバーが返す終了状態をローカル表示へ反映します。
@@ -613,7 +657,7 @@ class TrainingGameController extends GetxController
       final value = entry.value;
       if (type == null || value is! String) continue;
       final until = DateTime.tryParse(value);
-      if (until != null && DateTime.now().isBefore(until)) {
+      if (until != null && TrainingGameClock.now().isBefore(until)) {
         _cooldownUntil[type] = until;
       }
     }
@@ -676,15 +720,15 @@ class TrainingGameController extends GetxController
       };
 
   /// 現在状態をサーバーへ同期します。
-  void _syncServer({TrainingActionType? action}) {
-    _queueSync(action: action);
+  void _syncServer({TrainingActionType? action, MiniGameResult? result}) {
+    _queueSync(action: action, miniGameResult: result);
   }
 
   /// 同期を順番に実行し、同時更新競合を防ぎます。
-  void _queueSync({TrainingActionType? action, bool force = false}) {
-    if (_isDisposed && !force) return;
-    // 連続操作中は最新状態と最後の行動だけを保持し、古い同期を捨てます。
-    _queuedAction = action ?? _queuedAction;
+  void _queueSync({TrainingActionType? action, MiniGameResult? miniGameResult, bool force = false}) {
+    if ((_isDisposed && !force) || _syncBlockedUntilServerRestore) return;
+    // 連続操作中も各アクションを順番に保持し、効果を失わないようにします。
+    if (action != null) _queuedActions.add((type: action, result: miniGameResult));
     _syncRequested = true;
     _hasUnsyncedLocalState = true;
     _localStateRevision++;
@@ -700,11 +744,10 @@ class TrainingGameController extends GetxController
   /// 保留中の同期要求を1回の通信へ集約します。
   Future<void> _drainSyncQueue() async {
     try {
-      while (_syncRequested) {
+      while (_syncRequested || _queuedActions.isNotEmpty) {
         _syncRequested = false;
-        final action = _queuedAction;
-        _queuedAction = null;
-        await syncNow(action: action);
+        final pending = _queuedActions.isEmpty ? null : _queuedActions.removeAt(0);
+        await syncNow(action: pending?.type, miniGameResult: pending?.result);
       }
     } finally {
       _syncRunning = false;
@@ -717,7 +760,13 @@ class TrainingGameController extends GetxController
   }
 
   /// 画面終了前に最新状態の同期完了を待ちます。
-  Future<void> syncNow({TrainingActionType? action}) async {
+  Future<void> syncNow({TrainingActionType? action, MiniGameResult? miniGameResult}) async {
+    // 仕事はサーバー受理前に楽観更新するため、その結果が確定するまで
+    // 退室など別経路の同期で増分を送信しないようにします。
+    if (_syncBlockedUntilServerRestore ||
+        (_isWorkSyncPending && action != TrainingActionType.work)) {
+      return;
+    }
     if (_serverPlayerId == null) {
       await _startServerState();
       return;
@@ -728,26 +777,63 @@ class TrainingGameController extends GetxController
     _hasUnsyncedLocalState = true;
     await _saveLocalGameState();
     final isPositiveEnd = clearPosition.value != null;
-    final data = await _serverProvider.sync(
-      stageCode: _stageCode,
-      parameters: _serverParameters,
-      lockVersion: _serverLockVersion,
-      positionCode: _positionCode,
-      branchCode: _branchCode,
-      actionCode: action == null ? null : _actionCode(action),
-      status: isPositiveEnd
-          ? 'positive_end'
-          : ended.value
-              ? 'negative_end'
-              : 'playing',
-    );
-    _serverLockVersion =
-        (data['lock_version'] as num?)?.toInt() ?? _serverLockVersion;
-    // 後続行動がなければサーバー優先へ戻し、ある場合は未送信状態を保持します。
-    _hasUnsyncedLocalState = syncingRevision != _localStateRevision;
-    await _saveLocalGameState();
-    // 図鑑はポジティブ終了時だけ再取得し、通常同期の余分な通信を省きます。
-    if (isPositiveEnd && !_isDisposed) await refreshUnlockedPositions();
+    try {
+      final data = await _serverProvider.sync(
+        stageCode: _stageCode,
+        parameters: _serverParameters,
+        lockVersion: _serverLockVersion,
+        positionCode: _positionCode,
+        branchCode: _branchCode,
+        actionCode: action == null ? null : _actionCode(action),
+        actionScore: miniGameResult?.score,
+        actionEffectMultiplier: miniGameResult?.effectMultiplier,
+        status: isPositiveEnd
+            ? 'positive_end'
+            : ended.value
+                ? 'negative_end'
+                : 'playing',
+      );
+      _serverLockVersion =
+          (data['lock_version'] as num?)?.toInt() ?? _serverLockVersion;
+      _restoreWorkAvailability(data);
+      if (syncingRevision == _localStateRevision) {
+        _hasUnsyncedLocalState = false;
+        _applyServerState(data);
+      }
+      // 後続行動がなければサーバー優先へ戻し、ある場合は未送信状態を保持します。
+      _hasUnsyncedLocalState = syncingRevision != _localStateRevision;
+      await _saveLocalGameState();
+      // 図鑑はポジティブ終了時だけ再取得し、通常同期の余分な通信を省きます。
+      if (isPositiveEnd && !_isDisposed) await refreshUnlockedPositions();
+    } catch (_) {
+      if (action == TrainingActionType.work) {
+        // サーバーに拒否された楽観更新を捨てます。後続アクションで、
+        // 拒否済み仕事のメーター増分を保存してしまうことを防ぎます。
+        _isWorkAvailable = false;
+        _hasUnsyncedLocalState = false;
+        // _initializeServerState内のローカル復元で、同期直前の楽観更新を
+        // 再適用しないよう、対象スナップショットを先に破棄します。
+        await MySharedPref.clearTrainingGameLocalState();
+        try {
+          final serverData = await _serverProvider.fetchCurrent();
+          if (serverData != null && !_isDisposed) {
+            _initializeServerState(serverData);
+          }
+        } catch (_) {
+          // サーバー状態を取得できるまで画面操作を停止します。拒否済み仕事の
+          // 楽観更新を残したまま、別アクションで同期することを防ぎます。
+          if (!_isDisposed) {
+            _syncBlockedUntilServerRestore = true;
+            isServerStateReady.value = false;
+            serverErrorMessage.value = '通信状態を確認して、もう一度お試しください。';
+          }
+        }
+        await _saveLocalGameState();
+      }
+      rethrow;
+    } finally {
+      if (action == TrainingActionType.work) _isWorkSyncPending = false;
+    }
   }
 
   /// 同じ育成サイクルだけを対象に、途中進行のローカル復元情報を保存します。
@@ -774,14 +860,13 @@ class TrainingGameController extends GetxController
       'days_in_stage': daysInStage.value,
       'actions_today': actionsToday.value,
       'training_count': trainingCount.value,
-      'last_work_day': _lastWorkDay,
       'low_condition_training': _lowConditionTraining,
       'day_cared': _dayCared,
       'zero_hours': _zeroHours,
       'tutorial_zero_seconds': _tutorialZeroSeconds,
       'cooldowns': {
         for (final entry in _cooldownUntil.entries)
-          if (DateTime.now().isBefore(entry.value))
+          if (_deviceIndependentNow().isBefore(entry.value))
             _actionCode(entry.key): entry.value.toIso8601String(),
       },
       'ended': ended.value,
@@ -879,7 +964,7 @@ class TrainingGameController extends GetxController
       logs.insert(0, '幼少段階から筋トレを始められます。');
       return;
     }
-    if (type == TrainingActionType.work && _lastWorkDay == day.value) {
+    if (type == TrainingActionType.work && !canWorkToday) {
       logs.insert(0, '仕事は1日1回までです。');
       return;
     }
@@ -952,7 +1037,8 @@ class TrainingGameController extends GetxController
         _changeMeter('体調', -10);
         _changeMeter('仕事', 30);
         _addTrend('TECH', 6, '体調', sourceOffset: 10);
-        _lastWorkDay = day.value;
+        // 同期中は重複実行を止め、成功時の可否はサーバー応答で更新します。
+        _isWorkSyncPending = true;
         break;
     }
     if (_isTraining(type) && wasOverfed) {
@@ -975,7 +1061,7 @@ class TrainingGameController extends GetxController
     if (meters['体調']! >= 80) _lowConditionTraining = 0;
     _advanceMainStageIfNeeded();
     _checkGameOver();
-    _syncServer(action: type);
+    _syncServer(action: type, result: miniGameResult);
   }
 
   /// 指定時間を進め、自然減衰と段階移行を処理します。
@@ -986,16 +1072,45 @@ class TrainingGameController extends GetxController
   /// 指定した分数を進め、自然減衰と段階移行を処理します。
   void advanceTimeMinutes(int minutes) {
     if (minutes <= 0 || ended.value || evolutionStage.value != null) return;
+    final previousDay = day.value;
     // デバッグ加算分も表示用の経過時間へ反映し、内部進行と時計を一致させます。
     _elapsedTimeOffsetSeconds += minutes * 60;
     unawaited(MySharedPref.setTrainingGameDebugElapsedSeconds(
         _elapsedTimeOffsetSeconds));
-    final progressAt = _mainProgressAt ??= DateTime.now();
-    _mainProgressAt = progressAt.subtract(Duration(minutes: minutes));
+    // デバッグ指定分だけを明示的に反映し、端末時計との差分は使いません。
+    final elapsedHours = minutes ~/ 60;
+    for (var index = 0; index < elapsedHours; index++) {
+      _tickMainHour();
+      if (ended.value || evolutionStage.value != null) break;
+    }
+    _updateElapsedTimeFromStart();
     _mainClockTick.value++;
-    _advanceMainProgressToNow();
     logs.insert(0, '${minutes}分経過。メーターが自然に減少しました。');
-    if (!_isDisposed) _syncServer();
+    if (_isDisposed) return;
+    if (day.value > previousDay) {
+      final previousSync = _debugTimeSync ?? Future<void>.value();
+      final sync = previousSync.then((_) => _syncDebugTimeAndResetDailyActions());
+      _debugTimeSync = sync;
+      unawaited(sync.whenComplete(() {
+        if (identical(_debugTimeSync, sync)) _debugTimeSync = null;
+      }));
+    } else {
+      _syncServer();
+    }
+  }
+
+  /// デバッグでゲーム内日付を進めた場合だけ、日次アクション制限も解除します。
+  Future<void> _syncDebugTimeAndResetDailyActions() async {
+    try {
+      await TrainingGameProvider.waitForPendingSync();
+      await syncNow();
+      final data = await _serverProvider.resetDebugDailyActionUsage();
+      if (!_isDisposed) _initializeServerState(data);
+    } catch (_) {
+      if (!_isDisposed) {
+        logs.insert(0, 'デバッグ用の日次アクション制限をリセットできませんでした。');
+      }
+    }
   }
 
   /// デバッグ操作として育成期の初期状態にします。
@@ -1024,7 +1139,7 @@ class TrainingGameController extends GetxController
     evolutionStage.value = null;
     // デバッグ開始を仮想サイクルの開始時刻とし、実運用のstarted_atと同じ経路で計測します。
     _mainStartedAt = DateTime.now();
-    _mainProgressAt = DateTime.now();
+    _serverElapsedSeconds = 0;
     _elapsedTimeOffsetSeconds = 0;
     unawaited(MySharedPref.clearTrainingGameDebugElapsedSeconds());
     unawaited(MySharedPref.setTrainingGameStartedAt(_mainStartedAt!));
@@ -1043,7 +1158,7 @@ class TrainingGameController extends GetxController
   /// 行動完了時点からクールタイムを開始します。
   void _startCooldown(TrainingActionType type) {
     if (!isCooldownEnabled(type)) return;
-    _cooldownUntil[type] = DateTime.now().add(careCooldown);
+    _cooldownUntil[type] = _deviceIndependentNow().add(careCooldown);
   }
 
   /// 傾向値を0未満にならないよう更新します。
@@ -1184,65 +1299,21 @@ class TrainingGameController extends GetxController
       if (_dayCared) daysInStage.value++;
       _dayCared = false;
       actionsToday.value = 0;
-      _lastWorkDay = 0;
       _advanceMainStageIfNeeded();
     }
     _checkGameOver();
   }
 
-  /// 本編開始後に実時間で経過した時間を反映します。
-  void _advanceMainProgressToNow() {
-    if (stageIndex.value < 2 || ended.value || evolutionStage.value != null)
-      return;
-    final progressAt = _mainProgressAt ??= DateTime.now();
-    final elapsedSeconds = DateTime.now().difference(progressAt).inSeconds;
-    if (elapsedSeconds < 0) {
-      // 端末時計が巻き戻された場合、過去の基準時刻を待たず現在から進行を再開します。
-      _mainProgressAt = DateTime.now();
-      _updateElapsedTimeFromStart();
-      return;
-    }
-    // 卵段階と同じく、鮫になった後も毎秒の実時間を画面状態へ反映します。
-    _updateElapsedTimeFromStart();
-    final elapsedHours = elapsedSeconds ~/ Duration.secondsPerHour;
-    if (elapsedHours <= 0) return;
-    for (var index = 0; index < elapsedHours; index++) {
-      _tickMainHour();
-      if (ended.value || evolutionStage.value != null) break;
-    }
-    _mainProgressAt = progressAt.add(Duration(hours: elapsedHours));
-    _updateElapsedTimeFromStart();
-    _syncServer();
-  }
-
-  /// サーバーの育成開始日時を基準に、画面へ表示する経過秒数を更新します。
+  /// サーバー応答の経過時間とデバッグ加算だけを、画面時計へ反映します。
   void _updateElapsedTimeFromStart() {
-    final startedAt = _mainStartedAt;
-    if (startedAt == null) return;
-    final elapsedSeconds = DateTime.now().difference(startedAt).inSeconds;
-    final currentElapsedSeconds =
-        (elapsedSeconds < 0 ? 0 : elapsedSeconds) + _elapsedTimeOffsetSeconds;
-    // 端末時計の巻き戻しで表示中の経過時間が減少しないよう維持します。
-    if (currentElapsedSeconds >= mainElapsedSeconds.value) {
-      mainElapsedSeconds.value = currentElapsedSeconds;
-    }
+    mainElapsedSeconds.value =
+        _serverElapsedSeconds + _elapsedTimeOffsetSeconds;
   }
 
   /// チュートリアルの倍速設定を時計へ反映します。
   void _advanceTutorialClock(int speed) {
     // 実時間との差分を補正し、停止・倍速でも表示とメーターの進行を一致させます。
     _elapsedTimeOffsetSeconds += speed - 1;
-    _updateElapsedTimeFromStart();
-  }
-
-  /// 育成期・成長期の倍速設定を時計と本編進行へ反映します。
-  void _advanceMainClock(int speed) {
-    _elapsedTimeOffsetSeconds += speed - 1;
-    final progressAt = _mainProgressAt;
-    if (progressAt != null) {
-      // 基準時刻をずらし、次の本編更新でも同じ倍率の経過時間を扱います。
-      _mainProgressAt = progressAt.subtract(Duration(seconds: speed - 1));
-    }
     _updateElapsedTimeFromStart();
   }
 

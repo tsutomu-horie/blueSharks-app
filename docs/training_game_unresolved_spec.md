@@ -27,6 +27,13 @@ DB設計書では減衰率を `game_settings` の調整値として管理する�
 - 育成期のゲーム内1日は4時間として扱い、条件を満たしている場合に日数を加算します。
 - 上記は正式仕様ではなく、正式な減衰率・下限・経過時間が決定した時点で更新します。
 
+### サーバー時刻化の暫定実装方針（2026-08-28追記）
+
+- 端末の壁時計は通常プレイの経過判定・日次制限・クールタイム判定に使用しません。
+- 経過精算とアクション確定は、既存のサーバー日時カラムおよびアクション履歴を正本とします。
+- `required_elapsed_hours`、`required_work_value` などの正式な段階閾値が未登録のため、現行の段階進行条件は暫定値として扱います。
+- 暫定の育成期ゲーム内1日=4時間、自然減衰率、クールタイム=60秒は、正式値確定時にマスタ／設定へ差し替えます。
+
 実装箇所: `lib/presentation/training_game/controllers/training_game.controller.dart`、`blueSharks-server/app/Services/V1/Game/GameParameterDecayService.php`、`blueSharks-server/database/seeders/Game/GameMasterSeeder.php`
 
 ## 発注元の確認が必要な項目
