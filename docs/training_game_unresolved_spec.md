@@ -64,9 +64,10 @@ DB設計書では減衰率を `game_settings` の調整値として管理する�
 
 | 項目 | 現在の暫定実装 | 確認事項 | 実装箇所 |
 | --- | --- | --- | --- |
+| 成功判定 | ボールと移動中の仲間の当たり判定が重なった時点で成功 | 資料上の「仲間方向へのフリック」で成功する判定と異なる挙動。方向が正しくても衝突しなければ失敗、方向にかかわらず衝突すれば成功 | `pass_and_run_game.screen.dart`、`pass_and_run_logic.dart` |
 | 片道時間 | 15秒 | 「15秒程度」の正式値 | `pass_and_run_logic.dart` |
 | フリックしきい値 | 24 logical px・400 logical px/秒 | 実機での正式値 | `pass_and_run_logic.dart` |
-| 判定タイミング | `onPanEnd` | `onPanEnd`と距離到達時のどちらを正式採用するか | `pass_and_run_game.screen.dart` |
+| 判定タイミング | ボール移動中に、描画フレームごとに仲間との衝突を確認 | `onPanEnd`時点で成功を決める仕様に戻すか、衝突時に決めるか | `pass_and_run_game.screen.dart` |
 | 並走速度 | 2人に異なる周期の連続往復運動 | 速度、加減速、上下端、追越し頻度 | `pass_and_run_game.screen.dart` |
 | ボール移動時間 | 往路220ms＋返球180ms（合計400ms） | 「速やかに」の具体値 | `pass_and_run_game.screen.dart` |
 | ボール素材 | コード描画のデフォルメボール | 正式素材の画像・サイズ・色 | `pass_and_run_game.screen.dart` |
