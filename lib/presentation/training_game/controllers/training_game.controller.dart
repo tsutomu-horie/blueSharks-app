@@ -791,6 +791,10 @@ class TrainingGameController extends GetxController
       _serverLockVersion =
           (data['lock_version'] as num?)?.toInt() ?? _serverLockVersion;
       _restoreWorkAvailability(data);
+      if (syncingRevision == _localStateRevision) {
+        _hasUnsyncedLocalState = false;
+        _applyServerState(data);
+      }
       // 後続行動がなければサーバー優先へ戻し、ある場合は未送信状態を保持します。
       _hasUnsyncedLocalState = syncingRevision != _localStateRevision;
       await _saveLocalGameState();
