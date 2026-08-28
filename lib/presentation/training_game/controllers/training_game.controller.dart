@@ -4,19 +4,16 @@ import 'dart:convert';
 import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
 import 'package:koto_blue_sharks/app/providers/training_game/training_game_provider.dart';
+import 'package:koto_blue_sharks/app/services/server_time_clock.dart';
 import 'package:koto_blue_sharks/utils/my_shared_pref.dart';
 
 import '../mini_games/models/mini_game_result.dart';
 import '../models/training_game_models.dart';
 import '../models/training_game_position_classifier.dart';
-import '../models/training_game_clock.dart';
 
 /// 育成ゲームの進行状態と行動結果を管理します。
 class TrainingGameController extends GetxController
     with WidgetsBindingObserver {
-  final _monotonicClock = Stopwatch()..start();
-  DateTime _deviceIndependentNow() =>
-      TrainingGameClock.now();
   /// 回数上限を設けず、連打だけを抑制するための暫定クールタイムです。
   /// 仕様では秒数が調整項目のため、正式値確定時にここだけ変更します。
   static const careCooldown = Duration(seconds: 60);
@@ -159,9 +156,11 @@ class TrainingGameController extends GetxController
   final _tutorialZeroSeconds = <String, int>{'食事': 0, '清潔': 0, '体調': 0};
   Timer? _tutorialTimer;
   Timer? _mainTimer;
-  DateTime? _mainStartedAt;
   int _serverElapsedSeconds = 0;
   int _elapsedTimeOffsetSeconds = 0;
+  int? _activeMainProgressBaseSeconds;
+  int _processedActiveMainHours = 0;
+  bool _waitingForServerRestore = false;
   final _mainClockTick = 0.obs;
   bool _isAppInBackground = false;
   Future<void> _syncChain = Future<void>.value();
@@ -225,7 +224,7 @@ class TrainingGameController extends GetxController
     cooldownTick.value;
     if (!isCooldownEnabled(type)) return true;
     final until = _cooldownUntil[type];
-    return until == null || !_deviceIndependentNow().isBefore(until);
+    return until == null || !_serverNow().isBefore(until);
   }
 
   /// 指定行動のクールタイム設定を返します。
@@ -244,7 +243,7 @@ class TrainingGameController extends GetxController
     cooldownTick.value;
     final until = _cooldownUntil[type];
     if (until == null) return Duration.zero;
-    final remaining = until.difference(_deviceIndependentNow());
+    final remaining = until.difference(_serverNow());
     return remaining.isNegative ? Duration.zero : remaining;
   }
 
@@ -257,7 +256,7 @@ class TrainingGameController extends GetxController
   /// 参照HTMLと同じ形式で現在時刻を表示します。
   String get clockLabel {
     _mainClockTick.value;
-    final elapsedSeconds = _mainStartedAt == null
+    final elapsedSeconds = stageIndex.value < 2
         ? totalElapsedSeconds.value
         : mainElapsedSeconds.value;
     final elapsedDays = elapsedSeconds ~/ Duration.secondsPerDay;
@@ -340,6 +339,8 @@ class TrainingGameController extends GetxController
     _mainTimer = Timer.periodic(const Duration(seconds: 1), (_) {
       cooldownTick.value++;
       if (isServerStateReady.value && !_isAppInBackground) {
+        _advanceActiveMainProgress();
+        _updateElapsedTimeFromStart();
         _mainClockTick.value++;
         // パラメータ減衰はサーバー精算だけで確定し、端末時計には依存しません。
         if (_mainClockTick.value % 60 == 0) unawaited(_restoreServerState());
@@ -405,8 +406,10 @@ class TrainingGameController extends GetxController
     endingMessage.value = '';
     clearPosition.value = null;
     evolutionStage.value = null;
-    _mainStartedAt = null;
     _elapsedTimeOffsetSeconds = 0;
+    _activeMainProgressBaseSeconds = null;
+    _processedActiveMainHours = 0;
+    _waitingForServerRestore = false;
   }
 
   /// 育成完了後の演出フローを次へ進めます。
@@ -417,6 +420,7 @@ class TrainingGameController extends GetxController
   /// 段階上昇時の進化演出を完了し、育成画面へ戻します。
   void advanceEvolution() {
     evolutionStage.value = null;
+    _resetActiveMainProgressBaseline();
     _updateElapsedTimeFromStart();
     _mainClockTick.value++;
   }
@@ -424,6 +428,8 @@ class TrainingGameController extends GetxController
   /// 育成画面を離れる前にローカルのリアルタイム進行を停止します。
   void pauseLocalProgress() {
     _isAppInBackground = true;
+    _waitingForServerRestore = true;
+    _activeMainProgressBaseSeconds = null;
   }
 
   /// アプリがバックグラウンドへ移る前に育成状態を保存します。
@@ -434,6 +440,8 @@ class TrainingGameController extends GetxController
         state == AppLifecycleState.paused ||
         state == AppLifecycleState.detached) {
       _isAppInBackground = true;
+      _waitingForServerRestore = true;
+      _activeMainProgressBaseSeconds = null;
       _queueSync();
     }
     if (state == AppLifecycleState.resumed) {
@@ -499,13 +507,18 @@ class TrainingGameController extends GetxController
 
   /// APIレスポンスの状態を画面状態へ反映します。
   void _applyServerState(Map<String, dynamic> data) {
+    final previousStageIndex = stageIndex.value;
+    final serverTime = _parseServerDateTime(data['server_time']);
+    if (serverTime != null) ServerTimeClock.instance.synchronize(serverTime);
     _restoreWorkAvailability(data);
     final elapsedSeconds = (data['elapsed_seconds'] as num?)?.toInt();
-    if (elapsedSeconds != null) _serverElapsedSeconds = elapsedSeconds;
+    if (elapsedSeconds != null) {
+      _serverElapsedSeconds = elapsedSeconds.clamp(0, 0x7fffffff).toInt();
+      totalElapsedSeconds.value = _serverElapsedSeconds;
+    }
     final startedAt = _parseServerDateTime(data['started_at']) ??
         MySharedPref.getTrainingGameStartedAt();
     if (startedAt != null) {
-      _mainStartedAt = startedAt;
       // サーバー状態を再取得しても、同じ育成サイクルのデバッグ加算を復元します。
       _elapsedTimeOffsetSeconds =
           MySharedPref.getTrainingGameDebugElapsedSeconds();
@@ -516,6 +529,12 @@ class TrainingGameController extends GetxController
     final stageMap = {'egg': 0, 'child': 1, 'training': 2, 'growth': 3};
     if (stage != null && stageMap.containsKey(stage))
       stageIndex.value = stageMap[stage]!;
+    if (_waitingForServerRestore ||
+        _activeMainProgressBaseSeconds == null ||
+        previousStageIndex != stageIndex.value) {
+      _resetActiveMainProgressBaseline();
+      _waitingForServerRestore = false;
+    }
     final parameters = data['parameters'];
     if (parameters is Map) {
       const displayMap = {
@@ -546,6 +565,12 @@ class TrainingGameController extends GetxController
       }
     }
     _restoreLocalGameState(data);
+    final serverActionsToday = (data['actions_today'] as num?)?.toInt();
+    if (serverActionsToday != null) {
+      actionsToday.value = serverActionsToday;
+    }
+    // ローカル保存値より、サーバーが現在時刻で判定した値を優先します。
+    _restoreServerCooldowns(data['cooldowns']);
     _restoreEndedState(data);
   }
 
@@ -581,22 +606,32 @@ class TrainingGameController extends GetxController
       if (!serverHasTech) _restoreDoubleValue(localState, 'tech', 'TECH');
     }
 
-    elapsedHours.value = _localInt(localState, 'elapsed_hours', elapsedHours.value);
-    totalElapsedSeconds.value =
-        _localInt(localState, 'total_elapsed_seconds', totalElapsedSeconds.value);
-    mainElapsedSeconds.value =
-        _localInt(localState, 'main_elapsed_seconds', mainElapsedSeconds.value);
+    // 経過時間・日次境界はサーバー応答を正とし、保存済みの端末カウンターで
+    // サーバー状態を巻き戻さないようにします。
+    // サーバーが返さない本編の日次カウンターは、同じ育成サイクルの
+    // ローカル状態から復元します。経過秒そのものは上でサーバー値を反映済みです。
+    elapsedHours.value =
+        _localInt(localState, 'elapsed_hours', elapsedHours.value);
     day.value = _localInt(localState, 'day', day.value);
-    secondsInStage.value =
-        _localInt(localState, 'seconds_in_stage', secondsInStage.value);
-    daysInStage.value =
-        _localInt(localState, 'days_in_stage', daysInStage.value);
+    secondsInStage.value = _localInt(
+      localState,
+      'seconds_in_stage',
+      secondsInStage.value,
+    );
+    daysInStage.value = _localInt(
+      localState,
+      'days_in_stage',
+      daysInStage.value,
+    );
     actionsToday.value =
         _localInt(localState, 'actions_today', actionsToday.value);
     trainingCount.value =
         _localInt(localState, 'training_count', trainingCount.value);
-    _lowConditionTraining =
-        _localInt(localState, 'low_condition_training', _lowConditionTraining);
+    _lowConditionTraining = _localInt(
+      localState,
+      'low_condition_training',
+      _lowConditionTraining,
+    );
     _dayCared = localState['day_cared'] == true;
     _restoreCooldowns(localState['cooldowns']);
     _restoreCounters(localState['zero_hours'], _zeroHours);
@@ -615,6 +650,14 @@ class TrainingGameController extends GetxController
   /// サーバーが返す終了状態をローカル表示へ反映します。
   void _restoreEndedState(Map<String, dynamic> data) {
     final status = data['status'] as String?;
+    if (status == 'playing' && !_hasUnsyncedLocalState) {
+      // 同期済みの端末スナップショットに残った終了状態を復元しません。
+      ended.value = false;
+      endingStep.value = 0;
+      endingMessage.value = '';
+      clearPosition.value = null;
+      return;
+    }
     if (status == 'positive_end') {
       ended.value = true;
       endingStep.value = 0;
@@ -657,7 +700,22 @@ class TrainingGameController extends GetxController
       final value = entry.value;
       if (type == null || value is! String) continue;
       final until = DateTime.tryParse(value);
-      if (until != null && TrainingGameClock.now().isBefore(until)) {
+      if (until != null && _serverNow().isBefore(until)) {
+        _cooldownUntil[type] = until;
+      }
+    }
+  }
+
+  /// サーバーが現在時刻で判定したクールタイムを復元します。
+  void _restoreServerCooldowns(Object? rawCooldowns) {
+    if (rawCooldowns is! Map) return;
+    _cooldownUntil.clear();
+    for (final entry in rawCooldowns.entries) {
+      final type = _actionTypeFromCode(entry.key.toString());
+      final value = entry.value;
+      if (type == null || value is! String) continue;
+      final until = DateTime.tryParse(value);
+      if (until != null && _serverNow().isBefore(until)) {
         _cooldownUntil[type] = until;
       }
     }
@@ -866,7 +924,7 @@ class TrainingGameController extends GetxController
       'tutorial_zero_seconds': _tutorialZeroSeconds,
       'cooldowns': {
         for (final entry in _cooldownUntil.entries)
-          if (_deviceIndependentNow().isBefore(entry.value))
+          if (_serverNow().isBefore(entry.value))
             _actionCode(entry.key): entry.value.toIso8601String(),
       },
       'ended': ended.value,
@@ -1083,6 +1141,7 @@ class TrainingGameController extends GetxController
       _tickMainHour();
       if (ended.value || evolutionStage.value != null) break;
     }
+    _markActiveMainProgressAsProcessed();
     _updateElapsedTimeFromStart();
     _mainClockTick.value++;
     logs.insert(0, '${minutes}分経過。メーターが自然に減少しました。');
@@ -1137,12 +1196,11 @@ class TrainingGameController extends GetxController
     clearPosition.value = null;
     endingStep.value = 0;
     evolutionStage.value = null;
-    // デバッグ開始を仮想サイクルの開始時刻とし、実運用のstarted_atと同じ経路で計測します。
-    _mainStartedAt = DateTime.now();
+    // デバッグ開始も端末の壁時計ではなく、最後に同期したサーバー時刻を基準にします。
     _serverElapsedSeconds = 0;
     _elapsedTimeOffsetSeconds = 0;
+    _resetActiveMainProgressBaseline();
     unawaited(MySharedPref.clearTrainingGameDebugElapsedSeconds());
-    unawaited(MySharedPref.setTrainingGameStartedAt(_mainStartedAt!));
     _updateElapsedTimeFromStart();
     // デバッグ開始直後から本編のリアルタイム時計を再描画します。
     _mainClockTick.value++;
@@ -1158,7 +1216,7 @@ class TrainingGameController extends GetxController
   /// 行動完了時点からクールタイムを開始します。
   void _startCooldown(TrainingActionType type) {
     if (!isCooldownEnabled(type)) return;
-    _cooldownUntil[type] = _deviceIndependentNow().add(careCooldown);
+    _cooldownUntil[type] = _serverNow().add(careCooldown);
   }
 
   /// 傾向値を0未満にならないよう更新します。
@@ -1276,6 +1334,7 @@ class TrainingGameController extends GetxController
     stageIndex.value++;
     // チュートリアルから本編へは、シミュレータ仕様どおり表示値を引き継ぎます。
     _showEvolutionForCurrentStage();
+    if (stageIndex.value >= 2) _resetActiveMainProgressBaseline();
     secondsInStage.value = 0;
     trainingCount.value = 0;
     actionsToday.value = 0;
@@ -1304,10 +1363,63 @@ class TrainingGameController extends GetxController
     _checkGameOver();
   }
 
+  /// サーバー時刻を基準に、アプリ前面中に経過した本編の時間を処理します。
+  void _advanceActiveMainProgress() {
+    if (stageIndex.value < 2 ||
+        ended.value ||
+        evolutionStage.value != null ||
+        _waitingForServerRestore) {
+      return;
+    }
+    _activeMainProgressBaseSeconds ??= _currentServerElapsedSeconds;
+    final elapsedSeconds =
+        _currentServerElapsedSeconds - _activeMainProgressBaseSeconds!;
+    final targetHours = elapsedSeconds < 0 ? 0 : elapsedSeconds ~/ 3600;
+    while (_processedActiveMainHours < targetHours) {
+      _processedActiveMainHours++;
+      _tickActiveMainHour();
+      if (ended.value || evolutionStage.value != null) break;
+    }
+  }
+
+  /// 本編1時間分の日次判定だけを進めます。自然減衰はサーバーが確定します。
+  void _tickActiveMainHour() {
+    elapsedHours.value++;
+    if (elapsedHours.value % mainDayHours != 0) return;
+
+    day.value++;
+    if (_dayCared) daysInStage.value++;
+    _dayCared = false;
+    actionsToday.value = 0;
+    _advanceMainStageIfNeeded();
+  }
+
+  /// デバッグで手動加算した時間を、実時間処理済みとして扱います。
+  void _markActiveMainProgressAsProcessed() {
+    final base = _activeMainProgressBaseSeconds;
+    if (base == null) return;
+    final elapsedSeconds = _currentServerElapsedSeconds - base;
+    _processedActiveMainHours =
+        elapsedSeconds < 0 ? 0 : elapsedSeconds ~/ 3600;
+  }
+
+  /// 新しい本編段階または復帰後のサーバー時刻を進行基準にします。
+  void _resetActiveMainProgressBaseline() {
+    _activeMainProgressBaseSeconds = _currentServerElapsedSeconds;
+    _processedActiveMainHours = 0;
+  }
+
+  int get _currentServerElapsedSeconds =>
+      _serverElapsedSeconds +
+      _elapsedTimeOffsetSeconds +
+      ServerTimeClock.instance.elapsedSinceSync.inSeconds;
+
   /// サーバー応答の経過時間とデバッグ加算だけを、画面時計へ反映します。
   void _updateElapsedTimeFromStart() {
     mainElapsedSeconds.value =
-        _serverElapsedSeconds + _elapsedTimeOffsetSeconds;
+        _serverElapsedSeconds +
+        _elapsedTimeOffsetSeconds +
+        ServerTimeClock.instance.elapsedSinceSync.inSeconds;
   }
 
   /// チュートリアルの倍速設定を時計へ反映します。
@@ -1317,11 +1429,14 @@ class TrainingGameController extends GetxController
     _updateElapsedTimeFromStart();
   }
 
-  /// APIのISO日時を端末のローカル時刻へ変換します。
+  /// APIのISO日時をサーバー時刻として解釈します。
   DateTime? _parseServerDateTime(Object? value) {
     if (value is! String || value.isEmpty) return null;
-    return DateTime.tryParse(value)?.toLocal();
+    return DateTime.tryParse(value);
   }
+
+  /// 最後に同期したサーバー時刻を返します。
+  DateTime _serverNow() => ServerTimeClock.instance.now;
 
   /// 「世話が行き届いた日」7日で本編段階を進めます。
   void _advanceMainStageIfNeeded() {
