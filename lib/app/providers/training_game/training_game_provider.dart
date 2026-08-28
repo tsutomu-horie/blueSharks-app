@@ -1,5 +1,6 @@
 import 'package:get/get.dart';
 import 'package:koto_blue_sharks/app/services/auth_token.dart';
+import 'package:koto_blue_sharks/app/services/server_time_clock.dart';
 import 'package:koto_blue_sharks/utils/Constant.dart';
 
 /// 育成ゲームのサーバー同期APIを担当します。
@@ -140,6 +141,12 @@ class TrainingGameProvider extends GetConnect {
     final data = body['data'];
     if (data == null) return null;
     if (data is! Map) throw Exception('育成ゲームAPIのデータ形式が不正です。');
-    return Map<String, dynamic>.from(data);
+    final result = Map<String, dynamic>.from(data);
+    final serverTime = result['server_time'];
+    if (serverTime is String) {
+      final parsed = DateTime.tryParse(serverTime);
+      if (parsed != null) ServerTimeClock.instance.synchronize(parsed);
+    }
+    return result;
   }
 }
