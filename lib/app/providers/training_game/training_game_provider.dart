@@ -86,6 +86,8 @@ class TrainingGameProvider extends GetConnect {
     String? positionCode,
     String? branchCode,
     String? actionCode,
+    double? actionScore,
+    double? actionEffectMultiplier,
     String status = 'playing',
   }) async {
     final write = _pendingWrite.then((_) async {
@@ -103,6 +105,8 @@ class TrainingGameProvider extends GetConnect {
               'code': actionCode,
               'idempotency_key': '${DateTime.now().microsecondsSinceEpoch}-$actionCode',
               'result_code': 'completed',
+              if (actionScore != null) 'score': actionScore,
+              if (actionEffectMultiplier != null) 'effect_multiplier': actionEffectMultiplier,
             },
         },
         headers: await _headers(),

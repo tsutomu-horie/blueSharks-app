@@ -162,7 +162,7 @@ class TrainingGameController extends GetxController
   bool _isAppInBackground = false;
   Future<void> _syncChain = Future<void>.value();
   Future<void> _restoreChain = Future<void>.value();
-  final _queuedActions = <TrainingActionType>[];
+  final _queuedActions = <({TrainingActionType type, MiniGameResult? result})>[];
   bool _syncRequested = false;
   bool _syncRunning = false;
   Future<void>? _debugTimeSync;
@@ -716,15 +716,15 @@ class TrainingGameController extends GetxController
       };
 
   /// 現在状態をサーバーへ同期します。
-  void _syncServer({TrainingActionType? action}) {
-    _queueSync(action: action);
+  void _syncServer({TrainingActionType? action, MiniGameResult? result}) {
+    _queueSync(action: action, miniGameResult: result);
   }
 
   /// 同期を順番に実行し、同時更新競合を防ぎます。
-  void _queueSync({TrainingActionType? action, bool force = false}) {
+  void _queueSync({TrainingActionType? action, MiniGameResult? miniGameResult, bool force = false}) {
     if ((_isDisposed && !force) || _syncBlockedUntilServerRestore) return;
     // 連続操作中も各アクションを順番に保持し、効果を失わないようにします。
-    if (action != null) _queuedActions.add(action);
+    if (action != null) _queuedActions.add((type: action, result: miniGameResult));
     _syncRequested = true;
     _hasUnsyncedLocalState = true;
     _localStateRevision++;
@@ -742,8 +742,8 @@ class TrainingGameController extends GetxController
     try {
       while (_syncRequested || _queuedActions.isNotEmpty) {
         _syncRequested = false;
-        final action = _queuedActions.isEmpty ? null : _queuedActions.removeAt(0);
-        await syncNow(action: action);
+        final pending = _queuedActions.isEmpty ? null : _queuedActions.removeAt(0);
+        await syncNow(action: pending?.type, miniGameResult: pending?.result);
       }
     } finally {
       _syncRunning = false;
@@ -756,7 +756,7 @@ class TrainingGameController extends GetxController
   }
 
   /// 画面終了前に最新状態の同期完了を待ちます。
-  Future<void> syncNow({TrainingActionType? action}) async {
+  Future<void> syncNow({TrainingActionType? action, MiniGameResult? miniGameResult}) async {
     // 仕事はサーバー受理前に楽観更新するため、その結果が確定するまで
     // 退室など別経路の同期で増分を送信しないようにします。
     if (_syncBlockedUntilServerRestore ||
@@ -781,6 +781,8 @@ class TrainingGameController extends GetxController
         positionCode: _positionCode,
         branchCode: _branchCode,
         actionCode: action == null ? null : _actionCode(action),
+        actionScore: miniGameResult?.score,
+        actionEffectMultiplier: miniGameResult?.effectMultiplier,
         status: isPositiveEnd
             ? 'positive_end'
             : ended.value
@@ -1055,7 +1057,7 @@ class TrainingGameController extends GetxController
     if (meters['体調']! >= 80) _lowConditionTraining = 0;
     _advanceMainStageIfNeeded();
     _checkGameOver();
-    _syncServer(action: type);
+    _syncServer(action: type, result: miniGameResult);
   }
 
   /// 指定時間を進め、自然減衰と段階移行を処理します。
