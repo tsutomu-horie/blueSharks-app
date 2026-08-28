@@ -450,6 +450,9 @@ class TrainingGameController extends GetxController
     }
     if (state == AppLifecycleState.resumed) {
       _isAppInBackground = false;
+      // 復帰直後は、直前に同期したサーバー時刻から表示だけを先に再開します。
+      _updateElapsedTimeFromStart();
+      _mainClockTick.value++;
       // オフライン中の精算はサーバー状態の再取得へ一元化し、端末側の二重減衰を防ぎます。
       unawaited(_restoreServerState());
     }
@@ -512,8 +515,7 @@ class TrainingGameController extends GetxController
   /// APIレスポンスの状態を画面状態へ反映します。
   void _applyServerState(Map<String, dynamic> data) {
     final previousStageIndex = stageIndex.value;
-    final serverTime = _parseServerDateTime(data['server_time']);
-    if (serverTime != null) ServerTimeClock.instance.synchronize(serverTime);
+    ServerTimeClock.instance.synchronizeFromPayload(data);
     _restoreWorkAvailability(data);
     final elapsedSeconds = (data['elapsed_seconds'] as num?)?.toInt();
     if (elapsedSeconds != null) {

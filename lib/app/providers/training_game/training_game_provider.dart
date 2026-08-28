@@ -142,11 +142,7 @@ class TrainingGameProvider extends GetConnect {
     if (data == null) return null;
     if (data is! Map) throw Exception('育成ゲームAPIのデータ形式が不正です。');
     final result = Map<String, dynamic>.from(data);
-    final serverTime = result['server_time'];
-    if (serverTime is String) {
-      final parsed = DateTime.tryParse(serverTime);
-      if (parsed != null) ServerTimeClock.instance.synchronize(parsed);
-    }
+    ServerTimeClock.instance.synchronizeFromPayload(result);
     return result;
   }
 }
