@@ -90,6 +90,7 @@ class TrainingGameProvider extends GetConnect {
     String? actionCode,
     double? actionScore,
     double? actionEffectMultiplier,
+    bool reconcileParameters = false,
     String status = 'playing',
   }) async {
     final write = _pendingWrite.then((_) async {
@@ -102,6 +103,7 @@ class TrainingGameProvider extends GetConnect {
           'status': status,
           'lock_version': lockVersion,
           'parameters': parameters,
+          if (reconcileParameters) 'reconcile_parameters': true,
           if (actionCode != null)
             'action': {
               'code': actionCode,

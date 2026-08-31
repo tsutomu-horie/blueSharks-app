@@ -112,12 +112,29 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
       final endingVisual = isPositive
           ? '🦈\n旅立ち'
           : '${controller.characterLabel}\n引退';
+      final isSyncPending = controller.isEndingSyncPending.value;
+      final syncError = controller.endingSyncError.value;
+      final canStartNextCycle = !isSyncPending && syncError.isEmpty;
       return _buildEndingPage(
         title: '旅立ち',
         visual: endingVisual,
-        message: isPositive ? '育成した鮫太朗が旅立ちます。' : '育成を終え、次の卵へ進みます。',
-        buttonLabel: isPositive ? '図鑑へ登録' : '次の卵へ',
-        onPressed: isPositive ? controller.advanceEndingStep : _openNewEgg,
+        message: [
+          isPositive ? '育成した鮫太朗が旅立ちます。' : '育成を終え、次の卵へ進みます。',
+          if (isSyncPending) '終了状態を保存しています…',
+          if (syncError.isNotEmpty) syncError,
+        ].join('\n\n'),
+        buttonLabel: syncError.isNotEmpty
+            ? '再試行'
+            : isPositive
+                ? '図鑑へ登録'
+                : '次の卵へ',
+        onPressed: !canStartNextCycle
+            ? syncError.isNotEmpty
+                ? controller.retryEndingSync
+                : null
+            : isPositive
+                ? controller.advanceEndingStep
+                : _openNewEgg,
       );
     }
     return _buildDexPage();
@@ -221,7 +238,7 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
     required String title,
     required String visual,
     required String buttonLabel,
-    required VoidCallback onPressed,
+    required VoidCallback? onPressed,
     String? message,
   }) {
     return Padding(
