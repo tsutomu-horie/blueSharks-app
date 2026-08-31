@@ -115,7 +115,10 @@ class TrainingGameNewGameScreen extends GetView<TrainingGameNewGameController> {
     controller.startNewGame(forceRestart: forceRestart).then((startedState) {
       if (startedState == null) return;
       // 開始APIのレスポンスを引き渡し、画面表示時の再取得を省略します。
-      Get.offNamed(Routes.TRAINING_GAME, arguments: startedState);
+      // 新サイクルであることを明示し、旧ローカル状態の復元を禁止します。
+      final newCycleState = Map<String, dynamic>.from(startedState)
+        ..['_new_cycle'] = true;
+      Get.offNamed(Routes.TRAINING_GAME, arguments: newCycleState);
     });
   }
 }

@@ -328,8 +328,17 @@ class TrainingGameController extends GetxController
     logs.add('段階1「卵」からスタート。お世話をして時間を進めましょう。');
     final initialState = Get.arguments;
     if (initialState is Map) {
+      final isNewCycle = initialState['_new_cycle'] == true;
+      final state = Map<String, dynamic>.from(initialState)
+        ..remove('_new_cycle');
+      if (isNewCycle) _resetLocalProgressForNewCycle();
       // 遷移元で取得済みの状態を利用し、初期表示時の重複通信を避けます。
-      _initializeServerState(Map<String, dynamic>.from(initialState));
+      _initializeServerState(state, forceNewCycle: isNewCycle);
+      if (isNewCycle) {
+        // 新サイクル開始レスポンスに旧クールタイムが混在していても引き継がない。
+        _cooldownUntil.clear();
+        cooldownTick.value++;
+      }
     } else {
       unawaited(_restoreServerState());
     }
@@ -527,12 +536,16 @@ class TrainingGameController extends GetxController
   }
 
   /// 取得済みのサーバー状態を初期表示へ反映します。
-  bool _initializeServerState(Map<String, dynamic> data) {
+  bool _initializeServerState(
+    Map<String, dynamic> data, {
+    bool forceNewCycle = false,
+  }) {
     final serverCycleNo = (data['cycle_no'] as num?)?.toInt();
     final isNewCycle =
-        serverCycleNo != null &&
-        _serverCycleNo != null &&
-        serverCycleNo != _serverCycleNo;
+        forceNewCycle ||
+        (serverCycleNo != null &&
+            _serverCycleNo != null &&
+            serverCycleNo != _serverCycleNo);
     final hasStaleLocalCycle = _hasStaleLocalCycle(serverCycleNo);
     if (isNewCycle || hasStaleLocalCycle) {
       _resetLocalProgressForNewCycle();
