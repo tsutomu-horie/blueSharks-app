@@ -219,17 +219,20 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
   }
 
   /// 次の育成を開始する前に、卵獲得画面へ遷移します。
-  void _openNewEgg() => _openEgg(debugRestart: false);
+  void _openNewEgg() => _openEgg(debugRestart: false, newCycle: true);
 
   /// デバッグ用に現在の育成を卵から再開始します。
-  void _openDebugEgg() => _openEgg(debugRestart: true);
+  void _openDebugEgg() => _openEgg(debugRestart: true, newCycle: true);
 
   /// 卵獲得画面へ遷移し、必要に応じてデバッグ再開始を引き渡します。
-  void _openEgg({required bool debugRestart}) {
+  void _openEgg({required bool debugRestart, required bool newCycle}) {
     // サーバー上の新規育成作成は、卵獲得画面の「はじめる」後に実行します。
     Get.offNamed(
       Routes.TRAINING_GAME_NEW,
-      arguments: {'debugRestart': debugRestart},
+      arguments: {
+        'debugRestart': debugRestart,
+        'newCycle': newCycle,
+      },
     );
   }
 

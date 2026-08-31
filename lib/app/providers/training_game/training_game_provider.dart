@@ -47,6 +47,9 @@ class TrainingGameProvider extends GetConnect {
     required Map<String, double> parameters,
     bool forceRestart = false,
   }) async {
+    // 旧サイクルの同期完了前に新サイクルを作成すると、終了直前の状態で
+    // 新しい開始状態が上書きされるため、書き込みを直列化します。
+    await _pendingWrite;
     final response = await post(
       'game/start',
       {
@@ -107,6 +110,7 @@ class TrainingGameProvider extends GetConnect {
     required String stageCode,
     required Map<String, double> parameters,
     required int lockVersion,
+    required int cycleNo,
     String? positionCode,
     String? branchCode,
     String? actionCode,
@@ -127,7 +131,7 @@ class TrainingGameProvider extends GetConnect {
           if (actionCode != null)
             'action': {
               'code': actionCode,
-              'idempotency_key': '${_clock.elapsedMicroseconds}-$actionCode',
+              'idempotency_key': '$cycleNo-${_clock.elapsedMicroseconds}-$actionCode',
               'result_code': 'completed',
               if (actionScore != null) 'score': actionScore,
               if (actionEffectMultiplier != null) 'effect_multiplier': actionEffectMultiplier,

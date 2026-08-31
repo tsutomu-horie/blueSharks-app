@@ -21,6 +21,23 @@ class TrainingGameController extends GetxController
   /// 育成期におけるゲーム内1日の経過時間です。
   static const mainDayHours = 4;
 
+  /// 新しい育成サイクルの表示パラメータ初期値です。
+  static const initialMeters = <String, double>{
+    '食事': 100,
+    '清潔': 50,
+    '体調': 50,
+    '仕事': 0,
+  };
+
+  /// 新しい育成サイクルの傾向値初期値です。
+  static const initialTrends = <String, double>{
+    'FW': 0,
+    'CMD': 0,
+    'RUN': 0,
+    'BULK': 0,
+    'TECH': 0,
+  };
+
   /// 各段階の表示定義です。
   static const stages = <TrainingStageDefinition>[
     TrainingStageDefinition(
@@ -100,20 +117,9 @@ class TrainingGameController extends GetxController
       type == TrainingActionType.rest ||
       type == TrainingActionType.squat;
 
-  final meters = <String, double>{
-    // 段階1のチュートリアル用初期値を、サーバー応答前にも表示します。
-    '食事': 100,
-    '清潔': 50,
-    '体調': 50,
-    '仕事': 0,
-  }.obs;
-  final trends = <String, double>{
-    'FW': 0,
-    'CMD': 0,
-    'RUN': 0,
-    'BULK': 0,
-    'TECH': 0,
-  }.obs;
+  // 段階1のチュートリアル用初期値を、サーバー応答前にも表示します。
+  final meters = Map<String, double>.from(initialMeters).obs;
+  final trends = Map<String, double>.from(initialTrends).obs;
   final stageIndex = 0.obs;
   final elapsedHours = 0.obs;
   final totalElapsedSeconds = 0.obs;
@@ -179,6 +185,7 @@ class TrainingGameController extends GetxController
   bool _skipFinalSync = false;
   int _localStateRevision = 0;
   bool _isDisposed = false;
+  bool _finalSyncCompleted = false;
   final TrainingGameProvider _serverProvider = TrainingGameProvider();
   int? _serverPlayerId;
   int? _serverCycleNo;
@@ -331,13 +338,20 @@ class TrainingGameController extends GetxController
       final isNewCycle = initialState['_new_cycle'] == true;
       final state = Map<String, dynamic>.from(initialState)
         ..remove('_new_cycle');
-      if (isNewCycle) _resetLocalProgressForNewCycle();
-      // 遷移元で取得済みの状態を利用し、初期表示時の重複通信を避けます。
-      _initializeServerState(state, forceNewCycle: isNewCycle);
       if (isNewCycle) {
-        // 新サイクル開始レスポンスに旧クールタイムが混在していても引き継がない。
-        _cooldownUntil.clear();
-        cooldownTick.value++;
+        // ルート生成中にRx値を更新すると、build中の再描画通知になります。
+        // 新しいControllerの初期値はすでに初期状態なので、初回フレーム後に
+        // サーバー状態だけを反映します。
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (_isDisposed) return;
+          _initializeServerState(state, forceNewCycle: true);
+          // 新サイクル開始レスポンスに旧クールタイムが混在していても引き継がない。
+          _cooldownUntil.clear();
+          cooldownTick.value++;
+        });
+      } else {
+        // 遷移元で取得済みの状態を利用し、初期表示時の重複通信を避けます。
+        _initializeServerState(state);
       }
     } else {
       unawaited(_restoreServerState());
@@ -377,7 +391,8 @@ class TrainingGameController extends GetxController
     _tutorialTimer?.cancel();
     _mainTimer?.cancel();
     // 画面終了直前の最新状態だけを、既存の同期処理の後ろへ追加します。
-    if (!_skipFinalSync) _queueSync(force: true);
+    // 画面側で最新同期が完了済みなら、同じ状態をもう一度送信しません。
+    if (!_skipFinalSync && !_finalSyncCompleted) _queueSync(force: true);
     super.onClose();
   }
 
@@ -405,6 +420,10 @@ class TrainingGameController extends GetxController
 
   /// 初期化前サイクルのローカル進行状態を破棄します。
   void _resetLocalProgressForNewCycle() {
+    // Controllerが再利用された場合や、開始レスポンスに一部パラメータが
+    // 含まれない場合でも、前サイクルの表示値を新サイクルへ持ち越しません。
+    _resetMetersIfNeeded();
+    _resetTrendsIfNeeded();
     stageIndex.value = 0;
     elapsedHours.value = 0;
     totalElapsedSeconds.value = 0;
@@ -436,6 +455,36 @@ class TrainingGameController extends GetxController
     _processedActiveMainHours = 0;
     _waitingForServerRestore = false;
     _restoreLocalCountersOnNextServerState = true;
+    _queuedActions.clear();
+    _syncRequested = false;
+    _hasUnsyncedLocalState = false;
+    _syncBlockedUntilServerRestore = false;
+    isServerStateReady.value = false;
+    serverErrorMessage.value = '';
+    _finalSyncCompleted = false;
+  }
+
+  /// 初期値と異なる場合だけ、可変Mapへ差し替えます。
+  ///
+  /// `RxMap.assignAll` は受け取ったMapを内部値として保持するため、const Mapを
+  /// 直接渡すと、次回のMap更新時にunmodifiableエラーになります。
+  void _resetMetersIfNeeded() {
+    if (meters.length == initialMeters.length &&
+        initialMeters.entries
+            .every((entry) => meters[entry.key] == entry.value)) {
+      return;
+    }
+    meters.value = Map<String, double>.from(initialMeters);
+  }
+
+  /// 初期値と異なる場合だけ、可変Mapへ差し替えます。
+  void _resetTrendsIfNeeded() {
+    if (trends.length == initialTrends.length &&
+        initialTrends.entries
+            .every((entry) => trends[entry.key] == entry.value)) {
+      return;
+    }
+    trends.value = Map<String, double>.from(initialTrends);
   }
 
   /// 育成完了後の演出フローを次へ進めます。
@@ -495,6 +544,7 @@ class TrainingGameController extends GetxController
       if (_isDisposed) return;
       // 復帰直前のローカル操作を先に保存してからサーバー状態を読み込みます。
       await _syncChain;
+      if (_isDisposed) return;
       final data = await _serverProvider.fetchCurrent();
       if (_isDisposed) return;
       if (data != null) {
@@ -946,6 +996,7 @@ class TrainingGameController extends GetxController
     if (action != null) _queuedActions.add((type: action, result: miniGameResult));
     _syncRequested = true;
     _hasUnsyncedLocalState = true;
+    _finalSyncCompleted = false;
     _localStateRevision++;
     if (_syncRunning) return _syncChain;
     _syncRunning = true;
@@ -984,6 +1035,7 @@ class TrainingGameController extends GetxController
       return;
     }
     if (_serverPlayerId == null) {
+      if (_isDisposed) return;
       await _startServerState();
       return;
     }
@@ -998,6 +1050,7 @@ class TrainingGameController extends GetxController
         stageCode: _stageCode,
         parameters: _serverParameters,
         lockVersion: _serverLockVersion,
+        cycleNo: _serverCycleNo ?? 0,
         positionCode: _positionCode,
         branchCode: _branchCode,
         actionCode: action == null ? null : _actionCode(action),
@@ -1018,6 +1071,7 @@ class TrainingGameController extends GetxController
       }
       // 後続行動がなければサーバー優先へ戻し、ある場合は未送信状態を保持します。
       _hasUnsyncedLocalState = syncingRevision != _localStateRevision;
+      _finalSyncCompleted = !_hasUnsyncedLocalState;
       await _saveLocalGameState();
       // 図鑑はポジティブ終了時だけ再取得し、通常同期の余分な通信を省きます。
       if (isPositiveEnd && !_isDisposed) await refreshUnlockedPositions();
@@ -1317,6 +1371,7 @@ class TrainingGameController extends GetxController
         _pendingStageIndex != null) {
       return;
     }
+    _markLocalStateChanged();
     final previousDay = day.value;
     // デバッグ加算分も表示用の経過時間へ反映し、内部進行と時計を一致させます。
     _elapsedTimeOffsetSeconds += minutes * 60;
@@ -1394,6 +1449,7 @@ class TrainingGameController extends GetxController
 
   /// メーターを範囲内に収めて更新します。
   void _changeMeter(String name, double amount) {
+    _markLocalStateChanged();
     // 可視パラメータは仕様どおり整数相当の0〜100で保持します。
     meters[name] = (meters[name]! + amount).clamp(0, 150).toDouble();
   }
@@ -1407,8 +1463,14 @@ class TrainingGameController extends GetxController
 
   /// 傾向値を0未満にならないよう更新します。
   void _changeTrend(String name, double amount) {
+    _markLocalStateChanged();
     // 育成傾向も仕様上の上限100を超えないようにします。
     trends[name] = (trends[name]! + amount).clamp(0, 999).toDouble();
+  }
+
+  /// サーバー同期後に端末側の状態が変更されたことを記録します。
+  void _markLocalStateChanged() {
+    _finalSyncCompleted = false;
   }
 
   /// 状態係数、清潔補正、行動回数補正を適用して傾向値を加算します。
@@ -1461,6 +1523,7 @@ class TrainingGameController extends GetxController
       TrainingActionType.squat: {'食事': -12, '清潔': -8, '体調': -6},
     }[type];
     if (effects == null) return false;
+    _markLocalStateChanged();
 
     effects.forEach((name, amount) {
       if (activeMeters.contains(name)) {
