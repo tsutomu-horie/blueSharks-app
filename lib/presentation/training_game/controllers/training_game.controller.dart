@@ -1501,12 +1501,6 @@ class TrainingGameController extends GetxController
     actionsToday.value = 0;
     logs.insert(0, '成長しました。段階「${currentStage.name}」へ進みます。');
     _queuePendingStageSync();
-    // タイマー起点の段階上昇でも同期を開始します。行動同期が先に積まれた場合は重複させません。
-    unawaited(Future<void>.microtask(() {
-      if (!_syncRunning && _queuedActions.isEmpty && _pendingStageIndex != null) {
-        _syncServer();
-      }
-    }));
   }
 
   /// 本編を1時間進め、日単位の進行条件を更新します。
