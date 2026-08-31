@@ -123,6 +123,8 @@ class TrainingGameController extends GetxController
   final logs = <String>[].obs;
   final ended = false.obs;
   final endingMessage = ''.obs;
+  final isEndingSyncPending = false.obs;
+  final endingSyncError = ''.obs;
   final clearPosition = RxnString();
   final unlockedPositions = <String>[].obs;
   final endingStep = 0.obs;
@@ -149,6 +151,8 @@ class TrainingGameController extends GetxController
   bool _isWorkAvailable = false;
   bool _isWorkSyncPending = false;
   bool _isWorkPreparationPending = false;
+  int? _pendingStageIndex;
+  bool _pendingStageSyncQueued = false;
   int _lowConditionTraining = 0;
   bool _dayCared = false;
   final _zeroHours = <String, int>{'食事': 0, '清潔': 0, '体調': 0, '仕事': 0};
@@ -177,13 +181,15 @@ class TrainingGameController extends GetxController
   bool _isDisposed = false;
   final TrainingGameProvider _serverProvider = TrainingGameProvider();
   int? _serverPlayerId;
+  int? _serverCycleNo;
   int _serverLockVersion = 0;
 
   /// 現在の段階定義を返します。
   TrainingStageDefinition get currentStage => stages[stageIndex.value];
 
   /// サーバー時刻で当日の仕事が未実施かを返します。
-  bool get canWorkToday => _isWorkAvailable && !_isWorkSyncPending;
+  bool get canWorkToday =>
+      _isWorkAvailable && !_isWorkSyncPending && _pendingStageIndex == null;
 
   /// 仕事の可否照会または専用画面への遷移中かを返します。
   bool get isWorkPreparationPending => _isWorkPreparationPending;
@@ -203,7 +209,7 @@ class TrainingGameController extends GetxController
       if (data == null || _isDisposed) return false;
       // 可否と同じ応答に含まれるlock_version・パラメータも更新し、
       // 他端末操作後に古い状態で仕事を送信しないようにします。
-      _initializeServerState(data);
+      if (!_initializeServerState(data)) return false;
       prepared = canWorkToday;
       return prepared;
     } catch (_) {
@@ -223,6 +229,7 @@ class TrainingGameController extends GetxController
   /// 指定行動のクールタイムが終了しているかを返します。
   bool canPerform(TrainingActionType type) {
     cooldownTick.value;
+    if (_pendingStageIndex != null) return false;
     if (!isCooldownEnabled(type)) return true;
     final until = _cooldownUntil[type];
     return until == null || !_serverNow().isBefore(until);
@@ -331,6 +338,7 @@ class TrainingGameController extends GetxController
       if (isServerStateReady.value &&
           !_isAppInBackground &&
           evolutionStage.value == null &&
+          _pendingStageIndex == null &&
           stageIndex.value < 2 &&
           !ended.value) {
         _advanceTutorialClock(timeSpeed.value);
@@ -339,7 +347,10 @@ class TrainingGameController extends GetxController
     });
     _mainTimer = Timer.periodic(const Duration(seconds: 1), (_) {
       cooldownTick.value++;
-      if (isServerStateReady.value && !_isAppInBackground) {
+      if (isServerStateReady.value &&
+          !_isAppInBackground &&
+          evolutionStage.value == null &&
+          !ended.value) {
         _advanceActiveMainProgress();
         _updateElapsedTimeFromStart();
         _mainClockTick.value++;
@@ -386,6 +397,7 @@ class TrainingGameController extends GetxController
 
   /// 初期化前サイクルのローカル進行状態を破棄します。
   void _resetLocalProgressForNewCycle() {
+    stageIndex.value = 0;
     elapsedHours.value = 0;
     totalElapsedSeconds.value = 0;
     mainElapsedSeconds.value = 0;
@@ -402,9 +414,13 @@ class TrainingGameController extends GetxController
     _zeroHours.updateAll((key, value) => 0);
     _tutorialZeroSeconds.updateAll((key, value) => 0);
     _cooldownUntil.clear();
+    _pendingStageIndex = null;
+    _pendingStageSyncQueued = false;
     ended.value = false;
     endingStep.value = 0;
     endingMessage.value = '';
+    isEndingSyncPending.value = false;
+    endingSyncError.value = '';
     clearPosition.value = null;
     evolutionStage.value = null;
     _elapsedTimeOffsetSeconds = 0;
@@ -448,7 +464,9 @@ class TrainingGameController extends GetxController
       _restoreLocalCountersOnNextServerState = true;
       _queueSync();
     }
-    if (state == AppLifecycleState.resumed) {
+    if (state == AppLifecycleState.resumed &&
+        !ended.value &&
+        evolutionStage.value == null) {
       _isAppInBackground = false;
       // 復帰直後は、直前に同期したサーバー時刻から表示だけを先に再開します。
       _updateElapsedTimeFromStart();
@@ -458,7 +476,10 @@ class TrainingGameController extends GetxController
     }
   }
 
-  /// サーバーに保存された育成状態を復元し、なければ新規作成します。
+  /// サーバーに保存された育成状態を復元します。
+  ///
+  /// 終了済みプレイヤーが取得できないことを理由に新しい育成サイクルを開始しません。
+  /// 新規開始は卵獲得画面で明示的に行います。
   Future<void> _restoreServerState() async {
     serverErrorMessage.value = '';
     // 復帰イベントが短時間に複数回発生しても、取得処理を直列化します。
@@ -468,10 +489,13 @@ class TrainingGameController extends GetxController
       await _syncChain;
       final data = await _serverProvider.fetchCurrent();
       if (_isDisposed) return;
-      if (data == null) {
-        await _startServerState();
-      } else {
-        _initializeServerState(data);
+      if (data != null) {
+        if (!_initializeServerState(data)) return;
+      } else if (!ended.value) {
+        isServerStateReady.value = false;
+        serverErrorMessage.value =
+            '育成データが見つかりません。ゲーム開始画面からやり直してください。';
+        return;
       }
       isServerStateReady.value = true;
     }).catchError((_) {
@@ -497,44 +521,79 @@ class TrainingGameController extends GetxController
       parameters: _serverParameters,
     );
     _serverPlayerId = (data['id'] as num?)?.toInt();
+    _serverCycleNo = (data['cycle_no'] as num?)?.toInt();
     _serverLockVersion = (data['lock_version'] as num?)?.toInt() ?? 0;
     _applyServerState(data);
     _refreshUnlockedPositionsInBackground();
   }
 
   /// 取得済みのサーバー状態を初期表示へ反映します。
-  void _initializeServerState(Map<String, dynamic> data) {
-    _syncBlockedUntilServerRestore = false;
+  bool _initializeServerState(Map<String, dynamic> data) {
+    final serverCycleNo = (data['cycle_no'] as num?)?.toInt();
+    final isNewCycle =
+        serverCycleNo != null &&
+        _serverCycleNo != null &&
+        serverCycleNo != _serverCycleNo;
+    final hasStaleLocalCycle = _hasStaleLocalCycle(serverCycleNo);
+    if (isNewCycle || hasStaleLocalCycle) {
+      _resetLocalProgressForNewCycle();
+      unawaited(MySharedPref.clearTrainingGameDebugElapsedSeconds());
+      unawaited(MySharedPref.clearTrainingGameLocalState());
+    }
     _serverPlayerId = (data['id'] as num?)?.toInt();
+    _serverCycleNo = serverCycleNo ?? _serverCycleNo;
     _serverLockVersion = (data['lock_version'] as num?)?.toInt() ?? 0;
-    _applyServerState(data);
+    if (!_applyServerState(
+      data,
+      restoreLocalState: !isNewCycle && !hasStaleLocalCycle,
+      restoreDebugElapsed: !isNewCycle && !hasStaleLocalCycle,
+    )) {
+      return false;
+    }
+    _syncBlockedUntilServerRestore = false;
     isServerStateReady.value = true;
     _refreshUnlockedPositionsInBackground();
+    return true;
+  }
+
+  /// 現在のサーバーサイクルと異なるローカル状態だけを破棄対象にします。
+  bool _hasStaleLocalCycle(int? serverCycleNo) {
+    final encodedState = MySharedPref.getTrainingGameLocalState();
+    if (encodedState == null || serverCycleNo == null) return false;
+    try {
+      final decodedState = jsonDecode(encodedState);
+      if (decodedState is! Map) return true;
+      return (decodedState['cycle_no'] as num?)?.toInt() != serverCycleNo;
+    } catch (_) {
+      return true;
+    }
   }
 
   /// APIレスポンスの状態を画面状態へ反映します。
-  void _applyServerState(Map<String, dynamic> data) {
+  bool _applyServerState(
+    Map<String, dynamic> data, {
+    bool restoreLocalState = true,
+    bool restoreDebugElapsed = true,
+  }) {
     final previousStageIndex = stageIndex.value;
-    ServerTimeClock.instance.synchronizeFromPayload(data);
-    _restoreWorkAvailability(data);
-    final elapsedSeconds = (data['elapsed_seconds'] as num?)?.toInt();
-    if (elapsedSeconds != null) {
-      _serverElapsedSeconds = elapsedSeconds.clamp(0, 0x7fffffff).toInt();
-      totalElapsedSeconds.value = _serverElapsedSeconds;
-    }
-    final startedAt = _parseServerDateTime(data['started_at']) ??
-        MySharedPref.getTrainingGameStartedAt();
-    if (startedAt != null) {
-      // サーバー状態を再取得しても、同じ育成サイクルのデバッグ加算を復元します。
-      _elapsedTimeOffsetSeconds =
-          MySharedPref.getTrainingGameDebugElapsedSeconds();
-      unawaited(MySharedPref.setTrainingGameStartedAt(startedAt));
-      _updateElapsedTimeFromStart();
-    }
     final stage = data['stage_code'] as String?;
-    final stageMap = {'egg': 0, 'child': 1, 'training': 2, 'growth': 3};
-    if (stage != null && stageMap.containsKey(stage))
-      stageIndex.value = stageMap[stage]!;
+    final serverStageIndex = _stageIndexFromCode(stage);
+    if (_pendingStageIndex != null &&
+        serverStageIndex != null &&
+        serverStageIndex < _pendingStageIndex!) {
+      return false;
+    }
+    _restoreServerClock(data, restoreDebugElapsed: restoreDebugElapsed);
+    _restoreWorkAvailability(data);
+    if (serverStageIndex != null) {
+      final previousStage = stageIndex.value;
+      stageIndex.value = serverStageIndex;
+      if (_pendingStageIndex == serverStageIndex) {
+        _pendingStageIndex = null;
+        _pendingStageSyncQueued = false;
+        if (serverStageIndex > previousStage) _showEvolutionForCurrentStage();
+      }
+    }
     if (_waitingForServerRestore ||
         _activeMainProgressBaseSeconds == null ||
         previousStageIndex != stageIndex.value) {
@@ -570,11 +629,15 @@ class TrainingGameController extends GetxController
         }
       }
     }
-    final restoreLocalCounters = _restoreLocalCountersOnNextServerState;
-    _restoreLocalGameState(
-      data,
-      restoreProgressCounters: restoreLocalCounters,
-    );
+    if (restoreLocalState) {
+      final restoreLocalCounters = _restoreLocalCountersOnNextServerState;
+      _restoreLocalGameState(
+        data,
+        restoreProgressCounters: restoreLocalCounters,
+      );
+    } else {
+      _hasUnsyncedLocalState = false;
+    }
     _restoreLocalCountersOnNextServerState = false;
     final serverActionsToday = (data['actions_today'] as num?)?.toInt();
     if (serverActionsToday != null) {
@@ -583,6 +646,28 @@ class TrainingGameController extends GetxController
     // ローカル保存値より、サーバーが現在時刻で判定した値を優先します。
     _restoreServerCooldowns(data['cooldowns']);
     _restoreEndedState(data);
+    return true;
+  }
+
+  /// サーバー時計と同一サイクルの経過時間だけを画面状態へ反映します。
+  void _restoreServerClock(
+    Map<String, dynamic> data, {
+    required bool restoreDebugElapsed,
+  }) {
+    ServerTimeClock.instance.synchronizeFromPayload(data);
+    final elapsedSeconds = (data['elapsed_seconds'] as num?)?.toInt();
+    if (elapsedSeconds != null) {
+      _serverElapsedSeconds = elapsedSeconds.clamp(0, 0x7fffffff).toInt();
+      totalElapsedSeconds.value = _serverElapsedSeconds;
+    }
+    final startedAt = _parseServerDateTime(data['started_at']) ??
+        MySharedPref.getTrainingGameStartedAt();
+    if (startedAt == null) return;
+    _elapsedTimeOffsetSeconds = restoreDebugElapsed
+        ? MySharedPref.getTrainingGameDebugElapsedSeconds()
+        : 0;
+    unawaited(MySharedPref.setTrainingGameStartedAt(startedAt));
+    _updateElapsedTimeFromStart();
   }
 
   /// サーバーに未保存の途中進行を、同じ育成サイクルに限って復元します。
@@ -596,6 +681,16 @@ class TrainingGameController extends GetxController
     if (decodedState is! Map) return;
     final localState = Map<String, dynamic>.from(decodedState);
     if (localState['player_id'] != _serverPlayerId) return;
+    final serverCycleNo = (serverData['cycle_no'] as num?)?.toInt();
+    final localCycleNo = (localState['cycle_no'] as num?)?.toInt();
+    // game_players.idは新しい育成サイクルでも再利用されるため、IDだけでは
+    // 旧サイクルのスナップショットを識別できません。
+    if (serverCycleNo == null || localCycleNo != serverCycleNo) {
+      _hasUnsyncedLocalState = false;
+      unawaited(MySharedPref.clearTrainingGameLocalState());
+      unawaited(MySharedPref.clearTrainingGameDebugElapsedSeconds());
+      return;
+    }
 
     _hasUnsyncedLocalState = localState['has_unsynced_state'] == true;
     restoreProgressCounters = restoreProgressCounters || _hasUnsyncedLocalState;
@@ -783,7 +878,15 @@ class TrainingGameController extends GetxController
         'child',
         'training',
         'growth'
-      ][stageIndex.value.clamp(0, 3).toInt()];
+      ][(_pendingStageIndex ?? stageIndex.value).clamp(0, 3).toInt()];
+
+  /// サーバー段階コードを画面段階番号へ変換します。
+  int? _stageIndexFromCode(Object? stageCode) => const {
+        'egg': 0,
+        'child': 1,
+        'training': 2,
+        'growth': 3,
+      }[stageCode];
 
   /// DB設計のパラメータコードへ変換します。
   Map<String, double> get _serverParameters => {
@@ -804,20 +907,27 @@ class TrainingGameController extends GetxController
   }
 
   /// 同期を順番に実行し、同時更新競合を防ぎます。
-  void _queueSync({TrainingActionType? action, MiniGameResult? miniGameResult, bool force = false}) {
-    if ((_isDisposed && !force) || _syncBlockedUntilServerRestore) return;
+  Future<void> _queueSync({
+    TrainingActionType? action,
+    MiniGameResult? miniGameResult,
+    bool force = false,
+  }) {
+    if ((_isDisposed && !force) || _syncBlockedUntilServerRestore) {
+      return Future<void>.value();
+    }
     // 連続操作中も各アクションを順番に保持し、効果を失わないようにします。
     if (action != null) _queuedActions.add((type: action, result: miniGameResult));
     _syncRequested = true;
     _hasUnsyncedLocalState = true;
     _localStateRevision++;
-    if (_syncRunning) return;
+    if (_syncRunning) return _syncChain;
     _syncRunning = true;
     _syncChain = _drainSyncQueue().catchError((_) {
       // 同期失敗時も画面上のローカル状態を保持します。
     });
     TrainingGameProvider.registerPendingSync(_syncChain);
     unawaited(_syncChain);
+    return _syncChain;
   }
 
   /// 保留中の同期要求を1回の通信へ集約します。
@@ -908,10 +1018,28 @@ class TrainingGameController extends GetxController
           }
         }
         await _saveLocalGameState();
+      } else if (!_isDisposed) {
+        await _restoreAuthoritativeStateAfterSyncFailure();
       }
       rethrow;
     } finally {
       if (action == TrainingActionType.work) _isWorkSyncPending = false;
+    }
+  }
+
+  /// 同期に失敗した場合は端末側の先行変更を破棄し、サーバー状態へ戻します。
+  Future<void> _restoreAuthoritativeStateAfterSyncFailure() async {
+    _pendingStageIndex = null;
+    _pendingStageSyncQueued = false;
+    await MySharedPref.clearTrainingGameLocalState();
+    try {
+      final data = await _serverProvider.fetchCurrent();
+      if (!_isDisposed && data != null) _initializeServerState(data);
+    } catch (_) {
+      if (!_isDisposed) {
+        isServerStateReady.value = false;
+        serverErrorMessage.value = '通信状態を確認して、もう一度お試しください。';
+      }
     }
   }
 
@@ -921,6 +1049,8 @@ class TrainingGameController extends GetxController
     if (playerId == null) return Future<void>.value();
     return MySharedPref.setTrainingGameLocalState(jsonEncode({
       'player_id': playerId,
+      'cycle_no': _serverCycleNo,
+      'stage_code': _stageCode,
       'has_unsynced_state': _hasUnsyncedLocalState,
       'hunger': meters['食事'],
       'cleanliness': meters['清潔'],
@@ -1029,6 +1159,10 @@ class TrainingGameController extends GetxController
   /// 指定した行動を実行し、メーターと傾向値を更新します。
   void perform(TrainingActionType type, {MiniGameResult? miniGameResult}) {
     if (ended.value || evolutionStage.value != null) return;
+    if (_pendingStageIndex != null) {
+      logs.insert(0, '育成状態を同期中です。しばらくお待ちください。');
+      return;
+    }
     if (!canPerform(type)) {
       logs.insert(0, '${_labelFor(type)}はクールタイム中です。');
       return;
@@ -1150,7 +1284,12 @@ class TrainingGameController extends GetxController
 
   /// 指定した分数を進め、自然減衰と段階移行を処理します。
   void advanceTimeMinutes(int minutes) {
-    if (minutes <= 0 || ended.value || evolutionStage.value != null) return;
+    if (minutes <= 0 ||
+        ended.value ||
+        evolutionStage.value != null ||
+        _pendingStageIndex != null) {
+      return;
+    }
     final previousDay = day.value;
     // デバッグ加算分も表示用の経過時間へ反映し、内部進行と時計を一致させます。
     _elapsedTimeOffsetSeconds += minutes * 60;
@@ -1194,38 +1333,30 @@ class TrainingGameController extends GetxController
   }
 
   /// デバッグ操作として育成期の初期状態にします。
-  void debugStartAtTraining() {
-    stageIndex.value = 2;
-    meters.assignAll({'食事': 20, '清潔': 20, '体調': 20, '仕事': 20});
-    trends.assignAll({'FW': 0, 'CMD': 0, 'RUN': 0, 'BULK': 0, 'TECH': 0});
-    elapsedHours.value = 0;
-    totalElapsedSeconds.value = 0;
-    mainElapsedSeconds.value = 0;
-    day.value = 1;
-    secondsInStage.value = 0;
-    daysInStage.value = 0;
-    actionsToday.value = 0;
-    trainingCount.value = 0;
-    timeSpeed.value = 1;
-    _dayCared = false;
-    _lowConditionTraining = 0;
-    _zeroHours.updateAll((key, value) => 0);
-    _tutorialZeroSeconds.updateAll((key, value) => 0);
-    _cooldownUntil.clear();
-    ended.value = false;
-    endingMessage.value = '';
-    clearPosition.value = null;
-    endingStep.value = 0;
-    evolutionStage.value = null;
-    // デバッグ開始も端末の壁時計ではなく、最後に同期したサーバー時刻を基準にします。
-    _serverElapsedSeconds = 0;
-    _elapsedTimeOffsetSeconds = 0;
-    _resetActiveMainProgressBaseline();
-    unawaited(MySharedPref.clearTrainingGameDebugElapsedSeconds());
-    _updateElapsedTimeFromStart();
-    // デバッグ開始直後から本編のリアルタイム時計を再描画します。
-    _mainClockTick.value++;
-    _syncServer();
+  Future<void> debugStartAtTraining() async {
+    if (_pendingStageIndex != null) return;
+    try {
+      final data = await _serverProvider.start(
+        stageCode: 'training',
+        parameters: const {
+          'hunger': 20.0,
+          'cleanliness': 20.0,
+          'condition': 20.0,
+          'work': 20.0,
+          'tendency_fw': 0.0,
+          'tendency_command': 0.0,
+          'tendency_backs': 0.0,
+          'tendency_bulk': 0.0,
+          'tendency_tech': 0.0,
+        },
+        forceRestart: true,
+      );
+      if (_isDisposed) return;
+      _resetLocalProgressForNewCycle();
+      _initializeServerState(data);
+    } catch (_) {
+      if (!_isDisposed) logs.insert(0, '育成期のデバッグ開始に失敗しました。');
+    }
   }
 
   /// メーターを範囲内に収めて更新します。
@@ -1317,7 +1448,11 @@ class TrainingGameController extends GetxController
 
   /// チュートリアルを参照HTMLと同じ秒単位で進めます。
   void tickTutorial(int seconds) {
-    if (seconds <= 0 || evolutionStage.value != null) return;
+    if (seconds <= 0 ||
+        evolutionStage.value != null ||
+        _pendingStageIndex != null) {
+      return;
+    }
     final decay = stageIndex.value == 0
         ? {'清潔': .7, '体調': .7}
         : {'食事': .2, '清潔': .2, '体調': .2};
@@ -1328,10 +1463,11 @@ class TrainingGameController extends GetxController
       _tutorialZeroSeconds[name] =
           meters[name]! <= 0 ? _tutorialZeroSeconds[name]! + seconds : 0;
       if (_tutorialZeroSeconds[name]! >= 30) {
-        ended.value = true;
         // チュートリアル失敗時は進化演出を挟まず、引退画面へ直接進みます。
-        endingStep.value = 2;
-        endingMessage.value = 'チュートリアル失敗。卵からやりなおしてください。';
+        _endGame(
+          endingStep: 2,
+          message: 'チュートリアル失敗。卵からやりなおしてください。',
+        );
         return;
       }
     }
@@ -1345,6 +1481,7 @@ class TrainingGameController extends GetxController
 
   /// チュートリアルの段階移行条件を判定します。
   void _advanceTutorialIfNeeded() {
+    if (_pendingStageIndex != null) return;
     final ready = stageIndex.value == 0
         ? secondsInStage.value >= 180 &&
             meters['清潔']! >= 60 &&
@@ -1352,14 +1489,18 @@ class TrainingGameController extends GetxController
         : trainingCount.value >= 15 &&
             ['食事', '清潔', '体調'].every((name) => meters[name]! >= 60);
     if (!ready) return;
-    stageIndex.value++;
-    // チュートリアルから本編へは、シミュレータ仕様どおり表示値を引き継ぎます。
-    _showEvolutionForCurrentStage();
-    if (stageIndex.value >= 2) _resetActiveMainProgressBaseline();
+    _pendingStageIndex = stageIndex.value + 1;
     secondsInStage.value = 0;
     trainingCount.value = 0;
     actionsToday.value = 0;
     logs.insert(0, '成長しました。段階「${currentStage.name}」へ進みます。');
+    _queuePendingStageSync();
+    // タイマー起点の段階上昇でも同期を開始します。行動同期が先に積まれた場合は重複させません。
+    unawaited(Future<void>.microtask(() {
+      if (!_syncRunning && _queuedActions.isEmpty && _pendingStageIndex != null) {
+        _syncServer();
+      }
+    }));
   }
 
   /// 本編を1時間進め、日単位の進行条件を更新します。
@@ -1389,6 +1530,7 @@ class TrainingGameController extends GetxController
     if (stageIndex.value < 2 ||
         ended.value ||
         evolutionStage.value != null ||
+        _pendingStageIndex != null ||
         _waitingForServerRestore) {
       return;
     }
@@ -1464,10 +1606,11 @@ class TrainingGameController extends GetxController
     final requiredDays = currentStage.days;
     if (requiredDays == null || daysInStage.value < requiredDays) return;
     if (stageIndex.value < stages.length - 1) {
-      stageIndex.value++;
-      _showEvolutionForCurrentStage();
+      if (_pendingStageIndex != null) return;
+      _pendingStageIndex = stageIndex.value + 1;
       daysInStage.value = 0;
-      logs.insert(0, '成長しました。段階「${currentStage.name}」へ進みます。');
+      logs.insert(0, '成長条件を満たしました。サーバー確認後に次の段階へ進みます。');
+      _queuePendingStageSync();
       return;
     }
     if (position == '判定前') {
@@ -1476,10 +1619,22 @@ class TrainingGameController extends GetxController
       logs.insert(0, 'ポジション判定には練習による傾向値の獲得が必要です。');
       return;
     }
-    ended.value = true;
-    clearPosition.value = position;
-    endingStep.value = 0;
-    endingMessage.value = '育成完了。${position}として図鑑に登録されました。';
+    _endGame(
+      endingStep: 0,
+      message: '育成完了。${position}として図鑑に登録されました。',
+      clearPosition: position,
+    );
+  }
+
+  /// 段階上昇を既存の同期キューへ積みます。
+  void _queuePendingStageSync() {
+    if (_pendingStageIndex == null || _pendingStageSyncQueued) return;
+    _pendingStageSyncQueued = true;
+    unawaited(Future<void>.microtask(() {
+      if (_pendingStageIndex != null && _queuedActions.isEmpty) {
+        _syncServer();
+      }
+    }));
   }
 
   /// 練習系アクションかを判定します。
@@ -1504,12 +1659,57 @@ class TrainingGameController extends GetxController
     final zeroLimit = <String, int>{'食事': 48, '体調': 48, '清潔': 72};
     final zeroTarget = _findExceeded(_zeroHours, zeroLimit);
     if (zeroTarget == null && _lowConditionTraining < 15) return;
-    ended.value = true;
-    endingStep.value = 2;
-    endingMessage.value = zeroTarget != null
-        ? '${zeroTarget.key}が0のまま${zeroTarget.value}時間経過しました。'
-        : '体調20未満での練習が15回になりました。';
+    _endGame(
+      endingStep: 2,
+      message: zeroTarget != null
+          ? '${zeroTarget.key}が0のまま${zeroTarget.value}時間経過しました。'
+          : '体調20未満での練習が15回になりました。',
+    );
     logs.insert(0, 'ゲームオーバー：体調が0になりました。');
+  }
+
+  /// 終了状態をサーバーへ保存し、定期復元による新規サイクル開始を防ぎます。
+  void _endGame({
+    required int endingStep,
+    required String message,
+    String? clearPosition,
+  }) {
+    if (ended.value) return;
+    ended.value = true;
+    this.endingStep.value = endingStep;
+    endingMessage.value = message;
+    this.clearPosition.value = clearPosition;
+    endingSyncError.value = '';
+    isEndingSyncPending.value = true;
+    // 行動実行中に終了した場合は、その行動の同期要求を先にキューへ積みます。
+    unawaited(Future<void>.microtask(_confirmEndingSync));
+  }
+
+  /// 保存に失敗した終了状態を再送します。
+  void retryEndingSync() {
+    if (!ended.value || isEndingSyncPending.value || _isDisposed) return;
+    endingSyncError.value = '';
+    isEndingSyncPending.value = true;
+    unawaited(_confirmEndingSync());
+  }
+
+  /// 終了状態がサーバーで育成中でなくなったことを確認します。
+  Future<void> _confirmEndingSync() async {
+    try {
+      await _queueSync();
+      if (_isDisposed) return;
+      final current = await _serverProvider.fetchCurrent();
+      if (current != null) {
+        throw StateError('終了状態がサーバーへ反映されていません。');
+      }
+    } catch (_) {
+      if (!_isDisposed) {
+        endingSyncError.value =
+            '終了状態を保存できません。通信状態を確認して再試行してください。';
+      }
+    } finally {
+      if (!_isDisposed) isEndingSyncPending.value = false;
+    }
   }
 
   /// 指定した継続時間条件に到達したメーターを返します。
