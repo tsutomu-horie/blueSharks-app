@@ -1322,7 +1322,13 @@ class TrainingGameController extends GetxController
   Future<void> _syncDebugTimeAndResetDailyActions() async {
     try {
       await TrainingGameProvider.waitForPendingSync();
-      await syncNow();
+      final syncedData = await _serverProvider.syncDebugTime(
+        stageCode: _stageCode,
+        parameters: _serverParameters,
+        lockVersion: _serverLockVersion,
+      );
+      _serverLockVersion =
+          (syncedData['lock_version'] as num?)?.toInt() ?? _serverLockVersion;
       final data = await _serverProvider.resetDebugDailyActionUsage();
       if (!_isDisposed) _initializeServerState(data);
     } catch (_) {
