@@ -339,6 +339,7 @@ class TrainingGameController extends GetxController
           !_isAppInBackground &&
           evolutionStage.value == null &&
           _pendingStageIndex == null &&
+          !_waitingForServerRestore &&
           stageIndex.value < 2 &&
           !ended.value) {
         _advanceTutorialClock(timeSpeed.value);
@@ -354,8 +355,6 @@ class TrainingGameController extends GetxController
         _advanceActiveMainProgress();
         _updateElapsedTimeFromStart();
         _mainClockTick.value++;
-        // パラメータ減衰はサーバー精算だけで確定し、端末時計には依存しません。
-        if (_mainClockTick.value % 60 == 0) unawaited(_restoreServerState());
       }
     });
   }
@@ -578,6 +577,11 @@ class TrainingGameController extends GetxController
     final previousStageIndex = stageIndex.value;
     final stage = data['stage_code'] as String?;
     final serverStageIndex = _stageIndexFromCode(stage);
+    // 同一育成サイクルの段階は後退しない。定期取得や復帰処理で古いレスポンスが
+    // 到着しても、育成期以降の表示をチュートリアルへ戻さないようにします。
+    if (serverStageIndex != null && serverStageIndex < previousStageIndex) {
+      return false;
+    }
     if (_pendingStageIndex != null &&
         serverStageIndex != null &&
         serverStageIndex < _pendingStageIndex!) {
@@ -824,6 +828,7 @@ class TrainingGameController extends GetxController
 
   /// サーバーが現在時刻で判定したクールタイムを復元します。
   void _restoreServerCooldowns(Object? rawCooldowns) {
+    final localCooldowns = Map<TrainingActionType, DateTime>.from(_cooldownUntil);
     if (rawCooldowns is! Map) return;
     _cooldownUntil.clear();
     for (final entry in rawCooldowns.entries) {
@@ -833,6 +838,15 @@ class TrainingGameController extends GetxController
       final until = DateTime.tryParse(value);
       if (until != null && _serverNow().isBefore(until)) {
         _cooldownUntil[type] = until;
+      }
+    }
+    // 同期直後の応答に対象アクションが含まれない場合でも、端末で開始した
+    // クールタイムを消さない。次回のサーバー応答で正規化します。
+    for (final entry in localCooldowns.entries) {
+      final serverUntil = _cooldownUntil[entry.key];
+      if (_serverNow().isBefore(entry.value) &&
+          (serverUntil == null || serverUntil.isBefore(entry.value))) {
+        _cooldownUntil[entry.key] = entry.value;
       }
     }
   }
@@ -1159,7 +1173,7 @@ class TrainingGameController extends GetxController
   /// 指定した行動を実行し、メーターと傾向値を更新します。
   void perform(TrainingActionType type, {MiniGameResult? miniGameResult}) {
     if (ended.value || evolutionStage.value != null) return;
-    if (_pendingStageIndex != null) {
+    if (_pendingStageIndex != null || _waitingForServerRestore) {
       logs.insert(0, '育成状態を同期中です。しばらくお待ちください。');
       return;
     }
@@ -1375,6 +1389,7 @@ class TrainingGameController extends GetxController
   void _startCooldown(TrainingActionType type) {
     if (!isCooldownEnabled(type)) return;
     _cooldownUntil[type] = _serverNow().add(careCooldown);
+    cooldownTick.value++;
   }
 
   /// 傾向値を0未満にならないよう更新します。
@@ -1545,16 +1560,11 @@ class TrainingGameController extends GetxController
     }
   }
 
-  /// 本編1時間分の日次判定だけを進めます。自然減衰はサーバーが確定します。
+  /// 本編1時間分の表示・日次判定を進めます。
   void _tickActiveMainHour() {
-    elapsedHours.value++;
-    if (elapsedHours.value % mainDayHours != 0) return;
-
-    day.value++;
-    if (_dayCared) daysInStage.value++;
-    _dayCared = false;
-    actionsToday.value = 0;
-    _advanceMainStageIfNeeded();
+    // 画面表示中の自然減衰はサーバー時刻から算出した時間単位で表示へ反映し、
+    // バックグラウンド／復帰時はサーバー精算結果で補正します。
+    _tickMainHour();
   }
 
   /// デバッグで手動加算した時間を、実時間処理済みとして扱います。
