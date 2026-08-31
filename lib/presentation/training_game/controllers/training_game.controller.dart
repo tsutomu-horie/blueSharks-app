@@ -589,6 +589,7 @@ class TrainingGameController extends GetxController
   bool _initializeServerState(
     Map<String, dynamic> data, {
     bool forceNewCycle = false,
+    bool? restoreLocalStateOverride,
   }) {
     final serverCycleNo = (data['cycle_no'] as num?)?.toInt();
     final isNewCycle =
@@ -607,7 +608,8 @@ class TrainingGameController extends GetxController
     _serverLockVersion = (data['lock_version'] as num?)?.toInt() ?? 0;
     if (!_applyServerState(
       data,
-      restoreLocalState: !isNewCycle && !hasStaleLocalCycle,
+      restoreLocalState: restoreLocalStateOverride ??
+          (!isNewCycle && !hasStaleLocalCycle),
       restoreDebugElapsed: !isNewCycle && !hasStaleLocalCycle,
     )) {
       return false;
@@ -711,7 +713,10 @@ class TrainingGameController extends GetxController
       actionsToday.value = serverActionsToday;
     }
     // ローカル保存値より、サーバーが現在時刻で判定した値を優先します。
-    _restoreServerCooldowns(data['cooldowns']);
+    _restoreServerCooldowns(
+      data['cooldowns'],
+      preserveLocalCooldowns: restoreLocalState,
+    );
     _restoreEndedState(data);
     return true;
   }
@@ -890,9 +895,15 @@ class TrainingGameController extends GetxController
   }
 
   /// サーバーが現在時刻で判定したクールタイムを復元します。
-  void _restoreServerCooldowns(Object? rawCooldowns) {
+  void _restoreServerCooldowns(
+    Object? rawCooldowns, {
+    required bool preserveLocalCooldowns,
+  }) {
     final localCooldowns = Map<TrainingActionType, DateTime>.from(_cooldownUntil);
-    if (rawCooldowns is! Map) return;
+    if (rawCooldowns is! Map) {
+      if (!preserveLocalCooldowns) _cooldownUntil.clear();
+      return;
+    }
     _cooldownUntil.clear();
     for (final entry in rawCooldowns.entries) {
       final type = _actionTypeFromCode(entry.key.toString());
@@ -905,11 +916,13 @@ class TrainingGameController extends GetxController
     }
     // 同期直後の応答に対象アクションが含まれない場合でも、端末で開始した
     // クールタイムを消さない。次回のサーバー応答で正規化します。
-    for (final entry in localCooldowns.entries) {
-      final serverUntil = _cooldownUntil[entry.key];
-      if (_serverNow().isBefore(entry.value) &&
-          (serverUntil == null || serverUntil.isBefore(entry.value))) {
-        _cooldownUntil[entry.key] = entry.value;
+    if (preserveLocalCooldowns) {
+      for (final entry in localCooldowns.entries) {
+        final serverUntil = _cooldownUntil[entry.key];
+        if (_serverNow().isBefore(entry.value) &&
+            (serverUntil == null || serverUntil.isBefore(entry.value))) {
+          _cooldownUntil[entry.key] = entry.value;
+        }
       }
     }
   }
@@ -1062,13 +1075,52 @@ class TrainingGameController extends GetxController
                 ? 'negative_end'
                 : 'playing',
       );
+      if (syncingRevision == _localStateRevision) {
+        // 同期前に保存したローカルスナップショットを再適用すると、
+        // サーバーが行ったオフライン精算（下限10を含む）を古い値で上書きします。
+        // 同期成功時はサーバー応答を正本として、現在のControllerの進行カウンターだけを維持します。
+        final applied = _applyServerState(data, restoreLocalState: false);
+        if (!applied) {
+          // 同期自体は成功している可能性があるため、同じアクションを
+          // 新しい冪等キーで再送せず、現在のサーバー状態を再取得します。
+          Map<String, dynamic>? current;
+          try {
+            current = await _serverProvider.fetchCurrent();
+          } catch (_) {
+            // 再取得に失敗しても、通信復旧後に再利用できるよう
+            // 未同期のローカル状態は削除せず保持します。
+            if (!_isDisposed) {
+              isServerStateReady.value = false;
+              serverErrorMessage.value = '通信状態を確認して、もう一度お試しください。';
+            }
+            _hasUnsyncedLocalState = true;
+            _finalSyncCompleted = false;
+            await _saveLocalGameState();
+            return;
+          }
+          if (!_isDisposed && current != null) {
+            final currentApplied = _initializeServerState(
+              current,
+              restoreLocalStateOverride: false,
+            );
+            if (currentApplied) {
+              _hasUnsyncedLocalState = false;
+              _finalSyncCompleted = true;
+              await _saveLocalGameState();
+              return;
+            }
+          }
+          // 再取得できない場合は、次回の同期対象としてローカル状態を保持します。
+          _hasUnsyncedLocalState = true;
+          _finalSyncCompleted = false;
+          await _saveLocalGameState();
+          return;
+        }
+        _hasUnsyncedLocalState = false;
+      }
       _serverLockVersion =
           (data['lock_version'] as num?)?.toInt() ?? _serverLockVersion;
       _restoreWorkAvailability(data);
-      if (syncingRevision == _localStateRevision) {
-        _hasUnsyncedLocalState = false;
-        _applyServerState(data);
-      }
       // 後続行動がなければサーバー優先へ戻し、ある場合は未送信状態を保持します。
       _hasUnsyncedLocalState = syncingRevision != _localStateRevision;
       _finalSyncCompleted = !_hasUnsyncedLocalState;
