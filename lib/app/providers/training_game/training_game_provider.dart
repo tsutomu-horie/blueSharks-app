@@ -80,6 +80,28 @@ class TrainingGameProvider extends GetConnect {
     return write;
   }
 
+  /// デバッグ時間操作後のパラメータをサーバーへ保存します。
+  Future<Map<String, dynamic>> syncDebugTime({
+    required String stageCode,
+    required Map<String, double> parameters,
+    required int lockVersion,
+  }) async {
+    final write = _pendingWrite.then((_) async {
+      final response = await post(
+        'game/debug/sync-time',
+        {
+          'stage_code': stageCode,
+          'parameters': parameters,
+          'lock_version': lockVersion,
+        },
+        headers: await _headers(),
+      );
+      return _data(response) ?? <String, dynamic>{};
+    });
+    _pendingWrite = write.then<void>((_) {}, onError: (_, __) {});
+    return write;
+  }
+
   /// ローカルで確定した状態とアクションをサーバーへ同期します。
   Future<Map<String, dynamic>> sync({
     required String stageCode,
