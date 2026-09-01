@@ -5,66 +5,161 @@ import 'package:koto_blue_sharks/app/services/auth_token.dart';
 import 'package:koto_blue_sharks/app/providers/training_game/training_game_provider.dart';
 import 'package:koto_blue_sharks/infrastructure/navigation/routes.dart';
 
+import 'controllers/training_game.controller.dart';
 import 'controllers/training_game_new_game.controller.dart';
 
 /// ワイヤーフレーム①「アプリ内 ゲーム起動」を表示します。
-class TrainingGameLaunchScreen extends StatelessWidget {
+class TrainingGameLaunchScreen extends StatefulWidget {
   /// 起動画面を作成します。
   const TrainingGameLaunchScreen({super.key});
 
   @override
+  State<TrainingGameLaunchScreen> createState() =>
+      _TrainingGameLaunchScreenState();
+}
+
+class _TrainingGameLaunchScreenState extends State<TrainingGameLaunchScreen> {
+  late final Future<String?> _accessTokenFuture;
+  bool _isLaunching = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _accessTokenFuture = AuthToken().getAccessToken();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('アプリ ｜ ゲーム')),
-      body: FutureBuilder<String?>(
-        future: AuthToken().getAccessToken(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState != ConnectionState.done) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          final authenticated = snapshot.data?.isNotEmpty == true;
-          return Padding(
-            padding: EdgeInsets.all(20.w),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+    return PopScope(
+      canPop: !_isLaunching,
+      child: Scaffold(
+        appBar: AppBar(title: const Text('アプリ ｜ ゲーム')),
+        body: FutureBuilder<String?>(
+          future: _accessTokenFuture,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState != ConnectionState.done) {
+              return const Center(child: CircularProgressIndicator());
+            }
+            final authenticated = snapshot.data?.isNotEmpty == true;
+            return Stack(
               children: [
-                _FlowPlaceholder(height: 180.h, label: 'ゲームバナー'),
-                SizedBox(height: 20.h),
-                Text('鮫太朗育成ゲーム', style: TextStyle(fontSize: 22.sp, fontWeight: FontWeight.w700)),
-                SizedBox(height: 8.h),
-                Text(authenticated ? 'ゲームを開始できます。' : 'ゲームを起動するには会員認証が必要です。'),
-                const Spacer(),
-                SizedBox(
-                  width: double.infinity,
-                  height: 52.h,
-                  child: ElevatedButton(
-                    onPressed: authenticated ? _openGame : null,
-                    child: const Text('ゲームを起動'),
+                Padding(
+                  padding: EdgeInsets.all(20.w),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _FlowPlaceholder(height: 180.h, label: 'ゲームバナー'),
+                      SizedBox(height: 20.h),
+                      Text(
+                        '鮫太朗育成ゲーム',
+                        style: TextStyle(
+                          fontSize: 22.sp,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      SizedBox(height: 8.h),
+                      Text(
+                        authenticated
+                            ? 'ゲームを開始できます。'
+                            : 'ゲームを起動するには会員認証が必要です。',
+                      ),
+                      const Spacer(),
+                      SizedBox(
+                        width: double.infinity,
+                        height: 52.h,
+                        child: ElevatedButton(
+                          onPressed: authenticated && !_isLaunching
+                              ? _openGame
+                              : null,
+                          child: _isLaunching
+                              ? Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    SizedBox(
+                                      width: 20.w,
+                                      height: 20.w,
+                                      child: const CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                      ),
+                                    ),
+                                    SizedBox(width: 8.w),
+                                    const Text('起動中…'),
+                                  ],
+                                )
+                              : const Text('ゲームを起動'),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
+                if (_isLaunching) _buildLaunchingOverlay(),
               ],
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  /// 起動中は画面操作を抑止し、待機中であることを表示します。
+  Widget _buildLaunchingOverlay() {
+    return Positioned.fill(
+      child: AbsorbPointer(
+        absorbing: true,
+        child: ColoredBox(
+          color: Colors.black26,
+          child: Center(
+            child: Card(
+              child: Padding(
+                padding: EdgeInsets.symmetric(horizontal: 28.w, vertical: 22.h),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const CircularProgressIndicator(),
+                    SizedBox(height: 14.h),
+                    Text(
+                      'ゲームを起動中…',
+                      style: TextStyle(
+                        fontSize: 16.sp,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
-          );
-        },
+          ),
+        ),
       ),
     );
   }
 
   /// 育成中の卵がある場合は②を省略し、③へ直接遷移します。
-  void _openGame() {
-    TrainingGameProvider.waitForPendingSync().then((_) {
-      return TrainingGameProvider().fetchCurrent();
-    }).then((current) {
+  Future<void> _openGame() async {
+    if (_isLaunching) return;
+    setState(() => _isLaunching = true);
+    final loadingDelay = Future<void>.delayed(
+      TrainingGameController.randomTransitionLoadingDuration(),
+    );
+    try {
+      await TrainingGameProvider.waitForPendingSync();
+      final current = await TrainingGameProvider().fetchCurrent();
+      await loadingDelay;
+      if (!mounted) return;
       if (current == null) {
         Get.toNamed(Routes.TRAINING_GAME_NEW);
-        return;
+      } else {
+        // 取得済み状態を引き渡し、育成画面での同一API再取得を省略します。
+        Get.toNamed(Routes.TRAINING_GAME, arguments: current);
       }
-      // 取得済み状態を引き渡し、育成画面での同一API再取得を省略します。
-      Get.toNamed(Routes.TRAINING_GAME, arguments: current);
-    }).catchError((_) {
+    } catch (_) {
+      await loadingDelay;
+      if (!mounted) return;
       // サーバー未接続時は新規開始画面へ進めます。
       Get.toNamed(Routes.TRAINING_GAME_NEW);
-    });
+    } finally {
+      if (mounted) setState(() => _isLaunching = false);
+    }
   }
 }
 

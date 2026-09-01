@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:math';
 
 import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
@@ -17,6 +18,20 @@ class TrainingGameController extends GetxController
   /// 回数上限を設けず、連打だけを抑制するための暫定クールタイムです。
   /// 仕様では秒数が調整項目のため、正式値確定時にここだけ変更します。
   static const careCooldown = Duration(seconds: 60);
+
+  /// 画面遷移時に表示するロード時間の下限・上限です。
+  static const transitionLoadingMinMilliseconds = 1500;
+  static const transitionLoadingMaxMilliseconds = 3000;
+
+  /// 1.5〜3秒の範囲から画面遷移用のロード時間を生成します。
+  static Duration randomTransitionLoadingDuration() {
+    final range = transitionLoadingMaxMilliseconds -
+        transitionLoadingMinMilliseconds +
+        1;
+    return Duration(
+      milliseconds: transitionLoadingMinMilliseconds + Random().nextInt(range),
+    );
+  }
 
   /// 育成期におけるゲーム内1日の経過時間です。
   static const mainDayHours = 4;
@@ -151,6 +166,7 @@ class TrainingGameController extends GetxController
   final trainingCount = 0.obs;
   final timeSpeed = 1.obs;
   final isServerStateReady = false.obs;
+  final isReturningHome = false.obs;
   final serverErrorMessage = ''.obs;
   final workAvailabilityError = ''.obs;
   // 仕事の実施可否は端末時計ではなく、APIが返すサーバー判定だけを使用します。
@@ -506,6 +522,17 @@ class TrainingGameController extends GetxController
     _waitingForServerRestore = true;
     _activeMainProgressBaseSeconds = null;
     _restoreLocalCountersOnNextServerState = true;
+  }
+
+  /// ホームへ戻る前に状態を同期し、1.5〜3秒のロード表示を維持します。
+  Future<void> syncBeforeReturningHome() async {
+    if (isReturningHome.value) return;
+    isReturningHome.value = true;
+    pauseLocalProgress();
+    await Future.wait<void>([
+      syncNow(),
+      Future<void>.delayed(randomTransitionLoadingDuration()),
+    ]);
   }
 
   /// アプリがバックグラウンドへ移る前に育成状態を保存します。

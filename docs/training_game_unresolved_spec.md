@@ -36,6 +36,14 @@ DB設計書では減衰率を `game_settings` の調整値として管理する�
 
 実装箇所: `lib/presentation/training_game/controllers/training_game.controller.dart`、`blueSharks-server/app/Services/V1/Game/GameParameterDecayService.php`、`blueSharks-server/database/seeders/Game/GameMasterSeeder.php`
 
+## ゲーム画面遷移ロード（暫定実装）
+
+ゲーム起動画面の「ゲームを起動」と育成ゲーム画面のホームボタンでは、押下直後から通信処理と並行して1.5〜3秒のランダムな待機時間を設けています。待機中はローディング表示を出し、対象ボタンおよび画面操作を抑止します。
+
+待機時間の範囲、ランダム化、ローディング表示の内容はいずれも仮実装です。正式な演出・待機時間・通信中の操作仕様が決定した時点で見直します。
+
+実装箇所: `lib/presentation/training_game/training_game_flow.screen.dart`、`lib/presentation/training_game/training_game.screen.dart`、`lib/presentation/training_game/controllers/training_game.controller.dart`
+
 ## 発注元の確認が必要な項目
 
 ### タックル
