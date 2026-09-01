@@ -20,26 +20,71 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      body: SafeArea(
-        child: Obx(
-          () => controller.isServerStateReady.value
-              ? controller.evolutionStage.value != null
-                  ? _buildEvolutionFlow()
-                  : controller.ended.value
-                      ? _buildEndingFlow(context)
-                      : Column(
-                          children: [
-                            _buildStatusBar(context),
-                            _buildHud(context),
-                            Expanded(child: _buildRoom(context)),
-                            _buildCareBar(context),
-                          ],
-                        )
-              : controller.serverErrorMessage.value.isEmpty
-                  ? const Center(child: CircularProgressIndicator())
-                  : _buildConnectionError(),
+    return Obx(
+      () => PopScope(
+        canPop: !controller.isReturningHome.value,
+        child: Scaffold(
+          backgroundColor: Colors.white,
+          body: SafeArea(
+            child: Obx(() {
+              final content = controller.isServerStateReady.value
+                  ? controller.evolutionStage.value != null
+                      ? _buildEvolutionFlow()
+                      : controller.ended.value
+                          ? _buildEndingFlow(context)
+                          : Column(
+                              children: [
+                                _buildStatusBar(context),
+                                _buildHud(context),
+                                Expanded(child: _buildRoom(context)),
+                                _buildCareBar(context),
+                              ],
+                            )
+                  : controller.serverErrorMessage.value.isEmpty
+                      ? const Center(child: CircularProgressIndicator())
+                      : _buildConnectionError();
+              return Stack(
+                children: [
+                  content,
+                  if (controller.isReturningHome.value)
+                    _buildReturningHomeOverlay(),
+                ],
+              );
+            }),
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// ホーム遷移中は画面操作を抑止し、ロード中であることを表示します。
+  Widget _buildReturningHomeOverlay() {
+    return Positioned.fill(
+      child: AbsorbPointer(
+        absorbing: true,
+        child: ColoredBox(
+          color: Colors.black26,
+          child: Center(
+            child: Card(
+              child: Padding(
+                padding: EdgeInsets.symmetric(horizontal: 28.w, vertical: 22.h),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const CircularProgressIndicator(),
+                    SizedBox(height: 14.h),
+                    Text(
+                      'ホームへ移動中…',
+                      style: TextStyle(
+                        fontSize: 16.sp,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
         ),
       ),
     );
@@ -358,7 +403,9 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
             width: 52.w,
             height: 52.w,
             child: ElevatedButton(
-              onPressed: _returnHomeAfterSync,
+              onPressed: controller.isReturningHome.value
+                  ? null
+                  : () => _returnHomeAfterSync(context),
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xff5ee05e),
                 foregroundColor: Colors.black,
@@ -367,7 +414,13 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
                   borderRadius: BorderRadius.circular(6.r),
                 ),
               ),
-              child: Text('🚪', style: TextStyle(fontSize: 22.sp)),
+              child: controller.isReturningHome.value
+                  ? SizedBox(
+                      width: 22.w,
+                      height: 22.w,
+                      child: const CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : Text('🚪', style: TextStyle(fontSize: 22.sp)),
             ),
           ),
         ],
@@ -376,14 +429,20 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
   }
 
   /// 最新状態の同期完了後にホームへ戻ります。
-  Future<void> _returnHomeAfterSync() async {
-    controller.pauseLocalProgress();
-    await controller.syncNow().then((_) {
-      Get.back<void>();
-    }).catchError((_) {
+  Future<void> _returnHomeAfterSync(BuildContext context) async {
+    if (controller.isReturningHome.value) return;
+    try {
+      await controller.syncBeforeReturningHome();
+    } catch (_) {
       // 通信失敗時も画面を閉じ、次回起動時の再同期へ委ねます。
-      Get.back<void>();
-    });
+    } finally {
+      // 戻る操作で先に画面が閉じられても、別画面を誤って閉じないようにします。
+      if (context.mounted &&
+          (ModalRoute.of(context)?.isCurrent ?? false) &&
+          Get.currentRoute == Routes.TRAINING_GAME) {
+        Get.back<void>();
+      }
+    }
   }
 
   /// メーター1項目を作成します。
