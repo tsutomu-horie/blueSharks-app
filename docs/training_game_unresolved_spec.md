@@ -44,6 +44,10 @@ DB設計書では減衰率を `game_settings` の調整値として管理する�
 
 実装箇所: `lib/presentation/training_game/training_game_flow.screen.dart`、`lib/presentation/training_game/training_game.screen.dart`、`lib/presentation/training_game/controllers/training_game.controller.dart`
 
+### チュートリアル進化後の時間再開（2026-09-04）
+
+進化演出中にアプリがバックグラウンドへ移った場合でも、幼少段階の「次へ」でチュートリアル時間を再開します。進化演出中は時間を停止し、復帰後に演出を閉じる操作で前面状態とサーバー復元待ち状態を解除する方針です。デバッグの16倍速を含め、再開後も設定した速度を維持します。
+
 ## 発注元の確認が必要な項目
 
 ### タックル
