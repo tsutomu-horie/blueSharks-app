@@ -116,6 +116,8 @@ class TrainingGameProvider extends GetConnect {
     String? actionCode,
     double? actionScore,
     double? actionEffectMultiplier,
+    String? actionResultCode,
+    bool debugBypassCooldown = false,
     String status = 'playing',
   }) async {
     final write = _pendingWrite.then((_) async {
@@ -132,7 +134,8 @@ class TrainingGameProvider extends GetConnect {
             'action': {
               'code': actionCode,
               'idempotency_key': '$cycleNo-${_clock.elapsedMicroseconds}-$actionCode',
-              'result_code': 'completed',
+              'result_code': actionResultCode ?? 'completed',
+              if (debugBypassCooldown) 'debug_bypass_cooldown': true,
               if (actionScore != null) 'score': actionScore,
               if (actionEffectMultiplier != null) 'effect_multiplier': actionEffectMultiplier,
             },
@@ -161,7 +164,14 @@ class TrainingGameProvider extends GetConnect {
 
   /// GetConnectのレスポンスをAPIデータへ変換します。
   Map<String, dynamic>? _data(Response<dynamic> response) {
-    if (response.hasError) throw Exception(response.statusText ?? '育成ゲームAPIエラー');
+    if (response.hasError) {
+      final body = response.body;
+      final message = body is Map ? body['message']?.toString() : null;
+      throw TrainingGameApiException(
+        statusCode: response.statusCode,
+        message: message ?? response.statusText ?? '育成ゲームAPIエラー',
+      );
+    }
     final body = response.body;
     if (body is! Map) throw Exception('育成ゲームAPIのレスポンス形式が不正です。');
     final data = body['data'];
@@ -171,4 +181,18 @@ class TrainingGameProvider extends GetConnect {
     ServerTimeClock.instance.synchronizeFromPayload(result);
     return result;
   }
+}
+
+/// 育成ゲームAPIのHTTPエラーを、通信障害と業務エラーに分類できる例外です。
+class TrainingGameApiException implements Exception {
+  const TrainingGameApiException({
+    required this.statusCode,
+    required this.message,
+  });
+
+  final int? statusCode;
+  final String message;
+
+  @override
+  String toString() => 'TrainingGameApiException($statusCode): $message';
 }

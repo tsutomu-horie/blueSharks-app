@@ -9,6 +9,7 @@ import 'package:koto_blue_sharks/app/services/server_time_clock.dart';
 import 'package:koto_blue_sharks/utils/my_shared_pref.dart';
 
 import '../mini_games/models/mini_game_result.dart';
+import '../models/training_action_gate.dart';
 import '../models/training_game_models.dart';
 import '../models/training_game_position_classifier.dart';
 
@@ -178,8 +179,10 @@ class TrainingGameController extends GetxController
   int _lowConditionTraining = 0;
   bool _dayCared = false;
   final _zeroHours = <String, int>{'食事': 0, '清潔': 0, '体調': 0, '仕事': 0};
-  final _cooldownUntil = <TrainingActionType, DateTime>{};
   final _tutorialZeroSeconds = <String, int>{'食事': 0, '清潔': 0, '体調': 0};
+  final _actionGate = TrainingActionGate(
+    now: () => ServerTimeClock.instance.now,
+  );
   Timer? _tutorialTimer;
   Timer? _mainTimer;
   int _serverElapsedSeconds = 0;
@@ -253,9 +256,11 @@ class TrainingGameController extends GetxController
   bool canPerform(TrainingActionType type) {
     cooldownTick.value;
     if (_pendingStageIndex != null) return false;
-    if (!isCooldownEnabled(type)) return true;
-    final until = _cooldownUntil[type];
-    return until == null || !_serverNow().isBefore(until);
+    return _actionGate.canPerform(
+      type,
+      clientCooldownEnabled: isCooldownEnabled(type),
+      bypassServerCooldown: _bypassesServerCooldown(type),
+    );
   }
 
   /// 指定行動のクールタイム設定を返します。
@@ -263,19 +268,21 @@ class TrainingGameController extends GetxController
       cooldownEnabled[type] ?? false;
 
   /// デバッグメニューから指定行動のクールタイムを切り替えます。
+  /// OFFの場合は開発環境のAPIにも解除を通知します。
   void setCooldownEnabled(TrainingActionType type, bool enabled) {
     cooldownEnabled[type] = enabled;
-    if (!enabled) _cooldownUntil.remove(type);
+    _actionGate.setClientCooldownEnabled(type, enabled);
     cooldownTick.value++;
   }
 
   /// 指定行動の残りクールタイムを返します。
   Duration cooldownRemaining(TrainingActionType type) {
     cooldownTick.value;
-    final until = _cooldownUntil[type];
-    if (until == null) return Duration.zero;
-    final remaining = until.difference(_serverNow());
-    return remaining.isNegative ? Duration.zero : remaining;
+    return _actionGate.remaining(
+      type,
+      clientCooldownEnabled: isCooldownEnabled(type),
+      bypassServerCooldown: _bypassesServerCooldown(type),
+    );
   }
 
   /// 画面に表示するクールタイムを返します。
@@ -362,7 +369,7 @@ class TrainingGameController extends GetxController
           if (_isDisposed) return;
           _initializeServerState(state, forceNewCycle: true);
           // 新サイクル開始レスポンスに旧クールタイムが混在していても引き継がない。
-          _cooldownUntil.clear();
+          _actionGate.clear();
           cooldownTick.value++;
         });
       } else {
@@ -456,7 +463,7 @@ class TrainingGameController extends GetxController
     _dayCared = false;
     _zeroHours.updateAll((key, value) => 0);
     _tutorialZeroSeconds.updateAll((key, value) => 0);
-    _cooldownUntil.clear();
+    _actionGate.clear();
     _pendingStageIndex = null;
     _pendingStageSyncQueued = false;
     ended.value = false;
@@ -910,15 +917,17 @@ class TrainingGameController extends GetxController
   /// ローカルスナップショットから行動別クールタイムを復元します。
   void _restoreCooldowns(Object? rawCooldowns) {
     if (rawCooldowns is! Map) return;
+    final cooldowns = <TrainingActionType, DateTime>{};
     for (final entry in rawCooldowns.entries) {
       final type = _actionTypeFromCode(entry.key.toString());
       final value = entry.value;
       if (type == null || value is! String) continue;
       final until = DateTime.tryParse(value);
       if (until != null && _serverNow().isBefore(until)) {
-        _cooldownUntil[type] = until;
+        cooldowns[type] = until;
       }
     }
+    _actionGate.mergeServerCooldowns(cooldowns);
   }
 
   /// サーバーが現在時刻で判定したクールタイムを復元します。
@@ -926,32 +935,26 @@ class TrainingGameController extends GetxController
     Object? rawCooldowns, {
     required bool preserveLocalCooldowns,
   }) {
-    final localCooldowns = Map<TrainingActionType, DateTime>.from(_cooldownUntil);
+    final localCooldowns = _actionGate.snapshot(cooldownEnabled);
+    final serverCooldowns = <TrainingActionType, DateTime>{};
     if (rawCooldowns is! Map) {
-      if (!preserveLocalCooldowns) _cooldownUntil.clear();
+      if (!preserveLocalCooldowns) _actionGate.replaceServerCooldowns({});
       return;
     }
-    _cooldownUntil.clear();
     for (final entry in rawCooldowns.entries) {
       final type = _actionTypeFromCode(entry.key.toString());
       final value = entry.value;
       if (type == null || value is! String) continue;
       final until = DateTime.tryParse(value);
       if (until != null && _serverNow().isBefore(until)) {
-        _cooldownUntil[type] = until;
+        serverCooldowns[type] = until;
       }
     }
-    // 同期直後の応答に対象アクションが含まれない場合でも、端末で開始した
-    // クールタイムを消さない。次回のサーバー応答で正規化します。
-    if (preserveLocalCooldowns) {
-      for (final entry in localCooldowns.entries) {
-        final serverUntil = _cooldownUntil[entry.key];
-        if (_serverNow().isBefore(entry.value) &&
-            (serverUntil == null || serverUntil.isBefore(entry.value))) {
-          _cooldownUntil[entry.key] = entry.value;
-        }
-      }
-    }
+    _actionGate.replaceServerCooldowns(
+      serverCooldowns,
+      preserveUntil: preserveLocalCooldowns ? localCooldowns : const {},
+    );
+    cooldownTick.value++;
   }
 
   /// ローカルスナップショットの整数値を安全に読み取ります。
@@ -1033,7 +1036,10 @@ class TrainingGameController extends GetxController
       return Future<void>.value();
     }
     // 連続操作中も各アクションを順番に保持し、効果を失わないようにします。
-    if (action != null) _queuedActions.add((type: action, result: miniGameResult));
+    if (action != null) {
+      _actionGate.markPending(action);
+      _queuedActions.add((type: action, result: miniGameResult));
+    }
     _syncRequested = true;
     _hasUnsyncedLocalState = true;
     _finalSyncCompleted = false;
@@ -1096,12 +1102,33 @@ class TrainingGameController extends GetxController
         actionCode: action == null ? null : _actionCode(action),
         actionScore: miniGameResult?.score,
         actionEffectMultiplier: miniGameResult?.effectMultiplier,
+        actionResultCode: miniGameResult?.resultCode,
+        debugBypassCooldown:
+            action != null && _bypassesServerCooldown(action),
         status: isPositiveEnd
             ? 'positive_end'
             : ended.value
                 ? 'negative_end'
                 : 'playing',
       );
+      // 先行操作がある場合は状態全体をまだ上書きしませんが、サーバーが確定した
+      // クールタイムだけは直ちに反映し、同じ行動の再送を防ぎます。
+      _restoreServerCooldowns(
+        data['cooldowns'],
+        preserveLocalCooldowns: true,
+      );
+      // 古いAPIがcooldownsを返さない場合でも、サーバー側の固定ルールを
+      // クライアントが一時的に無視して再送しないようにします。
+      final responseCooldowns = data['cooldowns'];
+      if (action != null &&
+          isCooldownAction(action) &&
+          (responseCooldowns is! Map ||
+              !responseCooldowns.containsKey(_actionCode(action)))) {
+        _actionGate.mergeServerCooldowns({
+          action: _serverNow().add(careCooldown),
+        });
+        cooldownTick.value++;
+      }
       if (syncingRevision == _localStateRevision) {
         // 同期前に保存したローカルスナップショットを再適用すると、
         // サーバーが行ったオフライン精算（下限10を含む）を古い値で上書きします。
@@ -1154,7 +1181,13 @@ class TrainingGameController extends GetxController
       await _saveLocalGameState();
       // 図鑑はポジティブ終了時だけ再取得し、通常同期の余分な通信を省きます。
       if (isPositiveEnd && !_isDisposed) await refreshUnlockedPositions();
-    } catch (_) {
+    } catch (error) {
+      if (action != null &&
+          error is TrainingGameApiException &&
+          _isCooldownRejection(action, error)) {
+        await _handleCooldownRejection(action);
+        return;
+      }
       if (action == TrainingActionType.work) {
         // サーバーに拒否された楽観更新を捨てます。後続アクションで、
         // 拒否済み仕事のメーター増分を保存してしまうことを防ぎます。
@@ -1183,9 +1216,53 @@ class TrainingGameController extends GetxController
       }
       rethrow;
     } finally {
+      if (action != null) _actionGate.clearPending(action);
       if (action == TrainingActionType.work) _isWorkSyncPending = false;
     }
   }
+
+  /// サーバー側で拒否されたクールタイムを、通信障害として扱わず同期します。
+  Future<void> _handleCooldownRejection(TrainingActionType action) async {
+    // 同じ行動が既にキューへ積まれていれば、同じ422を繰り返し発生させない。
+    _queuedActions.removeWhere((pending) => pending.type == action);
+    _actionGate.mergeServerCooldowns({
+      action: _serverNow().add(careCooldown),
+    });
+    if (!_isDisposed) {
+      logs.insert(0, '${_labelFor(action)}はサーバー側でクールタイム中です。');
+    }
+
+    try {
+      final data = await _serverProvider.fetchCurrent();
+      if (_isDisposed || data == null) return;
+      _serverLockVersion =
+          (data['lock_version'] as num?)?.toInt() ?? _serverLockVersion;
+      _restoreServerCooldowns(data['cooldowns'], preserveLocalCooldowns: true);
+      _restoreWorkAvailability(data);
+      if (_queuedActions.isEmpty) {
+        // 後続操作がなければ、拒否された操作の楽観更新を正本へ戻します。
+        _initializeServerState(data, restoreLocalStateOverride: false);
+        _hasUnsyncedLocalState = false;
+        _finalSyncCompleted = true;
+        await _saveLocalGameState();
+      }
+    } catch (_) {
+      // クールタイム拒否は画面を通信エラーに遷移させず、次回の状態取得で補正します。
+    }
+  }
+
+  bool _isCooldownRejection(
+    TrainingActionType action,
+    TrainingGameApiException error,
+  ) {
+    return error.statusCode == 422 &&
+        isCooldownAction(action) &&
+        error.message.contains('クールタイム');
+  }
+
+  /// デバッグでクールタイムを解除する対象かを返します。
+  bool _bypassesServerCooldown(TrainingActionType type) =>
+      isCooldownAction(type) && !isCooldownEnabled(type);
 
   /// 同期に失敗した場合は端末側の先行変更を破棄し、サーバー状態へ戻します。
   Future<void> _restoreAuthoritativeStateAfterSyncFailure() async {
@@ -1234,9 +1311,8 @@ class TrainingGameController extends GetxController
       'zero_hours': _zeroHours,
       'tutorial_zero_seconds': _tutorialZeroSeconds,
       'cooldowns': {
-        for (final entry in _cooldownUntil.entries)
-          if (_serverNow().isBefore(entry.value))
-            _actionCode(entry.key): entry.value.toIso8601String(),
+        for (final entry in _actionGate.snapshot(cooldownEnabled).entries)
+          _actionCode(entry.key): entry.value.toIso8601String(),
       },
       'ended': ended.value,
       'ending_step': endingStep.value,
@@ -1319,7 +1395,9 @@ class TrainingGameController extends GetxController
   /// 指定した行動を実行し、メーターと傾向値を更新します。
   void perform(TrainingActionType type, {MiniGameResult? miniGameResult}) {
     if (ended.value || evolutionStage.value != null) return;
-    if (_pendingStageIndex != null || _waitingForServerRestore) {
+    if (_pendingStageIndex != null ||
+        _waitingForServerRestore ||
+        _syncBlockedUntilServerRestore) {
       logs.insert(0, '育成状態を同期中です。しばらくお待ちください。');
       return;
     }
@@ -1359,35 +1437,31 @@ class TrainingGameController extends GetxController
         _changeMeter('清潔', -3);
         break;
       case TrainingActionType.clean:
-        _changeMeter('清潔', 40);
         _addTrend('TECH', 2, '体調');
+        _changeMeter('清潔', 40);
         break;
       case TrainingActionType.rest:
         _changeMeter('体調', 40);
         _changeMeter('食事', -5);
         break;
       case TrainingActionType.squat:
+        _addTrend('FW', 3, '食事', sourceOffset: 12, training: true);
+        _addTrend('BULK', 2, '食事', sourceOffset: 12, training: true);
         _changeMeter('食事', -12);
         _changeMeter('清潔', -8);
         _changeMeter('体調', -6);
-        _addTrend('FW', 3, '食事', sourceOffset: 12, training: true);
-        _addTrend('BULK', 2, '食事', sourceOffset: 12, training: true);
         break;
       case TrainingActionType.tackle:
-        _changeMeter('清潔', -12);
-        _changeMeter('体調', -12);
-        _changeMeter('食事', -8);
-        _changeMeter('仕事', 10 * miniGameMultiplier);
         _addTrend('FW', 5 * miniGameMultiplier, '体調',
             sourceOffset: 12, training: true);
         _addTrend('BULK', 1 * miniGameMultiplier, '体調',
             sourceOffset: 12, training: true);
+        _changeMeter('清潔', -12);
+        _changeMeter('体調', -12);
+        _changeMeter('食事', -8);
+        _changeMeter('仕事', 10 * miniGameMultiplier);
         break;
       case TrainingActionType.passAndRun:
-        _changeMeter('清潔', -10);
-        _changeMeter('体調', -10);
-        _changeMeter('食事', -10);
-        _changeMeter('仕事', 10 * miniGameMultiplier);
         _addTrend(
           'RUN',
           (workBeforeAction >= 80 ? 2 : 5) * miniGameMultiplier,
@@ -1404,12 +1478,16 @@ class TrainingGameController extends GetxController
             training: true,
           );
         }
+        _changeMeter('清潔', -10);
+        _changeMeter('体調', -10);
+        _changeMeter('食事', -10);
+        _changeMeter('仕事', 10 * miniGameMultiplier);
         break;
       case TrainingActionType.work:
+        _addTrend('TECH', 6, '体調', sourceOffset: 10);
         _changeMeter('食事', -10);
         _changeMeter('体調', -10);
         _changeMeter('仕事', 30);
-        _addTrend('TECH', 6, '体調', sourceOffset: 10);
         // 同期中は重複実行を止め、成功時の可否はサーバー応答で更新します。
         _isWorkSyncPending = true;
         break;
@@ -1535,8 +1613,11 @@ class TrainingGameController extends GetxController
 
   /// 行動完了時点からクールタイムを開始します。
   void _startCooldown(TrainingActionType type) {
-    if (!isCooldownEnabled(type)) return;
-    _cooldownUntil[type] = _serverNow().add(careCooldown);
+    _actionGate.startClientCooldown(
+      type,
+      enabled: isCooldownEnabled(type),
+      duration: careCooldown,
+    );
     cooldownTick.value++;
   }
 

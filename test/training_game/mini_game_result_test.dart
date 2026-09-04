@@ -12,6 +12,7 @@ void main() {
 
       expect(result.type, MiniGameType.tackle);
       expect(result.effectMultiplier, .75);
+      expect(result.resultCode, 'B');
       expect(result.summary, contains('総合B'));
     });
 
