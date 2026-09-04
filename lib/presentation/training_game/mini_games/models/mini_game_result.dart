@@ -24,6 +24,7 @@ class MiniGameResult {
     required this.summary,
     required this.score,
     required this.effectMultiplier,
+    this.resultCode,
   });
 
   final MiniGameType type;
@@ -36,6 +37,9 @@ class MiniGameResult {
 
   /// 内部傾向値と仕事加算へ適用する暫定倍率です。
   final double effectMultiplier;
+
+  /// サーバーが倍率を再計算するための結果コードです。
+  final String? resultCode;
 
   /// タックルの総合ランクから育成反映倍率を決定します。
   factory MiniGameResult.tackle({
@@ -51,6 +55,7 @@ class MiniGameResult {
       summary: 'タックル 総合$rank／平均$averageLabel／成功$successCount/3',
       score: averageSeconds ?? .5,
       effectMultiplier: tackleEffectMultipliers[rank] ?? .25,
+      resultCode: rank,
     );
   }
 

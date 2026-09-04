@@ -1099,7 +1099,7 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
                   const ListTile(
                     leading: Icon(Icons.timer),
                     title: Text('行動別クールタイム'),
-                    subtitle: Text('正式値調整用。既定値はお世話のみ有効です。'),
+                    subtitle: Text('開発環境では端末・サーバーのクールタイムを解除できます。'),
                   ),
                   ...TrainingGameController.actions.map(
                     (action) => SwitchListTile(
