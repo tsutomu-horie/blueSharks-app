@@ -380,17 +380,7 @@ class TrainingGameController extends GetxController
       unawaited(_restoreServerState());
     }
     _tutorialTimer = Timer.periodic(const Duration(seconds: 1), (_) {
-      cooldownTick.value++;
-      if (isServerStateReady.value &&
-          !_isAppInBackground &&
-          evolutionStage.value == null &&
-          _pendingStageIndex == null &&
-          !_waitingForServerRestore &&
-          stageIndex.value < 2 &&
-          !ended.value) {
-        _advanceTutorialClock(timeSpeed.value);
-        tickTutorial(timeSpeed.value);
-      }
+      tickTutorialTimer();
     });
     _mainTimer = Timer.periodic(const Duration(seconds: 1), (_) {
       cooldownTick.value++;
@@ -403,6 +393,15 @@ class TrainingGameController extends GetxController
         _mainClockTick.value++;
       }
     });
+  }
+
+  /// チュートリアルタイマー1回分の進行を処理します。
+  void tickTutorialTimer() {
+    cooldownTick.value++;
+    if (isTutorialTimeActive) {
+      _advanceTutorialClock(timeSpeed.value);
+      tickTutorial(timeSpeed.value);
+    }
   }
 
   /// Controller破棄時にチュートリアルのリアルタイム進行を停止します。
@@ -517,11 +516,26 @@ class TrainingGameController extends GetxController
 
   /// 段階上昇時の進化演出を完了し、育成画面へ戻します。
   void advanceEvolution() {
+    if (evolutionStage.value == null) return;
     evolutionStage.value = null;
+    // 進化演出中にOS割り込みが発生しても、次へ進んだ時点で
+    // チュートリアルのリアルタイム進行を必ず再開します。
+    _isAppInBackground = false;
+    _waitingForServerRestore = false;
     _resetActiveMainProgressBaseline();
     _updateElapsedTimeFromStart();
     _mainClockTick.value++;
   }
+
+  /// 現在の状態でチュートリアル時間を進められるかを返します。
+  bool get isTutorialTimeActive =>
+      isServerStateReady.value &&
+      !_isAppInBackground &&
+      evolutionStage.value == null &&
+      _pendingStageIndex == null &&
+      !_waitingForServerRestore &&
+      stageIndex.value < 2 &&
+      !ended.value;
 
   /// 育成画面を離れる前にローカルのリアルタイム進行を停止します。
   void pauseLocalProgress() {
@@ -555,10 +569,13 @@ class TrainingGameController extends GetxController
       _restoreLocalCountersOnNextServerState = true;
       _queueSync();
     }
-    if (state == AppLifecycleState.resumed &&
-        !ended.value &&
-        evolutionStage.value == null) {
+    if (state == AppLifecycleState.resumed && !ended.value) {
       _isAppInBackground = false;
+      if (evolutionStage.value != null) {
+        // 演出中は時間を進めませんが、OS割り込み中のサーバー状態は復元します。
+        unawaited(_restoreServerState());
+        return;
+      }
       // 復帰直後は、直前に同期したサーバー時刻から表示だけを先に再開します。
       _updateElapsedTimeFromStart();
       _mainClockTick.value++;
@@ -1833,6 +1850,7 @@ class TrainingGameController extends GetxController
 
   /// チュートリアルの倍速設定を時計へ反映します。
   void _advanceTutorialClock(int speed) {
+    if (speed <= 0) return;
     // 実時間との差分を補正し、停止・倍速でも表示とメーターの進行を一致させます。
     _elapsedTimeOffsetSeconds += speed - 1;
     _updateElapsedTimeFromStart();
