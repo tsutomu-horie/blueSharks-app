@@ -34,6 +34,8 @@ class QrCampaignScreen extends GetView<QrCampaignController> {
                   AdminSidebar(
                     selectedItem: 'QR施策',
                     wireframeLabel: 'WIREFRAME ・ 13',
+                    requiredPermissionLabel:
+                        'point.qr-campaign.view\npoint.qr-campaign.manage',
                     onItemTap: (item) {
                       if (item == 'WordPress') {
                         Get.toNamed(Routes.WORDPRESS);

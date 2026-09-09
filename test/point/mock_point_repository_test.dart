@@ -27,6 +27,16 @@ void main() {
       expect(lots.fold<int>(0, (sum, lot) => sum + lot.remainingAmount), 150);
     });
 
+    test('QR再発行で古いペイロードを更新する', () async {
+      final repository = MockPointRepository.instance;
+
+      final current = await repository.getQrToken();
+      final reissued = await repository.reissueQrToken();
+
+      expect(reissued.token, isNot(current.token));
+      expect((await repository.getQrToken()).token, reissued.token);
+    });
+
     test('景品の交換可否を現在残高から判定する', () {
       final controller = PointController(
         repository: MockPointRepository.instance,

@@ -32,6 +32,7 @@ class WordPressScreen extends GetView<WordPressController> {
                 children: [
                   AdminSidebar(
                     selectedItem: 'WordPress',
+                    requiredPermissionLabel: 'view.user',
                     onItemTap: (item) {
                       if (item == 'QR施策') {
                         Get.offNamed(Routes.QR_CAMPAIGN);
