@@ -11,7 +11,6 @@ import 'package:koto_blue_sharks/utils/my_shared_pref.dart';
 import '../mini_games/models/mini_game_result.dart';
 import '../models/training_action_gate.dart';
 import '../models/training_game_models.dart';
-import '../models/training_game_position_classifier.dart';
 
 /// 育成ゲームの進行状態と行動結果を管理します。
 class TrainingGameController extends GetxController
@@ -77,6 +76,11 @@ class TrainingGameController extends GetxController
       description: '育て方の傾向から、適性ポジションが見え始めます。',
       unlockHours: 0,
       days: 7,
+    ),
+    TrainingStageDefinition(
+      name: '一軍',
+      description: '最終ポジションが確定し、育成を完了します。',
+      unlockHours: 0,
     ),
   ];
 
@@ -148,6 +152,8 @@ class TrainingGameController extends GetxController
   final isEndingSyncPending = false.obs;
   final endingSyncError = ''.obs;
   final clearPosition = RxnString();
+  final _serverBranchCode = RxnString();
+  final _serverPositionCode = RxnString();
   final unlockedPositions = <String>[].obs;
   final endingStep = 0.obs;
   final evolutionStage = RxnInt();
@@ -209,6 +215,10 @@ class TrainingGameController extends GetxController
   int? _serverPlayerId;
   int? _serverCycleNo;
   int _serverLockVersion = 0;
+  double? _serverRequiredWorkValue;
+  int? _serverRequiredElapsedHours;
+  String? _serverNextStageCode;
+  int _playFloor = 0;
 
   /// 現在の段階定義を返します。
   TrainingStageDefinition get currentStage => stages[stageIndex.value];
@@ -320,16 +330,16 @@ class TrainingGameController extends GetxController
   /// 成長期以降に表示する大別コードを返します。
   String? get branch {
     if (stageIndex.value < 3) return null;
-    final main = {
-      'FW': trends['FW']!,
-      'CMD': trends['CMD']!,
-      'RUN': trends['RUN']!
-    };
-    if (main.values.every((value) => value == 0) && trends['BULK'] == 0)
-      return null;
-    final top = main.entries.toList()
-      ..sort((a, b) => b.value.compareTo(a.value));
-    return {'FW': 'A フォワード型', 'CMD': 'B 司令塔型', 'RUN': 'C バックス型'}[top.first.key];
+    final serverBranch = _serverBranchCode.value;
+    if (serverBranch != null) {
+      return const {
+        'FW': 'A フォワード型',
+        'COMMAND': 'B 司令塔型',
+        'BACKS': 'C バックス型',
+      }[serverBranch];
+    }
+    // 分岐計算式は未確定のため、サーバーが確定した結果だけを表示します。
+    return null;
   }
 
   /// 大別に応じたキャラクター表示サイズを返します。
@@ -347,7 +357,9 @@ class TrainingGameController extends GetxController
   /// 最も高い傾向から暫定ポジションを判定します。
   String get position {
     if (stageIndex.value < 3) return '判定前';
-    return TrainingGamePositionClassifier.classify(trends);
+    final serverPosition = _positionNameFromCode(_serverPositionCode.value);
+    // 最終10ポジションへの収束条件は未確定のため、サーバー判定前に推測しません。
+    return serverPosition ?? '判定前';
   }
 
   /// 初期表示用のログを準備します。
@@ -471,6 +483,12 @@ class TrainingGameController extends GetxController
     isEndingSyncPending.value = false;
     endingSyncError.value = '';
     clearPosition.value = null;
+    _serverBranchCode.value = null;
+    _serverPositionCode.value = null;
+    _serverRequiredWorkValue = null;
+    _serverRequiredElapsedHours = null;
+    _serverNextStageCode = null;
+    _playFloor = 0;
     evolutionStage.value = null;
     _elapsedTimeOffsetSeconds = 0;
     _activeMainProgressBaseSeconds = null;
@@ -525,6 +543,11 @@ class TrainingGameController extends GetxController
     _resetActiveMainProgressBaseline();
     _updateElapsedTimeFromStart();
     _mainClockTick.value++;
+    // サーバーで一軍への遷移が確定した後は、ポジション結果を確認して
+    // 最終段階の完了同期へ進みます。
+    if (stageIndex.value == stages.length - 1) {
+      _advanceMainStageIfNeeded();
+    }
   }
 
   /// 現在の状態でチュートリアル時間を進められるかを返します。
@@ -705,6 +728,7 @@ class TrainingGameController extends GetxController
     }
     _restoreServerClock(data, restoreDebugElapsed: restoreDebugElapsed);
     _restoreWorkAvailability(data);
+    _restoreStageProgress(data);
     if (serverStageIndex != null) {
       final previousStage = stageIndex.value;
       stageIndex.value = serverStageIndex;
@@ -714,6 +738,8 @@ class TrainingGameController extends GetxController
         if (serverStageIndex > previousStage) _showEvolutionForCurrentStage();
       }
     }
+    _serverBranchCode.value = data['branch_code'] as String?;
+    _serverPositionCode.value = data['position_code'] as String?;
     if (_waitingForServerRestore ||
         _activeMainProgressBaseSeconds == null ||
         previousStageIndex != stageIndex.value) {
@@ -745,7 +771,7 @@ class TrainingGameController extends GetxController
           meters[displayName] = value.clamp(0, 150).toDouble();
         }
         if (tendencyName != null) {
-          trends[tendencyName] = value.clamp(0, 999).toDouble();
+          trends[tendencyName] = value.clamp(0, 100).toDouble();
         }
       }
     }
@@ -886,6 +912,30 @@ class TrainingGameController extends GetxController
     _isWorkAvailable = data['work_available'] == true;
   }
 
+  /// 管理画面で設定された段階条件を、端末側の進行判定へ反映します。
+  void _restoreStageProgress(Map<String, dynamic> data) {
+    final progress = data['stage_progress'];
+    if (progress is Map) {
+      final requiredWork = progress['required_work_value'];
+      _serverRequiredWorkValue = requiredWork is num
+          ? requiredWork.toDouble()
+          : null;
+      final requiredElapsed = progress['required_elapsed_hours'];
+      _serverRequiredElapsedHours = requiredElapsed is num
+          ? requiredElapsed.toInt()
+          : null;
+      _serverNextStageCode = progress['next_stage_code'] as String?;
+    } else {
+      _serverRequiredWorkValue = null;
+      _serverRequiredElapsedHours = null;
+      _serverNextStageCode = null;
+    }
+    final playFloor = data['play_floor'];
+    if (playFloor is num) {
+      _playFloor = playFloor.toInt().clamp(0, 100).toInt();
+    }
+  }
+
   /// サーバーが返す終了状態をローカル表示へ反映します。
   void _restoreEndedState(Map<String, dynamic> data) {
     final status = data['status'] as String?;
@@ -1014,8 +1064,9 @@ class TrainingGameController extends GetxController
         'egg',
         'child',
         'training',
-        'growth'
-      ][(_pendingStageIndex ?? stageIndex.value).clamp(0, 3).toInt()];
+        'growth',
+        'first_team',
+      ][(_pendingStageIndex ?? stageIndex.value).clamp(0, 4).toInt()];
 
   /// サーバー段階コードを画面段階番号へ変換します。
   int? _stageIndexFromCode(Object? stageCode) => const {
@@ -1023,6 +1074,7 @@ class TrainingGameController extends GetxController
         'child': 1,
         'training': 2,
         'growth': 3,
+        'first_team': 4,
       }[stageCode];
 
   /// DB設計のパラメータコードへ変換します。
@@ -1624,8 +1676,8 @@ class TrainingGameController extends GetxController
   /// メーターを範囲内に収めて更新します。
   void _changeMeter(String name, double amount) {
     _markLocalStateChanged();
-    // 可視パラメータは仕様どおり整数相当の0〜100で保持します。
-    meters[name] = (meters[name]! + amount).clamp(0, 150).toDouble();
+    // プレイ中の下限は管理画面のgame_settingsをサーバーから受け取ります。
+    meters[name] = (meters[name]! + amount).clamp(_playFloor, 150).toDouble();
   }
 
   /// 行動完了時点からクールタイムを開始します。
@@ -1642,7 +1694,7 @@ class TrainingGameController extends GetxController
   void _changeTrend(String name, double amount) {
     _markLocalStateChanged();
     // 育成傾向も仕様上の上限100を超えないようにします。
-    trends[name] = (trends[name]! + amount).clamp(0, 999).toDouble();
+    trends[name] = (trends[name]! + amount).clamp(0, 100).toDouble();
   }
 
   /// サーバー同期後に端末側の状態が変更されたことを記録します。
@@ -1756,14 +1808,17 @@ class TrainingGameController extends GetxController
   /// チュートリアルの段階移行条件を判定します。
   void _advanceTutorialIfNeeded() {
     if (_pendingStageIndex != null) return;
-    final ready = stageIndex.value == 0
-        ? secondsInStage.value >= 180 &&
-            meters['清潔']! >= 60 &&
-            meters['体調']! >= 60
-        : trainingCount.value >= 15 &&
-            ['食事', '清潔', '体調'].every((name) => meters[name]! >= 60);
+    final ready = _hasServerStageCondition
+        ? _serverStageConditionReady()
+        : stageIndex.value == 0
+            ? secondsInStage.value >= 180 &&
+                meters['清潔']! >= 60 &&
+                meters['体調']! >= 60
+            : trainingCount.value >= 15 &&
+                ['食事', '清潔', '体調'].every((name) => meters[name]! >= 60);
     if (!ready) return;
-    _pendingStageIndex = stageIndex.value + 1;
+    _pendingStageIndex = _stageIndexFromCode(_serverNextStageCode) ??
+        stageIndex.value + 1;
     secondsInStage.value = 0;
     trainingCount.value = 0;
     actionsToday.value = 0;
@@ -1867,27 +1922,44 @@ class TrainingGameController extends GetxController
 
   /// 「世話が行き届いた日」7日で本編段階を進めます。
   void _advanceMainStageIfNeeded() {
+    if (stageIndex.value == stages.length - 1) {
+      if (position == '判定前') return;
+      _endGame(
+        endingStep: 0,
+        message: '育成完了。${position}として図鑑に登録されました。',
+        clearPosition: position,
+      );
+      return;
+    }
+
     final requiredDays = currentStage.days;
-    if (requiredDays == null || daysInStage.value < requiredDays) return;
+    if (_hasServerStageCondition) {
+      if (!_serverStageConditionReady()) return;
+    } else if (requiredDays == null || daysInStage.value < requiredDays) {
+      return;
+    }
+
     if (stageIndex.value < stages.length - 1) {
       if (_pendingStageIndex != null) return;
-      _pendingStageIndex = stageIndex.value + 1;
+      _pendingStageIndex = _stageIndexFromCode(_serverNextStageCode) ??
+          stageIndex.value + 1;
       daysInStage.value = 0;
       logs.insert(0, '成長条件を満たしました。サーバー確認後に次の段階へ進みます。');
       _queuePendingStageSync();
       return;
     }
-    if (position == '判定前') {
-      // 傾向未成立のまま図鑑登録せず、次の世話・練習で再判定できる状態を維持します。
-      daysInStage.value = requiredDays - 1;
-      logs.insert(0, 'ポジション判定には練習による傾向値の獲得が必要です。');
-      return;
-    }
-    _endGame(
-      endingStep: 0,
-      message: '育成完了。${position}として図鑑に登録されました。',
-      clearPosition: position,
-    );
+  }
+
+  bool get _hasServerStageCondition =>
+      _serverRequiredWorkValue != null || _serverRequiredElapsedHours != null;
+
+  bool _serverStageConditionReady() {
+    final workReady = _serverRequiredWorkValue == null ||
+        meters['仕事']! >= _serverRequiredWorkValue!;
+    final elapsedHours = _currentServerElapsedSeconds ~/ 3600;
+    final elapsedReady = _serverRequiredElapsedHours == null ||
+        elapsedHours >= _serverRequiredElapsedHours!;
+    return workReady && elapsedReady;
   }
 
   /// 段階上昇を既存の同期キューへ積みます。

@@ -21,6 +21,8 @@ export 'package:koto_blue_sharks/presentation/profile/delete_account_confirmatio
 export 'package:koto_blue_sharks/presentation/profile/edit_password/edit_password.screen.dart';
 export 'package:koto_blue_sharks/presentation/profile/mypage/mypage.screen.dart';
 export 'package:koto_blue_sharks/presentation/point/point_screens.dart';
+export 'package:koto_blue_sharks/presentation/qr_campaign/qr_campaign.screen.dart';
+export 'package:koto_blue_sharks/presentation/wordpress/wordpress.screen.dart';
 export 'package:koto_blue_sharks/presentation/register/fan_club_confirmation/fan_club_confirmation.screen.dart';
 export 'package:koto_blue_sharks/presentation/register/forgot_password/forgot_password.screen.dart';
 export 'package:koto_blue_sharks/presentation/register/forgot_password_home/forgot_password_home.screen.dart';

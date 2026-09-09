@@ -23,6 +23,7 @@ export 'package:koto_blue_sharks/infrastructure/navigation/bindings/controllers/
 export 'package:koto_blue_sharks/infrastructure/navigation/bindings/controllers/notification_list.controller.binding.dart'; 
 export 'package:koto_blue_sharks/infrastructure/navigation/bindings/controllers/player_detail.controller.binding.dart'; 
 export 'package:koto_blue_sharks/infrastructure/navigation/bindings/controllers/point.controller.binding.dart';
+export 'package:koto_blue_sharks/infrastructure/navigation/bindings/controllers/qr_campaign.controller.binding.dart';
 export 'package:koto_blue_sharks/infrastructure/navigation/bindings/controllers/privacy_policy_screen.controller.binding.dart'; 
 export 'package:koto_blue_sharks/infrastructure/navigation/bindings/controllers/register_email.controller.binding.dart'; 
 export 'package:koto_blue_sharks/infrastructure/navigation/bindings/controllers/register_email_from_home.controller.binding.dart'; 
@@ -34,3 +35,4 @@ export 'package:koto_blue_sharks/infrastructure/navigation/bindings/controllers/
 export 'package:koto_blue_sharks/infrastructure/navigation/bindings/controllers/wallpaper.controller.binding.dart';
 export 'package:koto_blue_sharks/infrastructure/navigation/bindings/controllers/wallpaper_set_player.controller.binding.dart'; 
 export 'package:koto_blue_sharks/infrastructure/navigation/bindings/controllers/webview.controller.binding.dart';
+export 'package:koto_blue_sharks/infrastructure/navigation/bindings/controllers/wordpress.controller.binding.dart';

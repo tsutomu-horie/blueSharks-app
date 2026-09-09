@@ -104,6 +104,7 @@ flutter:
 
   assets:
     - assets/images/
+    - assets/images/sametaroh/
     - assets/images/image_stadium_parking/
     - assets/images/image_stadium_bus/
     - assets/images/home_stadium/
