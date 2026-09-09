@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -8,8 +10,17 @@ import 'package:koto_blue_sharks/infrastructure/navigation/routes.dart';
 import 'package:koto_blue_sharks/presentation/game_guide/controllers/game_guide.controller.dart';
 import 'package:koto_blue_sharks/utils/app_color.dart';
 
-class GameGuideListScreen extends StatelessWidget {
+class GameGuideListScreen extends StatefulWidget {
   const GameGuideListScreen({super.key});
+
+  @override
+  State<GameGuideListScreen> createState() => _GameGuideListScreenState();
+}
+
+class _GameGuideListScreenState extends State<GameGuideListScreen>
+    with WidgetsBindingObserver {
+  late final GameGuideController controller;
+  bool _wasBackgrounded = false;
 
   GameGuideController _controller() {
     if (Get.isRegistered<GameGuideController>()) {
@@ -19,9 +30,35 @@ class GameGuideListScreen extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
-    final controller = _controller();
+  void initState() {
+    super.initState();
+    controller = _controller();
+    WidgetsBinding.instance.addObserver(this);
+  }
 
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.inactive ||
+        state == AppLifecycleState.hidden ||
+        state == AppLifecycleState.paused ||
+        state == AppLifecycleState.detached) {
+      _wasBackgrounded = true;
+      return;
+    }
+    if (state == AppLifecycleState.resumed && _wasBackgrounded) {
+      _wasBackgrounded = false;
+      unawaited(controller.refreshOnResume());
+    }
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -84,6 +121,13 @@ class GameGuideListScreen extends StatelessWidget {
           _GuideIntroduction(
             hasActiveFilters: controller.hasActiveFilters,
             onFilterTap: () => _showFilters(context, controller),
+          ),
+          _SyncStatusBanner(
+            state: controller.syncState.value,
+            lastSyncedAt: controller.lastSyncedAt.value,
+            syncedCount: controller.lastSyncedCount.value,
+            failureCount: controller.syncFailureCount.value,
+            onRetry: controller.refreshGuides,
           ),
           if (controller.showingCachedData.value)
             _CachedDataBanner(cachedAt: controller.cachedAt.value),
@@ -523,6 +567,92 @@ class _CachedDataBanner extends StatelessWidget {
           color: WarningColor.hover,
           fontWeight: FontWeight.w600,
         ),
+      ),
+    );
+  }
+}
+
+class _SyncStatusBanner extends StatelessWidget {
+  const _SyncStatusBanner({
+    required this.state,
+    required this.lastSyncedAt,
+    required this.syncedCount,
+    required this.failureCount,
+    required this.onRetry,
+  });
+
+  final GameGuideSyncState state;
+  final DateTime? lastSyncedAt;
+  final int? syncedCount;
+  final int failureCount;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    if (state == GameGuideSyncState.idle) return const SizedBox.shrink();
+
+    final timestamp = lastSyncedAt == null
+        ? ''
+        : DateFormat('yyyy/MM/dd HH:mm').format(lastSyncedAt!.toLocal());
+    final hasPreviousSync = lastSyncedAt != null || syncedCount != null;
+    final (icon, message, color) = switch (state) {
+      GameGuideSyncState.syncing => (
+          Icons.sync,
+          'WordPress記事を更新しています…',
+          InfoColor.main,
+        ),
+      GameGuideSyncState.synced => (
+          Icons.cloud_done_outlined,
+          '同期済み：${syncedCount ?? 0}件（$timestamp）',
+          SuccessColor.main,
+        ),
+      GameGuideSyncState.cached => (
+          Icons.cloud_off_outlined,
+          '保存済み記事を表示中（$timestamp）',
+          WarningColor.hover,
+        ),
+      GameGuideSyncState.failed => (
+          Icons.sync_problem,
+          hasPreviousSync
+              ? '同期失敗：前回の一覧を表示中${failureCount > 0 ? '（$failureCount回）' : ''}'
+              : '同期失敗：記事を取得できませんでした',
+          DangerColor.main,
+        ),
+      GameGuideSyncState.idle => (
+          Icons.info_outline,
+          '',
+          TextColor.secondary,
+        ),
+    };
+
+    return Container(
+      margin: EdgeInsets.only(bottom: 12.h),
+      padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 9.h),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(8.r),
+        border: Border.all(color: color.withValues(alpha: 0.25)),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, size: 18.w, color: color),
+          SizedBox(width: 8.w),
+          Expanded(
+            child: Text(
+              message,
+              style: TextStyle(
+                color: color,
+                fontSize: 12.sp,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          if (state == GameGuideSyncState.failed)
+            TextButton(
+              onPressed: onRetry,
+              child: const Text('再試行'),
+            ),
+        ],
       ),
     );
   }

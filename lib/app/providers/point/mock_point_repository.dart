@@ -131,6 +131,12 @@ class MockPointRepository implements PointRepository {
   };
   final Set<String> _idempotencyKeys = {};
 
+  PointQrToken _qrToken = PointQrToken(
+    token: 'bspt_mock_9f4c7a2e1d8b6c3a',
+    maskedMemberId: 'C-******01',
+    issuedAt: DateTime(2026, 7, 27),
+  );
+
   Future<void> _delay() =>
       Future<void>.delayed(const Duration(milliseconds: 250));
 
@@ -151,11 +157,18 @@ class MockPointRepository implements PointRepository {
   @override
   Future<PointQrToken> getQrToken() async {
     await _delay();
-    return PointQrToken(
-      token: 'bspt_mock_9f4c7a2e1d8b6c3a',
-      maskedMemberId: 'C-******01',
-      issuedAt: DateTime(2026, 7, 27),
+    return _qrToken;
+  }
+
+  @override
+  Future<PointQrToken> reissueQrToken() async {
+    await _delay();
+    _qrToken = PointQrToken(
+      token: 'bspt_mock_reissued_${DateTime.now().microsecondsSinceEpoch}',
+      maskedMemberId: _qrToken.maskedMemberId,
+      issuedAt: DateTime.now(),
     );
+    return _qrToken;
   }
 
   @override

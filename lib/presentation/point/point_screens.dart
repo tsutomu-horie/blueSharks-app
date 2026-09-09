@@ -236,6 +236,28 @@ class _PointQrScreenState extends State<PointQrScreen> {
               '会場スタッフの読み取り完了後、ポイント履歴を更新してご確認ください。',
               align: TextAlign.center,
             ),
+            if (controller.errorMessage.value != null) ...[
+              SizedBox(height: 12.h),
+              CustomTextView(
+                controller.errorMessage.value!,
+                align: TextAlign.center,
+                color: DangerColor.main,
+              ),
+            ],
+            SizedBox(height: 8.h),
+            OutlinedButton.icon(
+              onPressed: controller.isLoading.value
+                  ? null
+                  : () => _confirmReissue(context),
+              icon: controller.isLoading.value
+                  ? SizedBox(
+                      width: 16.w,
+                      height: 16.w,
+                      child: const CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.refresh),
+              label: const Text('QRを更新'),
+            ),
             TextButton(
               onPressed: () => Get.toNamed(Routes.POINT_HISTORY),
               child: const Text('ポイント履歴を確認'),
@@ -244,6 +266,31 @@ class _PointQrScreenState extends State<PointQrScreen> {
         );
       }),
     );
+  }
+
+  Future<void> _confirmReissue(BuildContext context) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('QRを更新しますか？'),
+        content: const Text(
+          '現在表示しているQRは無効になります。会場端末に表示する直前に更新してください。',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('キャンセル'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('更新する'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true && mounted) {
+      await controller.reissueQr();
+    }
   }
 }
 

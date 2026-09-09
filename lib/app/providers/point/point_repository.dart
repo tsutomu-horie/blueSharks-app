@@ -4,6 +4,7 @@ abstract class PointRepository {
   Future<PointAccount> getAccount();
   Future<List<PointLot>> getExpiringLots();
   Future<PointQrToken> getQrToken();
+  Future<PointQrToken> reissueQrToken();
   Future<List<PointTransaction>> getTransactions();
   Future<PointTransaction> getTransaction(String id);
   Future<PointRanking> getRanking(PointRankingType type);

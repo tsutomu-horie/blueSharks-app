@@ -76,6 +76,14 @@ class PointController extends GetxController {
     });
   }
 
+  Future<void> reissueQr() async {
+    await _run(() async {
+      qrToken.value = await repository.reissueQrToken();
+      qrResult.value = PointQrResult.idle;
+      qrFailureCode.value = null;
+    });
+  }
+
   Future<void> loadTransactions() async {
     await _run(() async {
       transactions.assignAll(await repository.getTransactions());

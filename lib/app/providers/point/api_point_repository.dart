@@ -45,6 +45,16 @@ class ApiPointRepository extends GetConnect implements PointRepository {
   @override
   Future<PointQrToken> getQrToken() async {
     final data = _asMap(await _getData('points/qr'));
+    return _qrTokenFromJson(data);
+  }
+
+  @override
+  Future<PointQrToken> reissueQrToken() async {
+    final data = _asMap(await _postData('points/qr/reissue', {}));
+    return _qrTokenFromJson(data);
+  }
+
+  PointQrToken _qrTokenFromJson(Map<String, dynamic> data) {
     return PointQrToken(
       token: data['payload'] as String,
       maskedMemberId: '',

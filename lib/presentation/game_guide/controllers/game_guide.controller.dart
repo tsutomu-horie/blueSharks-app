@@ -5,8 +5,13 @@ import 'package:koto_blue_sharks/app/data/models/game_guide/game_guide_post.dart
 import 'package:koto_blue_sharks/app/providers/game_guide/game_guide_provider.dart';
 import 'package:koto_blue_sharks/utils/my_shared_pref.dart';
 
+enum GameGuideSyncState { idle, syncing, synced, cached, failed }
+
 class GameGuideController extends GetxController {
-  final GameGuideProvider provider = GameGuideProvider();
+  GameGuideController({GameGuideProvider? provider})
+      : provider = provider ?? GameGuideProvider();
+
+  final GameGuideProvider provider;
 
   final guides = <GameGuidePost>[].obs;
   final visibleGuides = <GameGuidePost>[].obs;
@@ -18,6 +23,10 @@ class GameGuideController extends GetxController {
   final cachedAt = Rxn<DateTime>();
   final saveArticlesEnabled = false.obs;
   final openingGuideId = RxnInt();
+  final syncState = GameGuideSyncState.idle.obs;
+  final lastSyncedAt = Rxn<DateTime>();
+  final lastSyncedCount = RxnInt();
+  final syncFailureCount = 0.obs;
 
   final selectedSeason = RxnString();
   final selectedLocation = RxnString();
@@ -54,12 +63,14 @@ class GameGuideController extends GetxController {
     if (isLoading.value) return;
 
     isLoading.value = true;
+    syncState.value = GameGuideSyncState.syncing;
     errorMessage.value = null;
     _currentPage = 0;
     hasMore.value = true;
 
     if (saveArticlesEnabled.value) {
       _loadCache();
+      syncState.value = GameGuideSyncState.syncing;
     }
 
     try {
@@ -69,9 +80,11 @@ class GameGuideController extends GetxController {
       hasMore.value = firstPage.length == GameGuideProvider.defaultPageSize;
       showingCachedData.value = false;
       cachedAt.value = null;
+      _markSynced();
       _applyFilters();
       await _persistCacheIfEnabled();
     } catch (_) {
+      _markSyncFailed();
       if (guides.isEmpty) {
         errorMessage.value = '記事を取得できませんでした。';
       } else {
@@ -83,6 +96,8 @@ class GameGuideController extends GetxController {
   }
 
   Future<void> refreshGuides() => loadInitial();
+
+  Future<void> refreshOnResume() => loadInitial();
 
   Future<void> loadMore() async {
     if (isLoading.value || isLoadingMore.value || !hasMore.value) {
@@ -101,9 +116,11 @@ class GameGuideController extends GetxController {
       _currentPage = nextPage;
       hasMore.value = nextItems.length == GameGuideProvider.defaultPageSize;
       showingCachedData.value = false;
+      _markSynced();
       _applyFilters();
       await _persistCacheIfEnabled();
     } catch (_) {
+      _markSyncFailed();
       errorMessage.value = '追加の記事を取得できませんでした。';
     } finally {
       isLoadingMore.value = false;
@@ -190,13 +207,28 @@ class GameGuideController extends GetxController {
     await MySharedPref.setGameGuideArticlesCachedAt(now);
   }
 
-  void _loadCache() {
+  void _markSynced() {
+    lastSyncedAt.value = DateTime.now();
+    lastSyncedCount.value = guides.length;
+    syncState.value = GameGuideSyncState.synced;
+  }
+
+  void _markSyncFailed() {
+    syncFailureCount.value += 1;
+    syncState.value = guides.isEmpty
+        ? GameGuideSyncState.failed
+        : showingCachedData.value
+            ? GameGuideSyncState.cached
+            : GameGuideSyncState.failed;
+  }
+
+  bool _loadCache() {
     final rawCache = MySharedPref.getGameGuideArticlesCache();
-    if (rawCache == null || rawCache.isEmpty) return;
+    if (rawCache == null || rawCache.isEmpty) return false;
 
     try {
       final decoded = jsonDecode(rawCache);
-      if (decoded is! List) return;
+      if (decoded is! List) return false;
       final cachedGuides = decoded
           .whereType<Map>()
           .map(
@@ -208,14 +240,19 @@ class GameGuideController extends GetxController {
             (item) => item.title.isNotEmpty && item.detailUrl.isNotEmpty,
           )
           .toList();
-      if (cachedGuides.isEmpty) return;
+      if (cachedGuides.isEmpty) return false;
 
       guides.assignAll(cachedGuides);
       cachedAt.value = MySharedPref.getGameGuideArticlesCachedAt();
       showingCachedData.value = true;
+      syncState.value = GameGuideSyncState.cached;
+      lastSyncedAt.value = cachedAt.value;
+      lastSyncedCount.value = cachedGuides.length;
       _applyFilters();
+      return true;
     } catch (_) {
       // 壊れたキャッシュは表示せず、ネットワーク取得を継続する。
+      return false;
     }
   }
 }

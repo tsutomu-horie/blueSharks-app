@@ -9,6 +9,7 @@ class AdminSidebar extends StatelessWidget {
     required this.selectedItem,
     required this.onItemTap,
     this.wireframeLabel = 'WIREFRAME ・ 19',
+    this.requiredPermissionLabel,
   });
 
   static const items = [
@@ -26,6 +27,7 @@ class AdminSidebar extends StatelessWidget {
   final String selectedItem;
   final ValueChanged<String> onItemTap;
   final String wireframeLabel;
+  final String? requiredPermissionLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -101,6 +103,39 @@ class AdminSidebar extends StatelessWidget {
               },
             ),
           ),
+          if (requiredPermissionLabel != null) ...[
+            const SizedBox(height: 12),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.fromLTRB(10, 8, 8, 8),
+              decoration: BoxDecoration(
+                color: const Color(0xFF1D3A5B),
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    '必要権限',
+                    style: TextStyle(
+                      color: Color(0xFFB8C5D5),
+                      fontSize: 9,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    requiredPermissionLabel!,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 9,
+                      height: 1.35,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
           Padding(
             padding: EdgeInsets.only(left: 17),
             child: Text(
