@@ -127,6 +127,7 @@ class _GameGuideListScreenState extends State<GameGuideListScreen>
             lastSyncedAt: controller.lastSyncedAt.value,
             syncedCount: controller.lastSyncedCount.value,
             failureCount: controller.syncFailureCount.value,
+            showingCachedData: controller.showingCachedData.value,
             onRetry: controller.refreshGuides,
           ),
           if (controller.showingCachedData.value)
@@ -578,6 +579,7 @@ class _SyncStatusBanner extends StatelessWidget {
     required this.lastSyncedAt,
     required this.syncedCount,
     required this.failureCount,
+    required this.showingCachedData,
     required this.onRetry,
   });
 
@@ -585,6 +587,7 @@ class _SyncStatusBanner extends StatelessWidget {
   final DateTime? lastSyncedAt;
   final int? syncedCount;
   final int failureCount;
+  final bool showingCachedData;
   final VoidCallback onRetry;
 
   @override
@@ -614,7 +617,7 @@ class _SyncStatusBanner extends StatelessWidget {
       GameGuideSyncState.failed => (
           Icons.sync_problem,
           hasPreviousSync
-              ? '同期失敗：前回の一覧を表示中${failureCount > 0 ? '（$failureCount回）' : ''}'
+              ? '同期失敗：${showingCachedData ? '保存済み' : '前回取得した'}記事を表示中${failureCount > 0 ? '（$failureCount回）' : ''}'
               : '同期失敗：記事を取得できませんでした',
           DangerColor.main,
         ),

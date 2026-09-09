@@ -46,5 +46,6 @@ void main() {
     expect(controller.syncState.value, GameGuideSyncState.failed);
     expect(controller.syncFailureCount.value, 1);
     expect(controller.guides, hasLength(1));
+    expect(controller.showingCachedData.value, isFalse);
   });
 }

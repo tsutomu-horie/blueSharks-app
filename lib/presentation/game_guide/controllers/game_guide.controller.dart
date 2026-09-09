@@ -87,8 +87,6 @@ class GameGuideController extends GetxController {
       _markSyncFailed();
       if (guides.isEmpty) {
         errorMessage.value = '記事を取得できませんでした。';
-      } else {
-        showingCachedData.value = true;
       }
     } finally {
       isLoading.value = false;
