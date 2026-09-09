@@ -12,6 +12,7 @@ import 'mini_games/models/mini_game_result.dart';
 import 'mini_games/pass_and_run/pass_and_run_game.screen.dart';
 import 'mini_games/tackle/tackle_game.screen.dart';
 import 'models/training_game_models.dart';
+import 'sametaroh_asset.dart';
 
 /// 参照HTMLのスマートフォン画面部分だけをアプリ用に再現します。
 class TrainingGameScreen extends GetView<TrainingGameController> {
@@ -157,12 +158,31 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
       final endingVisual = isPositive
           ? '🦈\n旅立ち'
           : '${controller.characterLabel}\n引退';
+      final endingFrames = isPositive
+          ? SametarohAssets.journeyFrames
+          : controller.stageIndex.value >= 2
+              ? SametarohAssets.normalFrames
+              : null;
+      final endingFit = isPositive ? BoxFit.contain : BoxFit.cover;
+      final endingWidth = isPositive ? 250.w : 128.w;
       final isSyncPending = controller.isEndingSyncPending.value;
       final syncError = controller.endingSyncError.value;
       final canStartNextCycle = !isSyncPending && syncError.isEmpty;
       return _buildEndingPage(
         title: '旅立ち',
         visual: endingVisual,
+        visualWidget: endingFrames == null
+            ? null
+            : SametarohAnimatedImage(
+                frames: endingFrames,
+                width: endingWidth,
+                height: 250.h,
+                fit: endingFit,
+                alignment: isPositive
+                    ? Alignment.bottomCenter
+                    : Alignment.center,
+                semanticLabel: isPositive ? '旅立つ鮫太朗' : '鮫太朗',
+              ),
         message: [
           isPositive ? '育成した鮫太朗が旅立ちます。' : '育成を終え、次の卵へ進みます。',
           if (isSyncPending) '終了状態を保存しています…',
@@ -288,6 +308,7 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
     required String buttonLabel,
     required VoidCallback? onPressed,
     String? message,
+    Widget? visualWidget,
   }) {
     return Padding(
       padding: EdgeInsets.all(20.w),
@@ -307,9 +328,10 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
                 color: const Color(0xffe2e5e8),
                 borderRadius: BorderRadius.circular(12.r),
               ),
-              child: Text(visual,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 30.sp, height: 1.5)),
+              child: visualWidget ??
+                  Text(visual,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(fontSize: 30.sp, height: 1.5)),
             ),
           ),
           if (message != null) ...[
@@ -579,10 +601,7 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
           child: Column(
             children: [
               _buildCharacterBadge(),
-              Text(
-                controller.characterLabel,
-                style: TextStyle(fontSize: controller.characterFontSize.sp),
-              ),
+              _buildCharacterVisual(),
               Text(
                 controller.currentStage.name,
                 style: TextStyle(
@@ -630,6 +649,24 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
             ),
           ),
       ],
+    );
+  }
+
+  /// 育成期以降は鮫太朗の通常立ち絵を表示します。
+  Widget _buildCharacterVisual() {
+    if (controller.stageIndex.value < 2) {
+      return Text(
+        controller.characterLabel,
+        style: TextStyle(fontSize: controller.characterFontSize.sp),
+      );
+    }
+    return SametarohAnimatedImage(
+      frames: SametarohAssets.normalFrames,
+      width: 92.w,
+      height: 184.h,
+      fit: BoxFit.cover,
+      alignment: Alignment.center,
+      semanticLabel: '鮫太朗',
     );
   }
 

@@ -70,4 +70,7 @@ class Constants {
   static const teamUrl = isRelease
       ? 'https://blue-sharks.jp/team/'
       : 'https://blue-sharks.donati.jp/team/';
+  static const wordpressAdminUrl = isRelease
+      ? 'https://blue-sharks.jp/wp-admin/'
+      : 'https://blue-sharks.donati.jp/wp-admin/';
 }

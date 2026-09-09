@@ -1,5 +1,11 @@
 class Routes {
   static Future<String> get initialRoute async {
+    if (const bool.fromEnvironment('WORDPRESS_PREVIEW')) {
+      return WORDPRESS;
+    }
+    if (const bool.fromEnvironment('QR_CAMPAIGN_PREVIEW')) {
+      return QR_CAMPAIGN;
+    }
     return SPLASH;
   }
 
@@ -43,6 +49,7 @@ class Routes {
   static const WALLPAPER_SET_PLAYER = '/wallpaper-set-player';
   static const WARNING_DIALOG = '/warning-dialog';
   static const WEBVIEW = '/webview';
+  static const WORDPRESS = '/admin/wordpress';
   static const YEAR_FILTER_CONTROLLER = '/year-filter-controller';
   static const LOCAL_FULL_SCREEN = '/local-full-screen';
   static const POINT_TOP = '/points';
@@ -58,4 +65,5 @@ class Routes {
   static const POINT_EXCHANGE_CONFIRM = '/points/exchange/confirm';
   static const POINT_EXCHANGE_COMPLETE = '/points/exchange/complete';
   static const POINT_EXCHANGE_RECEIPT = '/points/exchange/receipt';
+  static const QR_CAMPAIGN = '/admin/qr-campaign';
 }

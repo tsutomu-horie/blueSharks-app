@@ -310,5 +310,15 @@ class Nav {
       page: () => const PointExchangeReceiptScreen(),
       binding: PointControllerBinding(),
     ),
+    GetPage(
+      name: Routes.QR_CAMPAIGN,
+      page: () => const QrCampaignScreen(),
+      binding: QrCampaignControllerBinding(),
+    ),
+    GetPage(
+      name: Routes.WORDPRESS,
+      page: () => const WordPressScreen(),
+      binding: WordPressControllerBinding(),
+    ),
   ];
 }
