@@ -34,7 +34,7 @@ class TrainingGameController extends GetxController
   }
 
   /// 育成期におけるゲーム内1日の経過時間です。
-  static const mainDayHours = 4;
+  static const mainDayHours = 24;
 
   /// 新しい育成サイクルの表示パラメータ初期値です。
   static const initialMeters = <String, double>{
@@ -1837,7 +1837,7 @@ class TrainingGameController extends GetxController
     _zeroHours.updateAll((name, hours) => meters[name]! <= 0 ? hours + 1 : 0);
     _dayCared = _dayCared ||
         ['食事', '清潔', '体調', '仕事'].every((name) => meters[name]! >= 20);
-    // 育成期は実時間4時間をゲーム内の1日として扱います。
+    // 育成期は実時間24時間をゲーム内の1日として扱います。
     if (elapsedHours.value % mainDayHours == 0) {
       day.value++;
       if (_dayCared) daysInStage.value++;
