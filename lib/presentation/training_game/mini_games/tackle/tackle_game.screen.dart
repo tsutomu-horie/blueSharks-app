@@ -46,8 +46,10 @@ class _TackleGameScreenState extends State<TackleGameScreen>
   bool _restartInputOnResume = false;
   // 判定演出が終わるまでは、入力イベントから次セットへ進めません。
   bool _canAdvanceAfterAttempt = false;
+  // 判定結果の表示中は現在のセット番号を維持し、次セット開始時に更新します。
+  int _displayedSetNumber = 1;
 
-  int get _setNumber => (_attempts.length + 1).clamp(1, TackleRules.setCount);
+  int get _setNumber => _displayedSetNumber;
 
   @override
   void initState() {
@@ -79,7 +81,10 @@ class _TackleGameScreenState extends State<TackleGameScreen>
   void _startAttempt() {
     _cancelTimers();
     _phaseStartedAt = TrainingGameClock.now();
+    final nextSetNumber =
+        (_attempts.length + 1).clamp(1, TackleRules.setCount).toInt();
     setState(() {
+      _displayedSetNumber = nextSetNumber;
       _latestAttempt = null;
       _attemptSucceeded = null;
       _canAdvanceAfterAttempt = false;
