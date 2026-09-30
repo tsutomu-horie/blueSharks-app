@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["decision", "rationale", "next_status", "scope_additions"],
+  "properties": {
+    "decision": {"enum": ["APPROVE", "REJECT", "NEEDS_HUMAN", "ESCALATE_ASTRA"]},
+    "rationale": {"type": "string", "maxLength": 2000},
+    "next_status": {"enum": ["READY", "BACKLOG", "NEEDS_SPECIFICATION", "BLOCKED", "REPLAN"]},
+    "scope_additions": {"type": "array", "maxItems": 20, "items": {"type": "string", "maxLength": 300}}
+  }
+}
