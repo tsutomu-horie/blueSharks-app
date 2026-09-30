@@ -4,7 +4,7 @@
 
 ## 目的と現在地
 
-ユーザーが更新した `CODEX_HEADLESS_AUTONOMOUS_DEVELOPMENT.md` に合わせ、決定論的Orchestrator・SQLite Ticket DB・event-driven Codex起動をPhase 1として実装。PR #36は独立した敵対的レビュー後にmerge済み。現在のHEADは `7e1c860`、branchは `main`。
+ユーザーが更新した `CODEX_HEADLESS_AUTONOMOUS_DEVELOPMENT.md` に合わせ、決定論的Orchestrator・SQLite Ticket DB・event-driven Codex起動をPhase 1として実装。実装PR #36と引き継ぎ更新PR #37は独立レビュー後にmerge済み。ローカル`main`は`origin/main`へfast-forward済み。
 
 ユーザーは「刷新後に稼働」するよう明示済み。ただしGoogle Drive/Sheets bridgeが未接続のため、新Runnerはまだbootstrapしていない。旧Runner/Supervisor/Debugger LaunchAgentはdisabledのまま。5分heartbeat `bluesharks-5` は削除済み。
 
