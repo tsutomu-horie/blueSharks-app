@@ -5,11 +5,11 @@ Python 3.11標準ライブラリとSQLiteでTicket・Agent run・Resource Lease�
 ## Model Routing
 
 - Ticket Intake: `gpt-6-luna / low / read-only`
-- Investigator・Developer・Reviewer: `gpt-6-sol`（GPT-6 Sol）。通常low、修復medium
-- Supervisor: `gpt-6-sol / medium`。Ticket判断・範囲変更・修復上限でのみ起動
+- Investigator・Developer・Reviewer: `gpt-6.1-sol`（GPT-6.1 Sol）。通常low、修復medium
+- Supervisor: `gpt-6.1-sol / medium`。Ticket判断・範囲変更・修復上限でのみ起動
 - Astra: Supervisorが明示的に最終エスカレーションを要求した場合のみ
 - GPT-5.6系は設定段階と実行直前の両方で拒否
-- ChatGPT認証でGPT-6モデルを選ぶにはCodex CLI 0.156.0以降が必要。旧設定のAPI向け`gpt-6.1-sol`はCLI用`gpt-6-sol`へ読み込み時に正規化する。
+- GPT-6.1 SolはCodex CLI 0.159.2以上（本環境での最小確認バージョン）で`gpt-6.1-sol`を直接指定する。利用可否はChatGPTアカウント／Workspaceのモデル提供状況にも従う。
 
 Orchestrator自体はAIを使いません。空キュー時はSQLite状態だけを確認し、AIへ状態照会を行いません。
 

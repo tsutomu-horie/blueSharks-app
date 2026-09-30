@@ -17,13 +17,12 @@ from typing import Iterator
 from .config import DEFAULT_CONFIG, load_config
 from .engine import Orchestrator, ticket_from_row
 from .intake import add_request
+from .runtime import MIN_CODEX_VERSION_FOR_GPT_6_1
 from .state import Store
 
 
 SERVICE_LABEL = "com.bluesharks.autodev.orchestrator"
 EXAMPLE_CONFIG = Path(__file__).with_name("config.example.toml")
-
-
 def install_config(destination: Path = DEFAULT_CONFIG) -> Path:
     destination = destination.expanduser()
     if destination.exists():
@@ -248,8 +247,8 @@ def doctor(config: dict) -> int:
         else:
             version = tuple(map(int, version_match.groups()))
             print("codex_version=" + ".".join(map(str, version)))
-            if version < (0, 156, 0):
-                failures.append("Codex CLI 0.156.0 or newer is required for GPT-6 Sol/Luna with ChatGPT authentication")
+            if version < MIN_CODEX_VERSION_FOR_GPT_6_1:
+                failures.append("Codex CLI 0.159.2 or newer is required (validated baseline for GPT-6.1 Sol)")
     sandbox_binary = Path(str(config.get("sandbox", {}).get("exec_binary", "")))
     sandbox_available = sandbox_binary.is_file()
     print(f"test_sandbox={'available' if sandbox_available else 'missing'} path={sandbox_binary}")

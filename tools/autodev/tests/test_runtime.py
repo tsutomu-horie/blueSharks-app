@@ -4,6 +4,7 @@ import io
 import tempfile
 import unittest
 from pathlib import Path
+from types import SimpleNamespace
 from unittest.mock import patch
 
 from tools.autodev.runtime import CodexRunner
@@ -75,7 +76,7 @@ class RuntimeTests(unittest.TestCase):
             ticket_id=ticket_id,
             role=role,
             phase="test",
-            model="gpt-6-luna" if role == "ticket_intake" else "gpt-6-sol",
+            model="gpt-6-luna" if role == "ticket_intake" else "gpt-6.1-sol",
             reasoning="low",
             prompt="return the required JSON",
             schema=self.schema,
@@ -86,6 +87,7 @@ class RuntimeTests(unittest.TestCase):
     def test_ticket_intake_runs_without_a_nonexistent_ticket_lease(self):
         process = FakeProcess([None, 0])
         with patch.dict("os.environ", {"OPENAI_API_KEY": "secret", "GITHUB_TOKEN": "secret", "LANG": "en_US.UTF-8"}), \
+             patch("tools.autodev.runtime.subprocess.run", return_value=SimpleNamespace(returncode=0, stdout="codex-cli 0.159.2")), \
              patch("tools.autodev.runtime.subprocess.Popen", return_value=process) as popen, \
              patch("tools.autodev.runtime.CodexRunner._process_start_identity", return_value=None), \
              patch("tools.autodev.runtime.CodexRunner._terminate_process_group", return_value=True), \
@@ -107,7 +109,8 @@ class RuntimeTests(unittest.TestCase):
     def test_unverified_process_cleanup_keeps_run_and_lease_for_recovery(self):
         self.store.create_ticket(sample_ticket("LEASE-RETAIN"), "READY")
         process = FakeProcess([0])
-        with patch("tools.autodev.runtime.subprocess.Popen", return_value=process), \
+        with patch("tools.autodev.runtime.subprocess.run", return_value=SimpleNamespace(returncode=0, stdout="codex-cli 0.159.2")), \
+             patch("tools.autodev.runtime.subprocess.Popen", return_value=process), \
              patch("tools.autodev.runtime.CodexRunner._process_start_identity", return_value="start"), \
              patch("tools.autodev.runtime.CodexRunner._terminate_process_group", return_value=False), \
              patch("tools.autodev.runtime.CodexRunner._terminate_group", return_value=False):
@@ -116,6 +119,23 @@ class RuntimeTests(unittest.TestCase):
 
         self.assertTrue(any(lease["kind"] == "process_group" for lease in self.store.active_leases("LEASE-RETAIN")))
         self.assertEqual(len(self.store.running_agent_runs("LEASE-RETAIN")), 1)
+
+    def test_cli_version_gate_rejects_versions_before_validated_baseline(self):
+        with patch("tools.autodev.runtime.subprocess.run", return_value=SimpleNamespace(returncode=0, stdout="codex-cli 0.159.1")):
+            with self.assertRaisesRegex(RuntimeError, "0.159.2 or newer"):
+                self.runner._validate_cli_version(str(self.binary))
+
+    def test_cli_version_gate_accepts_validated_baseline(self):
+        with patch("tools.autodev.runtime.subprocess.run", return_value=SimpleNamespace(returncode=0, stdout="codex-cli 0.159.2")):
+            self.runner._validate_cli_version(str(self.binary))
+
+    def test_runtime_rejects_old_cli_before_starting_agent(self):
+        with patch("tools.autodev.runtime.subprocess.run", return_value=SimpleNamespace(returncode=0, stdout="codex-cli 0.159.1")), \
+             patch("tools.autodev.runtime.subprocess.Popen") as popen:
+            with self.assertRaisesRegex(RuntimeError, "0.159.2 or newer"):
+                self.call("OLD-CLI")
+
+        popen.assert_not_called()
 
     def test_orphaned_raw_output_is_sanitized_on_startup(self):
         directory = self.logs / "OLD"

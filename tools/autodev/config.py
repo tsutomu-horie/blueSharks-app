@@ -42,10 +42,6 @@ def load_config(path: Path | None = None) -> dict[str, Any]:
                 read_paths.add(path.parents[1].as_posix())
     sandbox["read_paths"] = sorted(read_paths)
     sandbox.setdefault("gradle_cache_seed", None)
-    # Translate the earlier API model slug to the ChatGPT-authenticated Codex CLI slug.
-    for key in ("developer_model", "reviewer_model", "supervisor_model"):
-        if config.get("codex", {}).get(key) == "gpt-6.1-sol":
-            config["codex"][key] = "gpt-6-sol"
     validate_config(config)
     config["_config_path"] = str(config_path.resolve())
     for key in ("root", "state_dir", "worktrees_dir", "snapshots_dir", "logs_dir", "artifacts_dir"):
@@ -96,8 +92,8 @@ def validate_config(config: dict[str, Any]) -> None:
             raise ValueError(f"{key} must use an allowed GPT-6 model; GPT-5.6 fallback is prohibited")
     if codex.get("intake_model") != "gpt-6-luna":
         raise ValueError("Ticket Intake must use GPT-6 Luna")
-    if any(codex[key] != "gpt-6-sol" for key in ("developer_model", "reviewer_model", "supervisor_model")):
-        raise ValueError("Developer, Reviewer, and Supervisor must use GPT-6 Sol")
+    if any(codex[key] != "gpt-6.1-sol" for key in ("developer_model", "reviewer_model", "supervisor_model")):
+        raise ValueError("Developer, Reviewer, and Supervisor must use GPT-6.1 Sol")
     if codex.get("escalation_model", "gpt-6-astra") != "gpt-6-astra":
         raise ValueError("final escalation must use GPT-6 Astra")
     if codex.get("escalation_reasoning", "high") != "high":
