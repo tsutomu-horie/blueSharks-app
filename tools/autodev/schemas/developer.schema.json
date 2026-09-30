@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["summary", "current_state", "scope_change_requests", "p2_candidates", "needs_decision"],
+  "properties": {
+    "summary": {"type": "string", "maxLength": 4000},
+    "current_state": {"type": "object", "additionalProperties": true},
+    "scope_change_requests": {"type": "array", "maxItems": 12, "items": {"type": "string", "maxLength": 1000}},
+    "p2_candidates": {"type": "array", "maxItems": 20, "items": {"type": "string", "maxLength": 500}},
+    "needs_decision": {"type": "boolean"}
+  }
+}

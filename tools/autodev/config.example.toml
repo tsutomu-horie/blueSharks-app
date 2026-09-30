@@ -1,0 +1,70 @@
+# Copy to ~/.config/bluesharks-autodev/config.toml and adjust paths/check commands.
+[workspace]
+root = "/Users/work/AgentWorkspace"
+state_dir = "/Users/work/AgentWorkspace/control"
+worktrees_dir = "/Users/work/AgentWorkspace/worktrees"
+snapshots_dir = "/Users/work/AgentWorkspace/snapshots"
+logs_dir = "/Users/work/AgentWorkspace/logs"
+artifacts_dir = "/Users/work/AgentWorkspace/artifacts"
+
+[codex]
+binary = "/usr/local/bin/codex"
+timeout_seconds = 1800
+intake_model = "gpt-6-luna"
+intake_reasoning = "low"
+developer_model = "gpt-6-sol"
+developer_reasoning = "low"
+reviewer_model = "gpt-6-sol"
+reviewer_reasoning = "low"
+supervisor_model = "gpt-6-sol"
+supervisor_reasoning = "medium"
+escalation_model = "gpt-6-astra"
+escalation_reasoning = "high"
+max_repair_cycles = 2
+
+[sandbox]
+exec_binary = "/usr/bin/sandbox-exec"
+read_paths = [
+  "/Users/work/.pub-cache",
+  "/Users/work/Library/Android/sdk",
+]
+# Optional: point this at a prewarmed, offline Gradle cache containing wrapper/dists and caches/modules-2.
+# android_debug_build is held as BLOCKED when no valid seed is configured; no network fallback is allowed.
+# gradle_cache_seed = "/Users/work/AgentWorkspace/cache/gradle-seed"
+
+[git]
+branch_prefix = "bot"
+base_ref = "origin/main"
+commit_enabled = true
+pull_request_enabled = true
+auto_merge = true
+require_github_checks = false
+merge_method = "squash"
+github_cli = "/Users/work/.local/bin/gh"
+checks_timeout_seconds = 1800
+merge_check_interval_seconds = 60
+max_changed_files = 80
+max_diff_lines = 12000
+max_diff_bytes = 300000
+
+[projects.app]
+repository = "/Users/work/Documents/Git/blueSharks-app"
+base_ref = "origin/main"
+check_timeout_seconds = 2400
+test_target_roots = ["test"]
+
+[projects.app.checks]
+flutter_test = ["flutter", "test", "--no-pub", "{target}"]
+flutter_analyze = ["flutter", "analyze", "--no-pub"]
+android_debug_build = ["flutter", "build", "apk", "--debug", "--no-pub"]
+
+[projects.server]
+repository = "/Users/work/Documents/Git/blueSharks-server"
+source_directory = "bluesharks-develop"
+base_ref = "origin/main"
+check_timeout_seconds = 1800
+test_target_roots = ["tests"]
+
+[projects.server.checks]
+php_test = ["php", "artisan", "test", "{target}"]
+php_lint = ["php", "-l", "{target}"]
