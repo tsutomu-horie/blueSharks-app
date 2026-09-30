@@ -4,6 +4,7 @@ from dataclasses import dataclass
 import json
 import os
 from pathlib import Path
+import re
 import signal
 import subprocess
 import time
@@ -14,8 +15,9 @@ from .redaction import redact_text, redact_value
 from .state import Store
 
 
-ALLOWED_MODELS = {"gpt-6-luna", "gpt-6-sol", "gpt-6-astra"}
+ALLOWED_MODELS = {"gpt-6-luna", "gpt-6.1-sol", "gpt-6-astra"}
 ALLOWED_REASONING = {"low", "medium", "high", "xhigh", "max"}
+MIN_CODEX_VERSION_FOR_GPT_6_1 = (0, 159, 2)
 
 
 @dataclass
@@ -54,6 +56,7 @@ class CodexRunner:
         codex_bin = str(self.config["codex"]["binary"])
         if not Path(codex_bin).exists():
             raise FileNotFoundError(f"Codex CLI not found: {codex_bin}")
+        self._validate_cli_version(codex_bin)
         if not schema.is_file():
             raise FileNotFoundError(f"output schema not found: {schema}")
         workdir = workdir.resolve(strict=True)
@@ -243,6 +246,22 @@ class CodexRunner:
             raise ValueError("GPT-6 Luna routing must use low reasoning")
         if reasoning not in ALLOWED_REASONING:
             raise ValueError(f"unsupported reasoning effort: {reasoning}")
+
+    @staticmethod
+    def _validate_cli_version(codex_bin: str) -> None:
+        try:
+            result = subprocess.run(
+                [codex_bin, "--version"], capture_output=True, text=True, timeout=10,
+                env=CodexRunner.safe_environment(),
+            )
+        except (OSError, subprocess.TimeoutExpired) as exc:
+            raise RuntimeError("Codex CLI version could not be verified") from exc
+        match = re.search(r"(\d+)\.(\d+)\.(\d+)", result.stdout)
+        if result.returncode or not match:
+            raise RuntimeError("Codex CLI version could not be verified")
+        version = tuple(map(int, match.groups()))
+        if version < MIN_CODEX_VERSION_FOR_GPT_6_1:
+            raise RuntimeError("Codex CLI 0.159.2 or newer is required (validated baseline for GPT-6.1 Sol)")
 
     @staticmethod
     def _terminate_group(process: subprocess.Popen) -> bool:

@@ -31,24 +31,25 @@
 - `tools/autodev/tests/`: DB、Ticket Intake、Git scope/worktree、model routing、redaction、human resolutionのテスト
 - `docs/autodev-phase1-plan.md`: 調査結果とPhase 1設計
 
-Model routingはLunaをIntake/read-only/low、SolをInvestigator/Developer/Reviewer/Supervisor、AstraをSolが明示的にエスカレーションした時だけに設定。GPT-5.6系は設定検証と実行直前の両方で拒否する。Codex CLI用のChatGPT認証モデルIDは`gpt-6-sol`。古い設定値`gpt-6.1-sol`は読み込み時にCLI IDへ正規化する。
+Model routingはLunaをIntake/read-only/low、GPT-6.1 SolをInvestigator/Developer/Reviewer/Supervisor、AstraをGPT-6.1 Solが明示的にエスカレーションした時だけに設定。GPT-5.6系は設定検証と実行直前の両方で拒否する。Codex CLI用のChatGPT認証モデルIDは`gpt-6.1-sol`。
 
 Server Gitルートは `/Users/work/Documents/Git/blueSharks-server`、コードルートは `bluesharks-develop/`。worktree Git操作は親Repository、AgentとPHPテストはsource directory内で行う。
 
 ## Workspaceと旧キュー
 
-- Config: `/Users/work/.config/bluesharks-autodev/config.toml`。古い`gpt-6.1-sol`設定値は読み込み時にChatGPT-auth Codex CLI用の`gpt-6-sol`へ正規化。Branch protectionが人間レビューを要求する場合は回避せず保留する。
+- Config: `/Users/work/.config/bluesharks-autodev/config.toml`。Developer/Reviewer/Supervisorは`gpt-6.1-sol`を直接指定する。Branch protectionが人間レビューを要求する場合は回避せず保留する。
 - Workspace: `/Users/work/AgentWorkspace/{control,worktrees,snapshots,logs,artifacts,tmp}` を作成。
 - SQLite: `/Users/work/AgentWorkspace/control/tickets.sqlite3` を作成。
 - 旧 `/Users/work/.autodev/blueSharks/tickets/*.md` の未完了9件を新DBへ保留Import済み。状態は `BLOCKED:4`、`NEEDS_DECISION:1`、`NEEDS_SPECIFICATION:4`。完了済み `BS-AUTO-000` はskip。Importerはworktreeを引き継いだり実行したりしない。
 - DB加算migrationを実施済み。pause flagはtrue、active leaseは0。Ticket状態は`BLOCKED:4`、`NEEDS_DECISION:1`、`NEEDS_SPECIFICATION:4`で保持。
 - Codex CLIは0.154.0から0.159.2へ更新済み。ChatGPT認証で`gpt-6-luna`と`gpt-6-sol`の読み取り専用スモークテストに成功。
+- 2026-09-30: Codex CLI 0.159.2のChatGPT認証で`gpt-6.1-sol`の読み取り専用スモークテストに成功。モデル応答を確認。
 - SQLite DBに`specification_checked_at`、`base_commit`、`agent_runs.pid_start`の加算migrationを適用済み。pauseと既存Ticket件数が維持されたことを再確認。
 - 実装にはfresh `origin/main` fetch、base commit基準のscope/review、worktree Git identity検査、.git pointer書込み禁止、独立review SHA固定merge、macOS test sandbox、Androidのoffline cache gateを追加済み。
 
 ## 直近の検証
 
-- 最新Unit Test: 46件中45件PASS、1件は制限付き実行環境がnested macOS sandboxを拒否したためskip。別途権限付きsandbox確認は成功し、外部書込み・.git pointer変更・他プロセスsignalが拒否されることを確認。
+- 最新Unit Test: 52件中51件PASS、1件は制限付き実行環境がnested macOS sandboxを拒否したためskip。別途権限付きsandbox確認は成功し、外部書込み・.git pointer変更・他プロセスsignalが拒否されることを確認。
 - `compileall`、実config doctor（Codex CLI 0.159.2、App/Server repo、test sandbox）、plist lint、schema JSON parse、`git diff --check` は成功。
 - Flutter/PHPの製品テストは、今回は自律開発制御系だけの変更なので未実施。
 - Codex CLIを0.154.0から0.159.2へ更新。ChatGPT認証でGPT-6 Luna/Solの読み取り専用スモークテスト成功。login credentials/API keyは変更していない。

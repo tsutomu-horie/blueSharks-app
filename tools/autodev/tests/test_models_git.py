@@ -21,7 +21,11 @@ class ModelPolicyTests(unittest.TestCase):
             CodexRunner._validate_model("gpt-6-luna", "medium")
 
     def test_sol_low_is_allowed(self):
-        CodexRunner._validate_model("gpt-6-sol", "low")
+        CodexRunner._validate_model("gpt-6.1-sol", "low")
+
+    def test_legacy_sol_model_id_is_forbidden(self):
+        with self.assertRaises(ValueError):
+            CodexRunner._validate_model("gpt-6-sol", "low")
 
 
 class GitManagerTests(unittest.TestCase):

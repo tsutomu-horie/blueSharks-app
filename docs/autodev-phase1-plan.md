@@ -11,10 +11,10 @@
 5. **Workspace**: `/Users/work/AgentWorkspace/{control,worktrees,snapshots,logs,artifacts,tmp}`。状態DBは `control/tickets.sqlite3`、Codex CLI runtime stateは専用の `control/codex-state`。ソースRepositoryから独立させる。
 6. **Orchestrator**: Python 3.11標準ライブラリの決定論的CLI。AIはイベント単位でCodex CLIを起動し、定期ポーリングには使わない。
 7. **Ticket DB**: `tickets`, `ticket_events`, `agent_runs`, `resource_leases`, `artifacts`。状態遷移・lease取得はSQLite transactionで直列化する。
-8. **Ticket Intake**: 自然文をGPT-6 Luna / low / read-onlyで実行可能Ticket JSONへ変換し、Goal・Acceptance Criteria・Scope・禁止範囲・Testsを検証する。ChatGPT-auth Codex CLIでは`gpt-6-luna`/`gpt-6-sol`を使用し、GPT-5.6を拒否する。Google Drive/Chrome bridgeが無いため、仕様依存Ticketは最新出典を本当に確認できない限り `NEEDS_SPECIFICATION` にする。
+8. **Ticket Intake**: 自然文をGPT-6 Luna / low / read-onlyで実行可能Ticket JSONへ変換し、Goal・Acceptance Criteria・Scope・禁止範囲・Testsを検証する。ChatGPT-auth Codex CLIではIntakeに`gpt-6-luna`、調査・実装・レビュー・Supervisorに`gpt-6.1-sol`を使用し、GPT-5.6を拒否する。Google Drive/Chrome bridgeが無いため、仕様依存Ticketは最新出典を本当に確認できない限り `NEEDS_SPECIFICATION` にする。
 9. **状態遷移**: `NEW → TRIAGE → READY → RUNNING → READY_FOR_REVIEW → REVIEWING → READY_TO_MERGE → MERGED → CLEANUP → DONE`。失敗・判断待ち・範囲変更・キャンセルは明示的な例外状態にする。修復は最大2回。
 10. **Worktree**: Ticketごとに `origin/main` をfetchしてから `bot/<ticket-id>` を作成。既存パス・ブランチ・作業中Ticketの衝突時は開始しない。各Phase後にGit identityと開始時base commitを確認し、Scope/Review/Commitを同じbase基準で照合。AppとServerを1 Ticketで同時変更せず、必要ならChangeset子Ticketへ分割する。
-11. **Model Routing**: Lunaは分類・状態要約のみ。Solは調査・実装・Reviewer別セッション・Supervisorイベントを担当し、lowから開始する。Solは問題が難しい場合にmedium/highへ上げる。GPT-5.6系は明示的に拒否し、AstraはSupervisorがエスカレーションを決めた場合のみ使う。
+11. **Model Routing**: Lunaは分類・状態要約のみ。GPT-6.1 Solは調査・実装・Reviewer別セッション・Supervisorイベントを担当し、lowから開始する。難しい場合にmedium/highへ上げる。GPT-5.6系は明示的に拒否し、AstraはSupervisorがエスカレーションを決めた場合のみ使う。
 12. **Resource Lease**: Orchestrator自身が起動したPID/Process Group、worktree、一時ディレクトリ、必要時ポートをTicket IDで記録する。キャンセルは当該Process Groupのみ停止する。
 13. **Cleanup**: leaseを取得した資源だけ解放する。merge済みかつcleanなworktreeのみ自動削除し、差分が残るworktreeは保全して `BLOCKED` にする。
 14. **Phase 1手順**: SQLite状態管理、自然文Intake、単一Ticket実行、worktree、Sol Developer、Mechanical QC、独立Sol Reviewer、reviewed SHA固定commit/PR/merge、監査イベント、cleanupを構築する。LaunchAgentはPR・DB移行・外部仕様/Sheet連携ゲートの確認後に有効化する。
