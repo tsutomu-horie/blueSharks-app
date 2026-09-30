@@ -4,16 +4,16 @@
 
 ## 目的と現在地
 
-ユーザーが更新した `CODEX_HEADLESS_AUTONOMOUS_DEVELOPMENT.md` に合わせ、決定論的Orchestrator・SQLite Ticket DB・event-driven Codex起動をPhase 1として実装中。作業はこのリポジトリの `feature/headless-autonomous-development` ブランチで行う。
+ユーザーが更新した `CODEX_HEADLESS_AUTONOMOUS_DEVELOPMENT.md` に合わせ、決定論的Orchestrator・SQLite Ticket DB・event-driven Codex起動をPhase 1として実装。PR #36は独立した敵対的レビュー後にmerge済み。現在のHEADは `7e1c860`、branchは `main`。
 
-ユーザーは「刷新後に稼働」するよう明示済み。起動は許可されているが、以下の外部連携ゲートが未解決のため、現時点では新Runnerをbootstrapしていない。旧Runner/Supervisor/Debugger LaunchAgentはdisabledのまま。5分heartbeat `bluesharks-5` は削除済み。
+ユーザーは「刷新後に稼働」するよう明示済み。ただしGoogle Drive/Sheets bridgeが未接続のため、新Runnerはまだbootstrapしていない。旧Runner/Supervisor/Debugger LaunchAgentはdisabledのまま。5分heartbeat `bluesharks-5` は削除済み。
 
 ## 必ず保持する既存状態
 
-- Appルートのユーザー変更: `AGENTS.md`、`docs/admin_wireframe_implementation_gap_report.md`。今回の依頼範囲に必要なModel Routing/spec項目だけを `AGENTS.md` 末尾へ追記し、他の既存変更は保持する。
+- Appルートのユーザー変更: `AGENTS.md`、`docs/admin_wireframe_implementation_gap_report.md`。PR #36には含めず、現在も未コミット差分として保持している。
 - App用作業worktreeの未コミット差分: `blueSharks-app-autodev-high-001`、`blueSharks-app-autodev-high-002`、ほか。移行・削除・reset・checkoutしない。
 - Server mainと作業worktreeの状態、既存Markdown Ticket、既存ログは保持する。
-- まだcommit、push、PR、mergeはしていない。
+- PR #36の制御系ファイルだけをmerge済み。上記ユーザー変更は含めていない。
 
 ## 実装した制御系
 
@@ -37,13 +37,13 @@ Server Gitルートは `/Users/work/Documents/Git/blueSharks-server`、コード
 
 ## Workspaceと旧キュー
 
-- Config: `/Users/work/.config/bluesharks-autodev/config.toml` をこの作業で新規作成。GitHub checksが空でもローカルQC+独立レビュー後にmergeできる設定。Branch protectionが人間レビューを要求する場合は回避せず保留する。
-- Workspace: `/Users/work/AgentWorkspace/{control,worktrees,snapshots,logs,artifacts}` を作成。
+- Config: `/Users/work/.config/bluesharks-autodev/config.toml`。古い`gpt-6.1-sol`設定値は読み込み時にChatGPT-auth Codex CLI用の`gpt-6-sol`へ正規化。Branch protectionが人間レビューを要求する場合は回避せず保留する。
+- Workspace: `/Users/work/AgentWorkspace/{control,worktrees,snapshots,logs,artifacts,tmp}` を作成。
 - SQLite: `/Users/work/AgentWorkspace/control/tickets.sqlite3` を作成。
 - 旧 `/Users/work/.autodev/blueSharks/tickets/*.md` の未完了9件を新DBへ保留Import済み。状態は `BLOCKED:4`、`NEEDS_DECISION:1`、`NEEDS_SPECIFICATION:4`。完了済み `BS-AUTO-000` はskip。Importerはworktreeを引き継いだり実行したりしない。
-- pause flagはtrueに設定済み。実行・commit・mergeなし。
+- DB加算migrationを実施済み。pause flagはtrue、active leaseは0。Ticket状態は`BLOCKED:4`、`NEEDS_DECISION:1`、`NEEDS_SPECIFICATION:4`で保持。
 - Codex CLIは0.154.0から0.159.2へ更新済み。ChatGPT認証で`gpt-6-luna`と`gpt-6-sol`の読み取り専用スモークテストに成功。
-- Config/DBはコード追加前後の簡易形式があり、最新DB列`specification_checked_at`、`base_commit`、`agent_runs.pid_start`を加算マイグレーションする必要がある。既存DBの安全停止状態を再確認してから`init`する。
+- SQLite DBに`specification_checked_at`、`base_commit`、`agent_runs.pid_start`の加算migrationを適用済み。pauseと既存Ticket件数が維持されたことを再確認。
 - 実装にはfresh `origin/main` fetch、base commit基準のscope/review、worktree Git identity検査、.git pointer書込み禁止、独立review SHA固定merge、macOS test sandbox、Androidのoffline cache gateを追加済み。
 
 ## 直近の検証
@@ -51,14 +51,14 @@ Server Gitルートは `/Users/work/Documents/Git/blueSharks-server`、コード
 - 最新Unit Test: 46件中45件PASS、1件は制限付き実行環境がnested macOS sandboxを拒否したためskip。別途権限付きsandbox確認は成功し、外部書込み・.git pointer変更・他プロセスsignalが拒否されることを確認。
 - `compileall`、実config doctor（Codex CLI 0.159.2、App/Server repo、test sandbox）、plist lint、schema JSON parse、`git diff --check` は成功。
 - Flutter/PHPの製品テストは、今回は自律開発制御系だけの変更なので未実施。
-- CodexモデルAgentは起動していない。CLI login credential/API Keyを変更していない。
+- Codex CLIを0.154.0から0.159.2へ更新。ChatGPT認証でGPT-6 Luna/Solの読み取り専用スモークテスト成功。login credentials/API keyは変更していない。
 
 ## 残りの作業
 
-1. 直近の敵対的subagent reviewでP0/P1なしを確認済み。最終差分後にUnit Test/Doctorを再実行する。
-2. App/Server双方の既存未コミット変更を保持し、今回の制御系ファイルだけを選択的にcommit・日本語PR化する。レビュー通過後にGitHub branch protection/checksを確認し、ユーザーが以前許可した範囲でmergeする。
-3. 既存Ticket DBを読み取り確認し、加算migrationを実行する。旧9件は`BLOCKED:4`、`NEEDS_DECISION:1`、`NEEDS_SPECIFICATION:4`のため、仕様確認・判断なしに処理対象化しない。
-4. LaunchAgentは、外部連携条件が解決するまで起動しない。
+1. Google Drive/Chrome-extension bridgeとGoogle Sheets作業ログ同期をheadless runnerへ接続する方法を確定する。これらが未解決の間はRunnerを起動しない。
+2. 既存9 Ticketは仕様確認/判断が必要。最新出典なしに`READY`へ変更しない。
+3. Android buildを必要とするTicket用の事前Gradle cache seedを安全に用意し、configへ登録する。未設定時は現状どおり事前BLOCKED。
+4. すべて解消後、PR #36でmerge済みのLaunchAgent templateをInstall/Bootstrapし、`resume`する。起動後にservice状態だけを確認し、QueueにREADYがない場合はidleであることを報告。
 
 ## 未完了・注意点
 
