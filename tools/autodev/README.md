@@ -79,6 +79,8 @@ LaunchAgentのテンプレートは `launchd/com.bluesharks.autodev.orchestrator
 
 管理要求は`manage-list`/`manage-show`、作業ログ未配信は`worklog-list`で確認する。Sheets追記はこのCodexからChrome拡張優先で行い、実読戻しを`worklog-confirm`へ渡す。詳細は`docs/AUTODEV_MANAGEMENT.md`。CLIはSheets編集AIを呼ばない。
 
+Google Drive connectorが小さいMarkdown等の本文をlegacy `b64_string`で返す環境では、`google_workspace.text_base64_compatibility=true`を明示して互換読取を使う。対象はID一致・上限付きUTF-8テキストのみで、制御文字・credential名・private key・binaryを拒否する。仕様Agentは復号本文を実際に読み、監査はhashだけを保持する。URIだけでは仕様確認済みとしない。
+
 Docker createがtimeout等で不確定となった場合は、単発の不存在確認でintentを解放せず、一時領域・repository leaseを保持する。後続復旧で実containerを確認して回収するまで、自動削除・完了扱いにしない。
 
 - SQLite: `AgentWorkspace/control/tickets.sqlite3`

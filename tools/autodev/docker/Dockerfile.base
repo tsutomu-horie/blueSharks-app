@@ -1,0 +1,9 @@
+FROM ghcr.io/cirruslabs/flutter:3.27.3
+RUN apt-get update && apt-get install -y --no-install-recommends openjdk-17-jdk-headless
+RUN git clone --depth=1 --branch=3.27.4 https://github.com/flutter/flutter.git /opt/bluesharks/flutter \
+    && /opt/bluesharks/flutter/bin/flutter --version \
+    && /opt/bluesharks/flutter/bin/flutter precache --android
+ENV FLUTTER_VERSION=3.27.4 FLUTTER_ROOT=/opt/bluesharks/flutter FLUTTER_HOME=/opt/bluesharks/flutter
+ENV PATH=/opt/bluesharks/flutter/bin:/opt/bluesharks/flutter/bin/cache/dart-sdk/bin:${PATH}
+ENV JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
+ENV PATH=/usr/lib/jvm/java-17-openjdk-amd64/bin:${PATH}

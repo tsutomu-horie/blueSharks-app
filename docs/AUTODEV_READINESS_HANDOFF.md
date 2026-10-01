@@ -29,6 +29,9 @@
 
 ### 2026-10-01 継続検証
 
+- draft PR: https://github.com/tsutomu-horie/blueSharks-app/pull/40 。本体commit `d2a781b`。追加入力互換処理とDockerレシピは再レビュー済み（P1/P2追加なし）、対象25テストPASS。既存ユーザー変更2ファイルのSHA256は開始時と一致。
+- 利用制限によるWorker/仕様確認の中断後、アプリの利用許可を再確認して担当と仕様フェーズを再開。成功済み接続フェーズは繰り返していない。
+
 - 最新共通基盤検証: 143件PASS、1件skip。監査ログの構造化errorと作業ログcellのsecretマスクを修正し、別GPT-6.1 Sol reviewerでP1/P2追加なしを確認。
 - 実CLI workspace-checkは成功。全13folder/156file候補を調査した結果、育成ゲーム全体には数値・日付・ミニゲーム条件の競合が残ったため全面verified=false。対象を状態復元・二重同期防止へ絞った再確認を実施中。未確定領域を推測でREADYにしない。
 - Android Docker buildはJDK17問題解消後、android-35不足を検出。専用imageへplatform/build-tools/NDKを準備し再検証中。既存baseを保持する追加layerのみ。

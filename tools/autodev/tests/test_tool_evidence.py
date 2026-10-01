@@ -57,3 +57,27 @@ class ToolEvidenceTests(unittest.TestCase):
         item = {'tool': 'google_drive.list_folder', 'arguments': {'url': 'https://drive.google.com/drive/folders/root', 'special_filter_query_str': "name='one-file'"},
                 'result': {'structured_content': {'files': [{'id': 'file', 'title': 'one-file', 'mime_type': 'text/plain'}]}}}
         self.assertIsNone(complete_inventory([call('list_folder', extract_tool_evidence(item))], 'root'))
+
+    def test_bounded_legacy_text_requires_explicit_opt_in_and_matching_file(self):
+        import base64
+        body = '状態復元はサーバー保存値を利用する。' * 30
+        item = {'tool': 'google_drive.fetch', 'arguments': {'url': 'https://drive.google.com/file/d/file/view'},
+                'result': {'structured_content': {'id': 'file', 'mime_type': 'text/x-markdown',
+                    'file_name': 'spec.md', 'b64_string': base64.b64encode(body.encode()).decode()}}}
+        self.assertFalse(extract_tool_evidence(item)['substantive'])
+        settings = {'text_base64_compatibility': True}
+        evidence = extract_tool_evidence(item, settings)
+        self.assertTrue(evidence['substantive'])
+        self.assertNotIn('b64_string', evidence)
+        item['result']['structured_content']['id'] = 'different'
+        self.assertFalse(extract_tool_evidence(item, settings)['substantive'])
+        item['result']['structured_content']['id'] = 'file'
+        item['result']['structured_content']['file_name'] = '.env'
+        self.assertFalse(extract_tool_evidence(item, settings)['substantive'])
+        item['result']['structured_content']['file_name'] = 'private-key.pem'
+        self.assertFalse(extract_tool_evidence(item, settings)['substantive'])
+        item['result']['structured_content']['file_name'] = 'spec.md'
+        for invalid in (bytes([0, 1, 2, 3]) * 100,
+                        b'-----BEGIN PRIVATE KEY-----\n' + b'a' * 300):
+            item['result']['structured_content']['b64_string'] = base64.b64encode(invalid).decode()
+            self.assertFalse(extract_tool_evidence(item, settings)['substantive'])

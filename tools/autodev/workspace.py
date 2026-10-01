@@ -89,7 +89,10 @@ class WorkspaceIntegration:
             "Use get_spreadsheet_range for Sheets section evidence and spell locations as sheet:<exact sheet_name>!<exact cell-only range>. "
             "A title/header-only read cannot verify business specifications. For files use fetch readable content and location file:full; "
             "a file URI/download alone is not content verification. coverage_note must explain which requirement the inspected sections support. "
+            "If text_base64_compatibility is enabled, fetch may return a bounded UTF-8 text file as b64_string. "
+            "Decode and actually read that text locally before adopting it; never decode credential/config files or binary files. "
             "verified is true only when the entire candidate inventory and applicable authoritative content were checked. "
+            f"text_base64_compatibility: {bool(self.settings.get('text_base64_compatibility'))}\n"
             f"Folder: https://drive.google.com/drive/folders/{self.settings['specification_folder_id']}\n"
             f"Request: {redact_text(request)[:16000]}"
         ), "specification.schema.json")

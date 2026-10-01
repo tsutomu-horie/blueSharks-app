@@ -28,6 +28,8 @@ timeout_seconds = 3600 # Orchestrator waits on SQLite; no CLI Supervisor inferen
 
 [google_workspace]
 enabled = false # Enable after workspace-check succeeds with the existing ChatGPT connection.
+# Small UTF-8 text returned as legacy bytes: opt in only to enable bounded read/hash verification.
+text_base64_compatibility = false
 connector_id = "connector_5f3c8c41a1e54ad7a76272c89e2554fa"
 specification_folder_id = "1aHGgByN73FyuxCEBPN-Ung9ZogIZv6C_"
 spreadsheet_id = "17X-Ezvv2vNZHtK8LsKwcdFc72CspnhgortNS6g6QdWE"

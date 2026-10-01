@@ -1,5 +1,7 @@
 """Retain bounded connector evidence without keeping document or credential bodies."""
 from __future__ import annotations
+import base64
+import binascii
 import hashlib
 import json
 import re
@@ -97,6 +99,27 @@ def extract_tool_evidence(item, settings=None):
                 except (ValueError, TypeError):
                     blocks.append(text)
             body = '\n'.join(blocks)
+        # Some connector versions return small text files through the legacy
+        # byte field instead of readable content. Opt in explicitly, decode
+        # only bounded UTF-8 text, and retain only its hash (never the bytes).
+        if not body and settings and settings.get('text_base64_compatibility'):
+            encoded = data.get('b64_string')
+            mime = data.get('mime_type', '')
+            filename = str(data.get('file_name', '')).lower()
+            credential_file = any(value in filename for value in
+                ('.env', 'firebase_options', 'google-services', 'googleservice-info',
+                 'credential', 'private_key', 'private-key', 'privatekey',
+                 'account_register', '.pem', '.key', '.p12', '.pfx', 'secret', 'token'))
+            if (isinstance(encoded, str) and len(encoded) <= 1400000
+                and mime in {'text/plain', 'text/markdown', 'text/x-markdown', 'text/html'}
+                and data.get('id') == evidence['target_id'] and not credential_file):
+                try:
+                    body = base64.b64decode(encoded, validate=True).decode('utf-8')
+                    if (re.search(r'[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]', body)
+                        or re.search(r'-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----', body)):
+                        body = ''
+                except (ValueError, UnicodeDecodeError, binascii.Error):
+                    body = ''
         evidence['read_location'] = 'file:full'
         evidence['substantive'] = len(body) >= 200
         evidence['body_hash'] = hashlib.sha256(str(body).encode()).hexdigest()
