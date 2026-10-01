@@ -114,6 +114,40 @@ class RecoveryTests(unittest.TestCase):
         self.assertEqual(self.store.get_ticket("NEEDS-DRIVE-SPEC")["status"], "NEEDS_SPECIFICATION")
         self.assertEqual(self.store.active_leases("NEEDS-DRIVE-SPEC"), [])
 
+    def test_unresolved_docker_intent_preserves_temp_and_repository(self):
+        self.store.create_ticket(ticket('LATE-CREATE'), 'BLOCKED')
+        directory = self.root / 'tmp' / 'LATE-CREATE' / 'check'
+        directory.mkdir(parents=True)
+        (directory / 'keep').touch()
+        self.store.lease('LATE-CREATE', 'repository', 'app')
+        self.store.lease('LATE-CREATE', 'temp_directory', str(directory))
+        self.store.lease('LATE-CREATE', 'docker_intent', 'autodev-check-' + 'a' * 32)
+        with patch('tools.autodev.docker_checks.DockerCheck.recover_intent', return_value=False):
+            self.orchestrator.recover_orphaned_work()
+        self.assertTrue((directory / 'keep').exists())
+        self.assertEqual({row['kind'] for row in self.store.active_leases('LATE-CREATE')},
+                         {'repository', 'temp_directory', 'docker_intent'})
+
+    def test_failed_docker_prepare_does_not_delete_leased_temp(self):
+        item = ticket('PREPARE-FAIL')
+        self.store.create_ticket(item, 'RUNNING')
+        self.config['projects']['app']['check_backend'] = 'docker'
+        tree = self.root / 'worktrees' / 'app' / 'PREPARE-FAIL'
+        tree.mkdir(parents=True)
+
+        def ambiguous_create(ticket, argv, worktree, temp_dir, run_id):
+            self.store.lease(ticket['id'], 'docker_intent', 'autodev-check-' + 'a' * 32)
+            raise TimeoutError('daemon creation result unknown')
+
+        with patch.object(self.orchestrator.git, 'source_workdir', return_value=tree), \
+             patch('tools.autodev.docker_checks.DockerCheck.prepare', side_effect=ambiguous_create):
+            with self.assertRaisesRegex(RuntimeError, 'resources retained'):
+                self.orchestrator._mechanical_command(item, 'flutter_test', ['flutter', 'test'], tree)
+        leases = self.store.active_leases(item['id'])
+        temporary = next(row for row in leases if row['kind'] == 'temp_directory')
+        self.assertTrue(Path(temporary['resource_key']).is_dir())
+        self.assertTrue(any(row['kind'] == 'docker_intent' for row in leases))
+
 
 if __name__ == "__main__":
     unittest.main()

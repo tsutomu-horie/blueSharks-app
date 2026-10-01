@@ -1,0 +1,1 @@
+{"type":"object","additionalProperties":false,"required":["connected","folder_id","sheet_id","reason"],"properties":{"connected":{"type":"boolean"},"folder_id":{"type":"string"},"sheet_id":{"type":"integer"},"reason":{"type":"string"}}}

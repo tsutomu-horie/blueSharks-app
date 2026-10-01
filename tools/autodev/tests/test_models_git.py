@@ -102,6 +102,19 @@ class GitManagerTests(unittest.TestCase):
         findings = self.manager.scope_findings(worktree, ["lib/**"], ["server/**"])
         self.assertTrue(any(item["kind"] == "forbidden_scope" for item in findings))
 
+    def test_gate_approval_only_covers_the_reviewed_paths_and_diff(self):
+        ticket = self.ticket('GATE-DIGEST')
+        ticket['allowed_scope'] += ['pubspec.yaml', 'pubspec.lock']
+        worktree, _ = self.manager.create_worktree(ticket)
+        ticket['base_commit'] = self._git(worktree, 'rev-parse', 'HEAD').strip()
+        (worktree / 'pubspec.yaml').write_text('name: fixture\n')
+        gates = [item for item in self.manager.mechanical_scope_check(ticket, worktree) if item['kind'] == 'supervisor_gate']
+        self.assertTrue(gates)
+        ticket['current_state'] = {'approved_gate_evidence': [{'category': item['category'], 'files': sorted(item['files']), 'digest': item['digest']} for item in gates]}
+        self.assertFalse(any(item['kind'] == 'supervisor_gate' for item in self.manager.mechanical_scope_check(ticket, worktree)))
+        (worktree / 'pubspec.lock').write_text('new dependency\n')
+        self.assertTrue(any(item['kind'] == 'supervisor_gate' for item in self.manager.mechanical_scope_check(ticket, worktree)))
+
     def test_clean_but_unmerged_commit_is_preserved(self):
         worktree, _ = self.manager.create_worktree(self.ticket())
         (worktree / "lib" / "change.dart").write_text("void changed() {}\n")

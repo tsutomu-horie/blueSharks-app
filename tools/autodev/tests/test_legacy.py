@@ -9,6 +9,13 @@ from tools.autodev.state import Store
 
 
 class LegacyImportTests(unittest.TestCase):
+    def test_cancelled_legacy_ticket_is_not_reactivated(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary) / "BS-CANCEL.md"
+            path.write_text("# BS-CANCEL 中止した依存更新\n- Status: `CANCELLED_NO_APP_MERGE`\n- Repository: `APP`\n")
+            ticket, status = parse_legacy_ticket(path)
+            self.assertEqual(status, "CANCELLED")
+
     def test_legacy_ticket_is_held_for_retriage(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)

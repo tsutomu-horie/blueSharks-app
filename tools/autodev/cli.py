@@ -23,6 +23,8 @@ from .state import Store
 
 SERVICE_LABEL = "com.bluesharks.autodev.orchestrator"
 EXAMPLE_CONFIG = Path(__file__).with_name("config.example.toml")
+
+
 def install_config(destination: Path = DEFAULT_CONFIG) -> Path:
     destination = destination.expanduser()
     if destination.exists():
@@ -67,12 +69,23 @@ def orchestrator_lock(state_dir: Path) -> Iterator[None]:
             fcntl.flock(stream, fcntl.LOCK_UN)
 
 
-def kickstart_if_loaded() -> None:
-    uid = os.getuid()
-    target = f"gui/{uid}/{SERVICE_LABEL}"
-    check = subprocess.run(["launchctl", "print", target], capture_output=True, text=True)
-    if check.returncode == 0:
-        subprocess.run(["launchctl", "kickstart", target], check=False, capture_output=True, text=True)
+def kickstart_if_loaded(config: dict) -> None:
+    """Wake only this config's registered, idle job; never kill an active Runner."""
+    from . import service
+
+    state_dir = Path(config["workspace"]["state_dir"])
+    identity = service._identity(config["_config_path"], state_dir)
+    if not service._verify_loaded(identity, None):
+        return
+    try:
+        with service._idle_lock(state_dir):
+            if not service._verify_loaded(identity, None):
+                return
+    except RuntimeError:
+        return
+    # Release first so the Runner can acquire its lock. No -k: an active job
+    # that starts after the idle check must not be killed or restarted.
+    service._launchctl("kickstart", service._target(None)).check_returncode()
 
 
 def _ticket_summary(ticket: dict) -> str:
@@ -136,6 +149,28 @@ def build_parser() -> argparse.ArgumentParser:
     run.add_argument("--idle-seconds", type=float, default=3.0)
     commands.add_parser("pause", aliases=["stop"], help="finish the active Ticket safely, then stop claiming new Tickets")
     commands.add_parser("resume", help="resume queue processing after a safe pause")
+    commands.add_parser("workspace-check", help="verify the configured Google Drive/Sheets connection with read-only tools")
+    sync_logs = commands.add_parser("sync-logs", help="deliver pending Ticket events to the configured worklog without duplicates")
+    sync_logs.add_argument('--retry-failed', action='store_true', help='explicitly requeue retained failed deliveries')
+    commands.add_parser('worklog-list', help='read literal event rows awaiting Chrome editing by the Codex manager')
+    worklog_confirm = commands.add_parser('worklog-confirm', help='confirm the actual app-side readback; no CLI logging agent')
+    worklog_confirm.add_argument('event_id', type=int)
+    worklog_confirm.add_argument('--row', type=int, required=True)
+    worklog_confirm.add_argument('--readback-file', type=Path, required=True)
+    worklog_error = commands.add_parser('worklog-error', help='retain a failed external operation for management')
+    worklog_error.add_argument('event_id', type=int)
+    worklog_error.add_argument('--reason', required=True)
+    legacy_retriage = commands.add_parser("retriage-legacy", help="rebuild an imported request through verified specifications and Intake")
+    legacy_retriage.add_argument("ticket_id")
+    legacy_retriage.add_argument("--project", action="append", choices=["app", "server"])
+    for name in ("service-install", "service-start", "service-status", "service-stop"):
+        commands.add_parser(name, help="manage the autonomous Runner LaunchAgent")
+    commands.add_parser('manage-list', help='list requests awaiting the manager in this Codex conversation')
+    management_show = commands.add_parser('manage-show', help='read the exact Ticket/diff-bound management request')
+    management_show.add_argument('request_id', type=int)
+    management_decide = commands.add_parser('manage-decide', help='record the decision made in Codex; never launch a CLI manager')
+    management_decide.add_argument('request_id', type=int)
+    management_decide.add_argument('--decision-file', type=Path, required=True)
     return parser
 
 
@@ -147,13 +182,40 @@ def main(argv: list[str] | None = None) -> int:
     config = load_config(args.config)
     if args.command == "doctor":
         return doctor(config)
-    if args.command in {"status", "list", "show"}:
+    if args.command == "service-status":
+        from .service import status
+        result = status()
+        print(result.stdout or result.stderr)
+        return result.returncode
+    if args.command in {"status", "list", "show", 'manage-list', 'manage-show', 'worklog-list'}:
         store = read_store(config)
         if store is None:
             print("Ticket DB is not initialized")
             return 0
+        if args.command in {'manage-list', 'manage-show'}:
+            from .management import ManagementBridge
+            with store.connection() as db:
+                available = db.execute("SELECT 1 FROM sqlite_master WHERE name='management_requests'").fetchone()
+            if not available:
+                print('[]' if args.command == 'manage-list' else 'management queue not initialized')
+                return 0
+            bridge = ManagementBridge(store, config)
+            print(json.dumps(bridge.pending() if args.command == 'manage-list' else bridge.show(args.request_id), ensure_ascii=False, indent=2))
+            return 0
+        if args.command == 'worklog-list':
+            from .workspace import WorkspaceIntegration
+            with store.connection() as db:
+                available = db.execute("SELECT 1 FROM sqlite_master WHERE name='workspace_deliveries'").fetchone()
+            print(json.dumps(WorkspaceIntegration(store, config).pending_entries() if available else [], ensure_ascii=False, indent=2))
+            return 0
         if args.command == "status":
-            print(json.dumps({"paused": store.pause_requested(), "tickets": store.counts(), "active_leases": len(store.active_leases())}, ensure_ascii=False, indent=2))
+            from .workspace import WorkspaceIntegration
+            with store.connection() as db:
+                has_outbox = db.execute("SELECT 1 FROM sqlite_master WHERE name='workspace_deliveries'").fetchone()
+                has_management = db.execute("SELECT 1 FROM sqlite_master WHERE name='management_requests'").fetchone()
+                management_pending = db.execute("SELECT COUNT(*) FROM management_requests m JOIN tickets t ON t.id=m.ticket_id WHERE m.status IN ('PENDING','STALE') AND t.status NOT IN ('DONE','CANCELLED')").fetchone()[0] if has_management else 0
+            deliveries = WorkspaceIntegration(store, config).delivery_status() if has_outbox else {'pending': 0, 'retry_required': 0}
+            print(json.dumps({"paused": store.pause_requested(), "tickets": store.counts(), "active_leases": len(store.active_leases()), 'worklog_delivery': deliveries, 'management': {'location': 'Codex conversation', 'pending_requests': management_pending}}, ensure_ascii=False, indent=2))
             return 0
         if args.command == "list":
             for row in store.list_tickets(args.status):
@@ -165,6 +227,48 @@ def main(argv: list[str] | None = None) -> int:
         print(json.dumps({"ticket": ticket, "events": events}, ensure_ascii=False, indent=2))
         return 0
     store = make_store(config)
+    if args.command == 'manage-decide':
+        from .management import ManagementBridge
+        decision = json.loads(args.decision_file.read_text())
+        ManagementBridge(store, config).decide(args.request_id, decision)
+        print(f'codex_management_decision_recorded={args.request_id}')
+        return 0
+    if args.command in {'worklog-confirm', 'worklog-error'}:
+        from .workspace import WorkspaceIntegration
+        integration = WorkspaceIntegration(store, config)
+        if args.command == 'worklog-confirm':
+            integration.confirm_delivery(args.event_id, args.row, json.loads(args.readback_file.read_text()))
+            print(f'codex_worklog_event_confirmed={args.event_id}')
+        else:
+            integration.delivery_error(args.event_id, args.reason)
+            print(f'codex_worklog_event_retained={args.event_id}')
+        return 0
+
+    if args.command.startswith("service-"):
+        from . import service
+        repo_root = Path(__file__).resolve().parents[2]
+        if args.command == "service-stop":
+            print(f"service_stopped={service.stop(config, repo_root)}")
+        else:
+            path = service.install(service.build_plist(config, repo_root))
+            print(f"service_plist={path}")
+            if args.command == "service-start":
+                print(f"service_bootstrapped={service.bootstrap(path, Path(config['workspace']['state_dir']))}")
+        return 0
+    if args.command in {"workspace-check", "sync-logs", "retriage-legacy"}:
+        from .workspace import WorkspaceIntegration
+        with orchestrator_lock(Path(config["workspace"]["state_dir"])):
+            integration = WorkspaceIntegration(store, config)
+            if args.command == "workspace-check":
+                print(json.dumps(integration.check_connection(), ensure_ascii=False))
+            elif args.command == "sync-logs":
+                if args.retry_failed:
+                    integration.retry_failed_deliveries()
+                print(json.dumps({'delivery_owner': 'Codex conversation', 'pending_entries': integration.pending_entries(), **integration.delivery_status()}, ensure_ascii=False))
+            else:
+                from .legacy import retriage_legacy
+                print(json.dumps({"replacement_tickets": retriage_legacy(store, config, args.ticket_id, projects=args.project)}, ensure_ascii=False))
+        return 0
 
     if args.command == "init":
         print(f"database={store.path}")
@@ -182,12 +286,12 @@ def main(argv: list[str] | None = None) -> int:
         if ticket["initial_status"] == "NEEDS_SPECIFICATION":
             for question in ticket["current_state"]["clarifying_questions"]:
                 print(f"確認が必要: {question}")
-        kickstart_if_loaded()
+        kickstart_if_loaded(config)
         return 0
     if args.command in {"append", "チケットに追記"}:
         status = store.append_request(args.ticket_id, args.text)
         print(f"{args.ticket_id}: {status} (append recorded)")
-        kickstart_if_loaded()
+        kickstart_if_loaded(config)
         return 0
     if args.command in {"cancel", "中止"}:
         status = store.request_cancel(args.ticket_id, args.reason)
@@ -203,7 +307,7 @@ def main(argv: list[str] | None = None) -> int:
             specification_checked_at=args.spec_checked_at,
         )
         print(f"{args.ticket_id}: {status}")
-        kickstart_if_loaded()
+        kickstart_if_loaded(config)
         return 0
     if args.command in {"pause", "stop"}:
         store.request_pause()
@@ -212,7 +316,7 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "resume":
         store.resume_queue()
         print("queue_resumed=true")
-        kickstart_if_loaded()
+        kickstart_if_loaded(config)
         return 0
     if args.command == "run":
         engine = Orchestrator(store, config)

@@ -22,8 +22,23 @@ escalation_model = "gpt-6-astra"
 escalation_reasoning = "high"
 max_repair_cycles = 2
 
+[management]
+location = "codex"
+timeout_seconds = 3600 # Orchestrator waits on SQLite; no CLI Supervisor inference.
+
+[google_workspace]
+enabled = false # Enable after workspace-check succeeds with the existing ChatGPT connection.
+connector_id = "connector_5f3c8c41a1e54ad7a76272c89e2554fa"
+specification_folder_id = "1aHGgByN73FyuxCEBPN-Ung9ZogIZv6C_"
+spreadsheet_id = "17X-Ezvv2vNZHtK8LsKwcdFc72CspnhgortNS6g6QdWE"
+worklog_sheet_id = 510981882
+worklog_sheet_name = "自律開発作業ログ"
+
 [sandbox]
 exec_binary = "/usr/bin/sandbox-exec"
+# Build the dedicated image from tools/autodev/docker/Dockerfile before enabling Docker checks.
+docker_image = "bluesharks-autodev-flutter:3.27.4"
+# pub_cache_seed = "/Users/work/AgentWorkspace/cache/pub"
 read_paths = [
   "/Users/work/.pub-cache",
   "/Users/work/Library/Android/sdk",
@@ -49,11 +64,13 @@ max_diff_bytes = 300000
 
 [projects.app]
 repository = "/Users/work/Documents/Git/blueSharks-app"
+# check_backend = "docker" # Isolated offline checks; no host loopback access.
 base_ref = "origin/main"
 check_timeout_seconds = 2400
 test_target_roots = ["test"]
 
 [projects.app.checks]
+pub_get = ["flutter", "pub", "get", "--offline"]
 flutter_test = ["flutter", "test", "--no-pub", "{target}"]
 flutter_analyze = ["flutter", "analyze", "--no-pub"]
 android_debug_build = ["flutter", "build", "apk", "--debug", "--no-pub"]
