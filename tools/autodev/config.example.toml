@@ -75,6 +75,8 @@ test_target_roots = ["test"]
 pub_get = ["flutter", "pub", "get", "--offline"]
 flutter_test = ["flutter", "test", "--no-pub", "{target}"]
 flutter_analyze = ["flutter", "analyze", "--no-pub"]
+# Focused analysis avoids unrelated repository-wide infos; warnings/errors remain fatal.
+flutter_analyze_training_restore = ["flutter", "analyze", "--no-pub", "--no-fatal-infos", "lib/presentation/training_game/controllers/training_game.controller.dart", "lib/presentation/training_game/controllers/training_game_new_game.controller.dart", "test/training_game/training_game_controller_test.dart"]
 android_debug_build = ["flutter", "build", "apk", "--debug", "--no-pub"]
 
 [projects.server]

@@ -75,6 +75,8 @@ LaunchAgentのテンプレートは `launchd/com.bluesharks.autodev.orchestrator
 
 秘密情報、本番DB/deploy、Signing、Store申請、データ消失、Dependency/API/DB/CIの変更は自動承認しません。Ticket・Agent出力はuntrusted dataとして扱います。AgentのJSONL command outputは監査ログに保存せず、最終構造化結果もredactします。
 
+状態復元Ticketの`flutter_analyze_training_restore`は許可3 Dartファイルに対象を限定し、infoを非致命、warning/errorを致命として解析する。全体`flutter_analyze`の設定値と閾値は変更しない。既存repository-wide info/warningとTicket起因の検出を混同しないための専用checkである。
+
 ## データ配置
 
 管理要求は`manage-list`/`manage-show`、作業ログ未配信は`worklog-list`で確認する。Sheets追記はこのCodexからChrome拡張優先で行い、実読戻しを`worklog-confirm`へ渡す。詳細は`docs/AUTODEV_MANAGEMENT.md`。CLIはSheets編集AIを呼ばない。
