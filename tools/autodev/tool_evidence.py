@@ -181,6 +181,8 @@ def read_location_contains(observed: str, claimed: str) -> bool:
         if not location.startswith('sheet:') or '!' not in location:
             return None
         sheet, cells = location[6:].rsplit('!', 1)
+        if len(sheet) >= 2 and sheet[0] == "'" and sheet[-1] == "'":
+            sheet = sheet[1:-1].replace("''", "'")
         match = re.fullmatch(r'([A-Z]+)(\d+)(?::([A-Z]+)(\d+))?', cells.upper())
         if not match:
             return None
