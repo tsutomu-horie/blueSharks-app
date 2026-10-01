@@ -166,6 +166,40 @@ def observed_content_ids(events):
     return set(observed_read_locations(events))
 
 
+def read_location_contains(observed: str, claimed: str) -> bool:
+    """Whether a substantive read rectangle actually contains a claimed section.
+
+    The connector can return a broad, bounded range while the investigator
+    cites a smaller section inside it. Provenance keeps both ranges explicit;
+    this never accepts a claim extending outside the actual read.
+    """
+    if observed == claimed:
+        return True
+    if observed == 'file:full' or claimed == 'file:full':
+        return False
+    def parse(location):
+        if not location.startswith('sheet:') or '!' not in location:
+            return None
+        sheet, cells = location[6:].rsplit('!', 1)
+        match = re.fullmatch(r'([A-Z]+)(\d+)(?::([A-Z]+)(\d+))?', cells.upper())
+        if not match:
+            return None
+        def column_number(value):
+            number = 0
+            for char in value:
+                number = number * 26 + ord(char) - ord('A') + 1
+            return number
+        start_col, start_row = column_number(match.group(1)), int(match.group(2))
+        end_col = column_number(match.group(3) or match.group(1))
+        end_row = int(match.group(4) or match.group(2))
+        return sheet, start_col, start_row, end_col, end_row
+
+    actual, section = parse(observed), parse(claimed)
+    return bool(actual and section and actual[0] == section[0]
+                and actual[1] <= section[1] <= section[3] <= actual[3]
+                and actual[2] <= section[2] <= section[4] <= actual[4])
+
+
 def observed_read_locations(events):
     result = {}
     for method in ('fetch', 'get_spreadsheet_range'):
