@@ -53,6 +53,10 @@ class CodexRunner:
         timeout: int | None = None,
     ) -> RunResult:
         self._validate_model(model, reasoning)
+        if role in {'supervisor', 'escalation', 'worklog'}:
+            raise ValueError('Management agents run in the Codex desktop conversation, not Codex CLI')
+        if model == "gpt-6-luna" and (write or role != 'ticket_intake'):
+            raise ValueError("GPT-6 Luna CLI is confined to read-only Ticket Intake")
         codex_bin = str(self.config["codex"]["binary"])
         if not Path(codex_bin).exists():
             raise FileNotFoundError(f"Codex CLI not found: {codex_bin}")
@@ -79,13 +83,30 @@ class CodexRunner:
         stderr_path = output_dir / f"{run_id}-{phase}.stderr.log"
         output_path = output_dir / f"{run_id}-{phase}.last.txt"
         command = [
-            codex_bin, "exec", "--ephemeral", "--ignore-user-config", "--json", "--color", "never",
+            codex_bin, "exec", "--ephemeral", "--ignore-user-config", "--ignore-rules", "--json", "--color", "never",
             "--model", model, "-c", f"model_reasoning_effort={reasoning}",
             "-c", f"sqlite_home={json.dumps(str(state_home.resolve()))}",
             "--sandbox", "workspace-write" if write else "read-only",
             "--cd", str(workdir), "--output-schema", str(schema),
             "--output-last-message", str(output_path), "-",
         ]
+        # Connected apps are confined to isolated specification/logging runs.
+        # Source agents consume verified evidence from the Ticket context.
+        command[2:2] = ["-c", "apps._default.enabled=false"]
+        integration = self.config.get("google_workspace", {})
+        if role == "specification" and integration.get("enabled"):
+            connector = integration["connector_id"]
+            command[2:2] = [
+                "--skip-git-repo-check",
+                "-c", "features.apps=true",
+                "-c", f"apps.{connector}.enabled=true",
+                "-c", f"apps.{connector}.default_tools_approval_mode=writes",
+                "-c", f"apps.{connector}.approvals_reviewer=auto_review",
+                "-c", "approval_policy=on-request",
+                "-c", "approvals_reviewer=auto_review",
+            ]
+            policy = 'This run is read-only specification verification. Do not approve any app write or credential content fetch.'
+            command[2:2] = ["-c", "auto_review.extra_policy=" + json.dumps(policy)]
         run_record = {
             "id": run_id, "ticket_id": ticket_id, "role": role,
             "model": model, "reasoning": reasoning, "phase": phase,
@@ -157,7 +178,7 @@ class CodexRunner:
             finally:
                 if lease_id is not None and group_stopped:
                     self.store.release_lease(lease_id)
-                self._sanitize_cli_log(raw_log_path, log_path)
+                self._sanitize_cli_log(raw_log_path, log_path, self.config.get("google_workspace"))
                 raw_log_path.unlink(missing_ok=True)
                 self._sanitize_output(output_path)
                 self._sanitize_text_file(stderr_path)
@@ -185,7 +206,7 @@ class CodexRunner:
             return
         for raw_path in self.logs_dir.rglob(".*.raw"):
             destination = raw_path.with_name(raw_path.name[1:-4] + ".jsonl")
-            self._sanitize_cli_log(raw_path, destination)
+            self._sanitize_cli_log(raw_path, destination, self.config.get("google_workspace"))
             raw_path.unlink(missing_ok=True)
         for path in self.logs_dir.rglob("*.stderr.log"):
             self._sanitize_text_file(path)
@@ -193,7 +214,7 @@ class CodexRunner:
             self._sanitize_output(path)
 
     @classmethod
-    def _sanitize_cli_log(cls, source: Path, destination: Path) -> None:
+    def _sanitize_cli_log(cls, source: Path, destination: Path, workspace_settings=None) -> None:
         with destination.open("w", encoding="utf-8") as sanitized:
             if not source.exists():
                 return
@@ -211,7 +232,18 @@ class CodexRunner:
                     "status": item.get("status") if isinstance(item, dict) else None,
                     "exit_code": item.get("exit_code") if isinstance(item, dict) else None,
                 }
-                sanitized.write(json.dumps(safe, ensure_ascii=False) + "\n")
+                error = event.get('error') if isinstance(event, dict) else None
+                if error:
+                    safe['error'] = redact_text(json.dumps(redact_value(error), ensure_ascii=False))[:800]
+                if isinstance(item, dict):
+                    for key in ("server", "tool", "name"):
+                        if isinstance(item.get(key), str):
+                            safe[key] = item[key][:200]
+                    from .tool_evidence import extract_tool_evidence
+                    evidence = extract_tool_evidence(item, workspace_settings)
+                    if evidence is not None:
+                        safe['evidence'] = evidence
+                sanitized.write(json.dumps(redact_value(safe), ensure_ascii=False) + "\n")
 
     @classmethod
     def _sanitize_output(cls, path: Path) -> None:

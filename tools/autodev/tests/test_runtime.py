@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import io
+import json
 import tempfile
 import unittest
 from pathlib import Path
@@ -152,6 +153,23 @@ class RuntimeTests(unittest.TestCase):
         self.assertNotIn("sk-proj-", safe_log.read_text())
         self.assertFalse(raw.exists())
         self.assertNotIn("token-secret-value", stderr.read_text())
+
+    def test_structured_error_and_worklog_cells_are_redacted_before_audit_write(self):
+        settings = {'spreadsheet_id': 'sheet', 'worklog_sheet_name': 'log'}
+        source = self.root / 'synthetic.raw'
+        destination = self.root / 'audit.jsonl'
+        events = [{'type': 'turn.failed', 'error': {'access_token': 'synthetic-error-token'}},
+                  {'type': 'item.completed', 'item': {'type': 'mcp_tool_call',
+                   'status': 'completed', 'tool': 'google_drive.get_spreadsheet_range',
+                   'arguments': {'spreadsheet_id': 'sheet', 'sheet_name': 'log', 'range': 'A2:G2'},
+                   'result': {'structured_content': {'range': "'log'!A2:G2",
+                     'values': [['password=synthetic-cell-secret'] + ['ok'] * 6]}}}}]
+        source.write_text('\n'.join(json.dumps(event) for event in events))
+        CodexRunner._sanitize_cli_log(source, destination, settings)
+        result = destination.read_text()
+        self.assertNotIn('synthetic-error-token', result)
+        self.assertNotIn('synthetic-cell-secret', result)
+        self.assertIn('[REDACTED]', result)
 
 
 if __name__ == "__main__":

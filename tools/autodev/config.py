@@ -29,6 +29,7 @@ def load_config(path: Path | None = None) -> dict[str, Any]:
         *(str(item) for item in sandbox.get("read_paths", [])),
     }
     for project in config.get("projects", {}).values():
+        read_paths.update(str(Path(value).expanduser().resolve()) for value in project.get("environment", {}).values())
         for command in project.get("checks", {}).values():
             if not command:
                 continue
@@ -81,7 +82,27 @@ def validate_config(config: dict[str, Any]) -> None:
         raw_seed = Path(str(gradle_seed)).expanduser()
         if not raw_seed.is_absolute() or ".." in raw_seed.parts or raw_seed.resolve() == Path("/"):
             raise ValueError("sandbox.gradle_cache_seed must be a specific absolute directory")
+    for value in sandbox.get("cache_write_paths", []):
+        target = Path(str(value)).expanduser().resolve()
+        if root not in target.parents or not any(parent in target.parents for parent in (root / "cache", root / "toolchains")):
+            raise ValueError("sandbox.cache_write_paths must be specific runner-owned cache/toolchain paths")
+    for value in sandbox.get('cache_write_files', []):
+        target = Path(str(value)).expanduser().resolve()
+        if root / 'toolchains' not in target.parents or target.name != 'version':
+            raise ValueError('sandbox.cache_write_files is restricted to runner toolchain version metadata')
     codex = config["codex"]
+    if config.get('management', {}).get('location', 'codex') != 'codex':
+        raise ValueError('management agents must run in the Codex conversation')
+    integration = config.get("google_workspace", {})
+    if integration.get("enabled"):
+        import re
+        for key in ("connector_id", "specification_folder_id", "spreadsheet_id"):
+            if not re.fullmatch(r"[A-Za-z0-9_-]+", str(integration.get(key, ""))):
+                raise ValueError(f"invalid google_workspace.{key}")
+        if not isinstance(integration.get("worklog_sheet_id"), int) or integration["worklog_sheet_id"] < 0:
+            raise ValueError("google_workspace.worklog_sheet_id must be a nonnegative integer")
+        if not str(integration.get("worklog_sheet_name", "")).strip():
+            raise ValueError("google_workspace.worklog_sheet_name is required")
     for key in ("binary", "intake_model", "intake_reasoning", "developer_model", "developer_reasoning", "reviewer_model", "reviewer_reasoning", "supervisor_model", "supervisor_reasoning", "escalation_model", "escalation_reasoning"):
         if key not in codex:
             raise ValueError(f"missing codex.{key}")
@@ -99,6 +120,14 @@ def validate_config(config: dict[str, Any]) -> None:
     if codex.get("escalation_reasoning", "high") != "high":
         raise ValueError("GPT-6 Astra escalation must use high reasoning")
     for project_id, project in config["projects"].items():
+        if project.get('check_backend', 'native') not in {'native','docker'} or (project.get('check_backend') == 'docker' and project_id != 'app'):
+            raise ValueError('Docker check backend is supported only for the App project')
+        for key, value in project.get("environment", {}).items():
+            if key not in {"PUB_CACHE", "JAVA_HOME", "ANDROID_HOME", "ANDROID_SDK_ROOT"} or not Path(str(value)).is_absolute():
+                raise ValueError("project environment must use approved toolchain/cache absolute paths")
+        for target, source in project.get("private_inputs", {}).items():
+            if Path(target).is_absolute() or ".." in Path(target).parts or not Path(str(source)).is_absolute():
+                raise ValueError("private inputs require worktree-relative targets and absolute source paths")
         for key in ("repository", "base_ref", "checks", "test_target_roots"):
             if key not in project:
                 raise ValueError(f"missing projects.{project_id}.{key}")

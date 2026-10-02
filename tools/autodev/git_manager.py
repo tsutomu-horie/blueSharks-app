@@ -212,10 +212,11 @@ class GitManager:
             findings = []
         findings.extend(self.scope_findings(worktree, ticket["allowed_scope"], ticket["forbidden_scope"], source_directory, base_revision))
         files = self.changed_files(worktree, base_revision)
-        approved_gates = set(ticket.get("current_state", {}).get("approved_supervisor_gates", []))
+        approved_gates = ticket.get('current_state', {}).get('approved_gate_evidence', [])
         for category, paths in self.supervisor_gates(files).items():
-            if category not in approved_gates:
-                findings.append({"kind": "supervisor_gate", "category": category, "files": paths})
+            digest = self.diff_digest(worktree, base_revision, only_paths=paths)
+            if not any(isinstance(item, dict) and item.get('category') == category and item.get('files') == sorted(paths) and item.get('digest') == digest for item in approved_gates):
+                findings.append({"kind": "supervisor_gate", "category": category, "files": paths, 'digest': digest})
         maximum = int(self.config["git"].get("max_changed_files", 80))
         if len(files) > maximum:
             findings.append({"kind": "diff_size", "changed_files": len(files), "maximum": maximum})
@@ -249,11 +250,13 @@ class GitManager:
     def git_untracked_files(self, worktree: Path) -> list[str]:
         return [item for item in self.git(worktree, ["ls-files", "--others", "--exclude-standard", "-z"]).split("\0") if item]
 
-    def diff_digest(self, worktree: Path, base_revision: str) -> str:
+    def diff_digest(self, worktree: Path, base_revision: str, only_paths: list[str] | None = None) -> str:
         digest = hashlib.sha256()
         tracked = self.git(worktree, ["diff", "--no-renames", "--name-only", "--diff-filter=ACDMRTUXB", base_revision, "-z"]).split("\0")
         untracked = self.git_untracked_files(worktree)
         paths = sorted({item for item in tracked + untracked if item})
+        if only_paths is not None:
+            paths = [item for item in paths if item in set(only_paths)]
         for relative in paths:
             digest.update(relative.encode("utf-8", errors="replace"))
             path = worktree / relative

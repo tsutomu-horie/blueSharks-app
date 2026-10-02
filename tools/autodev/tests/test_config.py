@@ -25,6 +25,12 @@ class ModelConfigTests(unittest.TestCase):
                 with self.assertRaises(ValueError):
                     validate_config(config)
 
+    def test_writable_cache_cannot_escape_runner_workspace(self):
+        config = load_config(EXAMPLE_CONFIG)
+        config['sandbox']['cache_write_paths'] = ['/Users/work/Documents']
+        with self.assertRaises(ValueError):
+            validate_config(config)
+
 
 if __name__ == "__main__":
     unittest.main()

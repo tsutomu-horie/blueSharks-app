@@ -186,6 +186,26 @@ class Store:
                     reason TEXT NOT NULL DEFAULT '',
                     updated_at TEXT NOT NULL
                 );
+                CREATE TABLE IF NOT EXISTS workspace_deliveries (
+                    event_id INTEGER PRIMARY KEY REFERENCES ticket_events(id),
+                    attempts INTEGER NOT NULL DEFAULT 0,
+                    next_attempt_at TEXT,
+                    confirmed_at TEXT,
+                    sheet_row INTEGER,
+                    last_error TEXT NOT NULL DEFAULT ''
+                );
+                CREATE TABLE IF NOT EXISTS management_requests (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    ticket_id TEXT NOT NULL REFERENCES tickets(id),
+                    event_type TEXT NOT NULL,
+                    request_key TEXT NOT NULL UNIQUE,
+                    payload_json TEXT NOT NULL,
+                    status TEXT NOT NULL DEFAULT 'PENDING',
+                    decision_json TEXT,
+                    actor TEXT,
+                    created_at TEXT NOT NULL,
+                    resolved_at TEXT
+                );
                 INSERT OR IGNORE INTO control_flags(id,pause_requested,reason,updated_at)
                     VALUES(1,0,'',CURRENT_TIMESTAMP);
                 """
@@ -250,9 +270,15 @@ class Store:
         to_status: str | None,
         payload: dict[str, Any] | None = None,
     ) -> None:
+        safe_payload = redact_value(payload or {})
+        if from_status is not None and from_status != to_status and to_status in {'DONE','BLOCKED','NEEDS_DECISION','NEEDS_SPECIFICATION','FAILED','CANCELLED'}:
+            ticket = db.execute('SELECT title,type,allowed_scope_json,pr_url FROM tickets WHERE id=?', (ticket_id,)).fetchone()
+            qc = db.execute("SELECT payload_json FROM ticket_events WHERE ticket_id=? AND event_type='MECHANICAL_QC_PASSED' ORDER BY id DESC LIMIT 1", (ticket_id,)).fetchone()
+            targets = json.loads(qc['payload_json']).get('changed_files', []) if qc else json.loads(ticket['allowed_scope_json'])
+            safe_payload = {**safe_payload, 'worklog_snapshot': {'title': ticket['title'], 'type': ticket['type'], 'targets': targets, 'pr_url': ticket['pr_url']}}
         db.execute(
             "INSERT INTO ticket_events(ticket_id,event_type,from_status,to_status,payload_json,created_at) VALUES(?,?,?,?,?,?)",
-            (ticket_id, event_type, from_status, to_status, dump(redact_value(payload or {})), now()),
+            (ticket_id, event_type, from_status, to_status, dump(safe_payload), now()),
         )
 
     def transition(self, ticket_id: str, new_status: str, event: str, payload: dict[str, Any] | None = None) -> None:
@@ -267,7 +293,7 @@ class Store:
                 raise ValueError(f"illegal ticket transition {old} -> {new_status}")
             if new_status == "DONE":
                 active_process = db.execute(
-                    "SELECT 1 FROM resource_leases WHERE ticket_id=? AND released_at IS NULL AND kind IN ('process_group','temp_directory') LIMIT 1",
+                    "SELECT 1 FROM resource_leases WHERE ticket_id=? AND released_at IS NULL AND kind IN ('process_group','temp_directory','docker_container','docker_intent') LIMIT 1",
                     (ticket_id,),
                 ).fetchone()
                 active_run = db.execute(
@@ -307,6 +333,72 @@ class Store:
             if row is None:
                 raise KeyError(ticket_id)
             self._event(db, ticket_id, event, row["status"], row["status"], payload)
+
+    def supersede_legacy(self, ticket_id: str, child_ids: list[str]) -> None:
+        """Archive a migrated parent and replace every dependency atomically."""
+        if not child_ids or len(set(child_ids)) != len(child_ids):
+            raise ValueError('replacement children must be nonempty and unique')
+        with self.transaction() as db:
+            parent = db.execute('SELECT * FROM tickets WHERE id=?', (ticket_id,)).fetchone()
+            if parent is None:
+                raise KeyError(ticket_id)
+            state = json.loads(parent['current_state_json'])
+            if parent['status'] == 'CANCELLED':
+                if state.get('replacement_ticket_ids') == child_ids:
+                    return
+                raise ValueError('an archived parent cannot be reassigned to different children')
+            if state.get('migration') != 'legacy_markdown_import' or parent['status'] in {'RUNNING','REVIEWING','MERGED','CLEANUP','DONE'}:
+                raise ValueError('only held imported parents can be superseded')
+            rows = {row['id']: row for row in db.execute('SELECT * FROM tickets').fetchall()}
+            prerequisites = json.loads(parent['dependencies_json'])
+            if any(value not in rows for value in prerequisites):
+                raise ValueError('parent prerequisite dependencies must exist before migration')
+            for child_id in child_ids:
+                child = rows.get(child_id)
+                if not child or json.loads(child['current_state_json']).get('legacy_parent') != ticket_id:
+                    raise ValueError('replacement children must belong to the imported parent')
+                if child['status'] not in {'TRIAGE','READY','NEEDS_DECISION','NEEDS_SPECIFICATION','BACKLOG'} or db.execute('SELECT 1 FROM resource_leases WHERE ticket_id=? AND released_at IS NULL', (child_id,)).fetchone():
+                    raise ValueError('migration children must not have started')
+            graph = {}
+            for row in rows.values():
+                dependencies = json.loads(row['dependencies_json'])
+                updated = [value for value in dependencies if value != ticket_id]
+                if row['id'] in child_ids:
+                    updated += prerequisites
+                elif ticket_id in dependencies:
+                    updated += child_ids
+                graph[row['id']] = list(dict.fromkeys(updated))
+            graph[ticket_id] = [] # The parent is archived; its incoming edges were replaced.
+            visiting, visited = set(), set()
+            def check_cycles(node):
+                if node in visiting:
+                    raise ValueError('legacy migration would introduce a dependency cycle')
+                if node in visited or node not in graph:
+                    return
+                visiting.add(node)
+                for dependency in graph[node]:
+                    check_cycles(dependency)
+                visiting.remove(node)
+                visited.add(node)
+            for child_id in child_ids:
+                check_cycles(child_id)
+            for identifier, row in rows.items():
+                if identifier == ticket_id:
+                    continue
+                if graph[identifier] != json.loads(row['dependencies_json']):
+                    db.execute('UPDATE tickets SET dependencies_json=?,updated_at=? WHERE id=?', (dump(graph[identifier]), now(), identifier))
+                    self._event(db, identifier, 'LEGACY_DEPENDENCIES_REPLACED', row['status'], row['status'], {'parent': ticket_id, 'dependencies': graph[identifier]})
+                if identifier in child_ids:
+                    child_state = json.loads(row['current_state_json'])
+                    if child_state.pop('legacy_migration_pending', False):
+                        desired = child_state.pop('migration_initial_status', 'NEEDS_DECISION')
+                        if desired not in {'READY','TRIAGE','NEEDS_DECISION','NEEDS_SPECIFICATION','BACKLOG'}:
+                            raise ValueError('invalid intended child state')
+                        db.execute('UPDATE tickets SET status=?,current_state_json=?,updated_at=? WHERE id=?', (desired, dump(child_state), now(), identifier))
+                        self._event(db, identifier, 'LEGACY_CHILD_RELEASED', row['status'], desired, {'parent': ticket_id})
+            state['replacement_ticket_ids'] = child_ids
+            db.execute("UPDATE tickets SET status='CANCELLED',cancel_requested=1,current_state_json=?,updated_at=? WHERE id=?", (dump(state), now(), ticket_id))
+            self._event(db, ticket_id, 'LEGACY_SUPERSEDED_BY_CHILDREN', parent['status'], 'CANCELLED', {'children': child_ids})
 
     def append_request(self, ticket_id: str, addition: str) -> str:
         with self.transaction() as db:
