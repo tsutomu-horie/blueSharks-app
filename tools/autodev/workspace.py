@@ -92,12 +92,19 @@ class WorkspaceIntegration:
             "a file URI/download alone is not content verification. coverage_note must explain which requirement the inspected sections support. "
             "If text_base64_compatibility is enabled, fetch may return a bounded UTF-8 text file as b64_string. "
             "Decode and actually read that text locally before adopting it; never decode credential/config files or binary files. "
-            "verified is true only when the entire candidate inventory and applicable authoritative content were checked. "
+            "The source_evidence_complete field describes ONLY source discovery and content-reading completeness. "
+            "It is unrelated to whether application code, tests, API calls, implementation behavior, acceptance criteria, or merge readiness were checked. "
+            "Do not mark source evidence incomplete because implementation or tests were not checked; those checks are out of scope for this Investigator. "
+            "Set source_evidence_gaps to a concise list of applicable authoritative files/tabs whose content could not be inspected or compared. "
+            "source_evidence_complete is true only when the recursive inventory is complete, all applicable authoritative source content was actually read, "
+            "and source_evidence_gaps is empty. Keep verified as a legacy alias for source_evidence_complete. "
             f"text_base64_compatibility: {bool(self.settings.get('text_base64_compatibility'))}\n"
             f"Folder: https://drive.google.com/drive/folders/{self.settings['specification_folder_id']}\n"
             f"Request: {redact_text(request)[:16000]}"
         ), "specification.schema.json")
-        if not result["verified"] or not result["inventory_complete"] or not result["sources"]:
+        if (not result.get("source_evidence_complete", result.get("verified", False))
+                or result.get("source_evidence_gaps")
+                or not result["inventory_complete"] or not result["sources"]):
             return None
         inventory = complete_inventory(events, self.settings['specification_folder_id'])
         reads = observed_read_locations(events)
@@ -125,6 +132,11 @@ class WorkspaceIntegration:
             source['title'] = observed['title']
         result["checked_at"] = datetime.now(timezone.utc).isoformat(timespec="seconds")
         result['inventory_count'] = len(inventory)
+        # Provenance checks above, not the model's unrelated code/test assessment, are
+        # the final authority for whether the returned specification evidence is verified.
+        result["source_evidence_complete"] = True
+        result["source_evidence_gaps"] = []
+        result["verified"] = True
         return result
 
     def pending_events(self, limit=3):

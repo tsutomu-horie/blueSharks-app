@@ -2,7 +2,7 @@ import json
 from pathlib import Path
 import tempfile
 import unittest
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 from tools.autodev.state import Store
 from tools.autodev.workspace import WorkspaceIntegration
@@ -133,3 +133,138 @@ class WorkspaceDeliveryTests(unittest.TestCase):
             self.store.supersede_legacy('PARENT', ['CHILD'])
         self.assertEqual(self.store.get_ticket('PARENT')['status'], 'BLOCKED')
         self.assertEqual(self.store.get_ticket('CHILD')['status'], 'TRIAGE')
+
+
+class SpecificationEvidenceTests(unittest.TestCase):
+    def setUp(self):
+        self.temporary = tempfile.TemporaryDirectory()
+        self.store = Store(Path(self.temporary.name) / 'state.sqlite3')
+        self.integration = WorkspaceIntegration(self.store, {
+            'google_workspace': {
+                'enabled': True,
+                'spreadsheet_id': 'test-sheet',
+                'worklog_sheet_id': 42,
+                'worklog_sheet_name': '自律開発作業ログ',
+                'specification_folder_id': 'folder-1',
+            },
+            'workspace': {}, 'codex': {},
+        })
+
+    def tearDown(self):
+        self.temporary.cleanup()
+
+    def test_source_evidence_is_verified_independently_of_code_and_test_status(self):
+        source = {
+            'title': 'ICCドリフト',
+            'url': 'https://docs.google.com/spreadsheets/d/test-sheet/edit',
+            'modified_at': '2026-10-02T00:00:00Z',
+            'read_locations': ["sheet:'育成ゲームテスト項目'!A90:AB100"],
+            'coverage_note': 'No.90/92/93の状態復元・同期仕様を確認。',
+        }
+        result = {
+            'verified': False,
+            'source_evidence_complete': True,
+            'source_evidence_gaps': [],
+            'inventory_complete': True,
+            'sources': [source],
+            'summary': '最新仕様の関連範囲を確認。',
+            'reason': '実装・テストはこの仕様確認フェーズでは検証していない。',
+        }
+        self.integration._run = Mock(return_value=(result, []))
+
+        with (
+            patch('tools.autodev.workspace.drive_id', return_value='source-1'),
+            patch('tools.autodev.workspace.complete_inventory', return_value={
+                'source-1': {'title': 'ICCドリフト', 'modified_at': source['modified_at']},
+            }),
+            patch('tools.autodev.workspace.observed_read_locations', return_value={
+                'source-1': {"sheet:育成ゲームテスト項目!A1:AB1037": 'actual-read-hash'},
+            }),
+            patch('tools.autodev.workspace.read_location_contains', return_value=True),
+        ):
+            evidence = self.integration.verify_specification('状態復元と二重同期防止')
+
+        self.assertIsNotNone(evidence)
+        self.assertTrue(evidence['verified'])
+        self.assertTrue(evidence['source_evidence_complete'])
+        self.assertEqual(evidence['source_evidence_gaps'], [])
+        self.assertEqual(evidence['sources'][0]['section_hashes'][source['read_locations'][0]], 'actual-read-hash')
+
+    def test_unread_applicable_source_keeps_specification_unverified(self):
+        self.integration._run = Mock(return_value=(
+            {
+                'verified': False,
+                'source_evidence_complete': False,
+                'source_evidence_gaps': ['ICCDB設計書の該当タブが未読'],
+                'inventory_complete': True,
+                'sources': [{'title': 'ICCドリフト'}],
+                'summary': '不足資料あり。',
+                'reason': '適用候補の内容が未読。',
+            },
+            [],
+        ))
+
+        self.assertIsNone(self.integration.verify_specification('状態復元と二重同期防止'))
+
+    def test_explicit_source_gap_blocks_even_when_completeness_flag_is_true(self):
+        self.integration._run = Mock(return_value=(
+            {
+                'verified': True,
+                'source_evidence_complete': True,
+                'source_evidence_gaps': ['ICCDB設計書の該当タブが未読'],
+                'inventory_complete': True,
+                'sources': [{'title': 'ICCドリフト'}],
+                'summary': '仕様を確認。',
+                'reason': '',
+            },
+            [],
+        ))
+
+        self.assertIsNone(self.integration.verify_specification('状態復元と二重同期防止'))
+
+    def test_claimed_source_without_observed_content_read_is_rejected(self):
+        source = {
+            'title': 'ICCドリフト',
+            'url': 'https://docs.google.com/spreadsheets/d/test-sheet/edit',
+            'modified_at': '2026-10-02T00:00:00Z',
+            'read_locations': ["sheet:'育成ゲームテスト項目'!A90:AB100"],
+            'coverage_note': '状態復元と通信失敗時の操作抑止を確認。',
+        }
+        result = {
+            'verified': True,
+            'source_evidence_complete': True,
+            'source_evidence_gaps': [],
+            'inventory_complete': True,
+            'sources': [source],
+            'summary': '仕様を確認。',
+            'reason': '',
+        }
+        self.integration._run = Mock(return_value=(result, []))
+
+        with (
+            patch('tools.autodev.workspace.drive_id', return_value='source-1'),
+            patch('tools.autodev.workspace.complete_inventory', return_value={
+                'source-1': {'title': 'ICCドリフト', 'modified_at': source['modified_at']},
+            }),
+            patch('tools.autodev.workspace.observed_read_locations', return_value={}),
+        ):
+            with self.assertRaisesRegex(RuntimeError, 'not matched to its actual inventory and content read'):
+                self.integration.verify_specification('状態復元と二重同期防止')
+
+    def test_model_inventory_claim_without_complete_observed_inventory_is_rejected(self):
+        self.integration._run = Mock(return_value=(
+            {
+                'verified': True,
+                'source_evidence_complete': True,
+                'source_evidence_gaps': [],
+                'inventory_complete': True,
+                'sources': [{'title': 'ICCドリフト'}],
+                'summary': '仕様を確認。',
+                'reason': '',
+            },
+            [],
+        ))
+
+        with patch('tools.autodev.workspace.complete_inventory', return_value=None):
+            with self.assertRaisesRegex(RuntimeError, 'complete recursive folder inventory'):
+                self.integration.verify_specification('状態復元と二重同期防止')
