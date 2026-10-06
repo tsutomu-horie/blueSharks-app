@@ -15,6 +15,7 @@ import uuid
 from typing import Any
 
 from .git_manager import GitIdentityError, GitManager, GitSafetyError
+from .intake import IntakeError, validate_payload
 from .runtime import CodexRunner
 from .state import Store, dump
 from .redaction import redact_value
@@ -536,23 +537,77 @@ class Orchestrator:
         result = self._agent(
             ticket, "investigator", "investigation",
             self.config["codex"]["developer_model"], self.config["codex"]["developer_reasoning"],
-            self._task_prompt(ticket, worktree, "Investigate only. Do not edit, add, delete, format, or generate files. Report evidence, exact files/lines, hypotheses, and suggested next Ticket."),
-            SCHEMAS / "developer.schema.json", write=False,
+            self._task_prompt(
+                ticket, worktree,
+                "Investigate only. Do not edit, add, delete, format, or generate source files. "
+                "Report source-grounded evidence with exact files/lines and return proposed child Tickets "
+                "in ticket_candidates as complete Intake payload objects matching the supplied investigation schema. "
+                "Do not use type=question or add proposal-only fields. Unresolved behavior must be a "
+                "write_permission=false investigation proposal with explicit clarifying_questions. Every proposed "
+                "child Ticket must set needs_specification=true and specification_required=true so a separate "
+                "current-source gate runs after registration; this report cannot transfer Verified Evidence or clear that gate. "
+                "Do not invent check IDs, test targets, sources, or implementation details. "
+                "These are proposals only, not registered or approved Tickets."
+            ),
+            SCHEMAS / "investigation.schema.json", write=False,
         )
         if result.exit_code:
             self.store.transition(ticket["id"], "BLOCKED", "INVESTIGATION_FAILED", {"log": str(result.log_path)})
             return False
+        report = self._parse_json(result.text(), result.output_path)
         artifact = Path(self.config["workspace"]["artifacts_dir"]) / ticket["id"] / "investigation.json"
         artifact.parent.mkdir(parents=True, exist_ok=True)
-        artifact.write_text(result.text())
+        artifact.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n")
         self.store.add_artifact(ticket["id"], "investigation", artifact)
+        if report["needs_decision"] or report["scope_change_requests"]:
+            self.store.transition(ticket["id"], "NEEDS_DECISION", "INVESTIGATION_REQUIRES_DECISION", {
+                "summary": report["summary"],
+                "scope_change_requests": report["scope_change_requests"],
+                "external_action_request": report["current_state"].get("external_action_request"),
+                "artifact": str(artifact),
+            })
+            return False
+        candidate_errors: list[dict[str, Any]] = []
+        candidate_summaries: list[dict[str, Any]] = []
+        for index, candidate in enumerate(report["ticket_candidates"], start=1):
+            try:
+                if candidate["project"] != ticket["project"] or candidate["project"] == "both":
+                    raise IntakeError("proposed child Ticket must target the investigation's single repository")
+                if candidate["specification_required"] is not True or candidate["needs_specification"] is not True:
+                    raise IntakeError("proposed child Tickets must remain held until a separate specification-gate verification")
+                validated = validate_payload(
+                    dict(candidate),
+                    f"Parent investigation {ticket['id']}: {candidate['title']}",
+                    self.config,
+                    project_override=candidate["project"],
+                    priority_override=candidate["priority"],
+                    force_investigation=candidate["type"] == "investigation",
+                )
+                candidate_summaries.append({
+                    "title": validated["title"],
+                    "type": validated["type"],
+                    "priority": validated["priority"],
+                    "project": validated["project"],
+                    "initial_status": validated["initial_status"],
+                })
+            except (IntakeError, KeyError, TypeError, ValueError) as exc:
+                candidate_errors.append({"index": index, "reason": str(exc)[:500]})
+        if candidate_errors:
+            self.store.transition(
+                ticket["id"], "NEEDS_DECISION", "INVESTIGATION_TICKET_PROPOSAL_INVALID",
+                {"findings": candidate_errors, "artifact": str(artifact)},
+            )
+            return False
+        self.store.add_event(ticket["id"], "INVESTIGATION_TICKET_CANDIDATES_VALIDATED", {
+            "count": len(candidate_summaries), "candidates": candidate_summaries,
+        })
         changed = self.git.changed_files(worktree, str(ticket.get("base_commit") or "HEAD"))
         if changed:
             self.store.transition(ticket["id"], "NEEDS_DECISION", "INVESTIGATION_MODIFIED_FILES", {"files": changed})
             return False
         self.store.transition(ticket["id"], "READY_FOR_REVIEW", "INVESTIGATION_REPORT_READY", {"artifact": str(artifact)})
         self.store.transition(ticket["id"], "REVIEWING", "INVESTIGATION_REVIEW_STARTED", {})
-        review = self._review(ticket, worktree, {"passed": True, "commands": [], "changed_files": []}, {"summary": result.text()})
+        review = self._review(ticket, worktree, {"passed": True, "commands": [], "changed_files": []}, {"summary": json.dumps(report, ensure_ascii=False)})
         if review.exit_code:
             self.store.transition(ticket["id"], "BLOCKED", "INVESTIGATION_REVIEW_FAILED", {"log": str(review.log_path)})
             return False

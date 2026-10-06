@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["summary", "current_state", "scope_change_requests", "p2_candidates", "ticket_candidates", "needs_decision"],
+  "properties": {
+    "summary": {"type": "string", "maxLength": 4000},
+    "current_state": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["last_action", "external_action_request"],
+      "properties": {
+        "last_action": {"type": "string", "maxLength": 2000},
+        "external_action_request": {"type": ["string", "null"], "maxLength": 2000}
+      }
+    },
+    "scope_change_requests": {"type": "array", "maxItems": 12, "items": {"type": "string", "maxLength": 1000}},
+    "p2_candidates": {"type": "array", "maxItems": 20, "items": {"type": "string", "maxLength": 500}},
+    "ticket_candidates": {
+      "type": "array",
+      "maxItems": 12,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["title", "type", "project", "priority", "goal", "acceptance_criteria", "allowed_scope", "forbidden_scope", "tests", "test_targets", "dependencies", "risk", "max_repair_cycles", "write_permission", "needs_specification", "specification_required", "clarifying_questions", "specification_source", "specification_checked_at"],
+        "properties": {
+          "title": {"type": "string", "minLength": 5, "maxLength": 120},
+          "type": {"enum": ["bugfix", "feature", "investigation", "maintenance"]},
+          "project": {"enum": ["app", "server"]},
+          "priority": {"enum": ["P0", "P1", "P2"]},
+          "goal": {"type": "string", "minLength": 10, "maxLength": 1500},
+          "acceptance_criteria": {"type": "array", "maxItems": 12, "items": {"type": "string", "minLength": 5, "maxLength": 500}},
+          "allowed_scope": {"type": "array", "maxItems": 30, "items": {"type": "string", "minLength": 1, "maxLength": 180}},
+          "forbidden_scope": {"type": "array", "maxItems": 30, "items": {"type": "string", "minLength": 1, "maxLength": 180}},
+          "tests": {"type": "array", "maxItems": 12, "items": {"type": "string", "minLength": 1, "maxLength": 80}},
+          "test_targets": {"type": "array", "maxItems": 40, "items": {"type": "string", "minLength": 1, "maxLength": 240}},
+          "dependencies": {"type": "array", "maxItems": 20, "items": {"type": "string", "minLength": 1, "maxLength": 80}},
+          "risk": {"enum": ["low", "medium", "high", "critical"]},
+          "max_repair_cycles": {"type": "integer", "minimum": 0, "maximum": 2},
+          "write_permission": {"type": "boolean"},
+          "needs_specification": {"const": true},
+          "specification_required": {"const": true},
+          "clarifying_questions": {"type": "array", "maxItems": 5, "items": {"type": "string", "maxLength": 400}},
+          "specification_source": {"type": ["string", "null"], "maxLength": 500},
+          "specification_checked_at": {"type": ["string", "null"], "maxLength": 80}
+        }
+      }
+    },
+    "needs_decision": {"type": "boolean"}
+  }
+}

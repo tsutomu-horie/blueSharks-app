@@ -4,6 +4,14 @@
 
 SQLite Orchestratorは通常プログラムとして状態・lease・タイムアウト・worktree・次Ticketを管理する。判断が必要なイベントを`management_requests`へ保存し、同じTicket/仕様/差分に対して要求を重複生成しない。管理判断待ちではモデルを呼ばずSQLiteだけを確認する。承認は要求作成時のTicket・差分・HEADと照合され、変更後の古い承認は拒否される。
 
+## 仕様ゲート回復Agent
+
+Ticketが`NEEDS_SPECIFICATION`、または仕様・調査成果物のReviewer指摘で`NEEDS_DECISION`になった場合、Codex管理heartbeatはその固有イベントIDをmarkerで重複確認し、GPT-6.1 Solの仕様調査・Ticket化Agentを起動する。これは状態監視用Supervisorではなく、実際の保留イベントに対する限定的な回復作業である。現在のheartbeatは7分周期で、状態不変なら通知・Agent起動を行わない。
+
+Agentは最新のICC開発案件資料、許可されたユーザー提供資料、正確なReviewer指摘を再確認し、仕様根拠の補完、調査成果物の修復、Intake schemaに合う`ticket_candidates`の作成、必要な独立再レビュー手配を行う。候補は親の調査成果物として保持し、独立レビュー前に新しい実装Ticketとして登録しない。候補JSONは`investigation.schema.json`で構造化し、Orchestratorは各候補をIntake validatorに通してからReviewerへ渡す。
+
+Agentは製品コード、SQLite、Ticket状態、Sheetsを直接変更せず、コード差分・P0/P1指摘・未確定仕様を自己承認しない。Orchestratorは各候補を既存Intake validatorに通し、全候補を`needs_specification=true`かつ`specification_required=true`の保留状態に固定する。親調査のEvidenceは子候補へ暗黙継承せず、登録後に各Ticketの独立した最新仕様ゲートを通す。検証済みの結果をCodex管理側が確認してOrchestrator経由で反映する。人間判断が真に必要な点は具体的に分離して保留し、推測で`READY`へ進めない。既存の独立Reviewer・テスト・レビュー済SHA・マージ条件は変わらない。
+
 ## 管理の入口
 
 ```sh
@@ -39,6 +47,6 @@ readback JSONは実際の読取ツール結果から作る。`spreadsheet_id`, `
 
 ## 継続管理
 
-このスレッドのheartbeatで5分ごとに管理要求・完了・障害を確認する。要求のない時にCLI管理AIを起動しない。変化なしの実行は静かにし、完了・重要な進捗・障害・人間判断だけを通知する。これは保存された管理スレッドの自動再開であり、モデルが途切れず推論する仕組みではない。ローカル管理にはMacの稼働とCodexアプリの起動が必要。
+このスレッドのheartbeatで管理要求・完了・障害・仕様ゲート回復対象を確認する。管理要求待ちではモデルを呼ばずSQLiteだけを見る。変化なしの実行は静かにし、完了・重要な進捗・障害・人間判断だけを通知する。これは保存された管理スレッドの自動再開であり、モデルが途切れず推論する仕組みではない。ローカル管理にはMacの稼働とCodexアプリの起動が必要。
 
 ユーザーの終了・停止を優先し、pause後に勝手に再開しない。始動準備が未完了の場合は`AUTODEV_READINESS_HANDOFF.md`から承認済み準備作業を継続し、検証・敵対的レビューを通過するまでRunnerを開始しない。
