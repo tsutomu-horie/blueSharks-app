@@ -1,5 +1,14 @@
 # 自律Runner始動準備の継続記録
 
+## 最新追記（2026-10-06）：仕様ゲート回復Agent
+
+- 仕様不足または仕様/調査成果物のReviewer差戻しでTicketが停止したとき、Codex管理heartbeatは固有イベントIDをmarkerで重複確認し、GPT-6.1 Solの仕様調査・Ticket化Agentを限定起動する。heartbeatはACTIVE（7分周期）だが、状態不変時には起動・通知しない。これはCLI Supervisorではなく、Codex管理下の回復担当。
+- Agentは最新資料の再照合、調査成果物の修復、Intake準拠のTicket候補作成、独立Reviewerへの再レビュー手配を担当する。DB・Ticket状態・製品コード・Sheetを直接変更せず、P0/P1・レビュー・人間判断を自己承認しない。Codex管理側が根拠とReviewer結果を確認してOrchestratorへ反映する。
+- `investigation.schema.json`を追加し、調査Agentが`ticket_candidates`をIntake payload形式で出力できるようにする。Orchestratorは提案をメモリ内でIntake validatorに通し、無効な候補は`NEEDS_DECISION`のまま独立レビューへ進めない。候補はすべて`needs_specification=true`かつ`specification_required=true`とし、親TicketのEvidenceを暗黙継承して実行可能扱いにしない。候補は親調査成果物の一部であり、独立レビュー前に重複する子Ticketとして登録しない。
+- 現在のP0: `BS-20261002-87463C`は`NEEDS_SPECIFICATION`、`BS-20261002-A2EC09`は`NEEDS_DECISION`。育成ゲーム変更は新規サイクルのみを対象とし、既存の保存済み卵データ移行は含めない。ローカルICCDB設計書を再読したが、Drive上同名原本との同一性と全Drive資料の最新性は未確認。
+- 管理画面案は初回独立レビューでIntake形式不備（P1）。修正版は全3件がIntake validatorを通過したが、独立レビューは「子Ticketとして登録せず、親調査Ticketの成果物に保持」と判定。実装可能な仕様と既存`BS-HIGH-004`の現在状態を独立確認するまで保留。PR #40はdraft/未mergeを維持。
+- ICCドリフトの自律開発作業ログ row 42–45 に、ゲートAgent起動、根拠確認、Reviewer差戻し、基盤schema修正をmarker付きで記録し、保留判断は赤字でreadback確認済み。
+
 更新: 2026-10-01。ユーザーは既知の障害を解消し、実行可能なチケットを整えてRunnerを開始することを許可済み。最新の追加指示により、全体管理はこのCodexスレッドへ移す。CLI管理AI・CLI作業ログAIは使わない。詳細は`AUTODEV_MANAGEMENT.md`。主力workerはGPT-6.1 Sol、CLI IntakeはLuna low、Astra最終エスカレーションはCodex上。
 
 ## 現在の作業
