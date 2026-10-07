@@ -532,3 +532,11 @@ class HeldRecoveryTests(unittest.TestCase):
         self.assertNotIn('synthetic-token', json.dumps(persisted))
         self.assertNotIn('synthetic-secret', json.dumps(persisted))
         self.assertEqual(ticket['current_state'], persisted)
+
+    def test_invalid_structured_proposal_is_exposed_for_management(self):
+        self.store.transition('HELD', 'NEEDS_DECISION', 'INVESTIGATION_TICKET_PROPOSAL_INVALID',
+                              {'errors': ['candidate fails Intake validation']})
+        self.engine._process_held_decisions()
+        request = self.bridge.pending()[0]['id']
+        self.assertEqual(self.bridge.show(request)['payload']['context']['hold_event_type'],
+                         'INVESTIGATION_TICKET_PROPOSAL_INVALID')

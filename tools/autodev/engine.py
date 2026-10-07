@@ -238,7 +238,8 @@ class Orchestrator:
     def _process_held_decisions(self) -> None:
         """Expose known stranded holds without approving or starting any worker."""
         events = {'REVIEW_NEEDS_DECISION', 'INVESTIGATION_REVIEW_BLOCKED',
-                  'INVESTIGATION_MODIFIED_FILES', 'SCOPE_CHANGE_REQUESTED'}
+                  'INVESTIGATION_MODIFIED_FILES', 'INVESTIGATION_REQUIRES_DECISION',
+                  'INVESTIGATION_TICKET_PROPOSAL_INVALID', 'SCOPE_CHANGE_REQUESTED'}
         for row in self.store.list_tickets('NEEDS_DECISION'):
             ticket = ticket_from_row(row)
             if ticket['cancel_requested'] or ticket['current_state'].get('management_wait'):
