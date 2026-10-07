@@ -331,7 +331,9 @@ class Orchestrator:
                 self._cleanup(ticket, worktree, worktree_lease, repo_lease, merged=False)
                 return
 
-            if ticket["risk"] in {"high", "critical"} or ticket["priority"] == "P0" or len(ticket["allowed_scope"]) > 4:
+            resume_report = self._consume_quality_resume(ticket, worktree)
+            scoped_analysis = resume_report is not None
+            if resume_report is None and (ticket["risk"] in {"high", "critical"} or ticket["priority"] == "P0" or len(ticket["allowed_scope"]) > 4):
                 self._create_plan(ticket, worktree)
 
             findings: list[dict[str, Any]] = []
@@ -345,15 +347,18 @@ class Orchestrator:
                     self.store.transition(ticket_id, "NEEDS_DECISION", "SECRET_PATTERN_BEFORE_SNAPSHOT", {"findings": secret_candidates})
                     return
                 self.git.snapshot(ticket_id, worktree, base_revision)
-                developer = self._developer(ticket, worktree, findings)
-                self.git.validate_worktree_identity(ticket["project"], ticket_id, worktree)
-                if developer.exit_code != 0:
-                    findings = [{"kind": "developer_failed", "exit_code": developer.exit_code, "log": str(developer.log_path)}]
-                    if not self._repair_or_replan(ticket, worktree, findings):
-                        return
-                    continue
-                report = self._parse_json(developer.text(), developer.output_path)
-                self._update_developer_state(ticket, report.get("current_state", {}))
+                if resume_report is not None:
+                    report, resume_report = resume_report, None
+                else:
+                    developer = self._developer(ticket, worktree, findings)
+                    self.git.validate_worktree_identity(ticket["project"], ticket_id, worktree)
+                    if developer.exit_code != 0:
+                        findings = [{"kind": "developer_failed", "exit_code": developer.exit_code, "log": str(developer.log_path)}]
+                        if not self._repair_or_replan(ticket, worktree, findings):
+                            return
+                        continue
+                    report = self._parse_json(developer.text(), developer.output_path)
+                    self._update_developer_state(ticket, report.get("current_state", {}))
                 if report.get("p2_candidates"):
                     self.store.add_event(ticket_id, "P2_CANDIDATE", {"items": report["p2_candidates"]})
                 if report.get("needs_decision") or report.get("scope_change_requests"):
@@ -362,7 +367,7 @@ class Orchestrator:
                     findings = [{"kind": "approved_scope_change", "note": "Continue under updated ticket scope."}]
                     continue
 
-                qc = self._mechanical_qc(ticket, worktree)
+                qc = self._mechanical_qc(ticket, worktree, scoped_analysis=True) if scoped_analysis else self._mechanical_qc(ticket, worktree)
                 if not qc["passed"]:
                     findings = qc["findings"]
                     environment_blockers = [item for item in findings if item.get("kind") == "environment_blocker"]
@@ -587,7 +592,7 @@ class Orchestrator:
             SCHEMAS / "reviewer.schema.json", write=False,
         )
 
-    def _mechanical_qc(self, ticket: dict[str, Any], worktree: Path) -> dict[str, Any]:
+    def _mechanical_qc(self, ticket: dict[str, Any], worktree: Path, *, scoped_analysis: bool = False) -> dict[str, Any]:
         findings = self.git.mechanical_scope_check(ticket, worktree)
         project = self.git.project(ticket["project"])
         commands: list[dict[str, Any]] = []
@@ -608,6 +613,12 @@ class Orchestrator:
                     if self.store.cancelled(ticket["id"]):
                         raise TicketCancelled(ticket["id"])
                     args = [part.replace("{target}", target or "") for part in argv]
+                    if scoped_analysis and check_id == 'flutter_analyze' and not has_target:
+                        changed_dart = sorted(path for path in self.git.changed_files(worktree, ticket.get('base_commit')) if path.endswith('.dart'))
+                        if not changed_dart or any(PurePosixPath(path).is_absolute() or '..' in PurePosixPath(path).parts or path.startswith('-') for path in changed_dart):
+                            findings.append({'kind': 'invalid_analysis_targets', 'test': check_id})
+                            continue
+                        args.extend(changed_dart)
                     if any(not part for part in args):
                         findings.append({"kind": "invalid_command_template", "test": check_id})
                         continue
@@ -875,6 +886,37 @@ class Orchestrator:
         self.store.transition(ticket_id, next_status, "REPLAN_REQUIRED", {"artifact": str(artifact), "decision": report.get("decision"), "summary": report.get("rationale")})
         return False
 
+    def _consume_quality_resume(self, ticket: dict[str, Any], worktree: Path) -> dict[str, Any] | None:
+        with self.store.transaction() as db:
+            live = self.management._decode_ticket(db.execute('SELECT * FROM tickets WHERE id=?', (ticket['id'],)).fetchone())
+            if live['cancel_requested'] or live['status'] == 'CANCELLED':
+                raise TicketCancelled(ticket['id'])
+            resume = live['current_state'].get('quality_resume')
+            if not resume:
+                return None
+            request = self.management.show(resume['request_id'])
+            context = request['payload']['context']
+            if (request['ticket_id'] != ticket['id'] or request['status'] != 'DECIDED'
+                    or request['decision']['decision'] != 'APPROVE' or request['decision']['scope_additions']
+                    or context.get('resume_phase') != 'quality_control' or context.get('requests')):
+                raise GitSafetyError('Quality resume has no matching manager validation approval')
+            changed = (self.management._fingerprint(live, request['event_type'], context) != request['payload']['fingerprint']
+                       or resume['diff_digest'] != request['payload']['diff_digest']
+                       or resume['head_sha'] != request['payload']['head_sha']
+                       or self.git.diff_digest(worktree, live['base_commit']) != request['payload']['diff_digest']
+                       or self.git.git(worktree, ['rev-parse', 'HEAD']) != request['payload']['head_sha'])
+            live['current_state'] = {**live['current_state'], 'quality_resume': None}
+            db.execute('UPDATE tickets SET current_state_json=?,updated_at=? WHERE id=?',
+                       (dump(live['current_state']), datetime.now(timezone.utc).isoformat(timespec='seconds'), live['id']))
+            self.store._event(db, live['id'], 'QUALITY_VALIDATION_CHANGED' if changed else 'QUALITY_VALIDATION_RESUMED',
+                              live['status'], live['status'], {'request_id': request['id'], 'diff_digest': resume['diff_digest']})
+        ticket.clear()
+        ticket.update(live)
+        if changed:
+            self.management.request(ticket, request['event_type'], context, request['payload']['prompt'], wait=False)
+            raise GitSafetyError('Changed quality resume unexpectedly reused an approval')
+        return {'summary': resume['summary'], 'current_state': {}, 'scope_change_requests': [], 'needs_decision': False}
+
     def _resolve_scope_change(self, ticket: dict[str, Any], worktree: Path, report: dict[str, Any]) -> bool:
         decision = self._supervisor(ticket, worktree, "SCOPE_CHANGE_REQUESTED", {"requests": report.get("scope_change_requests", []), "developer_needs_decision": report.get("needs_decision"), 'developer_summary': report.get('summary', ''), 'external_action': report.get('current_state', {}).get('external_action_request')})
         if decision.get("decision") != "APPROVE":
@@ -1111,7 +1153,7 @@ class Orchestrator:
 
     def _update_developer_state(self, ticket, current):
         reserved = {'intake','specification_evidence','approved_gate_evidence','approved_supervisor_gates',
-                    'merge_repair','merge_revision',
+                    'merge_repair','merge_revision','quality_resume',
                     'management_wait','management_decision','reviewed_head_sha','next_merge_check_at',
                     'human_resolution','legacy_parent','legacy_migration_pending','migration_initial_status',
                     'replacement_ticket_ids','unknown_dependencies','plan'}

@@ -48,6 +48,197 @@ class ManagementTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'stale'):
             self.bridge.decide(request_id, self.approval)
 
+    def waiting_validation_request(self):
+        context = {'requests': [], 'external_action': 'Run target tests and independent review', 'developer_summary': 'Implementation is ready for validation'}
+        with self.assertRaises(ManagementPending):
+            self.bridge.request(self.ticket, 'SCOPE_CHANGE_REQUESTED', context, 'Review\nTicket context:\n{}', wait=False)
+        request_id = self.bridge.pending()[0]['id']
+        self.store.transition('MANAGED', 'NEEDS_DECISION', 'WAIT')
+        return request_id
+
+    def test_refresh_supersedes_stale_request_without_copying_approval(self):
+        request_id = self.waiting_validation_request()
+        self.store.update_ticket('MANAGED', goal='current goal')
+        replacement = self.bridge.refresh(request_id)
+        self.assertNotEqual(request_id, replacement['id'])
+        self.assertEqual(self.bridge.show(request_id)['status'], 'SUPERSEDED')
+        self.assertEqual(replacement['status'], 'PENDING')
+        self.assertIsNone(replacement['decision'])
+        self.assertIn('current goal', replacement['payload']['prompt'])
+        self.assertEqual(self.bridge.refresh(request_id)['id'], replacement['id'])
+        self.assertEqual([r['id'] for r in self.bridge.pending()], [replacement['id']])
+        with self.assertRaisesRegex(ValueError, 'superseded'):
+            self.bridge.decide(request_id, self.approval)
+        self.bridge.decide(replacement['id'], self.approval)
+        self.assertEqual(self.store.get_ticket('MANAGED')['status'], 'READY')
+        self.assertNotIn('quality_resume', self.bridge._ticket('MANAGED')['current_state'])
+
+    def test_refresh_requires_active_wait_and_rolls_back_on_event_failure(self):
+        request_id = self.waiting_validation_request()
+        with patch.object(self.store, '_event', side_effect=RuntimeError('audit failed')):
+            with self.assertRaises(RuntimeError):
+                self.bridge.refresh(request_id)
+        self.assertEqual(self.bridge.show(request_id)['status'], 'PENDING')
+        self.assertEqual(self.bridge._ticket('MANAGED')['current_state']['management_wait']['request_id'], request_id)
+        self.store.update_ticket('MANAGED', current_state_json=json.dumps({}))
+        with self.assertRaisesRegex(ValueError, 'active management wait'):
+            self.bridge.refresh(request_id)
+
+    def validation_approval(self):
+        request_id = self.waiting_validation_request()
+        self.store.update_ticket('MANAGED', worktree=self.temporary.name, base_commit='base')
+        self.bridge.git = Mock()
+        self.bridge.git.diff_digest.return_value = 'diff'
+        self.bridge.git.git.return_value = 'head'
+        replacement = self.bridge.refresh(request_id, validation_only=True)
+        with self.assertRaisesRegex(ValueError, 'cannot add scope'):
+            self.bridge.decide(replacement['id'], {**self.approval, 'scope_additions': ['lib/new/**']})
+        self.bridge.decide(replacement['id'], self.approval)
+        return replacement['id']
+
+    def test_validation_resume_is_pinned_and_does_not_skip_qc_or_review(self):
+        request_id = self.validation_approval()
+        ticket = self.bridge._ticket('MANAGED')
+        self.assertEqual(ticket['current_state']['quality_resume']['request_id'], request_id)
+        self.store.transition('MANAGED', 'RUNNING', 'CLAIM')
+        engine = Orchestrator.__new__(Orchestrator)
+        engine.store, engine.management, engine.git = self.store, self.bridge, self.bridge.git
+        engine.config = {'git': {'auto_merge': False}}
+        engine.workspace = Mock(enabled=False)
+        engine.git.validate_resume_worktree.return_value = (Path(self.temporary.name), 'bot/MANAGED')
+        engine.git._secret_findings.return_value = []
+        engine.git.stage_and_commit.return_value = 'reviewed-commit'
+        engine.git.push_and_open_pr.return_value = 'https://example.test/pr/1'
+        engine._prepare_project = Mock()
+        engine._create_plan = Mock()
+        engine._developer = Mock(side_effect=AssertionError('validation approval must not rerun Developer'))
+        engine._mechanical_qc = Mock(return_value={'passed': True, 'findings': []})
+        result = Mock(exit_code=0, output_path=Path(self.temporary.name) / 'review.json')
+        result.text.return_value = json.dumps({'verdict': 'PASS', 'findings': [], 'summary': 'Independent review passed'})
+        engine._review = Mock(return_value=result)
+        engine._execute(ticket_from_row(self.store.get_ticket('MANAGED')))
+        engine._developer.assert_not_called()
+        engine._create_plan.assert_not_called()
+        engine._mechanical_qc.assert_called_once()
+        self.assertTrue(engine._mechanical_qc.call_args.kwargs['scoped_analysis'])
+        engine._review.assert_called_once()
+        self.assertEqual(self.store.get_ticket('MANAGED')['status'], 'READY_TO_MERGE')
+        self.assertIsNone(self.bridge._ticket('MANAGED')['current_state']['quality_resume'])
+
+    def test_validation_resume_changed_diff_creates_new_unapproved_request(self):
+        self.validation_approval()
+        self.store.transition('MANAGED', 'RUNNING', 'CLAIM')
+        engine = Orchestrator.__new__(Orchestrator)
+        engine.store, engine.management, engine.git = self.store, self.bridge, self.bridge.git
+        engine.git.diff_digest.return_value = 'changed-diff'
+        ticket = ticket_from_row(self.store.get_ticket('MANAGED'))
+        with self.assertRaises(ManagementPending):
+            engine._consume_quality_resume(ticket, Path(self.temporary.name))
+        pending = self.bridge.pending()
+        self.assertEqual(len(pending), 1)
+        self.assertEqual(pending[0]['status'], 'PENDING')
+        self.assertIsNone(self.bridge._ticket('MANAGED')['current_state']['quality_resume'])
+
+    def test_decision_transaction_rechecks_superseded_request(self):
+        request_id = self.waiting_validation_request()
+        original = self.store.transaction
+        def race():
+            with patch.object(self.store, 'transaction', original):
+                self.bridge.refresh(request_id)
+            return original()
+        with patch.object(self.store, 'transaction', side_effect=race):
+            with self.assertRaisesRegex(ValueError, 'superseded'):
+                self.bridge.decide(request_id, self.approval)
+        self.assertEqual(self.bridge.show(request_id)['status'], 'SUPERSEDED')
+        self.assertEqual(self.store.get_ticket('MANAGED')['status'], 'NEEDS_DECISION')
+
+    def test_decision_transaction_rechecks_cancellation(self):
+        request_id = self.waiting_validation_request()
+        original = self.store.transaction
+        def race():
+            with patch.object(self.store, 'transaction', original):
+                self.store.request_cancel('MANAGED', 'user stop')
+            return original()
+        with patch.object(self.store, 'transaction', side_effect=race):
+            with self.assertRaisesRegex(ValueError, 'no longer active'):
+                self.bridge.decide(request_id, self.approval)
+        self.assertNotEqual(self.store.get_ticket('MANAGED')['status'], 'READY')
+        self.assertEqual(self.bridge.show(request_id)['status'], 'PENDING')
+
+    def test_quality_resume_copies_request_binding_not_postcheck_diff(self):
+        request_id = self.waiting_validation_request()
+        self.store.update_ticket('MANAGED', worktree=self.temporary.name, base_commit='base')
+        self.bridge.git = Mock()
+        self.bridge.git.diff_digest.return_value = 'reviewed-diff'
+        self.bridge.git.git.return_value = 'head'
+        replacement = self.bridge.refresh(request_id, validation_only=True)
+        original = self.bridge._fingerprint
+        def after_check(ticket, event, context):
+            result = original(ticket, event, context)
+            self.bridge.git.diff_digest.return_value = 'changed-after-check'
+            return result
+        with patch.object(self.bridge, '_fingerprint', side_effect=after_check):
+            self.bridge.decide(replacement['id'], self.approval)
+        self.assertEqual(self.bridge._ticket('MANAGED')['current_state']['quality_resume']['diff_digest'], 'reviewed-diff')
+        self.store.transition('MANAGED', 'RUNNING', 'CLAIM')
+        engine = Orchestrator.__new__(Orchestrator)
+        engine.store, engine.management, engine.git = self.store, self.bridge, self.bridge.git
+        with self.assertRaises(ManagementPending):
+            engine._consume_quality_resume(ticket_from_row(self.store.get_ticket('MANAGED')), Path(self.temporary.name))
+
+    def test_quality_resume_changed_acceptance_requires_new_approval(self):
+        self.validation_approval()
+        self.store.update_ticket('MANAGED', acceptance_json=json.dumps(['new acceptance criterion']))
+        self.store.transition('MANAGED', 'RUNNING', 'CLAIM')
+        engine = Orchestrator.__new__(Orchestrator)
+        engine.store, engine.management, engine.git = self.store, self.bridge, self.bridge.git
+        with self.assertRaises(ManagementPending):
+            engine._consume_quality_resume(ticket_from_row(self.store.get_ticket('MANAGED')), Path(self.temporary.name))
+        self.assertEqual(self.bridge.pending()[0]['status'], 'PENDING')
+
+    def test_quality_resume_preserves_concurrent_specification_state(self):
+        self.validation_approval()
+        self.store.transition('MANAGED', 'RUNNING', 'CLAIM')
+        stale = ticket_from_row(self.store.get_ticket('MANAGED'))
+        current = {**stale['current_state'], 'specification_evidence': {'verified': True, 'summary': 'new source evidence'}}
+        self.store.update_ticket('MANAGED', current_state_json=json.dumps(current))
+        engine = Orchestrator.__new__(Orchestrator)
+        engine.store, engine.management, engine.git = self.store, self.bridge, self.bridge.git
+        with self.assertRaises(ManagementPending):
+            engine._consume_quality_resume(stale, Path(self.temporary.name))
+        state = self.bridge._ticket('MANAGED')['current_state']
+        self.assertEqual(state['specification_evidence']['summary'], 'new source evidence')
+        self.assertIsNone(state['quality_resume'])
+
+    def test_validation_refresh_rejects_actual_scope_request(self):
+        request_id = self.waiting_validation_request()
+        # Make another real scope request through the normal bridge.
+        ticket = self.bridge._ticket('MANAGED')
+        with self.assertRaises(ManagementPending):
+            self.bridge.request(ticket, 'SCOPE_CHANGE_REQUESTED', {'requests': ['lib/new/**'], 'external_action': 'review'}, 'Scope', wait=False)
+        active = self.bridge._ticket('MANAGED')['current_state']['management_wait']['request_id']
+        with self.assertRaisesRegex(ValueError, 'without scope additions'):
+            self.bridge.refresh(active, validation_only=True)
+
+    def test_scoped_validation_analysis_covers_all_changed_dart_files(self):
+        engine = Orchestrator.__new__(Orchestrator)
+        engine.store = self.store
+        engine.git = Mock()
+        engine.git.mechanical_scope_check.return_value = []
+        engine.git.scope_findings.return_value = []
+        engine.git.changed_files.return_value = ['lib/game.dart', 'test/game_test.dart', 'README.md']
+        engine.git.project.return_value = {'checks': {'flutter_analyze': ['flutter', 'analyze', '--no-pub']}}
+        engine._mechanical_command = Mock(return_value={'exit_code': 0, 'log': '/test.log'})
+        ticket = {**self.ticket, 'tests': ['flutter_analyze']}
+        self.assertTrue(engine._mechanical_qc(ticket, Path(self.temporary.name), scoped_analysis=True)['passed'])
+        self.assertEqual(engine._mechanical_command.call_args.args[2], ['flutter', 'analyze', '--no-pub', 'lib/game.dart', 'test/game_test.dart'])
+        engine._mechanical_qc(ticket, Path(self.temporary.name))
+        self.assertEqual(engine._mechanical_command.call_args.args[2], ['flutter', 'analyze', '--no-pub'])
+        engine.git.changed_files.return_value = ['../escape.dart']
+        engine._mechanical_command.reset_mock()
+        self.assertFalse(engine._mechanical_qc(ticket, Path(self.temporary.name), scoped_analysis=True)['passed'])
+        engine._mechanical_command.assert_not_called()
+
     def test_cached_decision_is_not_applied_after_ticket_changes(self):
         request_id = self.request()
         self.bridge.decide(request_id, self.approval)
@@ -149,10 +340,11 @@ class ManagementTests(unittest.TestCase):
     def test_developer_cannot_register_management_approval_or_source_evidence(self):
         engine = Orchestrator.__new__(Orchestrator)
         engine.store = self.store
-        engine._update_developer_state(self.ticket, {'approved_gate_evidence': [{'category': 'dependency_change', 'files': ['pubspec.yaml'], 'digest': 'fake'}], 'specification_evidence': {'verified': True}, 'last_action': 'source edit'})
+        engine._update_developer_state(self.ticket, {'approved_gate_evidence': [{'category': 'dependency_change', 'files': ['pubspec.yaml'], 'digest': 'fake'}], 'specification_evidence': {'verified': True}, 'quality_resume': {'request_id': 1}, 'last_action': 'source edit'})
         state = self.store.get_ticket('MANAGED')['current_state_json']
         self.assertNotIn('approved_gate_evidence', state)
         self.assertNotIn('specification_evidence', state)
+        self.assertNotIn('quality_resume', state)
         self.assertIn('source edit', state)
 
     def merge_request(self):

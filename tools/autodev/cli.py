@@ -168,6 +168,9 @@ def build_parser() -> argparse.ArgumentParser:
     commands.add_parser('manage-list', help='list requests awaiting the manager in this Codex conversation')
     management_show = commands.add_parser('manage-show', help='read the exact Ticket/diff-bound management request')
     management_show.add_argument('request_id', type=int)
+    management_refresh = commands.add_parser('manage-refresh', help='replace a stale waiting request with current Ticket/diff evidence; never copy approval')
+    management_refresh.add_argument('request_id', type=int)
+    management_refresh.add_argument('--validation-only', action='store_true', help='manager-confirmed validation request: resume at QC/review, without another Developer turn')
     management_decide = commands.add_parser('manage-decide', help='record the decision made in Codex; never launch a CLI manager')
     management_decide.add_argument('request_id', type=int)
     management_decide.add_argument('--decision-file', type=Path, required=True)
@@ -227,6 +230,10 @@ def main(argv: list[str] | None = None) -> int:
         print(json.dumps({"ticket": ticket, "events": events}, ensure_ascii=False, indent=2))
         return 0
     store = make_store(config)
+    if args.command == 'manage-refresh':
+        from .management import ManagementBridge
+        print(json.dumps(ManagementBridge(store, config).refresh(args.request_id, validation_only=args.validation_only), ensure_ascii=False, indent=2))
+        return 0
     if args.command == 'manage-decide':
         from .management import ManagementBridge
         decision = json.loads(args.decision_file.read_text())

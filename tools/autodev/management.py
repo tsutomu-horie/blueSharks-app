@@ -25,13 +25,25 @@ class ManagementBridge:
         self.git = GitManager(config)
 
     def _ticket(self, ticket_id):
-        row = dict(self.store.get_ticket(ticket_id))
+        return self._decode_ticket(self.store.get_ticket(ticket_id))
+
+    @staticmethod
+    def _decode_ticket(value):
+        row = dict(value)
         for field in ('allowed_scope', 'forbidden_scope', 'current_state', 'dependencies', 'test_targets'):
             row[field] = json.loads(row[field + '_json'])
         row['acceptance_criteria'] = json.loads(row['acceptance_json'])
         row['tests'] = json.loads(row['test_ids_json'])
         row['max_repair_cycles'] = row['max_repairs']
         return row
+
+    def _bindings(self, ticket):
+        if not ticket.get('worktree') or not ticket.get('base_commit'):
+            return {}
+        worktree = Path(ticket['worktree'])
+        self.git.validate_worktree_identity(ticket['project'], ticket['id'], worktree)
+        return {'diff_digest': self.git.diff_digest(worktree, ticket['base_commit']),
+                'head_sha': self.git.git(worktree, ['rev-parse', 'HEAD'])}
 
     def _fingerprint(self, ticket, event, context):
         key = {name: ticket.get(name) for name in ('id','title','type','project','priority','risk','goal','request','acceptance_criteria','tests','test_targets','dependencies','allowed_scope','forbidden_scope','base_commit','specification_source','specification_checked_at')}
@@ -50,7 +62,10 @@ class ManagementBridge:
     def request(self, ticket, event, context, prompt, *, wait=True):
         fingerprint = self._fingerprint(ticket, event, context)
         payload = {'ticket_id': ticket['id'], 'event': event, 'context': context, 'prompt': prompt,
-                   'fingerprint': fingerprint, 'worktree': ticket.get('worktree'), 'base_commit': ticket.get('base_commit')}
+                   'fingerprint': fingerprint, 'worktree': ticket.get('worktree'), 'base_commit': ticket.get('base_commit'),
+                   **self._bindings(ticket)}
+        if self._fingerprint(ticket, event, context) != fingerprint:
+            raise ValueError('Ticket or diff changed while pinning the management request')
         with self.store.transaction() as db:
             db.execute('INSERT OR IGNORE INTO management_requests(ticket_id,event_type,request_key,payload_json,created_at) VALUES(?,?,?,?,?)',
                        (ticket['id'], event, fingerprint, dump(payload), now()))
@@ -97,6 +112,55 @@ class ManagementBridge:
         result['decision'] = json.loads(decision) if decision else None
         return result
 
+    def refresh(self, request_id, *, validation_only=False):
+        """Replace a waiting request with a new current Ticket/diff binding.
+
+        No approval is copied. Validation-only routing is an explicit manager
+        instruction, not a classification inferred from worker prose.
+        """
+        request = self.show(request_id)
+        if request['status'] == 'SUPERSEDED':
+            return self.show(request['payload']['superseded_by'])
+        if request['status'] not in {'PENDING', 'STALE'}:
+            raise ValueError('Only an undecided waiting request can be refreshed')
+        ticket = self._ticket(request['ticket_id'])
+        if ticket['status'] != 'NEEDS_DECISION' or (ticket['current_state'].get('management_wait') or {}).get('request_id') != request_id:
+            raise ValueError('The request is not the active management wait')
+        context = dict(request['payload']['context'])
+        if validation_only:
+            if request['event_type'] != 'SCOPE_CHANGE_REQUESTED' or context.get('requests') or not context.get('external_action'):
+                raise ValueError('Validation-only routing requires an external validation request without scope additions')
+            context['resume_phase'] = 'quality_control'
+        context['refreshed_from'] = request_id
+        fingerprint = self._fingerprint(ticket, request['event_type'], context)
+        prompt = request['payload']['prompt'].split('\nTicket context:\n', 1)[0]
+        prompt += '\nTicket context:\n' + json.dumps(ticket, ensure_ascii=False, sort_keys=True)
+        payload = {'ticket_id': ticket['id'], 'event': request['event_type'], 'context': context,
+                   'prompt': prompt, 'fingerprint': fingerprint, 'worktree': ticket.get('worktree'),
+                   'base_commit': ticket.get('base_commit'), **self._bindings(ticket)}
+        with self.store.transaction() as db:
+            live = self._decode_ticket(db.execute('SELECT * FROM tickets WHERE id=?', (ticket['id'],)).fetchone())
+            if live['updated_at'] != ticket['updated_at'] or self._fingerprint(live, request['event_type'], context) != fingerprint:
+                raise ValueError('Ticket or diff changed during refresh; retry with current evidence')
+            if live['cancel_requested'] or live['status'] != 'NEEDS_DECISION' or (live['current_state'].get('management_wait') or {}).get('request_id') != request_id:
+                raise ValueError('Ticket no longer has this active management wait')
+            old = db.execute('SELECT status FROM management_requests WHERE id=?', (request_id,)).fetchone()
+            if old['status'] not in {'PENDING', 'STALE'}:
+                raise ValueError('Request changed during refresh')
+            db.execute('INSERT OR IGNORE INTO management_requests(ticket_id,event_type,request_key,payload_json,created_at) VALUES(?,?,?,?,?)',
+                       (ticket['id'], request['event_type'], fingerprint, dump(payload), now()))
+            replacement = db.execute('SELECT id,status FROM management_requests WHERE request_key=?', (fingerprint,)).fetchone()
+            if replacement['status'] != 'PENDING':
+                raise ValueError('Cannot refresh onto a previously decided request')
+            old_payload = {**request['payload'], 'superseded_by': replacement['id']}
+            db.execute("UPDATE management_requests SET status='SUPERSEDED',payload_json=?,resolved_at=? WHERE id=?", (dump(old_payload), now(), request_id))
+            state = live['current_state']
+            state['management_wait'] = {'request_id': replacement['id']}
+            db.execute('UPDATE tickets SET current_state_json=?,updated_at=? WHERE id=?', (dump(state), now(), ticket['id']))
+            self.store._event(db, ticket['id'], 'MANAGEMENT_REQUEST_REFRESHED', ticket['status'], ticket['status'],
+                              {'old_request_id': request_id, 'request_id': replacement['id'], 'validation_only': validation_only})
+        return self.show(replacement['id'])
+
     def decide(self, request_id, decision, actor='Codex management thread'):
         required = {'decision', 'rationale', 'next_status', 'scope_additions'}
         if set(decision) != required or decision['decision'] not in {'APPROVE','REJECT','NEEDS_HUMAN'}:
@@ -104,34 +168,41 @@ class ManagementBridge:
         if decision['next_status'] not in {'READY','BACKLOG','NEEDS_SPECIFICATION','BLOCKED','REPLAN'} or not str(decision['rationale']).strip():
             raise ValueError('A valid next status and concrete rationale are required')
         additions = _scope_list(decision['scope_additions'], 'scope_additions', allow_empty=True)
-        request = self.show(request_id)
-        if request['status'] == 'DECIDED':
-            if request['decision'] != decision:
-                raise ValueError('An existing decision cannot be overwritten')
-            ticket = self._ticket(request['ticket_id'])
-            if ticket['status'] == 'NEEDS_DECISION' and (ticket['current_state'].get('management_wait') or {}).get('request_id') == request_id:
-                if self._fingerprint(ticket, request['event_type'], request['payload']['context']) != request['payload']['fingerprint']:
-                    raise ValueError('Management request is stale; cannot resume')
-                with self.store.transaction() as db:
-                    self._resume_waiting(db, request, ticket, decision)
-            return
-        ticket = self._ticket(request['ticket_id'])
-        if ticket['status'] in {'DONE','CANCELLED'}:
-            raise ValueError('The Ticket is no longer active')
-        for pattern in additions:
-            if pattern in {'*','**','.'} or any(self.git.patterns_overlap(pattern, forbidden) for forbidden in ticket['forbidden_scope']):
-                raise ValueError('Management cannot approve forbidden or repository-wide scope')
-        if request['event_type'] == 'MERGE_APPROVAL' and additions:
-            raise ValueError('A merge approval cannot change the reviewed scope')
-        payload = request['payload']
-        if self._fingerprint(ticket, request['event_type'], payload['context']) != payload['fingerprint']:
-            raise ValueError('Management request is stale; review the current Ticket/diff before deciding')
         with self.store.transaction() as db:
-            existing = db.execute('SELECT status,decision_json FROM management_requests WHERE id=?', (request_id,)).fetchone()
-            if existing['status'] == 'DECIDED':
-                if json.loads(existing['decision_json']) != decision:
+            existing = db.execute('SELECT * FROM management_requests WHERE id=?', (request_id,)).fetchone()
+            if existing is None:
+                raise KeyError(request_id)
+            request = dict(existing)
+            request['payload'] = json.loads(request.pop('payload_json'))
+            recorded = request.pop('decision_json')
+            request['decision'] = json.loads(recorded) if recorded else None
+            ticket = self._decode_ticket(db.execute('SELECT * FROM tickets WHERE id=?', (request['ticket_id'],)).fetchone())
+            if ticket['cancel_requested'] or ticket['status'] in {'DONE', 'CANCELLED'}:
+                raise ValueError('The Ticket is no longer active')
+            if request['status'] == 'SUPERSEDED':
+                raise ValueError('Management request was superseded; decide the replacement request')
+            payload = request['payload']
+            if payload['context'].get('resume_phase') == 'quality_control' and additions:
+                raise ValueError('A validation-only approval cannot add scope')
+            if request['status'] == 'DECIDED':
+                if request['decision'] != decision:
                     raise ValueError('An existing decision cannot be overwritten')
+                if ticket['status'] == 'NEEDS_DECISION' and (ticket['current_state'].get('management_wait') or {}).get('request_id') == request_id:
+                    if self._fingerprint(ticket, request['event_type'], payload['context']) != payload['fingerprint']:
+                        raise ValueError('Management request is stale; cannot resume')
+                    self._resume_waiting(db, request, ticket, decision)
                 return
+            if request['status'] not in {'PENDING', 'STALE'}:
+                raise ValueError('The management request is no longer pending')
+            if request['event_type'] in {'SCOPE_CHANGE_REQUESTED', 'SUPERVISOR_GATE'} and (ticket['current_state'].get('management_wait') or {}).get('request_id') != request_id:
+                raise ValueError('The request is not the active management wait')
+            for pattern in additions:
+                if pattern in {'*', '**', '.'} or any(self.git.patterns_overlap(pattern, forbidden) for forbidden in ticket['forbidden_scope']):
+                    raise ValueError('Management cannot approve forbidden or repository-wide scope')
+            if request['event_type'] == 'MERGE_APPROVAL' and additions:
+                raise ValueError('A merge approval cannot change the reviewed scope')
+            if self._fingerprint(ticket, request['event_type'], payload['context']) != payload['fingerprint']:
+                raise ValueError('Management request is stale; review the current Ticket/diff before deciding')
             db.execute("UPDATE management_requests SET status='DECIDED',decision_json=?,actor=?,resolved_at=? WHERE id=?", (dump(decision), actor, now(), request_id))
             if decision['decision'] == 'NEEDS_HUMAN':
                 db.execute("UPDATE control_flags SET pause_requested=1,reason=?,updated_at=? WHERE id=1", ('Codex manager requires human judgment: ' + decision['rationale'][:300], now()))
@@ -159,6 +230,13 @@ class ManagementBridge:
             gates = [{'category': entry['category'], 'files': sorted(entry['files']), 'digest': entry['digest']} for entry in request['payload']['context'].get('gates', [])]
             state['approved_gate_evidence'] = state.get('approved_gate_evidence', []) + gates
         state['management_decision'] = decision
+        if request['payload']['context'].get('resume_phase') == 'quality_control':
+            state['quality_resume'] = {
+                'request_id': request['id'],
+                'diff_digest': request['payload']['diff_digest'],
+                'head_sha': request['payload']['head_sha'],
+                'summary': request['payload']['context'].get('developer_summary', ''),
+            }
         state.pop('management_wait', None)
         db.execute("UPDATE tickets SET status='READY',allowed_scope_json=?,current_state_json=?,updated_at=? WHERE id=?", (dump(scopes), dump(state), now(), ticket['id']))
         self.store._event(db, ticket['id'], 'CODEX_MANAGEMENT_RESUMED', 'NEEDS_DECISION', 'READY', {'request_id': request['id']})
