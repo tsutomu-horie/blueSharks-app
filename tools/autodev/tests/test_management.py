@@ -430,3 +430,105 @@ class ManagementTests(unittest.TestCase):
         engine.git.stage_and_commit.assert_not_called()
         engine.git.push_and_open_pr.assert_not_called()
         self.assertNotIn('reviewed_head_sha', self.bridge._ticket('MANAGED')['current_state'])
+
+
+class HeldRecoveryTests(unittest.TestCase):
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory()
+        self.store = Store(Path(self.temp.name) / 'state.sqlite3')
+        self.store.create_ticket(sample_ticket('HELD'), 'REVIEWING')
+        self.config = {'workspace': {}, 'git': {}, 'projects': {'app': {'repository': self.temp.name}},
+                       'management': {'timeout_seconds': 0}}
+        self.bridge = ManagementBridge(self.store, self.config)
+        self.engine = Orchestrator.__new__(Orchestrator)
+        self.engine.store, self.engine.config = self.store, self.config
+        self.engine.management, self.engine.git = self.bridge, self.bridge.git
+        self.approval = {'decision': 'APPROVE', 'rationale': 'Current evidence checked; repeat QC and independent review',
+                         'next_status': 'READY', 'scope_additions': []}
+
+    def tearDown(self):
+        self.temp.cleanup()
+
+    def hold(self):
+        self.store.transition('HELD', 'NEEDS_DECISION', 'REVIEW_NEEDS_DECISION', {'summary': 'evidence mismatch'})
+        self.engine._process_held_decisions()
+        return self.bridge.pending()[-1]['id']
+
+    def test_hold_is_durable_idempotent_and_never_starts_ai(self):
+        with patch.object(CodexRunner, 'run') as ai:
+            request = self.hold()
+            self.engine._process_held_decisions()
+        ai.assert_not_called()
+        self.assertEqual(len(self.bridge.pending()), 1)
+        self.assertEqual(self.store.get_ticket('HELD')['status'], 'NEEDS_DECISION')
+        self.assertEqual(self.bridge._ticket('HELD')['current_state']['management_wait']['request_id'], request)
+        self.assertEqual(self.bridge.show(request)['payload']['context']['hold_event_type'], 'REVIEW_NEEDS_DECISION')
+
+    def test_audit_after_hold_does_not_hide_it(self):
+        self.store.transition('HELD', 'NEEDS_DECISION', 'REVIEW_NEEDS_DECISION', {})
+        self.store.add_event('HELD', 'USER_PRIORITY_CHANGED', {'to': 'P0'})
+        self.engine._process_held_decisions()
+        self.assertEqual(len(self.bridge.pending()), 1)
+
+    def test_same_review_recurrence_requires_a_new_decision(self):
+        previous = self.hold()
+        self.bridge.decide(previous, self.approval)
+        self.assertEqual(self.store.get_ticket('HELD')['status'], 'READY')
+        self.store.transition('HELD', 'RUNNING', 'CLAIM')
+        self.store.transition('HELD', 'READY_FOR_REVIEW', 'QC')
+        self.store.transition('HELD', 'REVIEWING', 'REVIEW')
+        replacement = self.hold()
+        self.assertNotEqual(previous, replacement)
+        self.assertIsNone(self.bridge.show(replacement)['decision'])
+        self.assertEqual(self.store.get_ticket('HELD')['status'], 'NEEDS_DECISION')
+
+    def test_missing_worktree_is_visible_but_cannot_be_approved_ready(self):
+        missing = str(Path(self.temp.name) / 'removed-worktree')
+        self.store.update_ticket('HELD', worktree=missing, branch='bot/HELD', base_commit='base')
+        request = self.hold()
+        self.assertEqual(self.bridge.show(request)['event_type'], 'MISSING_WORKTREE_REVIEW')
+        with self.assertRaisesRegex(ValueError, 'cannot authorize READY'):
+            self.bridge.decide(request, self.approval)
+        self.assertEqual(self.bridge.show(request)['status'], 'PENDING')
+        self.bridge.decide(request, {**self.approval, 'decision': 'REJECT', 'next_status': 'REPLAN'})
+        self.assertEqual(self.store.get_ticket('HELD')['status'], 'REPLAN')
+
+    def test_cancelled_hold_cannot_resume(self):
+        request = self.hold()
+        self.store.request_cancel('HELD', 'user cancellation')
+        self.engine._process_held_decisions()
+        with self.assertRaisesRegex(ValueError, 'no longer active'):
+            self.bridge.decide(request, self.approval)
+        self.assertEqual(self.store.get_ticket('HELD')['status'], 'CANCELLED')
+
+    def test_developer_preserves_db_latest_reserved_evidence(self):
+        ticket = ticket_from_row(self.store.get_ticket('HELD'))
+        self.store.update_ticket('HELD', current_state_json=json.dumps({'specification_evidence': {'checked_at': 'latest'}}))
+        self.engine._update_developer_state(ticket, {'last_action': 'test added', 'specification_evidence': {'checked_at': 'old'}})
+        state = self.bridge._ticket('HELD')['current_state']
+        self.assertEqual(state['specification_evidence']['checked_at'], 'latest')
+        self.assertEqual(state['last_action'], 'test added')
+
+    def test_fresh_scalar_with_stale_evidence_requires_live_recheck(self):
+        from datetime import datetime, timezone
+        fresh = datetime.now(timezone.utc).isoformat()
+        self.store.update_ticket('HELD', specification_source='current source', specification_checked_at=fresh,
+            current_state_json=json.dumps({'intake': {'specification_required': True},
+              'specification_evidence': {'verified': True, 'checked_at': '2020-01-01T00:00:00Z'}}))
+        self.store.transition('HELD', 'NEEDS_DECISION', 'OLD_REVIEW')
+        self.store.transition('HELD', 'READY', 'MANAGER')
+        self.store.transition('HELD', 'RUNNING', 'CLAIM')
+        self.engine.workspace = Mock(enabled=True)
+        self.engine.workspace.verify_specification.return_value = None
+        self.engine._execute(ticket_from_row(self.store.get_ticket('HELD')))
+        self.engine.workspace.verify_specification.assert_called_once()
+        self.assertEqual(self.store.get_ticket('HELD')['status'], 'NEEDS_SPECIFICATION')
+
+    def test_atomic_state_save_redacts_db_and_memory(self):
+        ticket = ticket_from_row(self.store.get_ticket('HELD'))
+        self.engine._update_developer_state(ticket, {'access_token': 'synthetic-token',
+                                                  'last_action': 'Authorization: Bearer synthetic-secret'})
+        persisted = self.bridge._ticket('HELD')['current_state']
+        self.assertNotIn('synthetic-token', json.dumps(persisted))
+        self.assertNotIn('synthetic-secret', json.dumps(persisted))
+        self.assertEqual(ticket['current_state'], persisted)

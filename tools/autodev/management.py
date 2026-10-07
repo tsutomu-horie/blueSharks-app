@@ -37,7 +37,17 @@ class ManagementBridge:
         row['max_repair_cycles'] = row['max_repairs']
         return row
 
-    def _bindings(self, ticket):
+    @staticmethod
+    def _missing_binding(ticket):
+        path = Path(ticket['worktree'])
+        if path.exists():
+            raise ValueError('Missing worktree now exists; obtain a new verified request')
+        return {'missing_worktree': str(path), 'branch': ticket.get('branch'),
+                'base_commit': ticket.get('base_commit'), 'is_symlink': path.is_symlink()}
+
+    def _bindings(self, ticket, event=None):
+        if event == 'MISSING_WORKTREE_REVIEW':
+            return self._missing_binding(ticket)
         if not ticket.get('worktree') or not ticket.get('base_commit'):
             return {}
         worktree = Path(ticket['worktree'])
@@ -52,7 +62,9 @@ class ManagementBridge:
         key['specification_evidence'] = ticket.get('current_state', {}).get('specification_evidence')
         key['merge_revision'] = ticket.get('current_state', {}).get('merge_revision', 0)
         key.update(event=event, context=context)
-        if ticket.get('worktree') and ticket.get('base_commit'):
+        if event == 'MISSING_WORKTREE_REVIEW':
+            key['missing_binding'] = self._missing_binding(ticket)
+        elif ticket.get('worktree') and ticket.get('base_commit'):
             worktree = Path(ticket['worktree'])
             self.git.validate_worktree_identity(ticket['project'], ticket['id'], worktree)
             key['diff_digest'] = self.git.diff_digest(worktree, ticket['base_commit'])
@@ -63,14 +75,14 @@ class ManagementBridge:
         fingerprint = self._fingerprint(ticket, event, context)
         payload = {'ticket_id': ticket['id'], 'event': event, 'context': context, 'prompt': prompt,
                    'fingerprint': fingerprint, 'worktree': ticket.get('worktree'), 'base_commit': ticket.get('base_commit'),
-                   **self._bindings(ticket)}
+                   **self._bindings(ticket, event)}
         if self._fingerprint(ticket, event, context) != fingerprint:
             raise ValueError('Ticket or diff changed while pinning the management request')
         with self.store.transaction() as db:
             db.execute('INSERT OR IGNORE INTO management_requests(ticket_id,event_type,request_key,payload_json,created_at) VALUES(?,?,?,?,?)',
                        (ticket['id'], event, fingerprint, dump(payload), now()))
             row = db.execute('SELECT * FROM management_requests WHERE request_key=?', (fingerprint,)).fetchone()
-            if row['status'] == 'PENDING' and event in {'SCOPE_CHANGE_REQUESTED','SUPERVISOR_GATE','REPAIR_LIMIT_REACHED'}:
+            if row['status'] == 'PENDING' and event in {'SCOPE_CHANGE_REQUESTED','SUPERVISOR_GATE','REPAIR_LIMIT_REACHED','HELD_TICKET_REVIEW','MISSING_WORKTREE_REVIEW'}:
                 current_ticket = db.execute('SELECT current_state_json FROM tickets WHERE id=?', (ticket['id'],)).fetchone()
                 state = json.loads(current_ticket['current_state_json'])
                 state['management_wait'] = {'request_id': row['id']}
@@ -137,7 +149,7 @@ class ManagementBridge:
         prompt += '\nTicket context:\n' + json.dumps(ticket, ensure_ascii=False, sort_keys=True)
         payload = {'ticket_id': ticket['id'], 'event': request['event_type'], 'context': context,
                    'prompt': prompt, 'fingerprint': fingerprint, 'worktree': ticket.get('worktree'),
-                   'base_commit': ticket.get('base_commit'), **self._bindings(ticket)}
+                   'base_commit': ticket.get('base_commit'), **self._bindings(ticket, request['event_type'])}
         with self.store.transaction() as db:
             live = self._decode_ticket(db.execute('SELECT * FROM tickets WHERE id=?', (ticket['id'],)).fetchone())
             if live['updated_at'] != ticket['updated_at'] or self._fingerprint(live, request['event_type'], context) != fingerprint:
@@ -194,7 +206,7 @@ class ManagementBridge:
                 return
             if request['status'] not in {'PENDING', 'STALE'}:
                 raise ValueError('The management request is no longer pending')
-            if request['event_type'] in {'SCOPE_CHANGE_REQUESTED', 'SUPERVISOR_GATE'} and (ticket['current_state'].get('management_wait') or {}).get('request_id') != request_id:
+            if request['event_type'] in {'SCOPE_CHANGE_REQUESTED', 'SUPERVISOR_GATE', 'HELD_TICKET_REVIEW', 'MISSING_WORKTREE_REVIEW'} and (ticket['current_state'].get('management_wait') or {}).get('request_id') != request_id:
                 raise ValueError('The request is not the active management wait')
             for pattern in additions:
                 if pattern in {'*', '**', '.'} or any(self.git.patterns_overlap(pattern, forbidden) for forbidden in ticket['forbidden_scope']):
@@ -222,6 +234,26 @@ class ManagementBridge:
             state.pop('next_merge_check_at', None)
             db.execute("UPDATE tickets SET current_state_json=?,updated_at=? WHERE id=?", (dump(state), now(), ticket['id']))
             self.store._event(db, ticket['id'], 'MERGE_APPROVAL_REVOKED_FOR_REPAIR', ticket['status'], ticket['status'], {'request_id': request['id'], 'reason': decision['rationale']})
+            return
+        if request['event_type'] in {'HELD_TICKET_REVIEW', 'MISSING_WORKTREE_REVIEW'}:
+            if ticket['status'] != 'NEEDS_DECISION' or (state.get('management_wait') or {}).get('request_id') != request['id']:
+                return
+            if decision['decision'] == 'NEEDS_HUMAN':
+                return
+            if decision['scope_additions']:
+                raise ValueError('A held review cannot expand scope; redefine the Ticket first')
+            target = decision['next_status']
+            if request['event_type'] == 'MISSING_WORKTREE_REVIEW' and target == 'READY':
+                raise ValueError('Missing worktree review cannot authorize READY; repair metadata first')
+            if decision['decision'] == 'REJECT' and target == 'READY':
+                raise ValueError('A rejected review cannot resume work')
+            state['management_decision'] = decision
+            state.pop('management_wait', None)
+            state.pop('quality_resume', None)
+            db.execute("UPDATE tickets SET status=?,current_state_json=?,updated_at=? WHERE id=?",
+                       (target, dump(state), now(), ticket['id']))
+            self.store._event(db, ticket['id'], 'HELD_TICKET_DECIDED', 'NEEDS_DECISION', target,
+                              {'request_id': request['id'], 'decision': decision['decision']})
             return
         if ticket['status'] != 'NEEDS_DECISION' or (state.get('management_wait') or {}).get('request_id') != request['id'] or decision['decision'] != 'APPROVE' or request['event_type'] not in {'SCOPE_CHANGE_REQUESTED','SUPERVISOR_GATE'}:
             return

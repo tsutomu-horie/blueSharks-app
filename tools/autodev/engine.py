@@ -17,6 +17,7 @@ from typing import Any
 from .git_manager import GitIdentityError, GitManager, GitSafetyError
 from .runtime import CodexRunner
 from .state import Store, dump
+from .redaction import redact_value
 from .management import ManagementBridge, ManagementPending
 
 
@@ -74,6 +75,7 @@ class Orchestrator:
     def run_once(self) -> bool:
         if self.store.pause_requested():
             return False
+        self._process_held_decisions()
         self._process_triage()
         if self._process_ready_to_merge():
             self.workspace.sync_logs()
@@ -232,6 +234,34 @@ class Orchestrator:
             if not did_work:
                 time.sleep(max(0.5, idle_seconds))
 
+    def _process_held_decisions(self) -> None:
+        """Expose known stranded holds without approving or starting any worker."""
+        events = {'REVIEW_NEEDS_DECISION', 'INVESTIGATION_REVIEW_BLOCKED',
+                  'INVESTIGATION_MODIFIED_FILES', 'SCOPE_CHANGE_REQUESTED'}
+        for row in self.store.list_tickets('NEEDS_DECISION'):
+            ticket = ticket_from_row(row)
+            if ticket['cancel_requested'] or ticket['current_state'].get('management_wait'):
+                continue
+            recent = self.store.events_for(ticket['id'], limit=100)
+            event = next((entry for entry in recent if entry['event_type'] == 'SCOPE_CHANGE_REQUESTED'
+                          or (entry['to_status'] == 'NEEDS_DECISION' and entry['from_status'] != 'NEEDS_DECISION')), None)
+            if not event or event['event_type'] not in events:
+                continue
+            context = {'hold_event_id': event['id'], 'hold_event_type': event['event_type'],
+                       'hold_payload': json.loads(event['payload_json'])}
+            try:
+                event_type = 'HELD_TICKET_REVIEW'
+                if ticket.get('worktree') and not Path(ticket['worktree']).exists():
+                    event_type = 'MISSING_WORKTREE_REVIEW'
+                    context['missing_worktree'] = ticket['worktree']
+                self.management.request(ticket, event_type, context,
+                    self._supervisor_prompt(event_type, ticket, context), wait=False)
+            except ManagementPending:
+                pass
+            except (ValueError, GitSafetyError, OSError):
+                # Invalid worktree identity must remain held for explicit repair.
+                continue
+
     def _process_triage(self) -> None:
         for row in self.store.list_tickets("TRIAGE"):
             ticket = ticket_from_row(row)
@@ -276,7 +306,12 @@ class Orchestrator:
             if intake_state.get('specification_required') and self.workspace.enabled:
                 checked = ticket.get('specification_checked_at')
                 try:
-                    stale = not checked or (datetime.now(timezone.utc) - datetime.fromisoformat(checked.replace('Z', '+00:00'))).total_seconds() > 1800
+                    evidence_checked = ticket.get('current_state', {}).get('specification_evidence', {}).get('checked_at')
+                    checked_time = datetime.fromisoformat(checked.replace('Z', '+00:00')) if checked else None
+                    evidence_time = datetime.fromisoformat(evidence_checked.replace('Z', '+00:00')) if evidence_checked else None
+                    stale = (checked_time is None or evidence_time != checked_time
+                             or not ticket.get('current_state', {}).get('specification_evidence', {}).get('verified')
+                             or (datetime.now(timezone.utc) - checked_time).total_seconds() > 1800)
                 except (ValueError, TypeError):
                     stale = True
                 if stale:
@@ -1146,9 +1181,13 @@ class Orchestrator:
             self.store.add_event(ticket_id, event + "_STATUS_UNCHANGED", {"status": current, **payload})
 
     def _update_current_state(self, ticket: dict[str, Any], current: dict[str, Any]) -> None:
-        existing = ticket.get("current_state", {})
-        merged = {**existing, **current, "updated_at": datetime.now(timezone.utc).isoformat(timespec="seconds")}
-        self.store.update_ticket(ticket["id"], current_state_json=dump(merged))
+        with self.store.transaction() as db:
+            row = db.execute('SELECT current_state_json FROM tickets WHERE id=?', (ticket['id'],)).fetchone()
+            existing = json.loads(row['current_state_json'])
+            merged = {**existing, **current, "updated_at": datetime.now(timezone.utc).isoformat(timespec="seconds")}
+            merged = redact_value(merged)
+            db.execute('UPDATE tickets SET current_state_json=?,updated_at=? WHERE id=?',
+                       (dump(merged), datetime.now(timezone.utc).isoformat(timespec='seconds'), ticket['id']))
         ticket['current_state'] = merged
 
     def _update_developer_state(self, ticket, current):
