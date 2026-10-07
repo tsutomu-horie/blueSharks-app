@@ -10,7 +10,7 @@ import time
 
 from .git_manager import GitManager
 from .intake import _scope_list
-from .state import dump, now
+from .state import TRANSITIONS, dump, now
 
 
 class ManagementPending(RuntimeError):
@@ -243,6 +243,8 @@ class ManagementBridge:
             if decision['scope_additions']:
                 raise ValueError('A held review cannot expand scope; redefine the Ticket first')
             target = decision['next_status']
+            if target not in TRANSITIONS[ticket['status']]:
+                raise ValueError('Management decision is not an allowed Ticket transition')
             if request['event_type'] == 'MISSING_WORKTREE_REVIEW' and target == 'READY':
                 raise ValueError('Missing worktree review cannot authorize READY; repair metadata first')
             if decision['decision'] == 'REJECT' and target == 'READY':

@@ -540,3 +540,9 @@ class HeldRecoveryTests(unittest.TestCase):
         request = self.bridge.pending()[0]['id']
         self.assertEqual(self.bridge.show(request)['payload']['context']['hold_event_type'],
                          'INVESTIGATION_TICKET_PROPOSAL_INVALID')
+
+    def test_manager_specification_hold_is_an_allowed_state_transition(self):
+        request = self.hold()
+        self.bridge.decide(request, {**self.approval, 'next_status': 'NEEDS_SPECIFICATION'})
+        self.assertEqual(self.store.get_ticket('HELD')['status'], 'NEEDS_SPECIFICATION')
+        self.store.transition('HELD', 'TRIAGE', 'SPEC_UPDATED')
