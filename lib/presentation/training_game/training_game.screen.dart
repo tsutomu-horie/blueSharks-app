@@ -19,6 +19,8 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
   /// 育成ゲーム画面を作成します。
   const TrainingGameScreen({super.key});
 
+  String? get _bodyKey => SametarohAssets.bodyKeyForBranch(controller.branch);
+
   @override
   Widget build(BuildContext context) {
     return Obx(
@@ -126,6 +128,12 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
     return _buildEndingPage(
       title: '進化',
       visual: visual,
+      visualWidget: switch (controller.evolutionStage.value) {
+        1 => _buildSuppliedStatic(SametarohAssets.newbornFrame),
+        2 || 3 => _buildSuppliedStatic(
+            SametarohAssets.idleFramesForBodyKey(_bodyKey).first),
+        _ => null,
+      },
       message: '段階「${stage.name}」へ進みました。',
       buttonLabel: '次へ',
       onPressed: controller.advanceEvolution,
@@ -148,6 +156,7 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
       return _buildEndingPage(
         title: 'ポジション確定',
         visual: '🦈\nユニフォーム姿',
+        visualWidget: _buildPositionStatic(controller.position),
         message: controller.position,
         buttonLabel: '次へ',
         onPressed: controller.advanceEndingStep,
@@ -155,16 +164,20 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
     }
     if (step <= 2) {
       // 引退時は固定の鮫ではなく、現在の育成段階に対応する見た目を表示します。
-      final endingVisual = isPositive
-          ? '🦈\n旅立ち'
-          : '${controller.characterLabel}\n引退';
+      final endingVisual =
+          isPositive ? '🦈\n旅立ち' : '${controller.characterLabel}\n引退';
       final endingFrames = isPositive
-          ? SametarohAssets.journeyFrames
+          ? SametarohAssets.journeyFramesForBodyKey(_bodyKey)
           : controller.stageIndex.value >= 2
-              ? SametarohAssets.normalFrames
+              ? SametarohAssets.idleFramesForBodyKey(_bodyKey)
               : null;
-      final endingFit = isPositive ? BoxFit.contain : BoxFit.cover;
-      final endingWidth = isPositive ? 250.w : 128.w;
+      final hasBody = _bodyKey != null;
+      final endingFit = isPositive || hasBody ? BoxFit.contain : BoxFit.cover;
+      final endingWidth = isPositive
+          ? 250.w
+          : hasBody
+              ? 160.w
+              : 128.w;
       final isSyncPending = controller.isEndingSyncPending.value;
       final syncError = controller.endingSyncError.value;
       final canStartNextCycle = !isSyncPending && syncError.isEmpty;
@@ -172,13 +185,15 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
         title: '旅立ち',
         visual: endingVisual,
         visualWidget: endingFrames == null
-            ? null
+            ? controller.stageIndex.value == 1
+                ? _buildSuppliedStatic(SametarohAssets.newbornFrame)
+                : null
             : SametarohAnimatedImage(
                 frames: endingFrames,
                 width: endingWidth,
                 height: 250.h,
                 fit: endingFit,
-                alignment: isPositive
+                alignment: isPositive || hasBody
                     ? Alignment.bottomCenter
                     : Alignment.center,
                 semanticLabel: isPositive ? '旅立つ鮫太朗' : '鮫太朗',
@@ -219,14 +234,22 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
       'センター',
       'フルバック',
     ];
+    // GridViewの遅延builder外で履歴を読み、表示中の解放更新もObxへ登録します。
+    final unlockedStates = positions
+        .map((position) =>
+            controller.isPositionUnlocked(position) ||
+            position == controller.clearPosition.value)
+        .toList();
     return Padding(
       padding: EdgeInsets.fromLTRB(12.w, 12.h, 12.w, 16.h),
       child: Column(
         children: [
           Align(
             alignment: Alignment.centerLeft,
-            child: Text('図鑑・クリア履歴',
-                style: TextStyle(fontSize: 20.sp, fontWeight: FontWeight.w700)),
+            child: Text(
+              '図鑑・クリア履歴',
+              style: TextStyle(fontSize: 20.sp, fontWeight: FontWeight.w700),
+            ),
           ),
           SizedBox(height: 12.h),
           Expanded(
@@ -239,9 +262,7 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
                 childAspectRatio: .78,
               ),
               itemBuilder: (_, index) {
-                final unlocked =
-                    controller.isPositionUnlocked(positions[index]) ||
-                        positions[index] == controller.clearPosition.value;
+                final unlocked = unlockedStates[index];
                 return Container(
                   padding: EdgeInsets.all(3.w),
                   decoration: BoxDecoration(
@@ -252,19 +273,33 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Text(unlocked ? '🦈' : '👤',
+                      if (unlocked &&
+                          SametarohAssets.positionFrameFor(positions[index]) !=
+                              null)
+                        _buildSuppliedStatic(
+                          SametarohAssets.positionFrameFor(positions[index])!,
+                          width: 36,
+                          height: 48,
+                        )
+                      else
+                        Text(
+                          unlocked ? '🦈' : '👤',
                           style: TextStyle(
-                              fontSize: 26.sp,
-                              color: unlocked ? null : Colors.grey)),
+                            fontSize: 26.sp,
+                            color: unlocked ? null : Colors.grey,
+                          ),
+                        ),
                       SizedBox(height: 2.h),
-                      Text(positions[index],
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                              fontSize: 8.sp,
-                              color: unlocked ? Colors.black : Colors.grey,
-                              fontWeight: unlocked
-                                  ? FontWeight.w700
-                                  : FontWeight.normal)),
+                      Text(
+                        positions[index],
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 8.sp,
+                          color: unlocked ? Colors.black : Colors.grey,
+                          fontWeight:
+                              unlocked ? FontWeight.w700 : FontWeight.normal,
+                        ),
+                      ),
                     ],
                   ),
                 );
@@ -276,7 +311,9 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
             width: double.infinity,
             height: 52.h,
             child: ElevatedButton(
-                onPressed: _openNewEgg, child: const Text('次の卵へ')),
+              onPressed: _openNewEgg,
+              child: const Text('次の卵へ'),
+            ),
           ),
         ],
       ),
@@ -652,22 +689,48 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
     );
   }
 
-  /// 育成期以降は鮫太朗の通常立ち絵を表示します。
+  /// 確定した大別の立ち絵を表示し、未判定はノーマルを保持します。
   Widget _buildCharacterVisual() {
+    if (controller.stageIndex.value == 1) {
+      return _buildSuppliedStatic(
+        SametarohAssets.newbornFrame,
+        width: 92,
+        height: 184,
+      );
+    }
     if (controller.stageIndex.value < 2) {
       return Text(
         controller.characterLabel,
         style: TextStyle(fontSize: controller.characterFontSize.sp),
       );
     }
+    final bodyKey = _bodyKey;
     return SametarohAnimatedImage(
-      frames: SametarohAssets.normalFrames,
-      width: 92.w,
+      frames: SametarohAssets.idleFramesForBodyKey(bodyKey),
+      width: bodyKey == null ? 92.w : 128.w,
       height: 184.h,
-      fit: BoxFit.cover,
-      alignment: Alignment.center,
+      fit: bodyKey == null ? BoxFit.cover : BoxFit.contain,
+      alignment: bodyKey == null ? Alignment.center : Alignment.bottomCenter,
       semanticLabel: '鮫太朗',
     );
+  }
+
+  Widget _buildSuppliedStatic(
+    SametarohFrame frame, {
+    double width = 250,
+    double height = 250,
+  }) =>
+      SametarohFrameImage(
+        frame: frame,
+        width: width.w,
+        height: height.h,
+        fit: BoxFit.contain,
+        alignment: Alignment.bottomCenter,
+      );
+
+  Widget? _buildPositionStatic(String position) {
+    final frame = SametarohAssets.positionFrameFor(position);
+    return frame == null ? null : _buildSuppliedStatic(frame);
   }
 
   /// 分岐後の暫定ポジション表示を作成します。
@@ -996,7 +1059,10 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
     try {
       completed = await Navigator.of(context).push<bool>(
         MaterialPageRoute(
-          builder: (_) => TrainingGameCareActionScreen(actionType: type),
+          builder: (_) => TrainingGameCareActionScreen(
+            actionType: type,
+            bodyKey: _bodyKey,
+          ),
         ),
       );
     } finally {
@@ -1019,174 +1085,174 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-            Padding(
-              padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 4.h),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  '現在：${controller.day.value}日目　／　${controller.currentStage.name} ${controller.daysInStage.value}/${controller.currentStage.days ?? '-'}日',
-                  style:
-                      TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w700),
-                ),
-              ),
-            ),
-            if (controller.stageIndex.value < 2) ...[
-              ListTile(
-                leading: const Icon(Icons.pause),
-                title: const Text('⏸ 停止'),
-                onTap: () {
-                  controller.setTimeSpeed(0);
-                  Navigator.pop(context);
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.play_arrow),
-                title: const Text('▶ ×1'),
-                onTap: () {
-                  controller.setTimeSpeed(1);
-                  Navigator.pop(context);
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.fast_forward),
-                title: const Text('×4'),
-                onTap: () {
-                  controller.setTimeSpeed(4);
-                  Navigator.pop(context);
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.double_arrow),
-                title: const Text('×16'),
-                onTap: () {
-                  controller.setTimeSpeed(16);
-                  Navigator.pop(context);
-                },
-              ),
-            ] else ...[
-              ListTile(
-                leading: const Icon(Icons.pause),
-                title: const Text('⏸ 停止'),
-                onTap: () {
-                  controller.setTimeSpeed(0);
-                  Navigator.pop(context);
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.play_arrow),
-                title: const Text('▶ ×1'),
-                onTap: () {
-                  controller.setTimeSpeed(1);
-                  Navigator.pop(context);
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.fast_forward),
-                title: const Text('×4'),
-                onTap: () {
-                  controller.setTimeSpeed(4);
-                  Navigator.pop(context);
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.double_arrow),
-                title: const Text('×16'),
-                onTap: () {
-                  controller.setTimeSpeed(16);
-                  Navigator.pop(context);
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.edit_calendar),
-                title: const Text('経過時間を指定'),
-                onTap: () {
-                  Navigator.pop(context);
-                  unawaited(_showAdvanceTimeDialog(context));
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.schedule),
-                title: const Text('＋1時間'),
-                onTap: () {
-                  Navigator.pop(context);
-                  controller.advanceTime(1);
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.calendar_today),
-                title: const Text('＋6時間'),
-                onTap: () {
-                  Navigator.pop(context);
-                  controller.advanceTime(6);
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.nights_stay),
-                title: const Text('＋1日'),
-                onTap: () {
-                  Navigator.pop(context);
-                  controller.advanceTime(24);
-                },
-              ),
-            ],
-            // デバッグ時だけ、行動ごとのクールタイム適用状態を切り替えます。
-            Obx(
-              () => Column(
-                children: [
-                  const ListTile(
-                    leading: Icon(Icons.timer),
-                    title: Text('行動別クールタイム'),
-                    subtitle: Text('開発環境では端末・サーバーのクールタイムを解除できます。'),
-                  ),
-                  ...TrainingGameController.actions.map(
-                    (action) => SwitchListTile(
-                      dense: true,
-                      title: Text(action.label),
-                      subtitle: Text(
-                        TrainingGameController.isCooldownAction(action.type)
-                            ? '${TrainingGameController.careCooldown.inSeconds}秒'
-                            : '通常は無効（デバッグで変更可能）',
-                      ),
-                      value: controller.isCooldownEnabled(action.type),
-                      onChanged: (enabled) => controller.setCooldownEnabled(
-                        action.type,
-                        enabled,
-                      ),
+                Padding(
+                  padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 4.h),
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      '現在：${controller.day.value}日目　／　${controller.currentStage.name} ${controller.daysInStage.value}/${controller.currentStage.days ?? '-'}日',
+                      style: TextStyle(
+                          fontSize: 13.sp, fontWeight: FontWeight.w700),
                     ),
                   ),
+                ),
+                if (controller.stageIndex.value < 2) ...[
+                  ListTile(
+                    leading: const Icon(Icons.pause),
+                    title: const Text('⏸ 停止'),
+                    onTap: () {
+                      controller.setTimeSpeed(0);
+                      Navigator.pop(context);
+                    },
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.play_arrow),
+                    title: const Text('▶ ×1'),
+                    onTap: () {
+                      controller.setTimeSpeed(1);
+                      Navigator.pop(context);
+                    },
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.fast_forward),
+                    title: const Text('×4'),
+                    onTap: () {
+                      controller.setTimeSpeed(4);
+                      Navigator.pop(context);
+                    },
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.double_arrow),
+                    title: const Text('×16'),
+                    onTap: () {
+                      controller.setTimeSpeed(16);
+                      Navigator.pop(context);
+                    },
+                  ),
+                ] else ...[
+                  ListTile(
+                    leading: const Icon(Icons.pause),
+                    title: const Text('⏸ 停止'),
+                    onTap: () {
+                      controller.setTimeSpeed(0);
+                      Navigator.pop(context);
+                    },
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.play_arrow),
+                    title: const Text('▶ ×1'),
+                    onTap: () {
+                      controller.setTimeSpeed(1);
+                      Navigator.pop(context);
+                    },
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.fast_forward),
+                    title: const Text('×4'),
+                    onTap: () {
+                      controller.setTimeSpeed(4);
+                      Navigator.pop(context);
+                    },
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.double_arrow),
+                    title: const Text('×16'),
+                    onTap: () {
+                      controller.setTimeSpeed(16);
+                      Navigator.pop(context);
+                    },
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.edit_calendar),
+                    title: const Text('経過時間を指定'),
+                    onTap: () {
+                      Navigator.pop(context);
+                      unawaited(_showAdvanceTimeDialog(context));
+                    },
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.schedule),
+                    title: const Text('＋1時間'),
+                    onTap: () {
+                      Navigator.pop(context);
+                      controller.advanceTime(1);
+                    },
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.calendar_today),
+                    title: const Text('＋6時間'),
+                    onTap: () {
+                      Navigator.pop(context);
+                      controller.advanceTime(6);
+                    },
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.nights_stay),
+                    title: const Text('＋1日'),
+                    onTap: () {
+                      Navigator.pop(context);
+                      controller.advanceTime(24);
+                    },
+                  ),
                 ],
-              ),
-            ),
-            ListTile(
-              leading: const Icon(Icons.refresh),
-              title: const Text('🥚 段階1（卵）から開始'),
-              onTap: () {
-                Navigator.pop(context);
-                _openDebugEgg();
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.delete_forever),
-              title: const Text('初回プレイ状態へ初期化'),
-              subtitle: const Text('サーバー・端末の履歴を削除して、初期パラメータで開始します'),
-              onTap: () {
-                Navigator.pop(context);
-                unawaited(_resetDebugGame(context));
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.skip_next),
-              title: const Text('段階3（育成期）から開始'),
-              onTap: () {
-                Navigator.pop(context);
-                controller.debugStartAtTraining();
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.close),
-              title: const Text('閉じる'),
-              onTap: () => Navigator.pop(context),
-            ),
+                // デバッグ時だけ、行動ごとのクールタイム適用状態を切り替えます。
+                Obx(
+                  () => Column(
+                    children: [
+                      const ListTile(
+                        leading: Icon(Icons.timer),
+                        title: Text('行動別クールタイム'),
+                        subtitle: Text('開発環境では端末・サーバーのクールタイムを解除できます。'),
+                      ),
+                      ...TrainingGameController.actions.map(
+                        (action) => SwitchListTile(
+                          dense: true,
+                          title: Text(action.label),
+                          subtitle: Text(
+                            TrainingGameController.isCooldownAction(action.type)
+                                ? '${TrainingGameController.careCooldown.inSeconds}秒'
+                                : '通常は無効（デバッグで変更可能）',
+                          ),
+                          value: controller.isCooldownEnabled(action.type),
+                          onChanged: (enabled) => controller.setCooldownEnabled(
+                            action.type,
+                            enabled,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                ListTile(
+                  leading: const Icon(Icons.refresh),
+                  title: const Text('🥚 段階1（卵）から開始'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _openDebugEgg();
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.delete_forever),
+                  title: const Text('初回プレイ状態へ初期化'),
+                  subtitle: const Text('サーバー・端末の履歴を削除して、初期パラメータで開始します'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    unawaited(_resetDebugGame(context));
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.skip_next),
+                  title: const Text('段階3（育成期）から開始'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    controller.debugStartAtTraining();
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.close),
+                  title: const Text('閉じる'),
+                  onTap: () => Navigator.pop(context),
+                ),
               ],
             ),
           ),
@@ -1301,6 +1367,8 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
 
   /// シミュレータHTMLの図鑑カードと同じ構成でポジションを表示します。
   Widget _buildDexCard(_DexPosition position, bool unlocked) {
+    final frame =
+        unlocked ? SametarohAssets.positionFrameFor(position.name) : null;
     final borderColor =
         unlocked ? const Color(0xff1f6feb) : const Color(0xffdfe4ea);
     final backgroundColor =
@@ -1352,6 +1420,11 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
                 ),
               ],
             ),
+            if (frame != null)
+              Align(
+                alignment: Alignment.center,
+                child: _buildSuppliedStatic(frame, width: 48, height: 64),
+              ),
             SizedBox(height: 5.h),
             _buildDexDetail('役割', position.role),
             _buildDexDetail('資質', position.talent),

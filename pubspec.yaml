@@ -108,6 +108,10 @@ flutter:
     - assets/images/image_stadium_parking/
     - assets/images/image_stadium_bus/
     - assets/images/home_stadium/
+    - assets/images/training_game/main/pr/
+    - assets/images/training_game/main/sh/
+    - assets/images/training_game/main/wtb/
+    - assets/images/training_game/main/jersey/
     - assets/vectors/
     - assets/vectors/member_card/
     - assets/lottie/
