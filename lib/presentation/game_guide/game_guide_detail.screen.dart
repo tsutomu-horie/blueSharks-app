@@ -20,7 +20,8 @@ class GameGuideDetailScreen extends StatefulWidget {
   State<GameGuideDetailScreen> createState() => _GameGuideDetailScreenState();
 }
 
-class _GameGuideDetailScreenState extends State<GameGuideDetailScreen> {
+class _GameGuideDetailScreenState extends State<GameGuideDetailScreen>
+    with WidgetsBindingObserver {
   static const _externalLinkChannelName = 'GameGuideExternalLink';
 
   late final WebViewController _webViewController;
@@ -29,10 +30,17 @@ class _GameGuideDetailScreenState extends State<GameGuideDetailScreen> {
   var _progress = 0;
   var _hasFinishedInitialLoad = false;
   String? _errorMessage;
+  bool _linkHandlerReady = false;
+  bool _externalLinkPending = false;
+  bool _backPending = false;
+  bool _isForeground = true;
+  int _confirmationEpoch = 0;
+  int _pageEpoch = 0;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _articleUri = Uri.parse(widget.post.detailUrl);
     _webViewController = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
@@ -50,21 +58,32 @@ class _GameGuideDetailScreenState extends State<GameGuideDetailScreen> {
             setState(() => _progress = progress);
           },
           onPageStarted: (_) {
+            _pageEpoch++;
+            _confirmationEpoch++;
             _startTimeout();
             if (!mounted) return;
             setState(() {
               _errorMessage = null;
               _progress = 0;
+              _linkHandlerReady = false;
             });
           },
-          onPageFinished: (_) {
+          onPageFinished: (_) async {
             _timeoutTimer?.cancel();
             if (!mounted) return;
             setState(() {
               _hasFinishedInitialLoad = true;
               _progress = 100;
             });
-            unawaited(_installBlankTargetLinkHandler());
+            final pageEpoch = _pageEpoch;
+            try {
+              await _installLinkHandler();
+              if (!mounted || pageEpoch != _pageEpoch) return;
+              setState(() => _linkHandlerReady = true);
+            } catch (_) {
+              if (!mounted || pageEpoch != _pageEpoch) return;
+              setState(() => _errorMessage = '記事を読み込めませんでした。');
+            }
           },
           onWebResourceError: (error) {
             if (error.isForMainFrame == false || !mounted) return;
@@ -93,8 +112,17 @@ class _GameGuideDetailScreenState extends State<GameGuideDetailScreen> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _confirmationEpoch++;
+    _pageEpoch++;
     _timeoutTimer?.cancel();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    _isForeground = state == AppLifecycleState.resumed;
+    if (!_isForeground) _confirmationEpoch++;
   }
 
   @override
@@ -128,7 +156,10 @@ class _GameGuideDetailScreenState extends State<GameGuideDetailScreen> {
         body: Stack(
           children: [
             if (_errorMessage == null)
-              WebViewWidget(controller: _webViewController)
+              IgnorePointer(
+                ignoring: !_linkHandlerReady,
+                child: WebViewWidget(controller: _webViewController),
+              )
             else
               _DetailErrorState(
                 message: _errorMessage!,
@@ -148,17 +179,29 @@ class _GameGuideDetailScreenState extends State<GameGuideDetailScreen> {
   }
 
   Future<void> _handleBack() async {
-    if (await _webViewController.canGoBack()) {
-      await _webViewController.goBack();
-      return;
+    if (_backPending || !mounted) return;
+    final articleRoute = ModalRoute.of(context);
+    if (articleRoute?.isCurrent != true) return;
+    _backPending = true;
+    try {
+      final canGoBack = await _webViewController.canGoBack();
+      if (!mounted || articleRoute?.isCurrent != true) return;
+      if (canGoBack) {
+        await _webViewController.goBack();
+      } else {
+        Get.back();
+      }
+    } finally {
+      _backPending = false;
     }
-    Get.back();
   }
 
   Future<void> _reload() async {
+    _pageEpoch++;
     setState(() {
       _errorMessage = null;
       _progress = 0;
+      _linkHandlerReady = false;
     });
     _hasFinishedInitialLoad = false;
     await _webViewController.loadRequest(_articleUri);
@@ -181,18 +224,28 @@ class _GameGuideDetailScreenState extends State<GameGuideDetailScreen> {
     return uri.host.toLowerCase() == _articleUri.host.toLowerCase();
   }
 
-  Future<void> _installBlankTargetLinkHandler() async {
+  Future<void> _installLinkHandler() async {
     await _webViewController.runJavaScript('''
       (() => {
-        if (window.__gameGuideBlankTargetHandlerInstalled) return;
-        window.__gameGuideBlankTargetHandlerInstalled = true;
+        if (window.__gameGuideLinkHandlerInstalled) return;
+        window.__gameGuideLinkHandlerInstalled = true;
 
         document.addEventListener('click', (event) => {
           const target = event.target;
           const anchor = target instanceof Element
-              ? target.closest('a[target]')
+              ? target.closest('a[href]')
               : null;
-          if (!anchor || anchor.target.toLowerCase() !== '_blank') return;
+          if (!anchor) return;
+          const isBlank = anchor.target.toLowerCase() === '_blank';
+          if (!isBlank) {
+            const url = new URL(anchor.href, window.location.href);
+            if (url.protocol !== 'http:' && url.protocol !== 'https:') return;
+            const current = new URL(window.location.href);
+            // Keep page-local anchors on their existing WebView path.
+            if (url.href.includes('#') && url.origin === current.origin &&
+                url.pathname === current.pathname &&
+                url.search === current.search) return;
+          }
 
           event.preventDefault();
           event.stopPropagation();
@@ -204,41 +257,62 @@ class _GameGuideDetailScreenState extends State<GameGuideDetailScreen> {
 
   Future<void> _confirmAndOpenExternal(String url) async {
     final uri = Uri.tryParse(url);
-    if (uri == null || !mounted) return;
+    if (uri == null || !mounted || !_isForeground || _externalLinkPending) {
+      return;
+    }
+    final articleRoute = ModalRoute.of(context);
+    if (articleRoute?.isCurrent != true) return;
+    _externalLinkPending = true;
+    final epoch = _confirmationEpoch;
 
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('外部ページを開きますか？'),
-          content: Text(
-            _externalLinkMessage(uri),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('キャンセル'),
+    try {
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (context) {
+          // Covering this confirmation with another route invalidates it,
+          // even if the user later returns to the old dialog.
+          if (ModalRoute.isCurrentOf(context) == false) {
+            _confirmationEpoch++;
+          }
+          return AlertDialog(
+            title: const Text('外部ページを開きますか？'),
+            content: Text(
+              _externalLinkMessage(uri),
             ),
-            ElevatedButton(
-              onPressed: () => Navigator.of(context).pop(true),
-              child: const Text('開く'),
-            ),
-          ],
-        );
-      },
-    );
-
-    if (confirmed != true) return;
-    final launched = await launchUrl(
-      uri,
-      mode: LaunchMode.externalApplication,
-    );
-    if (!launched && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('対応するアプリで開けませんでした。'),
-        ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: const Text('キャンセル'),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                child: const Text('開く'),
+              ),
+            ],
+          );
+        },
       );
+
+      if (confirmed != true ||
+          !mounted ||
+          !_isForeground ||
+          epoch != _confirmationEpoch ||
+          articleRoute?.isCurrent != true) {
+        return;
+      }
+      final launched = await launchUrl(
+        uri,
+        mode: LaunchMode.externalApplication,
+      );
+      if (!launched && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('対応するアプリで開けませんでした。'),
+          ),
+        );
+      }
+    } finally {
+      _externalLinkPending = false;
     }
   }
 
