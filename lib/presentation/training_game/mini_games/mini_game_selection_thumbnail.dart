@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'mini_game_character_asset.dart';
 
 /// ミニゲーム選択カードに表示する操作イメージの種類です。
 enum MiniGameSelectionThumbnailType {
@@ -46,10 +47,14 @@ class _TackleGamePreview extends StatelessWidget {
             Expanded(child: Container(color: const Color(0xff8fca70))),
           ],
         ),
-        const Positioned.fill(child: CustomPaint(painter: _TackleGuidePainter())),
+        const Positioned.fill(
+            child: CustomPaint(painter: _TackleGuidePainter())),
         const Align(
           alignment: Alignment(-.55, 0),
-          child: Text('🦈', style: TextStyle(fontSize: 44)),
+          child: MiniGameCharacterAsset(
+            pose: MiniGameCharacterPose.rightRest,
+            fontSize: 44,
+          ),
         ),
         const Align(
           alignment: Alignment(.58, -.18),
@@ -81,10 +86,14 @@ class _PassAndRunGamePreview extends StatelessWidget {
     return Stack(
       children: [
         Positioned.fill(child: Container(color: const Color(0xff79ba63))),
-        const Positioned.fill(child: CustomPaint(painter: _PassAndRunGuidePainter())),
+        const Positioned.fill(
+            child: CustomPaint(painter: _PassAndRunGuidePainter())),
         const Align(
           alignment: Alignment(-.3, .36),
-          child: Text('🦈', style: TextStyle(fontSize: 44)),
+          child: MiniGameCharacterAsset(
+            pose: MiniGameCharacterPose.rightReach,
+            fontSize: 44,
+          ),
         ),
         const Align(
           alignment: Alignment(.42, -.28),

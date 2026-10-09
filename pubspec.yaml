@@ -106,6 +106,7 @@ flutter:
     - assets/images/
     - assets/images/ui_icons/
     - assets/images/sametaroh/
+    - assets/images/training_game/minigames/
     - assets/images/image_stadium_parking/
     - assets/images/image_stadium_bus/
     - assets/images/home_stadium/
