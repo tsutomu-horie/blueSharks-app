@@ -204,6 +204,9 @@ class _PointQrScreenState extends State<PointQrScreen> {
             onRetry: controller.loadQr,
           );
         }
+        final qrSize = (MediaQuery.sizeOf(context).width - 96.w)
+            .clamp(240.w, 280.w)
+            .toDouble();
         return ListView(
           padding: EdgeInsets.all(24.w),
           children: [
@@ -220,7 +223,10 @@ class _PointQrScreenState extends State<PointQrScreen> {
                 child: QrImageView(
                   data: token.token,
                   version: QrVersions.auto,
-                  size: 220.w,
+                  errorCorrectionLevel: QrErrorCorrectLevel.L,
+                  backgroundColor: Colors.white,
+                  gapless: true,
+                  size: qrSize,
                 ),
               ),
             ),
