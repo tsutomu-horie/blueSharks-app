@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:flutter_svg/flutter_svg.dart';
+import 'package:koto_blue_sharks/app/views/views/supplied_ui_icon.dart';
 import 'package:koto_blue_sharks/generated/locales.g.dart';
 import 'package:koto_blue_sharks/utils/app_color.dart';
 import 'package:get/get.dart';
@@ -29,11 +29,11 @@ class AppBottomNavigationBar extends StatelessWidget {
           currentIndex: selectedIndex,
           onTap: onTap,
           items: [
-            _svgItem('home', LocaleKeys.home.tr, 0),
-            _svgItem('info', LocaleKeys.menu_en.tr, 1),
-            _svgItem('member', LocaleKeys.my_page.tr, 2),
-            _svgItem('stadium', LocaleKeys.stadium.tr, 3),
-            _svgItem('calendar', LocaleKeys.calendar.tr, 4),
+            _imageItem('home', LocaleKeys.home.tr, 0),
+            _imageItem('menu', LocaleKeys.menu_en.tr, 1),
+            _imageItem('mypage', LocaleKeys.my_page.tr, 2),
+            _imageItem('stdium', LocaleKeys.stadium.tr, 3),
+            _imageItem('calendar', LocaleKeys.calendar.tr, 4),
             BottomNavigationBarItem(
               icon: _itemContent(
                 Icon(
@@ -53,13 +53,14 @@ class AppBottomNavigationBar extends StatelessWidget {
     );
   }
 
-  BottomNavigationBarItem _svgItem(String name, String label, int index) {
+  BottomNavigationBarItem _imageItem(String name, String label, int index) {
     return BottomNavigationBarItem(
       icon: _itemContent(
-        SvgPicture.asset(
-          'assets/vectors/ic_${name}_${selectedIndex == index ? "enabled" : "default"}.svg',
+        SuppliedUiIcon(
+          fileName: '${name}_icon_${selectedIndex == index ? "on" : "off"}.png',
           width: 20.w,
           height: 20.w,
+          color: selectedIndex == index ? BrandColor.main : TextColor.disabled,
         ),
         label,
         index,
