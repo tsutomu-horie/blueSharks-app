@@ -15,11 +15,15 @@ class TrainingGameCareActionScreen extends StatefulWidget {
   /// 表示対象のお世話行動を指定して画面を作成します。
   const TrainingGameCareActionScreen({
     required this.actionType,
+    this.bodyKey,
     super.key,
   });
 
   /// この画面で実施するお世話行動です。
   final TrainingActionType actionType;
+
+  /// 表示専用の体形。未指定・未知値では既存ノーマルを使います。
+  final String? bodyKey;
 
   @override
   State<TrainingGameCareActionScreen> createState() =>
@@ -45,7 +49,10 @@ class _TrainingGameCareActionScreenState
   @override
   void didUpdateWidget(covariant TrainingGameCareActionScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.actionType == widget.actionType) return;
+    if (oldWidget.actionType == widget.actionType &&
+        oldWidget.bodyKey == widget.bodyKey) {
+      return;
+    }
     _isCompleting = false;
     _showCompletionFrame = false;
     _completionAsset = null;
@@ -53,7 +60,8 @@ class _TrainingGameCareActionScreenState
   }
 
   void _prepareCompletionFrame() {
-    final presentation = _CareActionPresentation.forType(widget.actionType);
+    final presentation = _CareActionPresentation.forType(widget.actionType,
+        bodyKey: widget.bodyKey);
     final completionAsset = presentation.completionFrame.asset;
     if (_completionAsset == completionAsset) return;
     _completionAsset = completionAsset;
@@ -72,7 +80,8 @@ class _TrainingGameCareActionScreenState
 
   @override
   Widget build(BuildContext context) {
-    final presentation = _CareActionPresentation.forType(widget.actionType);
+    final presentation = _CareActionPresentation.forType(widget.actionType,
+        bodyKey: widget.bodyKey);
     return PopScope(
       canPop: !_isCompleting,
       child: Scaffold(
@@ -81,9 +90,8 @@ class _TrainingGameCareActionScreenState
           title: Text('お世話 ｜ ${presentation.title}'),
           leading: IconButton(
             // 完了フレーム表示中は、行動確定前に閉じられないようにします。
-            onPressed: _isCompleting
-                ? null
-                : () => Navigator.pop(context, false),
+            onPressed:
+                _isCompleting ? null : () => Navigator.pop(context, false),
             icon: const Icon(Icons.close),
             tooltip: 'お世話を中止',
           ),
@@ -232,9 +240,8 @@ class _TrainingGameCareActionScreenState
       onPressed: () => setState(() => _selectedMealKind = kind),
       style: OutlinedButton.styleFrom(
         foregroundColor: const Color(0xff3f3f3f),
-        backgroundColor: isSelected
-            ? const Color(0xffffe2ad)
-            : const Color(0xfffffbf4),
+        backgroundColor:
+            isSelected ? const Color(0xffffe2ad) : const Color(0xfffffbf4),
         side: BorderSide(
           color: isSelected ? const Color(0xffbc7610) : const Color(0xffc9c9c9),
           width: isSelected ? 2 : 1,
@@ -279,71 +286,83 @@ class _CareActionPresentation {
   final Color backgroundColor;
 
   /// お世話種別に対応する画面文言と素材表示情報を返します。
-  factory _CareActionPresentation.forType(TrainingActionType type) {
+  factory _CareActionPresentation.forType(TrainingActionType type,
+      {String? bodyKey}) {
     return switch (type) {
       TrainingActionType.work => _CareActionPresentation(
           title: '仕事',
-          frames: SametarohAssets.careFrames[TrainingActionType.work]!,
-          completionFrame:
-              SametarohAssets.completionFrames[TrainingActionType.work]!,
+          frames: SametarohAssets.careFramesFor(TrainingActionType.work,
+              bodyKey: bodyKey),
+          completionFrame: SametarohAssets.completionFrameFor(
+              TrainingActionType.work,
+              bodyKey: bodyKey),
           viewport: const Size(270, 280),
           fit: BoxFit.contain,
           illustrationLabel: '仕事中',
           progressLabel: '仕事中…',
           description: '今日の仕事をがんばっています。完了すると仕事が回復します。',
-          backgroundColor: Color(0xffe7edf5),
+          backgroundColor: const Color(0xffe7edf5),
         ),
       TrainingActionType.meal => _CareActionPresentation(
           title: 'ごはん',
-          frames: SametarohAssets.careFrames[TrainingActionType.meal]!,
-          completionFrame:
-              SametarohAssets.completionFrames[TrainingActionType.meal]!,
-          initialFrame:
-              SametarohAssets.initialFrames[TrainingActionType.meal],
+          frames: SametarohAssets.careFramesFor(TrainingActionType.meal,
+              bodyKey: bodyKey),
+          completionFrame: SametarohAssets.completionFrameFor(
+              TrainingActionType.meal,
+              bodyKey: bodyKey),
+          initialFrame: SametarohAssets.initialFrameFor(TrainingActionType.meal,
+              bodyKey: bodyKey),
           viewport: const Size(250, 260),
           fit: BoxFit.contain,
           illustrationLabel: '食事中',
           progressLabel: '食事中…',
           description: 'しっかり食べて、食事メーターを回復します。',
-          backgroundColor: Color(0xfffff1db),
+          backgroundColor: const Color(0xfffff1db),
         ),
       TrainingActionType.clean => _CareActionPresentation(
           title: '掃除',
-          frames: SametarohAssets.careFrames[TrainingActionType.clean]!,
-          completionFrame:
-              SametarohAssets.completionFrames[TrainingActionType.clean]!,
+          frames: SametarohAssets.careFramesFor(TrainingActionType.clean,
+              bodyKey: bodyKey),
+          completionFrame: SametarohAssets.completionFrameFor(
+              TrainingActionType.clean,
+              bodyKey: bodyKey),
           viewport: const Size(160, 280),
           fit: BoxFit.contain,
           illustrationLabel: '掃除中',
           progressLabel: '掃除中…',
           description: 'お部屋をきれいにして、清潔メーターを回復します。',
-          backgroundColor: Color(0xffe4f3ed),
+          backgroundColor: const Color(0xffe4f3ed),
         ),
       TrainingActionType.rest => _CareActionPresentation(
           title: '休養',
-          frames: SametarohAssets.careFrames[TrainingActionType.rest]!,
-          completionFrame:
-              SametarohAssets.completionFrames[TrainingActionType.rest]!,
+          frames: SametarohAssets.careFramesFor(TrainingActionType.rest,
+              bodyKey: bodyKey),
+          completionFrame: SametarohAssets.completionFrameFor(
+              TrainingActionType.rest,
+              bodyKey: bodyKey),
           viewport: const Size(320, 240),
           fit: BoxFit.contain,
           illustrationLabel: '休養・ケア中',
           progressLabel: 'ケア中…',
           description: 'ゆっくり休んで、体調メーターを回復します。',
-          backgroundColor: Color(0xffeee9f8),
+          backgroundColor: const Color(0xffeee9f8),
         ),
       TrainingActionType.squat => _CareActionPresentation(
           title: '筋トレ',
-          frames: SametarohAssets.careFrames[TrainingActionType.squat]!,
-          completionFrame:
-              SametarohAssets.completionFrames[TrainingActionType.squat]!,
+          frames: SametarohAssets.careFramesFor(TrainingActionType.squat,
+              bodyKey: bodyKey),
+          completionFrame: SametarohAssets.completionFrameFor(
+              TrainingActionType.squat,
+              bodyKey: bodyKey),
           viewport: const Size(170, 280),
           fit: BoxFit.contain,
           illustrationLabel: '筋トレ中',
           progressLabel: 'トレーニング中…',
           description: '日課の筋トレで、フォワードと体格の傾向を伸ばします。',
-          backgroundColor: Color(0xffffe9e6),
+          backgroundColor: const Color(0xffffe9e6),
         ),
-      TrainingActionType.tackle || TrainingActionType.passAndRun =>
+      TrainingActionType.tackle ||
+      TrainingActionType.passAndRun =>
         throw ArgumentError.value(type, 'type', 'お世話画面の対象外です。'),
     };
   }
