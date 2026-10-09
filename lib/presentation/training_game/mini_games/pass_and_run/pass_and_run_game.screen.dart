@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 
 import '../models/mini_game_result.dart';
+import '../mini_game_character_asset.dart';
 import '../../models/training_game_clock.dart';
 import 'pass_and_run_logic.dart';
 
@@ -65,6 +66,7 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
   bool get _isOutbound => _roundIndex == 0;
   bool get _isPenalized =>
       _penaltyUntil != null && TrainingGameClock.now().isBefore(_penaltyUntil!);
+
   /// ラウンド終了時刻を過ぎていない場合だけ、新しいパスを受け付けます。
   bool get _canPass {
     final roundStartedAt = _roundStartedAt;
@@ -78,8 +80,10 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
         !_isPaused &&
         !_isPenalized &&
         !_passInFlight &&
-        (_passReadyAt == null || !TrainingGameClock.now().isBefore(_passReadyAt!));
+        (_passReadyAt == null ||
+            !TrainingGameClock.now().isBefore(_passReadyAt!));
   }
+
   int get _totalScore => _roundScores.fold(0, (sum, score) => sum + score);
 
   @override
@@ -126,8 +130,9 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
   void _startRound({Duration carryPenalty = Duration.zero}) {
     _clockTimer?.cancel();
     _roundStartedAt = TrainingGameClock.now();
-    _penaltyUntil =
-      carryPenalty > Duration.zero ? TrainingGameClock.now().add(carryPenalty) : null;
+    _penaltyUntil = carryPenalty > Duration.zero
+        ? TrainingGameClock.now().add(carryPenalty)
+        : null;
     _passReadyAt = null;
     _passStartedAt = null;
     _passArrivalAt = null;
@@ -325,8 +330,7 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
   }
 
   Offset _mateOffsetAt(double seconds) {
-    final y =
-        .5 + .28 * math.sin(seconds * math.pi * 2 / 2.05 + math.pi * .65);
+    final y = .5 + .28 * math.sin(seconds * math.pi * 2 / 2.05 + math.pi * .65);
     return Offset(
       _fieldSize.width * (_isOutbound ? .75 : .25),
       _fieldSize.height * y,
@@ -473,8 +477,8 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
     // 返球時間に合わせ、移動中のプレイヤーが受け取る位置を先読みします。
     final returnSeconds = _motionSeconds +
         (_passReturnDelay + _passReturnDuration).inMilliseconds / 1000;
-    _passReturnTargetOffset = _playerOffsetAt(returnSeconds) +
-        Offset(_isOutbound ? 24 : -24, 4);
+    _passReturnTargetOffset =
+        _playerOffsetAt(returnSeconds) + Offset(_isOutbound ? 24 : -24, 4);
     _passReadyAt = now.add(_passReturnDelay + _passReturnDuration);
   }
 
@@ -633,7 +637,14 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
                 Positioned(
                   left: player.dx - 28,
                   top: player.dy - 28,
-                  child: const Text('🦈', style: TextStyle(fontSize: 52)),
+                  child: MiniGameCharacterAsset(
+                    key: const Key('pass-player'),
+                    pose: MiniGameCharacterPose.forPass(
+                      outbound: _isOutbound,
+                      passing: _passInFlight && !_isPenalized,
+                    ),
+                    fontSize: 52,
+                  ),
                 ),
                 Positioned(
                   left: mate.dx - 24,

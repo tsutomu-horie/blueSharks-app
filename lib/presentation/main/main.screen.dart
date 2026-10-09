@@ -5,7 +5,8 @@ import 'package:flutter_svg/flutter_svg.dart';
 
 import 'package:get/get.dart';
 import 'package:koto_blue_sharks/app/data/models/info/post.dart';
-import 'package:koto_blue_sharks/app/views/views/custom_text_view.dart';
+import 'package:koto_blue_sharks/app/views/views/supplied_ui_icon.dart';
+import 'main_header_icon_button.dart';
 import 'package:koto_blue_sharks/app/views/views/app_bottom_navigation_bar.dart';
 import 'package:koto_blue_sharks/generated/locales.g.dart';
 import 'package:koto_blue_sharks/presentation/screens.dart';
@@ -145,8 +146,9 @@ class _MainScreenState extends State<MainScreen> {
                             return Stack(
                               children: [
                                 toolbarButton(
-                                  SvgPicture.asset(
-                                    'assets/vectors/ic_notification.svg',
+                                  SuppliedUiIcon(
+                                    fileName: 'news_icon.png',
+                                    color: Colors.white,
                                     width: 24.w,
                                     height: 24.h,
                                   ),
@@ -194,8 +196,9 @@ class _MainScreenState extends State<MainScreen> {
                     Row(
                       children: [
                         toolbarButton(
-                            SvgPicture.asset(
-                              'assets/vectors/ic_fanclub.svg',
+                            SuppliedUiIcon(
+                              fileName: 'fanclub_icon.png',
+                              color: Colors.white,
                               width: 24.w,
                               height: 24.h,
                             ),
@@ -207,8 +210,9 @@ class _MainScreenState extends State<MainScreen> {
                           width: 8.w,
                         ),
                         toolbarButton(
-                            SvgPicture.asset(
-                              'assets/vectors/ic_ticket.svg',
+                            SuppliedUiIcon(
+                              fileName: 'ticket_icon.png',
+                              color: Colors.white,
                               width: 24.w,
                               height: 24.h,
                             ),
@@ -219,8 +223,9 @@ class _MainScreenState extends State<MainScreen> {
                           width: 8.w,
                         ),
                         toolbarButton(
-                            SvgPicture.asset(
-                              'assets/vectors/ic_goods.svg',
+                            SuppliedUiIcon(
+                              fileName: 'goods_icon.png',
+                              color: Colors.white,
                               width: 24.w,
                               height: 24.h,
                             ),
@@ -249,32 +254,11 @@ class _MainScreenState extends State<MainScreen> {
     );
   }
 
-  Widget toolbarButton(SvgPicture icon, String text, Function onPress) {
-    return ElevatedButton(
-      style: ElevatedButton.styleFrom(
-        shadowColor: Colors.transparent,
-        backgroundColor: Colors.transparent,
-        minimumSize: Size(40.w, 48.h),
-        padding: EdgeInsets.zero,
-      ),
-      onPressed: () {
-        onPress();
-      },
-      //     () {
-      //   if (text == LocaleKeys.fan_club.tr) {
-      //     Get.to(FanclubScreen());
-      //   }
-      //
-      // },
-      child: Column(
-        children: [
-          icon,
-          CustomTextView(
-            text,
-            style: TextStyle(fontSize: 10.sp, color: Colors.white),
-          )
-        ],
-      ),
+  Widget toolbarButton(Widget icon, String text, VoidCallback onPress) {
+    return MainHeaderIconButton(
+      icon: icon,
+      text: text,
+      onPressed: onPress,
     );
   }
 }
