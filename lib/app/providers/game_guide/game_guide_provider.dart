@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:get/get.dart';
 import 'package:koto_blue_sharks/app/data/models/game_guide/game_guide_media.dart';
 import 'package:koto_blue_sharks/app/data/models/game_guide/game_guide_post.dart';
@@ -17,7 +19,7 @@ class GameGuideProvider extends GetConnect {
     required int page,
     int perPage = defaultPageSize,
   }) async {
-    final response = await get<List<dynamic>>(
+    final response = await get<dynamic>(
       'game-guide',
       query: {
         'page': '$page',
@@ -25,7 +27,7 @@ class GameGuideProvider extends GetConnect {
         '_embed': '1',
         // APIで許可されているWordPress既定の表示順をそのまま利用する。
       },
-      decoder: (body) => body is List ? body : <dynamic>[],
+      decoder: (body) => body,
     );
 
     if (response.hasError) {
@@ -35,8 +37,27 @@ class GameGuideProvider extends GetConnect {
       );
     }
 
+    // GetConnectのdecoderによる正規化前の実レスポンスを検証する。
+    // 本文欠如や不正JSONを、正常な空配列として扱わない。
+    final rawBody = response.bodyString;
+    dynamic items;
+    try {
+      items = rawBody == null ? null : jsonDecode(rawBody);
+    } on FormatException {
+      throw GameGuideRequestException(
+        statusCode: response.statusCode,
+        message: 'Invalid game guide response.',
+      );
+    }
+    if (items is! List) {
+      throw GameGuideRequestException(
+        statusCode: response.statusCode,
+        message: 'Expected a game guide array.',
+      );
+    }
+
     final posts = <GameGuidePost>[];
-    for (final item in response.body ?? const <dynamic>[]) {
+    for (final item in items) {
       if (item is! Map) continue;
       try {
         posts.add(
@@ -45,6 +66,12 @@ class GameGuideProvider extends GetConnect {
       } on FormatException {
         // 欠損記事のみ非表示にし、一覧全体の取得は継続する。
       }
+    }
+    if (items.isNotEmpty && posts.isEmpty) {
+      throw GameGuideRequestException(
+        statusCode: response.statusCode,
+        message: 'No valid game guides in the response.',
+      );
     }
     return _attachFallbackThumbnails(posts);
   }

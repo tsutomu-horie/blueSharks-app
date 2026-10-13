@@ -60,15 +60,12 @@ class GameGuideController extends GetxController {
   }
 
   Future<void> loadInitial() async {
-    if (isLoading.value) return;
+    if (isLoading.value || isLoadingMore.value) return;
 
     isLoading.value = true;
     syncState.value = GameGuideSyncState.syncing;
     errorMessage.value = null;
-    _currentPage = 0;
-    hasMore.value = true;
-
-    if (saveArticlesEnabled.value) {
+    if (saveArticlesEnabled.value && _currentPage == 0 && guides.isEmpty) {
       _loadCache();
       syncState.value = GameGuideSyncState.syncing;
     }
@@ -82,7 +79,7 @@ class GameGuideController extends GetxController {
       cachedAt.value = null;
       _markSynced();
       _applyFilters();
-      await _persistCacheIfEnabled();
+      await _persistCacheIfEnabled(allowEmpty: true);
     } catch (_) {
       _markSyncFailed();
       if (guides.isEmpty) {
@@ -109,7 +106,7 @@ class GameGuideController extends GetxController {
       final nextItems = await _fetchWithRetry(nextPage);
       final existingIds = guides.map((item) => item.id).toSet();
       guides.addAll(
-        nextItems.where((item) => !existingIds.contains(item.id)),
+        nextItems.where((item) => existingIds.add(item.id)),
       );
       _currentPage = nextPage;
       hasMore.value = nextItems.length == GameGuideProvider.defaultPageSize;
@@ -195,8 +192,8 @@ class GameGuideController extends GetxController {
     return options;
   }
 
-  Future<void> _persistCacheIfEnabled() async {
-    if (!saveArticlesEnabled.value || guides.isEmpty) return;
+  Future<void> _persistCacheIfEnabled({bool allowEmpty = false}) async {
+    if (!saveArticlesEnabled.value || (!allowEmpty && guides.isEmpty)) return;
 
     await MySharedPref.setGameGuideArticlesCache(
       jsonEncode(guides.map((item) => item.toJson()).toList()),
@@ -238,7 +235,7 @@ class GameGuideController extends GetxController {
             (item) => item.title.isNotEmpty && item.detailUrl.isNotEmpty,
           )
           .toList();
-      if (cachedGuides.isEmpty) return false;
+      if (cachedGuides.isEmpty && decoded.isNotEmpty) return false;
 
       guides.assignAll(cachedGuides);
       cachedAt.value = MySharedPref.getGameGuideArticlesCachedAt();
