@@ -75,13 +75,12 @@ void main() {
           action == TrainingActionType.work) {
         continue;
       }
-      testWidgets('$body/${action.name}は操作なしで5秒後に完了し1回だけ戻る',
-          (tester) async {
+      testWidgets('$body/${action.name}は操作なしで5秒後に完了し1回だけ戻る', (tester) async {
         final results = <bool?>[];
         await _openCare(tester,
             action: action, body: body, onResult: results.add);
         expect(find.text('完了する'), findsNothing);
-        expect(find.text('スキップ'), findsOneWidget);
+        expect(find.text('スキップ'), findsNothing);
         // 同じ画面の再buildで自動完了までの時間が延長されない。
         await tester.pump(const Duration(seconds: 2));
         tester
@@ -93,8 +92,8 @@ void main() {
         expect(results, isEmpty);
         await tester.pump(const Duration(milliseconds: 1));
         await tester.pump();
-        final done = tester.widget<SametarohFrameImage>(
-            find.byType(SametarohFrameImage));
+        final done = tester
+            .widget<SametarohFrameImage>(find.byType(SametarohFrameImage));
         expect(done.frame.asset,
             SametarohAssets.completionFrameFor(action, bodyKey: body).asset);
         await tester.pump(const Duration(milliseconds: 499));
@@ -110,9 +109,8 @@ void main() {
     }
   }
 
-  for (final targetName in ['スキップ', '余白', 'キャラクター']) {
-    testWidgets('$targetName連打で待ち時間をスキップして1回だけ完了',
-        (tester) async {
+  for (final targetName in ['案内文', '余白', 'キャラクター', '画面下部']) {
+    testWidgets('$targetName連打で待ち時間をスキップして1回だけ完了', (tester) async {
       final results = <bool?>[];
       await _openCare(tester, onResult: results.add);
       if (targetName != 'キャラクター') {
@@ -121,7 +119,8 @@ void main() {
       final target = switch (targetName) {
         '余白' => const Offset(2, 200),
         'キャラクター' => tester.getCenter(find.byType(SametarohAnimatedImage)),
-        _ => tester.getCenter(find.text('スキップ')),
+        '画面下部' => const Offset(187.5, 780),
+        _ => tester.getCenter(find.text('5秒で自動完了します。画面タップでスキップ')),
       };
       await tester.tapAt(target);
       await tester.tapAt(target);
@@ -130,10 +129,12 @@ void main() {
       expect(find.text('完了しました'), findsOneWidget);
       expect(tester.widget<PopScope>(find.byType(PopScope)).canPop, isFalse);
       expect(
-          tester.widget<IconButton>(find.ancestor(
-            of: find.byTooltip('お世話を中止'),
-            matching: find.byType(IconButton),
-          )).onPressed,
+          tester
+              .widget<IconButton>(find.ancestor(
+                of: find.byTooltip('お世話を中止'),
+                matching: find.byType(IconButton),
+              ))
+              .onPressed,
           isNull);
       // 5秒の境界を跨いでも再度完了処理を開始しない。
       await tester.pump(const Duration(milliseconds: 1));
@@ -167,7 +168,7 @@ void main() {
       final results = <bool?>[];
       await _openCare(tester, onResult: results.add);
       if (skip) {
-        await tester.tap(find.text('スキップ'));
+        await tester.tap(find.text('5秒で自動完了します。画面タップでスキップ'));
         await tester.pump();
       }
       await tester.pumpWidget(const SizedBox());

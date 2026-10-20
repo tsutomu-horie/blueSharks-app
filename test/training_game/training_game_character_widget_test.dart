@@ -113,8 +113,7 @@ class _DisplayFixtureController extends TrainingGameController {
 
 void main() {
   for (final size in [const Size(375, 812), const Size(320, 568)]) {
-    testWidgets('ホーム背景がHUDの背面まで続き、同期通知でも下部配置を保つ $size',
-        (tester) async {
+    testWidgets('ホーム背景がHUDの背面まで続き、同期通知でも下部配置を保つ $size', (tester) async {
       tester.view.physicalSize = size;
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.resetPhysicalSize);
@@ -133,12 +132,15 @@ void main() {
       final meal = find.widgetWithText(TextButton, 'ごはん');
       final mealRect = tester.getRect(meal);
       final characterRect = tester.getRect(find.byType(SametarohFrameImage));
-      final exitRect = tester.getRect(find.widgetWithText(ElevatedButton, '🚪'));
+      final exitRect =
+          tester.getRect(find.widgetWithText(ElevatedButton, '🚪'));
       final debugRect = tester.getRect(find.byTooltip('デバッグコマンド'));
       expect(backgroundRect.top, 0);
       expect(backgroundRect.width, size.width);
-      expect(backgroundRect.contains(tester.getCenter(find.text('食事'))), isTrue);
-      expect(backgroundRect.contains(tester.getCenter(find.text('清潔'))), isTrue);
+      expect(
+          backgroundRect.contains(tester.getCenter(find.text('食事'))), isTrue);
+      expect(
+          backgroundRect.contains(tester.getCenter(find.text('清潔'))), isTrue);
       expect(backgroundRect.bottom, lessThanOrEqualTo(mealRect.top));
       expect(debugRect.center.dx, closeTo(exitRect.center.dx, .01));
       expect(debugRect.top, greaterThan(exitRect.bottom));
@@ -216,7 +218,7 @@ void main() {
     await tester.tap(find.text('open care'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
-    await tester.tap(find.text('スキップ'));
+    await tester.tap(find.text('5秒で自動完了します。画面タップでスキップ'));
     await tester.pump();
     expect(shownAsset(tester), endsWith('/sh/clean_done.png'));
     await tester.pump(const Duration(milliseconds: 499));

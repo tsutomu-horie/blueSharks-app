@@ -150,8 +150,8 @@ class _TrainingGameCareActionScreenState
                     ),
                     child: Text(
                       presentation.progressLabel,
-                      style:
-                          TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w700),
+                      style: TextStyle(
+                          fontSize: 16.sp, fontWeight: FontWeight.w700),
                     ),
                   ),
                   SizedBox(height: 12.h),
@@ -162,21 +162,9 @@ class _TrainingGameCareActionScreenState
                   ),
                   SizedBox(height: 12.h),
                   Text(
-                    _isCompleting
-                        ? '完了しました'
-                        : '5秒で自動完了します。画面タップでスキップ',
+                    _isCompleting ? '完了しました' : '5秒で自動完了します。画面タップでスキップ',
                     textAlign: TextAlign.center,
                     style: TextStyle(fontSize: 14.sp),
-                  ),
-                  SizedBox(height: 20.h),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 52.h,
-                    child: ElevatedButton(
-                      // 効果の反映は呼び出し元のControllerへ集約します。
-                      onPressed: _isCompleting ? null : _completeAction,
-                      child: Text(_isCompleting ? '反映中…' : 'スキップ'),
-                    ),
                   ),
                 ],
               ),
