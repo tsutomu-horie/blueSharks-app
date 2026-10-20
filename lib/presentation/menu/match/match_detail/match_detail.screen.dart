@@ -1,4 +1,3 @@
-import 'package:koto_blue_sharks/utils/app_environment.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_html/flutter_html.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -17,55 +16,17 @@ import 'package:koto_blue_sharks/utils/date_formatter.dart';
 import 'package:koto_blue_sharks/utils/match+extensions.dart';
 import 'package:koto_blue_sharks/app/views/views/html_text_view.dart';
 import 'package:shimmer/shimmer.dart';
+import 'package:koto_blue_sharks/utils/match+extensions.dart';
 
-class MatchDetailScreen extends StatelessWidget {
+class MatchDetailScreen extends GetView<MatchDetailController> {
   const MatchDetailScreen(this.data, {super.key, required this.homeStatus});
-  final MatchResultBySeason? data;
-  final String homeStatus;
-
-  @override
-  Widget build(BuildContext context) {
-    final controller = Get.put(MatchDetailController());
-    if (AppEnvironment.usesProductionServices || data == null) {
-      return _NativeMatchDetailScreen(data, homeStatus: homeStatus);
-    }
-    controller.loadDetail(data!);
-    return Obx(() {
-      if (!controller.loading.value && !controller.failed.value) {
-        final value = controller.detail.value ?? data;
-        return _NativeMatchDetailScreen(value, homeStatus: homeStatus);
-      }
-      return Scaffold(
-        appBar: AppBar(title: const Text('試合情報')),
-        body: Center(
-          child: controller.failed.value
-              ? Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Text('情報を取得できませんでした。'),
-                    TextButton(
-                      onPressed: () =>
-                          controller.loadDetail(data!, retry: true),
-                      child: const Text('再試行'),
-                    ),
-                  ],
-                )
-              : const CircularProgressIndicator(),
-        ),
-      );
-    });
-  }
-}
-
-class _NativeMatchDetailScreen extends GetView<MatchDetailController> {
-  const _NativeMatchDetailScreen(this.data, {required this.homeStatus});
 
   final MatchResultBySeason? data;
   final String homeStatus;
 
   @override
   Widget build(BuildContext context) {
-    final MatchDetailController controller = Get.find<MatchDetailController>();
+    final MatchDetailController controller = Get.put(MatchDetailController());
 
     print("data ${data}");
     final gameDate = data?.custom_field.gameDate ?? [];

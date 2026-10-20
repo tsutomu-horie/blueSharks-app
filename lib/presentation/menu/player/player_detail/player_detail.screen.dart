@@ -1,4 +1,3 @@
-import 'package:koto_blue_sharks/utils/app_environment.dart';
 import 'package:dotted_line/dotted_line.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -16,51 +15,16 @@ import 'package:url_launcher/url_launcher.dart';
 
 import 'controllers/player_detail.controller.dart';
 
-class PlayerDetailScreen extends StatelessWidget {
+class PlayerDetailScreen extends GetView<PlayerDetailController> {
   const PlayerDetailScreen(this.playerData, {super.key});
-  final Member? playerData;
-
-  @override
-  Widget build(BuildContext context) {
-    final controller = Get.put(PlayerDetailController());
-    if (AppEnvironment.usesProductionServices || playerData == null) {
-      return _NativePlayerDetailScreen(playerData);
-    }
-    controller.loadDetail(playerData!);
-    return Obx(() {
-      if (!controller.loading.value && !controller.failed.value) {
-        final value = controller.detail.value ?? playerData;
-        return _NativePlayerDetailScreen(value);
-      }
-      return Scaffold(
-        appBar: AppBar(title: const Text('選手情報')),
-        body: Center(
-          child: controller.failed.value
-              ? Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Text('情報を取得できませんでした。'),
-                    TextButton(
-                      onPressed: () =>
-                          controller.loadDetail(playerData!, retry: true),
-                      child: const Text('再試行'),
-                    ),
-                  ],
-                )
-              : const CircularProgressIndicator(),
-        ),
-      );
-    });
-  }
-}
-
-class _NativePlayerDetailScreen extends GetView<PlayerDetailController> {
-  const _NativePlayerDetailScreen(this.playerData);
 
   final Member? playerData;
 
   @override
   Widget build(BuildContext context) {
+    final PlayerDetailController memberController =
+    Get.put(PlayerDetailController());
+
     return Scaffold(
       appBar: AppBar(
         title: CustomTextView(
