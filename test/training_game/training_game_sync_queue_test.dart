@@ -34,8 +34,91 @@ void main() {
     return controller;
   }
 
-  test('取得済み状態で通常起動しても結果不明journalを同じ操作IDで復元する',
-      () async {
+  for (final v2 in [false, true]) {
+    test(
+        'tackle metadata survives queue restart v2=$v2 and retains operation ID',
+        () async {
+      final provider =
+          _RateLimitedTrainingGameProvider(rateLimitFirstAction: false);
+      final pendingKey = 'tackle-restart-$v2';
+      final raw = jsonEncode([
+        {
+          'action_code': 'tackle',
+          'revision': 1,
+          'idempotency_key': pendingKey,
+          'player_id': 7,
+          'cycle_no': 1,
+          'game_started_at': provider._startedAt.toIso8601String(),
+          'may_have_been_applied': true,
+          'result': {
+            'type': 'tackle',
+            'summary': 'tackle result',
+            'score': v2 ? .75 : .5,
+            'effect_multiplier': .25,
+            'result_code': 'D',
+            if (v2) ...{
+              'result_policy': 'tackle_v2_750_penalty_mean',
+              'attempt_count': 3,
+              'success_count': 0,
+              'successful_reaction_total_us': 0
+            }
+          },
+        }
+      ]);
+      await MySharedPref.setTrainingGamePendingActions(raw);
+      final controller = await openWithInitialState(provider);
+      expect(controller.pendingSyncActionCount, 1);
+      await controller.retryPendingSync();
+      expect(provider.idempotencyKeys, [pendingKey]);
+      expect(
+          provider.tackleMetadata.single,
+          v2
+              ? {
+                  'result_policy': 'tackle_v2_750_penalty_mean',
+                  'attempt_count': 3,
+                  'success_count': 0,
+                  'successful_reaction_total_us': 0,
+                }
+              : <String, dynamic>{});
+    });
+  }
+  for (final corruption in ['missing_total', 'rank', 'multiplier', 'score']) {
+    test('invalid tackle $corruption preserves journal without sending',
+        () async {
+      final provider =
+          _RateLimitedTrainingGameProvider(rateLimitFirstAction: false);
+      final raw = jsonEncode([
+        {
+          'action_code': 'tackle',
+          'revision': 1,
+          'idempotency_key': 'partial-tackle',
+          'player_id': 7,
+          'cycle_no': 1,
+          'game_started_at': provider._startedAt.toIso8601String(),
+          'may_have_been_applied': true,
+          'result': {
+            'type': 'tackle',
+            'summary': 'partial',
+            'score': corruption == 'score' ? .5 : .75,
+            'effect_multiplier': corruption == 'multiplier' ? 1 : .25,
+            'result_code': corruption == 'rank' ? 'C' : 'D',
+            'result_policy': 'tackle_v2_750_penalty_mean',
+            'attempt_count': 3,
+            'success_count': 0,
+            if (corruption != 'missing_total') 'successful_reaction_total_us': 0
+          },
+        }
+      ]);
+      await MySharedPref.setTrainingGamePendingActions(raw);
+      final controller = await openWithInitialState(provider);
+      expect(controller.syncStatus.value, TrainingSyncStatus.outcomeUnknown);
+      expect(provider.actionCodes, isEmpty);
+      expect(MySharedPref.getTrainingGamePendingActions(), raw);
+      expect(controller.syncStatusMessage.value, contains('読み取れません'));
+    });
+  }
+
+  test('取得済み状態で通常起動しても結果不明journalを同じ操作IDで復元する', () async {
     final provider = _RateLimitedTrainingGameProvider(
       rateLimitFirstAction: false,
     );
@@ -74,8 +157,7 @@ void main() {
     expect(MySharedPref.getTrainingGamePendingActions(), isNull);
   });
 
-  test('取得済み状態で通常起動しても破損journalの確認待ちを維持する',
-      () async {
+  test('取得済み状態で通常起動しても破損journalの確認待ちを維持する', () async {
     final provider = _RateLimitedTrainingGameProvider();
     await MySharedPref.setTrainingGamePendingActionsRecovery(jsonEncode({
       'player_id': 7,
@@ -93,8 +175,7 @@ void main() {
     expect(MySharedPref.getTrainingGamePendingActionsRecovery(), isNotNull);
   });
 
-  test('未確定操作により退出できなくても再試行後に育成時計が再開する',
-      () async {
+  test('未確定操作により退出できなくても再試行後に育成時計が再開する', () async {
     final provider = _RateLimitedTrainingGameProvider(
       rateLimitFirstAction: false,
       stageCode: 'child',
@@ -944,6 +1025,7 @@ class _RateLimitedTrainingGameProvider extends TrainingGameProvider {
   final heldFetchStarted = Completer<void>();
   final releaseHeldFetch = Completer<void>();
   final actionCodes = <String>[];
+  final tackleMetadata = <Map<String, dynamic>>[];
   final idempotencyKeys = <String?>[];
   final syncLockVersions = <int>[];
   final debugBypassFlags = <bool>[];
@@ -1032,9 +1114,20 @@ class _RateLimitedTrainingGameProvider extends TrainingGameProvider {
     double? actionScore,
     double? actionEffectMultiplier,
     String? actionResultCode,
+    String? actionResultPolicy,
+    int? actionAttemptCount,
+    int? actionSuccessCount,
+    int? actionSuccessfulReactionTotalUs,
     bool debugBypassCooldown = false,
     String status = 'playing',
   }) async {
+    tackleMetadata.add({
+      if (actionResultPolicy != null) 'result_policy': actionResultPolicy,
+      if (actionAttemptCount != null) 'attempt_count': actionAttemptCount,
+      if (actionSuccessCount != null) 'success_count': actionSuccessCount,
+      if (actionSuccessfulReactionTotalUs != null)
+        'successful_reaction_total_us': actionSuccessfulReactionTotalUs,
+    });
     actionCodes.add(actionCode!);
     idempotencyKeys.add(actionIdempotencyKey);
     syncLockVersions.add(lockVersion);

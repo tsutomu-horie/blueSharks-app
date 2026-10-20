@@ -83,7 +83,7 @@ class MenuScreen extends GetView<MenuListController> {
                           Text(
                             tabs[index],
                             style: TextStyle(
-                              fontSize: 14.sp,
+                              fontSize: 7.sp,
                               fontWeight: FontWeight.w500,
                               color: controller.selectedIndex.value == index
                                   ? Colors.white

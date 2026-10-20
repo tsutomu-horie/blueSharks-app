@@ -18,9 +18,16 @@ class TackleAttempt {
   /// 踏み込み開始からタップまでの時間です。
   final Duration? reaction;
 
-  /// 資料の暫定しきい値に従ったセット単位のランクです。
+  /// 正しい方向を0〜750msで入力した場合だけ成功です。
+  bool get isSuccess =>
+      isCorrect &&
+      reaction != null &&
+      !reaction!.isNegative &&
+      reaction! <= TackleRules.inputLimit;
+
+  /// セット単位のランクです。
   String get rank {
-    if (!isCorrect || reaction == null || reaction! > TackleRules.inputLimit) {
+    if (!isSuccess) {
       return 'MISS';
     }
     final milliseconds = reaction!.inMilliseconds;
@@ -31,40 +38,44 @@ class TackleAttempt {
   }
 }
 
-/// タックルの確定値と暫定ランク判定を集約します。
+/// タックルの確定値とランク判定を集約します。
 abstract final class TackleRules {
   /// 1プレイで実施するセット数です。
   static const setCount = 3;
 
   /// 踏み込み後に入力を受け付ける時間です。
-  static const inputLimit = Duration(milliseconds: 500);
+  static const inputLimit = Duration(milliseconds: 750);
 
-  /// 3セットの総合ランクを返します。
+  /// 3セットの総合ランクです。MISSは750ms、全MISSだけDです。
   static String overallRank(List<TackleAttempt> attempts) {
-    // MISSの最終扱いは未確定のため、資料にある厳しい暫定案を採用します。
-    if (attempts.length < setCount ||
-        attempts.any((attempt) => attempt.rank == 'MISS')) {
-      return 'D';
-    }
-    final average = averageReaction(attempts);
-    if (average == null) return 'D';
-    if (average.inMilliseconds <= 200) return 'S';
-    if (average.inMilliseconds <= 300) return 'A';
-    if (average.inMilliseconds <= 400) return 'B';
-    if (average.inMilliseconds <= 500) return 'C';
-    return 'D';
+    if (attempts.length != setCount || successCount(attempts) == 0) return 'D';
+    final total = _judgedTotalMicroseconds(attempts);
+    // 平均の丸めで境界をまたがないよう、整数の合計で比較します。
+    if (total <= 300000 * setCount) return 'S';
+    if (total <= 450000 * setCount) return 'A';
+    if (total <= 600000 * setCount) return 'B';
+    return 'C';
   }
 
-  /// 成功した3セットの平均反応時間を返します。
+  /// 制限時間内に正しい方向を入力した回数です。
+  static int successCount(List<TackleAttempt> attempts) =>
+      attempts.where((attempt) => attempt.isSuccess).length;
+
+  /// APIでの再計算にも使う、成功した反応時間だけの整数合計です。
+  static int successfulReactionTotalUs(List<TackleAttempt> attempts) =>
+      attempts.where((attempt) => attempt.isSuccess).fold<int>(
+            0,
+            (sum, attempt) => sum + attempt.reaction!.inMicroseconds,
+          );
+
+  static int _judgedTotalMicroseconds(List<TackleAttempt> attempts) =>
+      successfulReactionTotalUs(attempts) +
+      (setCount - successCount(attempts)) * inputLimit.inMicroseconds;
+
+  /// MISSを750msとして全3回に含めた判定平均です。
   static Duration? averageReaction(List<TackleAttempt> attempts) {
-    final successes = attempts
-        .where((attempt) => attempt.isCorrect && attempt.reaction != null)
-        .toList();
-    if (successes.isEmpty) return null;
-    final total = successes.fold<int>(
-      0,
-      (sum, attempt) => sum + attempt.reaction!.inMicroseconds,
-    );
-    return Duration(microseconds: total ~/ successes.length);
+    if (attempts.length != setCount) return null;
+    return Duration(
+        microseconds: _judgedTotalMicroseconds(attempts) ~/ setCount);
   }
 }

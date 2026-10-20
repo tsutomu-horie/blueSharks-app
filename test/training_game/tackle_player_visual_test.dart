@@ -1,3 +1,4 @@
+import 'tackle_test_driver.dart';
 import 'dart:math' as math;
 import 'dart:ui' as ui;
 
@@ -5,7 +6,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:koto_blue_sharks/presentation/training_game/mini_games/mini_game_character_asset.dart';
-import 'package:koto_blue_sharks/presentation/training_game/mini_games/tackle/tackle_game.screen.dart';
 import 'package:koto_blue_sharks/presentation/training_game/mini_games/tackle/tackle_game_logic.dart';
 import 'package:koto_blue_sharks/presentation/training_game/mini_games/tackle/tackle_player_visual.dart';
 
@@ -33,7 +33,7 @@ void main() {
     addTearDown(() async {
       await tester.pumpWidget(const SizedBox.shrink());
     });
-    await tester.pumpWidget(const MaterialApp(home: TackleGameScreen()));
+    await tester.pumpWidget(MaterialApp(home: tackleTestScreen()));
     expect(attack, findsNothing);
     await tester.tap(find.text('スタート'));
     await tester.pump();
@@ -70,12 +70,18 @@ void main() {
           expect(
               tester.getSize(attack).width, closeTo(72 * 615 / 1251, .000001));
           if (early) expect(find.text('突破された！'), findsOneWidget);
+          final succeeded = find.text('TACKLE!').evaluate().isNotEmpty;
           await tester.pump(const Duration(milliseconds: 160));
           expect(tester.getSize(player), size);
           debugPrint('TACKLE_METRIC direction=${up ? "up" : "down"} '
               'early=$early legacyBox=$size before=$before '
               'after=${tester.getCenter(player)}');
-          expect(tester.getCenter(player).dx, before.dx);
+          if (succeeded) {
+            // Successful interception moves into the runner's future path.
+            expect(tester.getCenter(player).dx, greaterThan(before.dx));
+          } else {
+            expect(tester.getCenter(player).dx, before.dx);
+          }
           expect(
             tester.getCenter(player).dy,
             up ? lessThan(before.dy) : greaterThan(before.dy),
@@ -107,15 +113,14 @@ void main() {
     ) async {
       await start(tester);
       await tester.pump(const Duration(milliseconds: 1350));
-      await tester.pump(const Duration(milliseconds: 110));
-      // Read the opponent's actual target after the feint, independent of RNG.
-      final opponent = tester.widget<AnimatedAlign>(
-        find.ancestor(
-          of: find.text('🏃'),
-          matching: find.byType(AnimatedAlign),
-        ),
+      await tester.pump(const Duration(milliseconds: 200));
+      // Observe the running direction after the feint without replacing RNG.
+      final actualUp =
+          find.byKey(const Key('tackle-running-up')).evaluate().isNotEmpty;
+      expect(
+        find.byKey(Key(actualUp ? 'tackle-running-up' : 'tackle-running-down')),
+        findsOneWidget,
       );
-      final actualUp = opponent.alignment.resolve(TextDirection.ltr).y < 0;
       final tapUp = correct ? actualUp : !actualUp;
       await tester.tap(find.text(tapUp ? '上をタップ ▲' : '下をタップ ▼'));
       await tester.pump();
