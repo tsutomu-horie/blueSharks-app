@@ -141,9 +141,29 @@ class TrainingGameProvider extends GetConnect {
     double? actionScore,
     double? actionEffectMultiplier,
     String? actionResultCode,
+    String? actionResultPolicy,
+    int? actionAttemptCount,
+    int? actionSuccessCount,
+    int? actionSuccessfulReactionTotalUs,
     bool debugBypassCooldown = false,
     String status = 'playing',
   }) async {
+    final hasTackleMetadata = actionResultPolicy != null ||
+        actionAttemptCount != null ||
+        actionSuccessCount != null ||
+        actionSuccessfulReactionTotalUs != null;
+    if (hasTackleMetadata &&
+        (actionCode != 'tackle' ||
+            actionResultPolicy != 'tackle_v2_750_penalty_mean' ||
+            actionAttemptCount != 3 ||
+            actionSuccessCount == null ||
+            actionSuccessCount < 0 ||
+            actionSuccessCount > 3 ||
+            actionSuccessfulReactionTotalUs == null ||
+            actionSuccessfulReactionTotalUs < 0 ||
+            actionSuccessfulReactionTotalUs > actionSuccessCount * 750000)) {
+      throw ArgumentError('Incomplete or invalid tackle action metadata');
+    }
     final write = _pendingWrite.then((_) async {
       final headers = await _headers(expectedSessionVersion);
       _assertSessionVersion(expectedSessionVersion);
@@ -162,6 +182,12 @@ class TrainingGameProvider extends GetConnect {
               'idempotency_key': actionIdempotencyKey ??
                   '$cycleNo-${_clock.elapsedMicroseconds}-$actionCode',
               'result_code': actionResultCode ?? 'completed',
+              if (hasTackleMetadata) ...{
+                'result_policy': actionResultPolicy,
+                'attempt_count': actionAttemptCount,
+                'success_count': actionSuccessCount,
+                'successful_reaction_total_us': actionSuccessfulReactionTotalUs,
+              },
               if (debugBypassCooldown) 'debug_bypass_cooldown': true,
               if (actionScore != null) 'score': actionScore,
               if (actionEffectMultiplier != null)
