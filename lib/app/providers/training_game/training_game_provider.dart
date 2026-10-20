@@ -2,7 +2,7 @@ import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:koto_blue_sharks/app/services/auth_token.dart';
 import 'package:koto_blue_sharks/app/services/server_time_clock.dart';
-import 'package:koto_blue_sharks/utils/Constant.dart';
+import 'package:koto_blue_sharks/utils/constant.dart';
 
 /// 育成ゲームのサーバー同期APIを担当します。
 class TrainingGameProvider extends GetConnect {
