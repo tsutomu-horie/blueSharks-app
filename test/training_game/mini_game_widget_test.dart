@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:koto_blue_sharks/app/services/server_time_clock.dart';
-import 'package:koto_blue_sharks/presentation/training_game/mini_games/mini_game_character_asset.dart';
+import 'package:koto_blue_sharks/presentation/training_game/mini_games/pass_and_run/pass_and_run_character_visual.dart';
 import 'package:koto_blue_sharks/presentation/training_game/mini_games/mini_game_selection_thumbnail.dart';
 import 'package:koto_blue_sharks/presentation/training_game/mini_games/pass_and_run/pass_and_run_game.screen.dart';
 import 'package:koto_blue_sharks/presentation/training_game/mini_games/tackle/tackle_game.screen.dart';
@@ -125,18 +125,18 @@ void main() {
 
   testWidgets('パス＆ランでは両キャラクターが連続して上下移動する', (tester) async {
     await tester.pumpWidget(
-      const MaterialApp(home: PassAndRunGameScreen()),
+      MaterialApp(home: PassAndRunGameScreen(now: () => serverTime)),
     );
     await tester.tap(find.text('スタート'));
     await tester.pump();
 
     final playerStart =
         tester.getCenter(find.byKey(const Key('pass-player'))).dy;
-    final mateStart = tester.getCenter(find.text('🏃')).dy;
+    final mateStart = tester.getCenter(find.byKey(const Key('pass-mate'))).dy;
     await advance(tester, const Duration(milliseconds: 500));
     final playerAfter =
         tester.getCenter(find.byKey(const Key('pass-player'))).dy;
-    final mateAfter = tester.getCenter(find.text('🏃')).dy;
+    final mateAfter = tester.getCenter(find.byKey(const Key('pass-mate'))).dy;
 
     expect(playerAfter, isNot(playerStart));
     expect(mateAfter, isNot(mateStart));
@@ -144,14 +144,14 @@ void main() {
 
   testWidgets('パス＆ランでボールと成功パスの軌跡を表示する', (tester) async {
     await tester.pumpWidget(
-      const MaterialApp(home: PassAndRunGameScreen()),
+      MaterialApp(home: PassAndRunGameScreen(now: () => serverTime)),
     );
 
     expect(find.byKey(const Key('pass-ball')), findsOneWidget);
     await tester.tap(find.text('スタート'));
     await tester.pump();
     final player = tester.getCenter(find.byKey(const Key('pass-player')));
-    final mate = tester.getCenter(find.text('🏃'));
+    final mate = tester.getCenter(find.byKey(const Key('pass-mate')));
     await tester.flingFrom(player, mate - player, 1200);
     await advance(tester, const Duration(milliseconds: 20));
 
@@ -160,7 +160,7 @@ void main() {
 
   testWidgets('パス＆ランはドラッグ中にフリック始点と方向を表示する', (tester) async {
     await tester.pumpWidget(
-      const MaterialApp(home: PassAndRunGameScreen()),
+      MaterialApp(home: PassAndRunGameScreen(now: () => serverTime)),
     );
     await tester.tap(find.text('スタート'));
     await tester.pump();
@@ -177,7 +177,7 @@ void main() {
 
   testWidgets('パス＆ランは仲間に当たらない場合もボールを発射する', (tester) async {
     await tester.pumpWidget(
-      const MaterialApp(home: PassAndRunGameScreen()),
+      MaterialApp(home: PassAndRunGameScreen(now: () => serverTime)),
     );
     await tester.tap(find.text('スタート'));
     await tester.pump();
@@ -197,44 +197,50 @@ void main() {
     expect(find.byKey(const Key('pass-ball')), findsOneWidget);
   });
 
-  testWidgets('送球ポーズと位置は一時停止中に保持され、再開できる', (tester) async {
-    await tester.pumpWidget(const MaterialApp(home: PassAndRunGameScreen()));
+  testWidgets('非保持姿と位置は一時停止中に保持され、再開できる', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(home: PassAndRunGameScreen(now: () => serverTime)),
+    );
     await tester.tap(find.text('スタート'));
     await tester.pump();
     final player = find.byKey(const Key('pass-player'));
     await tester.flingFrom(
         tester.getCenter(player), const Offset(-100, 0), 1200);
     await advance(tester, const Duration(milliseconds: 20));
-    expect(tester.widget<MiniGameCharacterAsset>(player).pose,
-        MiniGameCharacterPose.rightReach);
+    expect(tester.widget<PassAndRunCharacterVisual>(player).holding, isFalse);
     await tester.tap(find.byTooltip('一時停止'));
     await tester.pump();
     final pausedPosition = tester.getCenter(player);
     await advance(tester, const Duration(milliseconds: 500));
     expect(tester.getCenter(player), pausedPosition);
-    expect(tester.widget<MiniGameCharacterAsset>(player).pose,
-        MiniGameCharacterPose.rightReach);
+    expect(tester.widget<PassAndRunCharacterVisual>(player).holding, isFalse);
     await tester.tap(find.text('再開'));
     await tester.pump();
     expect(find.text('一時停止中'), findsNothing);
-    expect(tester.widget<MiniGameCharacterAsset>(player).pose,
-        MiniGameCharacterPose.rightReach);
+    expect(tester.widget<PassAndRunCharacterVisual>(player).holding, isFalse);
   });
 
-  testWidgets('復路と結果は提供済み左向き姿勢を表示する', (tester) async {
-    await tester.pumpWidget(const MaterialApp(home: PassAndRunGameScreen()));
+  testWidgets('復路と結果は承認済み姿を左向きに表示する', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(home: PassAndRunGameScreen(now: () => serverTime)),
+    );
     await tester.tap(find.text('スタート'));
     await tester.pump();
     // Cross the deadline rather than landing within the real Stopwatch's
     // sub-millisecond offset from the synchronized test clock.
     await advance(tester, const Duration(milliseconds: 15100));
     expect(find.text('復路'), findsOneWidget);
+    await advance(tester, const Duration(milliseconds: 480));
     final player = find.byKey(const Key('pass-player'));
-    expect(tester.widget<MiniGameCharacterAsset>(player).pose,
-        MiniGameCharacterPose.leftRest);
+    expect(
+      tester.widget<PassAndRunCharacterVisual>(player).facingRight,
+      isFalse,
+    );
     await advance(tester, const Duration(milliseconds: 15100));
     expect(find.text('メインへ戻る'), findsOneWidget);
-    expect(tester.widget<MiniGameCharacterAsset>(player).pose,
-        MiniGameCharacterPose.leftRest);
+    expect(
+      tester.widget<PassAndRunCharacterVisual>(player).facingRight,
+      isFalse,
+    );
   });
 }
