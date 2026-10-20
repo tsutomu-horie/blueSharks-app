@@ -322,7 +322,7 @@ void main() {
         await tester.pumpWidget(
             app(data, scale: scale, key: ValueKey('$width-$scale')));
         await tester.pumpAndSettle();
-        expect(find.text('2026 – 2027 シーズン'), findsOneWidget);
+        expect(find.text('2026/10/24'), findsOneWidget);
         expect(find.text('K.O 未定'), findsWidgets);
         expect(tester.takeException(), isNull, reason: '$width/$scale');
         await tester.drag(find.byKey(const ValueKey('website-matches-list')),
