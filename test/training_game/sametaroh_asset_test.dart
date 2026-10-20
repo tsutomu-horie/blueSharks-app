@@ -103,9 +103,10 @@ void main() {
             expect(alpha, 0, reason: '${entry.key} border ($x,$y)');
           }
           if (alpha == 255 &&
-              data[offset] > 240 &&
-              data[offset + 1] > 240 &&
-              data[offset + 2] > 240) {
+              // 支給PDFのCMYK白はnative sRGBで(245, 249, 240)になります。
+              data[offset] >= 240 &&
+              data[offset + 1] >= 240 &&
+              data[offset + 2] >= 240) {
             opaqueWhite++;
           }
           if (alpha > 0 && alpha < 255) {

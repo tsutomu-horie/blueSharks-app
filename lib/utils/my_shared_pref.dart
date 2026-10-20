@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:shared_preferences/shared_preferences.dart';
 
 class MySharedPref {
@@ -20,6 +22,12 @@ class MySharedPref {
   static const String _trainingGameDebugElapsedSeconds =
       'trainingGameDebugElapsedSeconds';
   static const String _trainingGameLocalState = 'trainingGameLocalState';
+  static const String _trainingGamePendingActions =
+      'trainingGamePendingActions';
+  static const String _trainingGamePendingActionsArchive =
+      'trainingGamePendingActionsArchive';
+  static const String _trainingGamePendingActionsRecovery =
+      'trainingGamePendingActionsRecovery';
 
   /// init get storage services
   static Future<void> init() async {
@@ -132,6 +140,51 @@ class MySharedPref {
   static Future<void> clearTrainingGameLocalState() =>
       _sharedPreferences.remove(_trainingGameLocalState);
 
+  /// 未確定アクションの冪等キーと内容をプロセス再起動後も保持します。
+  static Future<bool> setTrainingGamePendingActions(String value) =>
+      _sharedPreferences.setString(_trainingGamePendingActions, value);
+
+  /// 保留中アクションの永続キューを取得します。
+  static String? getTrainingGamePendingActions() =>
+      _sharedPreferences.getString(_trainingGamePendingActions);
+
+  /// 全アプリデータ削除時にのみ、保留アクションキューを削除します。
+  static Future<bool> clearTrainingGamePendingActions() =>
+      _sharedPreferences.remove(_trainingGamePendingActions);
+
+  /// 破損したjournalを再送せずに退避し、未確定操作の調査用に原文を保全します。
+  static Future<bool> archiveTrainingGamePendingActions(String value) async {
+    final rawArchive =
+        _sharedPreferences.getString(_trainingGamePendingActionsArchive);
+    final archived = <String>[];
+    if (rawArchive != null) {
+      final decoded = jsonDecode(rawArchive);
+      if (decoded is! List || decoded.any((entry) => entry is! String)) {
+        return false;
+      }
+      archived.addAll(decoded.cast<String>());
+    }
+    if (!archived.contains(value)) archived.add(value);
+    return _sharedPreferences.setString(
+      _trainingGamePendingActionsArchive,
+      jsonEncode(archived),
+    );
+  }
+
+  /// 退避済みのjournal原文を返します。
+  static String? getTrainingGamePendingActionsArchive() =>
+      _sharedPreferences.getString(_trainingGamePendingActionsArchive);
+
+  /// 破損journalの処理結果を確認するまで、対象ゲームの停止状態を再起動後も保持します。
+  static Future<bool> setTrainingGamePendingActionsRecovery(String value) =>
+      _sharedPreferences.setString(_trainingGamePendingActionsRecovery, value);
+
+  static String? getTrainingGamePendingActionsRecovery() =>
+      _sharedPreferences.getString(_trainingGamePendingActionsRecovery);
+
+  static Future<bool> clearTrainingGamePendingActionsRecovery() =>
+      _sharedPreferences.remove(_trainingGamePendingActionsRecovery);
+
   static Future<void> clearGameGuideArticlesCache() async {
     await _sharedPreferences.remove(_gameGuideArticlesCache);
     await _sharedPreferences.remove(_gameGuideArticlesCachedAt);
@@ -148,6 +201,9 @@ class MySharedPref {
     await _sharedPreferences.remove(_trainingGameStartedAt);
     await _sharedPreferences.remove(_trainingGameDebugElapsedSeconds);
     await _sharedPreferences.remove(_trainingGameLocalState);
+    await _sharedPreferences.remove(_trainingGamePendingActions);
+    await _sharedPreferences.remove(_trainingGamePendingActionsArchive);
+    await _sharedPreferences.remove(_trainingGamePendingActionsRecovery);
     await clearGameGuideArticlesCache();
   }
 }

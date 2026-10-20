@@ -36,43 +36,44 @@ dependencies:
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.6
   get: ^4.6.6
+  html: 0.15.6
   flutter_screenutil: ^5.9.3
   package_info_plus: ^8.0.2
   retrofit: ^4.4.1
   json_annotation: ^4.9.0
   freezed_annotation: ^2.4.1
-  intl: ^0.19.0
-  shimmer: ^3.0.0
+  intl: ^0.20.3
+  shimmer: ^4.0.0
   flutter_html: ^3.0.0-beta.2
-  flutter_widget_from_html: ^0.15.2
+  flutter_widget_from_html: ^0.17.4
   url_launcher: ^6.3.0
   hive: ^2.2.3  # local database (SQFlite replacement)
   hive_flutter: ^1.1.0 # make it easy to use hive (no need for path provider)
   dotted_line: ^3.2.2
   webview_flutter: ^4.8.0
   iconsax_plus: ^1.0.0
-  syncfusion_flutter_calendar: ^27.1.52
-  google_sign_in: ^5.2.1
-  cached_network_image: ^3.4.1
+  syncfusion_flutter_calendar: ^35.1.37
+  google_sign_in: ^7.2.0
+  cached_network_image: ^4.0.4
   flutter_svg: ^2.0.10+1
-  googleapis_auth: ^1.6.0
-  googleapis: ^13.2.0
-  extension_google_sign_in_as_googleapis_auth: ^2.0.12
-  syncfusion_localizations: ^27.1.52
-  flutter_localization: ^0.2.2
+  googleapis_auth: ^2.3.4
+  googleapis: ^17.0.0
+  extension_google_sign_in_as_googleapis_auth: ^3.0.0
+  syncfusion_localizations: ^35.1.37
+  flutter_localization: ^0.4.1
   lottie: ^3.1.3
   flutter_otp_text_field: ^1.1.1
-  pinput: ^5.0.0
+  pinput: ^6.0.2
   flutter_secure_storage: ^9.2.2
-  dotted_border: ^2.1.0
+  dotted_border: ^3.1.0
   qr_flutter: ^4.1.0
-  firebase_core: ^3.6.0
-  firebase_analytics: ^11.4.0
-  firebase_messaging: ^15.1.3
-  awesome_notifications: ^0.9.3+1 # notifications services (will be used for fcm)
+  firebase_core: ^4.15.0
+  firebase_analytics: ^12.6.0
+  firebase_messaging: ^16.7.0
+  awesome_notifications: ^0.12.1 # notifications services (will be used for fcm)
   shared_preferences: ^2.3.2
   photo_view: ^0.15.0
-  firebase_remote_config: ^5.3.0
+  firebase_remote_config: ^6.7.0
 
 dev_dependencies:
   flutter_test:
@@ -83,7 +84,7 @@ dev_dependencies:
   # activated in the `analysis_options.yaml` file located at the root of your
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
-  flutter_lints: ^4.0.0
+  flutter_lints: ^6.0.0
   build_runner: ^2.4.11
   hive_generator: # generate hive files
   freezed: ^2.5.2
@@ -103,20 +104,218 @@ flutter:
   uses-material-design: true
 
   assets:
-    - assets/images/
-    - assets/images/ui_icons/
-    - assets/images/sametaroh/
-    - assets/images/training_game/minigames/
-    - assets/images/image_stadium_parking/
-    - assets/images/image_stadium_bus/
-    - assets/images/home_stadium/
-    - assets/images/training_game/main/pr/
-    - assets/images/training_game/main/sh/
-    - assets/images/training_game/main/wtb/
-    - assets/images/training_game/main/jersey/
-    - assets/vectors/
-    - assets/vectors/member_card/
-    - assets/lottie/
+    # BEGIN GENERATED ASSET INPUTS
+    # Regenerate after adding assets: dart tool/update_asset_inputs.dart --write
+    # Check without edits: dart tool/update_asset_inputs.dart --check
+    # Keep macOS ._ and .DS_Store metadata on disk, outside the asset inputs.
+    - "assets/images/default_wallpaper.png"
+    - "assets/images/dummy_wallpaper.png"
+    - "assets/images/home_stadium/home-ground_ph.png"
+    - "assets/images/home_stadium/home_g-1.png"
+    - "assets/images/home_stadium/home_g-2.png"
+    - "assets/images/home_stadium/home_g-3.png"
+    - "assets/images/home_stadium/home_g-4.png"
+    - "assets/images/image_location.png"
+    - "assets/images/image_stadium.png"
+    - "assets/images/image_stadium_bus/img-wrapper-1.png"
+    - "assets/images/image_stadium_bus/img-wrapper-2.png"
+    - "assets/images/image_stadium_bus/img-wrapper-3.png"
+    - "assets/images/image_stadium_bus/img-wrapper-4.png"
+    - "assets/images/image_stadium_bus/img-wrapper-5.png"
+    - "assets/images/image_stadium_bus/img-wrapper-6.png"
+    - "assets/images/image_stadium_bus/img-wrapper-7.png"
+    - "assets/images/image_stadium_bus/img-wrapper.png"
+    - "assets/images/image_stadium_parking/img-wrapper-1.png"
+    - "assets/images/image_stadium_parking/img-wrapper.png"
+    - "assets/images/image_wallpaper2.png"
+    - "assets/images/image_wallpaper_1.png"
+    - "assets/images/img_banner_ticket.png"
+    - "assets/images/jrugby_logo.png"
+    - "assets/images/sametaroh/claening_sametaroh_1.png"
+    - "assets/images/sametaroh/cleaning_complete_sametaroh.png"
+    - "assets/images/sametaroh/cleaning_sametaroh_2.png"
+    - "assets/images/sametaroh/eating_complete_sametaroh.png"
+    - "assets/images/sametaroh/eating_sametaroh_1.png"
+    - "assets/images/sametaroh/eating_sametaroh_2.png"
+    - "assets/images/sametaroh/eating_sametaroh_start.png"
+    - "assets/images/sametaroh/normal_sameraroh_1.png"
+    - "assets/images/sametaroh/normal_sametaroh_2.png"
+    - "assets/images/sametaroh/sleeping_complete_sametaroh.png"
+    - "assets/images/sametaroh/sleeping_sametaroh_1.png"
+    - "assets/images/sametaroh/sleeping_sametaroh_2.png"
+    - "assets/images/sametaroh/training_complete_sametaroh.png"
+    - "assets/images/sametaroh/training_sametaroh_2.png"
+    - "assets/images/sametaroh/training_sametarohj_1.png"
+    - "assets/images/sametaroh/walk_sametaroh_1.png"
+    - "assets/images/sametaroh/walk_sametaroh_2.png"
+    - "assets/images/sametaroh/warking_complete_sametaroh.png"
+    - "assets/images/sametaroh/working_sametaroh_1.png"
+    - "assets/images/sametaroh/working_sametaroh_2.png"
+    - "assets/images/stadiumImage.jpg"
+    - "assets/images/training_game/child_care/clean_1.png"
+    - "assets/images/training_game/child_care/clean_2.png"
+    - "assets/images/training_game/child_care/clean_done.png"
+    - "assets/images/training_game/child_care/meal_1.png"
+    - "assets/images/training_game/child_care/meal_2.png"
+    - "assets/images/training_game/child_care/meal_done.png"
+    - "assets/images/training_game/child_care/rest_1.png"
+    - "assets/images/training_game/child_care/rest_2.png"
+    - "assets/images/training_game/child_care/rest_done.png"
+    - "assets/images/training_game/child_care/squat_1.png"
+    - "assets/images/training_game/child_care/squat_2.png"
+    - "assets/images/training_game/child_care/squat_done.png"
+    - "assets/images/training_game/hatching/egg_1.png"
+    - "assets/images/training_game/hatching/egg_2.png"
+    - "assets/images/training_game/main/jersey/center.png"
+    - "assets/images/training_game/main/jersey/flanker.png"
+    - "assets/images/training_game/main/jersey/fullback.png"
+    - "assets/images/training_game/main/jersey/ghost.png"
+    - "assets/images/training_game/main/jersey/hooker.png"
+    - "assets/images/training_game/main/jersey/lock.png"
+    - "assets/images/training_game/main/jersey/newborn.png"
+    - "assets/images/training_game/main/jersey/number_eight.png"
+    - "assets/images/training_game/main/jersey/prop_helmet.png"
+    - "assets/images/training_game/main/jersey/prop_plain.png"
+    - "assets/images/training_game/main/jersey/scrum_half_and_stand_off.png"
+    - "assets/images/training_game/main/jersey/wing.png"
+    - "assets/images/training_game/main/pr/clean_1.png"
+    - "assets/images/training_game/main/pr/clean_2.png"
+    - "assets/images/training_game/main/pr/clean_done.png"
+    - "assets/images/training_game/main/pr/idle_1.png"
+    - "assets/images/training_game/main/pr/idle_2.png"
+    - "assets/images/training_game/main/pr/meal_1.png"
+    - "assets/images/training_game/main/pr/meal_2.png"
+    - "assets/images/training_game/main/pr/meal_done.png"
+    - "assets/images/training_game/main/pr/meal_start.png"
+    - "assets/images/training_game/main/pr/move_1.png"
+    - "assets/images/training_game/main/pr/move_2.png"
+    - "assets/images/training_game/main/pr/rest_1.png"
+    - "assets/images/training_game/main/pr/rest_2.png"
+    - "assets/images/training_game/main/pr/rest_done.png"
+    - "assets/images/training_game/main/pr/squat_1.png"
+    - "assets/images/training_game/main/pr/squat_2.png"
+    - "assets/images/training_game/main/pr/squat_done.png"
+    - "assets/images/training_game/main/pr/work_1.png"
+    - "assets/images/training_game/main/pr/work_2.png"
+    - "assets/images/training_game/main/pr/work_done.png"
+    - "assets/images/training_game/main/sh/clean_1.png"
+    - "assets/images/training_game/main/sh/clean_2.png"
+    - "assets/images/training_game/main/sh/clean_done.png"
+    - "assets/images/training_game/main/sh/idle_1.png"
+    - "assets/images/training_game/main/sh/idle_2.png"
+    - "assets/images/training_game/main/sh/meal_1.png"
+    - "assets/images/training_game/main/sh/meal_2.png"
+    - "assets/images/training_game/main/sh/meal_done.png"
+    - "assets/images/training_game/main/sh/meal_start.png"
+    - "assets/images/training_game/main/sh/move_1.png"
+    - "assets/images/training_game/main/sh/move_2.png"
+    - "assets/images/training_game/main/sh/rest_1.png"
+    - "assets/images/training_game/main/sh/rest_2.png"
+    - "assets/images/training_game/main/sh/rest_done.png"
+    - "assets/images/training_game/main/sh/squat_1.png"
+    - "assets/images/training_game/main/sh/squat_2.png"
+    - "assets/images/training_game/main/sh/squat_done.png"
+    - "assets/images/training_game/main/sh/work_1.png"
+    - "assets/images/training_game/main/sh/work_2.png"
+    - "assets/images/training_game/main/sh/work_done.png"
+    - "assets/images/training_game/main/wtb/clean_1.png"
+    - "assets/images/training_game/main/wtb/clean_2.png"
+    - "assets/images/training_game/main/wtb/clean_done.png"
+    - "assets/images/training_game/main/wtb/idle_1.png"
+    - "assets/images/training_game/main/wtb/idle_2.png"
+    - "assets/images/training_game/main/wtb/meal_1.png"
+    - "assets/images/training_game/main/wtb/meal_2.png"
+    - "assets/images/training_game/main/wtb/meal_done.png"
+    - "assets/images/training_game/main/wtb/meal_start.png"
+    - "assets/images/training_game/main/wtb/move_1.png"
+    - "assets/images/training_game/main/wtb/move_2.png"
+    - "assets/images/training_game/main/wtb/rest_1.png"
+    - "assets/images/training_game/main/wtb/rest_2.png"
+    - "assets/images/training_game/main/wtb/rest_done.png"
+    - "assets/images/training_game/main/wtb/squat_1.png"
+    - "assets/images/training_game/main/wtb/squat_2.png"
+    - "assets/images/training_game/main/wtb/squat_done.png"
+    - "assets/images/training_game/main/wtb/work_1.png"
+    - "assets/images/training_game/main/wtb/work_2.png"
+    - "assets/images/training_game/main/wtb/work_done.png"
+    - "assets/images/training_game/minigames/side_left_reach.png"
+    - "assets/images/training_game/minigames/side_left_rest.png"
+    - "assets/images/training_game/minigames/side_right_reach.png"
+    - "assets/images/training_game/minigames/side_right_rest.png"
+    - "assets/images/training_game/minigames/tackle_attack_normal.png"
+    - "assets/images/training_game/scenes/clean_room.png"
+    - "assets/images/training_game/scenes/gym_bench.png"
+    - "assets/images/training_game/scenes/home_outdoor_day.png"
+    - "assets/images/training_game/scenes/home_outdoor_night.png"
+    - "assets/images/training_game/scenes/meal_office.png"
+    - "assets/images/training_game/scenes/rest_room_day.png"
+    - "assets/images/training_game/scenes/rest_room_night.png"
+    - "assets/images/training_game/scenes/work_office.png"
+    - "assets/images/ui_icons/calendar_icon_off.png"
+    - "assets/images/ui_icons/calendar_icon_on.png"
+    - "assets/images/ui_icons/fanclub_icon.png"
+    - "assets/images/ui_icons/goods_icon.png"
+    - "assets/images/ui_icons/home_icon_off.png"
+    - "assets/images/ui_icons/home_icon_on.png"
+    - "assets/images/ui_icons/menu_icon_off.png"
+    - "assets/images/ui_icons/menu_icon_on.png"
+    - "assets/images/ui_icons/mypage_icon_off.png"
+    - "assets/images/ui_icons/mypage_icon_on.png"
+    - "assets/images/ui_icons/news_icon.png"
+    - "assets/images/ui_icons/stdium_icon_off.png"
+    - "assets/images/ui_icons/stdium_icon_on.png"
+    - "assets/images/ui_icons/ticket_icon.png"
+    - "assets/images/video_thumbnail.png"
+    - "assets/images/wellcome_image.png"
+    - "assets/images/white_shadow.png"
+    - "assets/lottie/mail_animation.json"
+    - "assets/lottie/success_animation.json"
+    - "assets/vectors/app_logo.svg"
+    - "assets/vectors/app_logo_label.svg"
+    - "assets/vectors/background_toolbar.svg"
+    - "assets/vectors/bg_splash.svg"
+    - "assets/vectors/calendar-search.svg"
+    - "assets/vectors/close-circle.svg"
+    - "assets/vectors/ic_calendar-edit.svg"
+    - "assets/vectors/ic_calendar.svg"
+    - "assets/vectors/ic_calendar_default.svg"
+    - "assets/vectors/ic_calendar_enabled.svg"
+    - "assets/vectors/ic_empty_news.svg"
+    - "assets/vectors/ic_error.svg"
+    - "assets/vectors/ic_external_link.svg"
+    - "assets/vectors/ic_fanclub.svg"
+    - "assets/vectors/ic_gallery.svg"
+    - "assets/vectors/ic_goods.svg"
+    - "assets/vectors/ic_home_default.svg"
+    - "assets/vectors/ic_home_enabled.svg"
+    - "assets/vectors/ic_info_default.svg"
+    - "assets/vectors/ic_info_enabled.svg"
+    - "assets/vectors/ic_map.svg"
+    - "assets/vectors/ic_mascot_fullbody.svg"
+    - "assets/vectors/ic_member_default.svg"
+    - "assets/vectors/ic_member_enabled.svg"
+    - "assets/vectors/ic_notification.svg"
+    - "assets/vectors/ic_notification_status.svg"
+    - "assets/vectors/ic_scoreboard.svg"
+    - "assets/vectors/ic_stadium.svg"
+    - "assets/vectors/ic_stadium_default.svg"
+    - "assets/vectors/ic_stadium_enabled.svg"
+    - "assets/vectors/ic_ticket.svg"
+    - "assets/vectors/ic_user-search.svg"
+    - "assets/vectors/ic_x_twitter.svg"
+    - "assets/vectors/ic_youtube.svg"
+    - "assets/vectors/iconoir_binocular.svg"
+    - "assets/vectors/info-circle.svg"
+    - "assets/vectors/mascot.svg"
+    - "assets/vectors/member_card/beginner.svg"
+    - "assets/vectors/member_card/free.svg"
+    - "assets/vectors/member_card/geki_oshi.svg"
+    - "assets/vectors/member_card/junior.svg"
+    - "assets/vectors/member_card/koto.svg"
+    - "assets/vectors/member_card/one_shimz.svg"
+    - "assets/vectors/member_card/premium.svg"
+    - "assets/vectors/member_card/regular.svg"
+    # END GENERATED ASSET INPUTS
 
   # To add assets to your application, add an assets section, like this:
   # assets:
@@ -153,3 +352,5 @@ flutter:
         - asset: assets/fonts/Inter-Regular.ttf
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/custom-fonts/#from-packages
+  config:
+    enable-swift-package-manager: false

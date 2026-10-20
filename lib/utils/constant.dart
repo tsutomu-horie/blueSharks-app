@@ -1,11 +1,13 @@
 import 'package:flutter/foundation.dart';
 
-class Constants {
-  static const isRelease = true;
+import 'app_environment.dart';
 
-  // ローカルのLaravel環境で認証系APIのみ確認するための一時フラグ。
-  // ローカル確認が終わったら必ずfalseに戻すこと。
-  static const useLocalAuthApi = true;
+class Constants {
+  static const isRelease = kReleaseMode;
+
+  // Debugビルドでdart-defineを指定した場合だけローカルAPIを使います。
+  static const useLocalAuthApi = !kReleaseMode &&
+      bool.fromEnvironment('USE_LOCAL_AUTH_API', defaultValue: false);
 
   // Android実機などからLAN内のローカルAPIへ接続するためのホスト指定です。
   // 例: --dart-define=LOCAL_AUTH_API_HOST=192.168.1.10
@@ -13,29 +15,27 @@ class Constants {
     'LOCAL_AUTH_API_HOST',
   );
 
-  static const baseUrl = isRelease
-      ? 'https://blue-sharks.jp/wp-json/wp/v2/'
-      : 'https://blue-sharks.donati.jp/wp-json/wp/v2/';
+  static const baseUrl = AppEnvironment.wordpressApiBaseUrl;
+  static const remoteConfigEnvironment = AppEnvironment.remoteConfigEnvironment;
+
   /// 実行端末から到達できる認証APIのURLを返します。
   static String get baseUrlAuthApi {
+    AppEnvironment.validate();
     if (!useLocalAuthApi) {
-      return isRelease
-          ? 'https://app.blue-sharks.jp/api/mobile/v1/'
-          : 'https://dev-blueshark.tmdsite.my.id/api/mobile/v1/';
+      return AppEnvironment.authApiBaseUrl;
     }
     // 指定がない場合は、既存どおりAndroidエミュレーター用アドレスを使用します。
     final host = _localAuthApiHost.isNotEmpty
         ? _localAuthApiHost
         : defaultTargetPlatform == TargetPlatform.android
-        ? '10.0.2.2'
-        : '127.0.0.1';
+            ? '10.0.2.2'
+            : '127.0.0.1';
     return 'http://$host:8000/api/mobile/v1/';
   }
-  static const topic = isRelease ? 'news_prod' : 'news_dev';
 
-  static const baseUrlWeb = isRelease
-      ? 'https://app.blue-sharks.jp/api/'
-      : 'https://dev-blueshark.tmdsite.my.id/api';
+  static const topic = AppEnvironment.notificationTopic;
+
+  static const baseUrlWeb = AppEnvironment.webBaseUrl;
   static const teamName = 'シャークス';
   static const videoUrl = 'https://www.youtube.com/watch?v=sqtmPJFaXKg';
 
@@ -53,24 +53,14 @@ class Constants {
   static const stadiumDescription =
       '〒136-0081 東京都江東区夢の島1-1-2\ntel：03-3522-0846';
 
-  static const ticketsUrl = isRelease
-      ? 'https://blue-sharks.jp/tickets/'
-      : 'https://blue-sharks.donati.jp/tickets/';
-  static const fanClubUrl = isRelease
-      ? 'https://blue-sharks.jp/fanclub/'
-      : 'https://blue-sharks.donati.jp/fanclub/';
+  static const ticketsUrl = AppEnvironment.ticketsUrl;
+  static const fanClubUrl = AppEnvironment.fanClubUrl;
   static const shopUrl = isRelease
       ? 'https://bluesharks.base.shop/'
       : 'https://bluesharks.base.shop/';
   static const instagramUrl = 'https://www.instagram.com/shimz.bluesharks/';
   static const xUrl = 'https://x.com/Bluesharks_2020';
-  static const partnerUrl = isRelease
-      ? 'https://blue-sharks.jp/partner/'
-      : 'https://blue-sharks.donati.jp/partner/';
-  static const teamUrl = isRelease
-      ? 'https://blue-sharks.jp/team/'
-      : 'https://blue-sharks.donati.jp/team/';
-  static const wordpressAdminUrl = isRelease
-      ? 'https://blue-sharks.jp/wp-admin/'
-      : 'https://blue-sharks.donati.jp/wp-admin/';
+  static const partnerUrl = AppEnvironment.partnerUrl;
+  static const teamUrl = AppEnvironment.teamUrl;
+  static const wordpressAdminUrl = AppEnvironment.wordpressAdminUrl;
 }

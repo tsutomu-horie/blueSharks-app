@@ -1,7 +1,8 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:koto_blue_sharks/app/data/models/auth/auth.dart';
 import 'package:koto_blue_sharks/app/data/models/info/notification.dart';
+import 'package:koto_blue_sharks/app/providers/auth/login_response_diagnostics.dart';
 import 'package:koto_blue_sharks/app/services/auth_token.dart';
 import 'package:koto_blue_sharks/utils/Constant.dart';
 
@@ -20,18 +21,22 @@ class AuthProvider extends GetConnect {
       "password": password,
     };
 
-    final response = await post(
-      url.toString(), body, // Send the body in the request
-    );
-
-    debugPrint("Login successful2 , ${response.body}");
+    final response = kDebugMode
+        ? await httpClient.post<dynamic>(
+            url.toString(),
+            body: body,
+            responseInterceptor: (_, __, rawResponse) async {
+              debugPrint(loginResponseDiagnosticLine(rawResponse));
+              // Returning null preserves GetX's normal body decoding.
+              return null;
+            },
+          )
+        : await post<dynamic>(url.toString(), body);
 
     if (response.hasError) {
       onError();
       throw Exception('Failed to login: ${response.statusText}');
     }
-
-    debugPrint("Login successful, received data: ${response.body}");
 
     return Auth.fromJson(response.body["data"]);
   }

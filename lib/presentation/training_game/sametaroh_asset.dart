@@ -32,11 +32,93 @@ abstract final class SametarohAssets {
     ),
   ];
 
+  /// 承認済み幼体4動作専用の表示キー。成体のbranch判定には使いません。
+  static const childBodyKey = 'child';
+
+  static const childCareActions = <TrainingActionType>{
+    TrainingActionType.meal,
+    TrainingActionType.clean,
+    TrainingActionType.squat,
+    TrainingActionType.rest,
+  };
+
+  /// 承認PNGは全512角と透明余白を保持し、frameごとのtrimはしません。
+  static const childCareFrames = <String, SametarohFrame>{
+    'meal_1': SametarohFrame(
+      asset: 'assets/images/training_game/child_care/meal_1.png',
+      sourceSize: Size(512, 512),
+      canvasSize: Size(512, 512),
+    ),
+    'meal_2': SametarohFrame(
+      asset: 'assets/images/training_game/child_care/meal_2.png',
+      sourceSize: Size(512, 512),
+      canvasSize: Size(512, 512),
+    ),
+    'meal_done': SametarohFrame(
+      asset: 'assets/images/training_game/child_care/meal_done.png',
+      sourceSize: Size(512, 512),
+      canvasSize: Size(512, 512),
+    ),
+    'clean_1': SametarohFrame(
+      asset: 'assets/images/training_game/child_care/clean_1.png',
+      sourceSize: Size(512, 512),
+      canvasSize: Size(512, 512),
+    ),
+    'clean_2': SametarohFrame(
+      asset: 'assets/images/training_game/child_care/clean_2.png',
+      sourceSize: Size(512, 512),
+      canvasSize: Size(512, 512),
+    ),
+    'clean_done': SametarohFrame(
+      asset: 'assets/images/training_game/child_care/clean_done.png',
+      sourceSize: Size(512, 512),
+      canvasSize: Size(512, 512),
+    ),
+    'squat_1': SametarohFrame(
+      asset: 'assets/images/training_game/child_care/squat_1.png',
+      sourceSize: Size(512, 512),
+      canvasSize: Size(512, 512),
+    ),
+    'squat_2': SametarohFrame(
+      asset: 'assets/images/training_game/child_care/squat_2.png',
+      sourceSize: Size(512, 512),
+      canvasSize: Size(512, 512),
+    ),
+    'squat_done': SametarohFrame(
+      asset: 'assets/images/training_game/child_care/squat_done.png',
+      sourceSize: Size(512, 512),
+      canvasSize: Size(512, 512),
+    ),
+    'rest_1': SametarohFrame(
+      asset: 'assets/images/training_game/child_care/rest_1.png',
+      sourceSize: Size(512, 512),
+      canvasSize: Size(512, 512),
+    ),
+    'rest_2': SametarohFrame(
+      asset: 'assets/images/training_game/child_care/rest_2.png',
+      sourceSize: Size(512, 512),
+      canvasSize: Size(512, 512),
+    ),
+    'rest_done': SametarohFrame(
+      asset: 'assets/images/training_game/child_care/rest_done.png',
+      sourceSize: Size(512, 512),
+      canvasSize: Size(512, 512),
+    ),
+  };
+
+  static final _childCareSequences = <TrainingActionType, List<SametarohFrame>>{
+    for (final action in childCareActions)
+      action: List<SametarohFrame>.unmodifiable([
+        childCareFrames['${action.name}_1']!,
+        childCareFrames['${action.name}_2']!,
+      ]),
+  };
+
   static const initialFrames = <TrainingActionType, SametarohFrame>{
     TrainingActionType.meal: SametarohFrame(
       asset: 'assets/images/sametaroh/eating_sametaroh_start.png',
-      sourceSize: Size(292, 295),
-      canvasSize: Size(292, 309),
+      sourceSize: Size(294, 296),
+      canvasSize: Size(294, 312),
     ),
   };
 
@@ -44,61 +126,61 @@ abstract final class SametarohAssets {
     TrainingActionType.meal: [
       SametarohFrame(
         asset: 'assets/images/sametaroh/eating_sametaroh_1.png',
-        sourceSize: Size(289, 309),
-        canvasSize: Size(292, 309),
+        sourceSize: Size(290, 312),
+        canvasSize: Size(294, 312),
       ),
       SametarohFrame(
         asset: 'assets/images/sametaroh/eating_sametaroh_2.png',
-        sourceSize: Size(288, 309),
-        canvasSize: Size(292, 309),
+        sourceSize: Size(290, 312),
+        canvasSize: Size(294, 312),
       ),
     ],
     TrainingActionType.clean: [
       SametarohFrame(
         asset: 'assets/images/sametaroh/claening_sametaroh_1.png',
-        sourceSize: Size(157, 314),
-        canvasSize: Size(175, 314),
+        sourceSize: Size(164, 316),
+        canvasSize: Size(180, 316),
       ),
       SametarohFrame(
         asset: 'assets/images/sametaroh/cleaning_sametaroh_2.png',
-        sourceSize: Size(156, 314),
-        canvasSize: Size(175, 314),
+        sourceSize: Size(162, 316),
+        canvasSize: Size(180, 316),
       ),
     ],
     TrainingActionType.rest: [
       SametarohFrame(
         asset: 'assets/images/sametaroh/sleeping_sametaroh_1.png',
-        sourceSize: Size(448, 267),
-        canvasSize: Size(448, 301),
+        sourceSize: Size(426, 266),
+        canvasSize: Size(426, 300),
       ),
       SametarohFrame(
         asset: 'assets/images/sametaroh/sleeping_sametaroh_2.png',
-        sourceSize: Size(420, 301),
-        canvasSize: Size(448, 301),
+        sourceSize: Size(420, 296),
+        canvasSize: Size(426, 300),
       ),
     ],
     TrainingActionType.squat: [
       SametarohFrame(
         asset: 'assets/images/sametaroh/training_sametarohj_1.png',
-        sourceSize: Size(171, 315),
-        canvasSize: Size(201, 315),
+        sourceSize: Size(178, 306),
+        canvasSize: Size(206, 314),
       ),
       SametarohFrame(
         asset: 'assets/images/sametaroh/training_sametaroh_2.png',
-        sourceSize: Size(198, 315),
-        canvasSize: Size(201, 315),
+        sourceSize: Size(202, 314),
+        canvasSize: Size(206, 314),
       ),
     ],
     TrainingActionType.work: [
       SametarohFrame(
         asset: 'assets/images/sametaroh/working_sametaroh_1.png',
-        sourceSize: Size(288, 309),
-        canvasSize: Size(309, 349),
+        sourceSize: Size(290, 312),
+        canvasSize: Size(310, 352),
       ),
       SametarohFrame(
         asset: 'assets/images/sametaroh/working_sametaroh_2.png',
-        sourceSize: Size(288, 309),
-        canvasSize: Size(309, 349),
+        sourceSize: Size(292, 312),
+        canvasSize: Size(310, 352),
       ),
     ],
   };
@@ -106,28 +188,28 @@ abstract final class SametarohAssets {
   static const completionFrames = <TrainingActionType, SametarohFrame>{
     TrainingActionType.meal: SametarohFrame(
       asset: 'assets/images/sametaroh/eating_complete_sametaroh.png',
-      sourceSize: Size(289, 305),
-      canvasSize: Size(292, 309),
+      sourceSize: Size(292, 308),
+      canvasSize: Size(294, 312),
     ),
     TrainingActionType.clean: SametarohFrame(
       asset: 'assets/images/sametaroh/cleaning_complete_sametaroh.png',
-      sourceSize: Size(175, 302),
-      canvasSize: Size(175, 314),
+      sourceSize: Size(180, 306),
+      canvasSize: Size(180, 316),
     ),
     TrainingActionType.rest: SametarohFrame(
       asset: 'assets/images/sametaroh/sleeping_complete_sametaroh.png',
-      sourceSize: Size(425, 299),
-      canvasSize: Size(448, 301),
+      sourceSize: Size(426, 300),
+      canvasSize: Size(426, 300),
     ),
     TrainingActionType.squat: SametarohFrame(
       asset: 'assets/images/sametaroh/training_complete_sametaroh.png',
-      sourceSize: Size(201, 302),
-      canvasSize: Size(201, 315),
+      sourceSize: Size(206, 306),
+      canvasSize: Size(206, 314),
     ),
     TrainingActionType.work: SametarohFrame(
       asset: 'assets/images/sametaroh/warking_complete_sametaroh.png',
-      sourceSize: Size(309, 349),
-      canvasSize: Size(309, 349),
+      sourceSize: Size(310, 352),
+      canvasSize: Size(310, 352),
     ),
   };
 
@@ -554,14 +636,24 @@ abstract final class SametarohAssets {
     TrainingActionType type, {
     String? bodyKey,
   }) =>
-      type == TrainingActionType.meal && supportedBodyKeys.contains(bodyKey)
-          ? suppliedFrames['$bodyKey.meal_start']
-          : initialFrames[type];
+      bodyKey == childBodyKey
+          ? null
+          : type == TrainingActionType.meal &&
+                  supportedBodyKeys.contains(bodyKey)
+              ? suppliedFrames['$bodyKey.meal_start']
+              : initialFrames[type];
 
   static List<SametarohFrame> careFramesFor(
     TrainingActionType type, {
     String? bodyKey,
   }) {
+    if (bodyKey == childBodyKey) {
+      final frames = _childCareSequences[type];
+      if (frames == null) {
+        throw ArgumentError.value(type, 'type', '幼体のお世話は4動作だけです。');
+      }
+      return frames;
+    }
     final frames = careFrames[type];
     if (frames == null) {
       throw ArgumentError.value(type, 'type', 'お世話画面の対象外です。');
@@ -573,6 +665,13 @@ abstract final class SametarohAssets {
     TrainingActionType type, {
     String? bodyKey,
   }) {
+    if (bodyKey == childBodyKey) {
+      final frame = childCareFrames['${type.name}_done'];
+      if (frame == null) {
+        throw ArgumentError.value(type, 'type', '幼体のお世話は4動作だけです。');
+      }
+      return frame;
+    }
     final frame = completionFrames[type];
     if (frame == null) {
       throw ArgumentError.value(type, 'type', 'お世話画面の対象外です。');

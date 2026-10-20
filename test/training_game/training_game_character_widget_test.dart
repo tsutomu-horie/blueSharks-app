@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -9,6 +11,8 @@ import 'package:koto_blue_sharks/presentation/training_game/training_game.screen
 import 'package:koto_blue_sharks/presentation/training_game/models/training_game_models.dart';
 import 'package:koto_blue_sharks/presentation/training_game/sametaroh_asset.dart';
 import 'package:koto_blue_sharks/presentation/training_game/training_game_care_action.screen.dart';
+import 'package:koto_blue_sharks/presentation/training_game/training_home_background.dart';
+import 'package:koto_blue_sharks/presentation/training_game/training_home_roaming_character.dart';
 
 Widget host(Widget child) => ScreenUtilInit(
       designSize: const Size(375, 812),
@@ -50,18 +54,31 @@ Future<void> preload(
   await tester.pump();
 }
 
+// 呼吸・歩行は常時動くので、画面全体の静止を待たず遷移だけを進めます。
+Future<void> pumpRouteTransition(WidgetTester tester) async {
+  final theme = Theme.of(tester.element(find.byType(Navigator).first));
+  final transitions = theme.pageTransitionsTheme.builders[theme.platform];
+  final forward =
+      transitions?.transitionDuration ?? const Duration(milliseconds: 300);
+  final reverse = transitions?.reverseTransitionDuration ?? forward;
+  await tester.pump();
+  await tester.pump(forward > reverse ? forward : reverse);
+  await tester.pump();
+}
+
 // UIの表示fixture。実API・保存・clockは起動しません。
 class _DisplayFixtureController extends TrainingGameController {
   _DisplayFixtureController({this.fixturePosition = '判定前', this.fixtureBranch});
   final String fixturePosition;
   final String? fixtureBranch;
   final callbackTrace = <String>[];
+  Completer<bool>? workPreparationGate;
   // 表示fixtureは基底onInitの実API・周期clock起動を意図的に省きます。
   @override
   // ignore: must_call_super
   void onInit() {}
   @override
-  void onClose() {}
+  void onClose() => super.onClose();
   @override
   String get position => fixturePosition;
   @override
@@ -74,6 +91,8 @@ class _DisplayFixtureController extends TrainingGameController {
   @override
   Future<bool> prepareWork() async {
     callbackTrace.add('prepareWork');
+    final gate = workPreparationGate;
+    if (gate != null) return gate.future;
     return true;
   }
 
@@ -93,29 +112,79 @@ class _DisplayFixtureController extends TrainingGameController {
 }
 
 void main() {
-  testWidgets('同bodyの親再buildではmeal開始図へ戻らず、disposeでtimer停止', (tester) async {
+  for (final size in [const Size(375, 812), const Size(320, 568)]) {
+    testWidgets('ホーム背景がHUDの背面まで続き、同期通知でも下部配置を保つ $size',
+        (tester) async {
+      tester.view.physicalSize = size;
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      Get.testMode = true;
+      addTearDown(Get.reset);
+      final controller = _DisplayFixtureController();
+      controller.isServerStateReady.value = true;
+      controller.stageIndex.value = 1;
+      Get.put<TrainingGameController>(controller);
+      await tester.pumpWidget(host(const TrainingGameScreen()));
+      await preload(tester, [SametarohAssets.newbornFrame]);
+
+      final background = find.byType(TrainingHomeBackground);
+      final backgroundRect = tester.getRect(background);
+      final meal = find.widgetWithText(TextButton, 'ごはん');
+      final mealRect = tester.getRect(meal);
+      final characterRect = tester.getRect(find.byType(SametarohFrameImage));
+      final exitRect = tester.getRect(find.widgetWithText(ElevatedButton, '🚪'));
+      final debugRect = tester.getRect(find.byTooltip('デバッグコマンド'));
+      expect(backgroundRect.top, 0);
+      expect(backgroundRect.width, size.width);
+      expect(backgroundRect.contains(tester.getCenter(find.text('食事'))), isTrue);
+      expect(backgroundRect.contains(tester.getCenter(find.text('清潔'))), isTrue);
+      expect(backgroundRect.bottom, lessThanOrEqualTo(mealRect.top));
+      expect(debugRect.center.dx, closeTo(exitRect.center.dx, .01));
+      expect(debugRect.top, greaterThan(exitRect.bottom));
+      expect(find.text('鮫太朗育成'), findsNothing);
+      expect(find.text(controller.clockLabel), findsNothing);
+      expect(find.text('▮▮▮ ᯤ 🔋'), findsNothing);
+
+      controller.syncStatusMessage.value = 'サーバーへ同期中';
+      await tester.pump();
+      expect(find.text('サーバーへ同期中'), findsOneWidget);
+      expect(tester.getRect(background), backgroundRect);
+      expect(tester.getRect(meal), mealRect);
+      final updatedCharacterRect =
+          tester.getRect(find.byType(SametarohFrameImage));
+      expect(updatedCharacterRect.left, closeTo(characterRect.left, .01));
+      expect(updatedCharacterRect.top, closeTo(characterRect.top, .01));
+      expect(updatedCharacterRect.right, closeTo(characterRect.right, .01));
+      expect(updatedCharacterRect.bottom, closeTo(characterRect.bottom, .01));
+      await tester.tap(find.byTooltip('デバッグコマンド'));
+      await pumpRouteTransition(tester);
+      expect(find.text('⏸ 停止'), findsOneWidget);
+      await tester.pumpWidget(const SizedBox());
+      expect(tester.takeException(), isNull);
+    });
+  }
+
+  testWidgets('同bodyの親再buildでは食事2コマの連番を保持し、disposeでtimer停止', (tester) async {
     configurePhone(tester);
     final frames =
         SametarohAssets.careFramesFor(TrainingActionType.meal, bodyKey: 'pr');
     Widget meal() => host(SametarohAnimatedImage(
           frames: frames,
-          initialFrame: SametarohAssets.initialFrameFor(TrainingActionType.meal,
-              bodyKey: 'pr'),
           width: 250,
           height: 260,
         ));
     await tester.pumpWidget(meal());
     await preload(tester, [
       ...frames,
-      SametarohAssets.initialFrameFor(TrainingActionType.meal, bodyKey: 'pr')!,
     ]);
-    expect(shownAsset(tester), endsWith('/pr/meal_start.png'));
-    await tester.pump(const Duration(milliseconds: 650));
-    expect(shownAsset(tester), endsWith('/pr/meal_1.png'));
-    await tester.pumpWidget(meal());
     expect(shownAsset(tester), endsWith('/pr/meal_1.png'));
     await tester.pump(const Duration(milliseconds: 650));
     expect(shownAsset(tester), endsWith('/pr/meal_2.png'));
+    await tester.pumpWidget(meal());
+    expect(shownAsset(tester), endsWith('/pr/meal_2.png'));
+    await tester.pump(const Duration(milliseconds: 650));
+    expect(shownAsset(tester), endsWith('/pr/meal_1.png'));
     await tester.pumpWidget(const SizedBox());
     await tester.pump(const Duration(seconds: 2));
     expect(tester.takeException(), isNull);
@@ -147,20 +216,20 @@ void main() {
     await tester.tap(find.text('open care'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
-    await tester.tap(find.text('完了する'));
+    await tester.tap(find.text('スキップ'));
     await tester.pump();
     expect(shownAsset(tester), endsWith('/sh/clean_done.png'));
     await tester.pump(const Duration(milliseconds: 499));
     expect(result, isNull);
     await tester.pump(const Duration(milliseconds: 1));
-    await tester.pumpAndSettle();
+    await pumpRouteTransition(tester);
     expect(result, isTrue);
     result = null;
     await tester.tap(find.text('open care'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
     await tester.tap(find.byTooltip('お世話を中止'));
-    await tester.pumpAndSettle();
+    await pumpRouteTransition(tester);
     expect(result, isFalse);
     expect(tester.takeException(), isNull);
   });
@@ -184,6 +253,112 @@ void main() {
     await tester.pump();
     expect(shownAsset(tester), SametarohAssets.newbornFrame.asset);
     expect(find.text('次へ'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('幼体は4動作だけを表示して幼体素材へ渡し、育成期は仕事を保つ', (tester) async {
+    configurePhone(tester);
+    Get.testMode = true;
+    addTearDown(() => Get.reset());
+    final controller = _DisplayFixtureController();
+    controller.isServerStateReady.value = true;
+    controller.stageIndex.value = 1;
+    controller.meters.updateAll((key, value) => 100);
+    Get.put<TrainingGameController>(controller);
+    await tester.pumpWidget(host(const TrainingGameScreen()));
+    await preload(tester, [
+      SametarohAssets.newbornFrame,
+      ...SametarohAssets.childCareFrames.values,
+      ...SametarohAssets.normalFrames,
+      ...SametarohAssets.careFramesFor(TrainingActionType.meal),
+    ]);
+    expect(find.widgetWithText(TextButton, '仕事'), findsNothing);
+    const labels = {
+      TrainingActionType.meal: 'ごはん',
+      TrainingActionType.clean: '掃除',
+      TrainingActionType.squat: '筋トレ',
+      TrainingActionType.rest: '休養'
+    };
+    for (final entry in labels.entries) {
+      controller.callbackTrace.clear();
+      await tester.tap(find.widgetWithText(TextButton, entry.value));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      final care = tester.widget<TrainingGameCareActionScreen>(
+          find.byType(TrainingGameCareActionScreen));
+      expect(care.bodyKey, SametarohAssets.childBodyKey);
+      expect(care.actionType, entry.key);
+      expect(shownCareAsset(tester),
+          'assets/images/training_game/child_care/${entry.key.name}_1.png');
+      await tester.tap(find.byTooltip('お世話を中止'));
+      await pumpRouteTransition(tester);
+      expect(controller.callbackTrace, isEmpty);
+    }
+    controller.stageIndex.value = 2;
+    await tester.pump();
+    expect(find.widgetWithText(TextButton, '仕事'), findsOneWidget);
+    await tester.tap(find.widgetWithText(TextButton, 'ごはん'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(
+        tester
+            .widget<TrainingGameCareActionScreen>(
+                find.byType(TrainingGameCareActionScreen))
+            .bodyKey,
+        isNull);
+    expect(shownCareAsset(tester),
+        'assets/images/sametaroh/eating_sametaroh_1.png');
+    await tester.tap(find.byTooltip('お世話を中止'));
+    await pumpRouteTransition(tester);
+    await tester.pumpWidget(const SizedBox());
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('育成期の古い仕事callbackも幼体へ戻った後は仕事を開かない', (tester) async {
+    configurePhone(tester);
+    Get.testMode = true;
+    addTearDown(() => Get.reset());
+    final controller = _DisplayFixtureController();
+    controller.isServerStateReady.value = true;
+    controller.stageIndex.value = 2;
+    Get.put<TrainingGameController>(controller);
+    await tester.pumpWidget(host(const TrainingGameScreen()));
+    final oldWork = tester
+        .widget<TextButton>(find.widgetWithText(TextButton, '仕事'))
+        .onPressed!;
+    controller.stageIndex.value = 1;
+    await tester.pump();
+    expect(find.widgetWithText(TextButton, '仕事'), findsNothing);
+    oldWork();
+    await tester.pump();
+    expect(controller.callbackTrace, isEmpty);
+    expect(find.byType(TrainingGameCareActionScreen), findsNothing);
+    await tester.pumpWidget(const SizedBox());
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('仕事の可否照会中に幼体へ変わっても仕事画面を開かない', (tester) async {
+    configurePhone(tester);
+    Get.testMode = true;
+    addTearDown(() => Get.reset());
+    final controller = _DisplayFixtureController();
+    controller.isServerStateReady.value = true;
+    controller.stageIndex.value = 2;
+    controller.workPreparationGate = Completer<bool>();
+    Get.put<TrainingGameController>(controller);
+    await tester.pumpWidget(host(const TrainingGameScreen()));
+    await preload(tester,
+        [SametarohAssets.newbornFrame, ...SametarohAssets.normalFrames]);
+    await tester.tap(find.widgetWithText(TextButton, '仕事'));
+    await tester.pump();
+    expect(controller.callbackTrace, ['prepareWork']);
+    controller.stageIndex.value = 1;
+    controller.workPreparationGate!.complete(true);
+    await tester.pump();
+    expect(controller.callbackTrace, ['prepareWork', 'finishWorkPreparation']);
+    expect(find.byType(TrainingGameCareActionScreen), findsNothing);
+    expect(find.widgetWithText(TextButton, '仕事'), findsNothing);
+    await tester.pumpWidget(const SizedBox());
     expect(tester.takeException(), isNull);
   });
 
@@ -247,10 +422,11 @@ void main() {
       final move = SametarohAssets.journeyFramesForBodyKey(entry.value);
       await preload(tester, [...idle, ...move]);
       expect(shownAsset(tester), idle.first.asset);
-      final animation = tester
-          .widget<SametarohAnimatedImage>(find.byType(SametarohAnimatedImage));
-      expect(
-          animation.fit, entry.value == null ? BoxFit.cover : BoxFit.contain);
+      final animation = tester.widget<TrainingHomeCharacterAnimation>(
+          find.byType(TrainingHomeCharacterAnimation));
+      expect(animation.isWalking, isFalse);
+      expect(animation.frameSet.idleFrames.first.asset, idle.first.asset);
+      expect(animation.frameSet.walkFrames.first.asset, move.first.asset);
       controller.evolutionStage.value = 3;
       await tester.pump();
       expect(shownAsset(tester), idle.first.asset);
@@ -303,8 +479,6 @@ void main() {
           ...SametarohAssets.careFramesFor(action, bodyKey: entry.value),
         for (final action in actions)
           SametarohAssets.completionFrameFor(action, bodyKey: entry.value),
-        SametarohAssets.initialFrameFor(TrainingActionType.meal,
-            bodyKey: entry.value)!,
       ]);
       for (final action in actions) {
         controller.callbackTrace.clear();
@@ -315,15 +489,14 @@ void main() {
             find.byType(TrainingGameCareActionScreen));
         expect(care.bodyKey, entry.value);
         expect(care.actionType, action);
-        final initial = SametarohAssets.initialFrameFor(action,
-                bodyKey: entry.value) ??
+        final initial =
             SametarohAssets.careFramesFor(action, bodyKey: entry.value).first;
         expect(shownCareAsset(tester), initial.asset);
         expect(controller.callbackTrace,
             action == TrainingActionType.work ? ['prepareWork'] : isEmpty);
         await tester.tap(find.byTooltip('お世話を中止'));
-        await tester.pump();
-        await tester.pump(const Duration(milliseconds: 300));
+        // SDK既定の戻る遷移が終わり、次のcareボタンを操作できるまで待つ。
+        await pumpRouteTransition(tester);
         expect(
             controller.callbackTrace,
             action == TrainingActionType.work
@@ -334,13 +507,14 @@ void main() {
       await tester.tap(find.text('仕事').last);
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
-      await tester.tap(find.text('完了する'));
+      // 操作せず5秒に到達すると既存の完了・効果反映経路へ進む。
+      await tester.pump(const Duration(milliseconds: 4700));
       await tester.pump();
       expect(shownCareAsset(tester), endsWith('/${entry.value}/work_done.png'));
       await tester.pump(const Duration(milliseconds: 499));
       expect(controller.callbackTrace, ['prepareWork']);
       await tester.pump(const Duration(milliseconds: 1));
-      await tester.pump(const Duration(milliseconds: 300));
+      await pumpRouteTransition(tester);
       expect(controller.callbackTrace,
           ['prepareWork', 'finishWorkPreparation', 'perform:work']);
       expect(tester.takeException(), isNull, reason: entry.key);

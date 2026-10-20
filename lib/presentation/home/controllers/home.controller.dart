@@ -3,6 +3,14 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:koto_blue_sharks/app/data/models/info/post.dart';
+import 'package:koto_blue_sharks/app/data/models/home/website_video.dart';
+import 'package:koto_blue_sharks/app/data/models/home/website_match.dart';
+import 'package:koto_blue_sharks/app/data/models/home/website_banner.dart';
+import 'package:koto_blue_sharks/app/data/models/home/website_player.dart';
+import 'package:koto_blue_sharks/app/data/models/home/website_goods.dart';
+import 'package:koto_blue_sharks/app/data/models/home/website_standings.dart';
+import 'package:koto_blue_sharks/app/providers/home/website_video_provider.dart';
+import 'package:koto_blue_sharks/utils/app_environment.dart';
 import 'package:koto_blue_sharks/app/data/models/match/match_result.dart';
 import 'package:koto_blue_sharks/app/data/models/media/media.dart';
 import 'package:koto_blue_sharks/app/providers/info/info_provider.dart';
@@ -12,6 +20,84 @@ import 'package:koto_blue_sharks/utils/my_shared_pref.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class HomeController extends GetxController {
+  HomeController({WebsiteVideoProvider? websiteVideoProvider, DateTime Function()? websiteClock})
+      : websiteVideoProvider = websiteVideoProvider ?? WebsiteVideoProvider(),
+        websiteClock = websiteClock ?? DateTime.now;
+
+  final WebsiteVideoProvider websiteVideoProvider;
+  final DateTime Function() websiteClock;
+  final websiteSchedule = Rxn<WebsiteSchedule>();
+  final websiteBanners = <WebsiteBanner>[].obs;
+  final websiteVideos = <WebsiteVideo>[].obs;
+  final websiteGoods = <WebsiteGoods>[].obs;
+  final websiteStandings = Rxn<WebsiteStandings>();
+  final websitePlayers = Rxn<WebsitePlayers>();
+  Uri? _websiteScheduleUrl;
+  bool _websiteNextMatchesRequested = false;
+  bool _websiteNextMatchesLoading = false;
+  bool _websiteContentRequested = false;
+  bool _websiteContentLoading = false;
+
+  Future<void> fetchWebsiteContent({bool force = false}) async {
+    // The renewed website is currently a Debug/OTA verification source.
+    if (AppEnvironment.usesProductionServices ||
+        _websiteContentLoading ||
+        (_websiteContentRequested && !force)) {
+      return;
+    }
+    _websiteContentRequested = true;
+    _websiteContentLoading = true;
+    try {
+      final content = await websiteVideoProvider.fetchContent();
+      if (!isClosed) {
+        websiteVideos.assignAll(content.videos);
+        websiteGoods.assignAll(content.goods);
+        websiteStandings.value = content.standings;
+        websitePlayers.value = content.players;
+        websiteBanners.assignAll(content.banners);
+        _websiteScheduleUrl = content.scheduleUrl;
+      }
+    } catch (_) {
+      // Keep the previous successful media, or the original static video.
+    } finally {
+      _websiteContentLoading = false;
+    }
+  }
+
+  /// Screen orchestration keeps the existing four-section fetch independent.
+  Future<void> fetchWebsiteNextMatches({bool force = false}) async {
+    if (AppEnvironment.usesProductionServices || isClosed ||
+        _websiteNextMatchesLoading || _websiteContentLoading ||
+        (_websiteNextMatchesRequested && !force)) {
+      return;
+    }
+    _websiteNextMatchesRequested = true;
+    _websiteNextMatchesLoading = true;
+    try {
+      await fetchWebsiteContent(force: force);
+      if (isClosed) return;
+      final url = _websiteScheduleUrl;
+      if (url == null) {
+        websiteSchedule.value = null;
+      } else {
+        try {
+          final schedule = await websiteVideoProvider.fetchSchedule(url);
+          if (!isClosed) websiteSchedule.value = schedule;
+        } catch (_) {
+          // Schedule failure must not undo successful homepage sections.
+        }
+      }
+    } finally {
+      _websiteNextMatchesLoading = false;
+    }
+  }
+
+  @override
+  void onClose() {
+    websiteVideoProvider.httpClient.close();
+    super.onClose();
+  }
+
   final MatchProvider apiProvider = MatchProvider();
   final MediaProvider mediaProvider = MediaProvider();
   final InfoProvider infoProvider = InfoProvider();
@@ -33,10 +119,16 @@ class HomeController extends GetxController {
     infoProvider.onInit();
   }
 
-  void screenInit() {
-    fetchMatchResult();
+  void screenInit({bool refreshWebsiteContent = false}) {
+    if (AppEnvironment.usesProductionServices) {
+      fetchMatchResult();
+    } else {
+      fetchWebsiteNextMatches(force: refreshWebsiteContent);
+    }
     getTopics();
-    getBanner();
+    if (AppEnvironment.usesProductionServices) {
+      getBanner();
+    }
 
     // isLoading.value = false;
   }

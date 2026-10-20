@@ -32,3 +32,6 @@ Runner/GeneratedPluginRegistrant.*
 !default.mode2v3
 !default.pbxuser
 !default.perspectivev3
+
+# Local persistent connection preset selected by tools/ios_environment.py
+Flutter/SelectedEnvironment.xcconfig
