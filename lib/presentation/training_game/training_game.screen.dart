@@ -466,36 +466,33 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
     );
   }
 
-  /// 退出ボタンと、Debugビルド限定のパラメータ・開発操作を表示します。
+  /// パラメータと退出ボタン、Debugビルド限定の開発操作を表示します。
   Widget _buildHud(BuildContext context) {
     return Container(
       padding: EdgeInsets.fromLTRB(8.w, 16.h, 8.w, 8.w),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (kDebugMode) ...[
-            Expanded(
-              child: Container(
-                padding: EdgeInsets.all(6.w),
-                decoration: BoxDecoration(
-                  color: const Color(0xfffafafa),
-                  border: Border.all(color: Colors.black, width: 2),
-                  borderRadius: BorderRadius.circular(4.r),
-                ),
-                child: GridView.count(
-                  crossAxisCount: 2,
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  childAspectRatio: 2.2,
-                  children: const ['食事', '仕事', '清潔', '体調']
-                      .map((name) => _buildMeterByName(name))
-                      .toList(),
-                ),
+          Expanded(
+            child: Container(
+              padding: EdgeInsets.all(6.w),
+              decoration: BoxDecoration(
+                color: const Color(0xfffafafa),
+                border: Border.all(color: Colors.black, width: 2),
+                borderRadius: BorderRadius.circular(4.r),
+              ),
+              child: GridView.count(
+                crossAxisCount: 2,
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                childAspectRatio: 2.2,
+                children: const ['食事', '仕事', '清潔', '体調']
+                    .map((name) => _buildMeterByName(name))
+                    .toList(),
               ),
             ),
-            SizedBox(width: 8.w),
-          ] else
-            const Spacer(),
+          ),
+          SizedBox(width: 8.w),
           Column(
             mainAxisSize: MainAxisSize.min,
             children: [
