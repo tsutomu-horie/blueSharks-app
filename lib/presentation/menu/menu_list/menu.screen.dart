@@ -66,10 +66,8 @@ class MenuScreen extends GetView<MenuListController> {
                   child: Obx(() {
                     return AnimatedContainer(
                       duration: const Duration(milliseconds: 300),
-                      constraints: BoxConstraints(minHeight: 44.h),
-                      alignment: Alignment.center,
                       padding:
-                      EdgeInsets.symmetric(horizontal: 16.w, vertical: 6.h),
+                      EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
                       decoration: BoxDecoration(
                         border: Border(
                           bottom: BorderSide(
