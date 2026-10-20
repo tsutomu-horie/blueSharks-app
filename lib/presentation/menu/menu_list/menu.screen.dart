@@ -7,9 +7,6 @@ import 'package:iconsax_plus/iconsax_plus.dart';
 import 'package:koto_blue_sharks/app/data/models/info/post.dart';
 import 'package:koto_blue_sharks/presentation/screens.dart';
 import 'package:koto_blue_sharks/utils/app_color.dart';
-import 'package:koto_blue_sharks/utils/app_environment.dart';
-
-import 'website_menu_page.dart';
 
 import 'controllers/menu.controller.dart';
 
@@ -118,17 +115,8 @@ class MenuScreen extends GetView<MenuListController> {
               onOpenDetail(value);
             },
           ),
-          if (AppEnvironment.usesProductionServices)
-            const MatchListScreen()
-          else
-            const WebsiteMenuPage(
-              path: '/schedule-and-result/',
-              title: '試合日程・結果',
-            ),
-          if (AppEnvironment.usesProductionServices)
-            const PlayerListScreen(null)
-          else
-            const WebsiteMenuPage(path: '/members/', title: 'メンバー'),
+          const MatchListScreen(),
+          const PlayerListScreen(null),
           const GalleryScreen(),
         ],
       ),

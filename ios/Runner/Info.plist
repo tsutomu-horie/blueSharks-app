@@ -31,6 +31,8 @@
 	</array>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>ローカル環境で開発用サーバーに接続するために使用します。</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>The application does not use this feature</string>
 	<key>UIApplicationSupportsIndirectInputEvents</key>

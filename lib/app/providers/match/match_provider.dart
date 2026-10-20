@@ -1,14 +1,20 @@
 import 'package:get/get.dart';
 import 'package:koto_blue_sharks/app/data/models/match/match_result.dart';
 import 'package:koto_blue_sharks/utils/Constant.dart';
+import 'package:koto_blue_sharks/utils/app_environment.dart';
+import 'package:koto_blue_sharks/app/providers/website/renewal_website_provider.dart';
 
 class MatchProvider extends GetConnect {
+  final renewal = RenewalWebsiteProvider();
   @override
   void onInit() {
     httpClient.baseUrl = Constants.baseUrl;
   }
 
   Future<List<Category>> getMatch({int page = 1}) async {
+    if (!AppEnvironment.usesProductionServices) {
+      return renewal.seasons(page: page);
+    }
     final url = Uri.parse('categories?parent=24&page=$page');
     print("load ${httpClient.baseUrl}${url.toString()}");
 
@@ -17,6 +23,10 @@ class MatchProvider extends GetConnect {
   }
 
   Future<Rendered> getMatchStatus(String id) async {
+    if (!AppEnvironment.usesProductionServices &&
+        const {'host', 'visitor'}.contains(id)) {
+      return Rendered(rendered: id);
+    }
     final url = Uri.parse('media/$id?_fields=id,title,content,custom_field');
     print("load getMatchStatus ${httpClient.baseUrl}${url.toString()}");
 
@@ -29,6 +39,9 @@ class MatchProvider extends GetConnect {
   }
 
   Future<List<MatchResultBySeason>> getMatchBySeasonId(int seasonId, {int page = 1}) async {
+    if (!AppEnvironment.usesProductionServices) {
+      return renewal.matches(seasonId, page: page);
+    }
     final url = Uri.parse('posts?categories=$seasonId&page=$page');
     print("load ${httpClient.baseUrl}${url.toString()}");
 

@@ -1,13 +1,21 @@
 /// 接続環境だけを選択します。Release/Debugの実行モードは変更しません。
 class AppEnvironment {
-  static const name = String.fromEnvironment('APP_ENV');
-  static const isOtaTest = name == 'ota-test';
-  static const usesProductionServices =
-      bool.fromEnvironment('dart.vm.product') && !isOtaTest;
+  // 未指定時もビルド方式から推測せず、テスト環境を使います。
+  static const _configuredName =
+      String.fromEnvironment('APP_ENV', defaultValue: 'test');
+  // 既存のOTA設定から移行できるよう、旧名だけ互換対応します。
+  static const name = _configuredName == 'ota-test' ? 'test' : _configuredName;
+  static const usesProductionServices = name == 'production';
+  static const usesLocalServices = name == 'local';
+  static const badgeLabel = usesProductionServices ? '' : 'DEBUG';
+  static const localAuthApiHost = String.fromEnvironment('LOCAL_AUTH_API_HOST');
 
-  static const authApiBaseUrl = usesProductionServices
-      ? 'https://app.blue-sharks.jp/api/mobile/v1/'
-      : 'https://memodevelop.com/bluesharks_web/index.php/api/mobile/v1/';
+  // localでは会員APIのみPCへ接続し、他のサービスはテスト環境を使います。
+  static const authApiBaseUrl = usesLocalServices
+      ? 'http://$localAuthApiHost:8000/api/mobile/v1/'
+      : usesProductionServices
+          ? 'https://app.blue-sharks.jp/api/mobile/v1/'
+          : 'https://memodevelop.com/bluesharks_web/index.php/api/mobile/v1/';
   static const wordpressApiBaseUrl = usesProductionServices
       ? 'https://blue-sharks.jp/wp-json/wp/v2/'
       : 'https://blue-sharks.donati.jp/wp-json/wp/v2/';
@@ -36,13 +44,32 @@ class AppEnvironment {
 
   /// mainの通信・SDK初期化より前に検証します。assertには依存しません。
   static void validate() {
-    if (name.isNotEmpty && !isOtaTest) {
-      throw StateError('Unsupported APP_ENV. Omit it or use ota-test.');
+    if (!const ['local', 'test', 'production'].contains(name)) {
+      throw StateError('Use APP_ENV=local, test, or production.');
     }
-    if (isOtaTest &&
-        (const bool.fromEnvironment('USE_LOCAL_AUTH_API') ||
-            const String.fromEnvironment('LOCAL_AUTH_API_HOST').isNotEmpty)) {
-      throw StateError('ota-test cannot be combined with local API overrides.');
+    if (const bool.fromEnvironment('USE_LOCAL_AUTH_API')) {
+      throw StateError('Use APP_ENV=local instead of USE_LOCAL_AUTH_API.');
+    }
+    if (usesLocalServices) {
+      // スキーム・ポート・パスは指定せず、到達可能なIPv4/ホスト名を渡します。
+      final hostname = RegExp(
+        r'^[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?'
+        r'(?:\.[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?)*$',
+      );
+      final isNumeric = RegExp(r'^[0-9.]+$').hasMatch(localAuthApiHost);
+      final octets = localAuthApiHost.split('.');
+      final validIpv4 = octets.length == 4 &&
+          octets.every((part) {
+            final number = int.tryParse(part);
+            return number != null && number >= 0 && number <= 255;
+          });
+      if (localAuthApiHost.length > 253 ||
+          !hostname.hasMatch(localAuthApiHost) ||
+          (isNumeric && !validIpv4)) {
+        throw StateError('local requires a valid LOCAL_AUTH_API_HOST.');
+      }
+    } else if (localAuthApiHost.isNotEmpty) {
+      throw StateError('LOCAL_AUTH_API_HOST is available only for local.');
     }
   }
 }
