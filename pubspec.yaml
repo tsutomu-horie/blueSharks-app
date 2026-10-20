@@ -104,6 +104,7 @@ flutter:
   uses-material-design: true
 
   assets:
+    - "assets/fonts/line_seed_jp/OFL.txt"
     # BEGIN GENERATED ASSET INPUTS
     # Regenerate after adding assets: dart tool/update_asset_inputs.dart --write
     # Check without edits: dart tool/update_asset_inputs.dart --check
@@ -131,6 +132,11 @@ flutter:
     - "assets/images/image_wallpaper_1.png"
     - "assets/images/img_banner_ticket.png"
     - "assets/images/jrugby_logo.png"
+    - "assets/images/renewal/follow.png"
+    - "assets/images/renewal/guide_banner.jpg"
+    - "assets/images/renewal/match_background.jpg"
+    - "assets/images/renewal/training_banner.jpg"
+    - "assets/images/renewal/youtube.svg"
     - "assets/images/sametaroh/claening_sametaroh_1.png"
     - "assets/images/sametaroh/cleaning_complete_sametaroh.png"
     - "assets/images/sametaroh/cleaning_sametaroh_2.png"
@@ -316,12 +322,6 @@ flutter:
     - "assets/vectors/member_card/one_shimz.svg"
     - "assets/vectors/member_card/premium.svg"
     - "assets/vectors/member_card/regular.svg"
-    - "assets/fonts/line_seed_jp/OFL.txt"
-    - "assets/images/renewal/match_background.jpg"
-    - "assets/images/renewal/follow.png"
-    - "assets/images/renewal/youtube.svg"
-    - "assets/images/renewal/training_banner.jpg"
-    - "assets/images/renewal/guide_banner.jpg"
     # END GENERATED ASSET INPUTS
 
   # To add assets to your application, add an assets section, like this:
