@@ -81,7 +81,7 @@ void main() {
     }
   });
 
-  for (var selected = 0; selected < 6; selected++) {
+  for (var selected = 0; selected < 5; selected++) {
     testWidgets('footer index $selected preserves states, labels and all taps',
         (tester) async {
       final taps = <int>[];
@@ -97,14 +97,7 @@ void main() {
         ),
       );
       const names = ['home', 'menu', 'mypage', 'stdium', 'calendar'];
-      final labels = [
-        LocaleKeys.home.tr,
-        LocaleKeys.menu_en.tr,
-        LocaleKeys.my_page.tr,
-        LocaleKeys.stadium.tr,
-        LocaleKeys.calendar.tr,
-        '楽しみ方',
-      ];
+      const labels = ['HOME', 'MENU', 'MY PAGE', 'STADIUM', 'CALENDAR'];
       final icons = tester
           .widgetList<SuppliedUiIcon>(
             find.byType(SuppliedUiIcon),
@@ -115,17 +108,15 @@ void main() {
         expect(icons[i].fileName,
             '${names[i]}_icon_${i == selected ? "on" : "off"}.png');
         expect(icons[i].color,
-            i == selected ? BrandColor.main : TextColor.disabled);
+            i == selected ? Colors.white : const Color(0xff2c66bf));
         expect(tester.getSize(find.byWidget(icons[i])), const Size(20, 20));
       }
-      final guide = tester.widget<Icon>(find.byIcon(Icons.menu_book_outlined));
-      expect(guide.color, selected == 5 ? BrandColor.main : TextColor.disabled);
       for (final label in labels) {
         expect(find.text(label), findsOneWidget);
         await tester.tap(find.text(label));
         await tester.pumpAndSettle();
       }
-      expect(taps, [0, 1, 2, 3, 4, 5]);
+      expect(taps, [0, 1, 2, 3, 4]);
       final nodes = <SemanticsNode>[];
       void collect(SemanticsNode node) {
         nodes.add(node);
@@ -142,7 +133,7 @@ void main() {
               node.flagsCollection.isButton &&
               labels.any((label) => node.label.contains(label)))
           .toList();
-      expect(tabs, hasLength(6));
+      expect(tabs, hasLength(5));
       expect(
           tabs.where(
               (node) => node.flagsCollection.isSelected == ui.Tristate.isTrue),
@@ -164,7 +155,7 @@ void main() {
         enabled: false,
       ),
     );
-    await tester.tap(find.text(LocaleKeys.home.tr), warnIfMissed: false);
+    await tester.tap(find.text('HOME'), warnIfMissed: false);
     await tester.pumpAndSettle();
     expect(taps, isEmpty);
     final opacity = find
@@ -188,7 +179,7 @@ void main() {
           tester
               .widget<BottomNavigationBar>(find.byType(BottomNavigationBar))
               .backgroundColor,
-          BackgroundColor.primary);
+          const Color(0xff002b6d));
       final images = tester.widgetList<Image>(find.byType(Image));
       expect(images.every((image) => image.fit == BoxFit.contain), isTrue);
       expect(images.every((image) => image.colorBlendMode == BlendMode.srcIn),

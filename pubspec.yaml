@@ -316,6 +316,12 @@ flutter:
     - "assets/vectors/member_card/one_shimz.svg"
     - "assets/vectors/member_card/premium.svg"
     - "assets/vectors/member_card/regular.svg"
+    - "assets/fonts/line_seed_jp/OFL.txt"
+    - "assets/images/renewal/match_background.jpg"
+    - "assets/images/renewal/follow.png"
+    - "assets/images/renewal/youtube.svg"
+    - "assets/images/renewal/training_banner.jpg"
+    - "assets/images/renewal/guide_banner.jpg"
     # END GENERATED ASSET INPUTS
 
   # To add assets to your application, add an assets section, like this:
@@ -347,6 +353,12 @@ flutter:
   #         weight: 700
   #
   fonts:
+    - family: LINESeedJP
+      fonts:
+        - asset: assets/fonts/line_seed_jp/LINESeedJP-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/line_seed_jp/LINESeedJP-Bold.ttf
+          weight: 700
     - family: Inter
       fonts:
         - asset: assets/fonts/Inter-Italic.ttf
