@@ -306,6 +306,8 @@ class TrainingGameController extends GetxController
   DateTime? _syncRetryNotBefore;
   bool _syncRequestMayHaveBeenApplied = false;
   Future<void>? _debugTimeSync;
+  bool _debugDailyResetPending = false;
+  String _debugTimeSyncError = '';
   bool _syncBlockedUntilServerRestore = false;
   bool _hasUnsyncedLocalState = false;
   int _localStateRevision = 0;
@@ -1365,25 +1367,45 @@ class TrainingGameController extends GetxController
 
   /// 仕事画面を開く直前に、サーバー時刻による実施可否を取得します。
   Future<bool> prepareWork() async {
-    final debugTimeSync = _debugTimeSync;
-    if (debugTimeSync != null) await debugTimeSync;
-    if (_isWorkPreparationPending ||
-        _isWorkSyncPending ||
-        !_ownsSession(_ownedSessionVersion)) {
+    if (_isWorkPreparationPending) {
       return false;
     }
     _isWorkPreparationPending = true;
     var prepared = false;
     workAvailabilityError.value = '';
     try {
+      final debugTimeSync = _debugTimeSync;
+      if (debugTimeSync != null) {
+        await debugTimeSync;
+      } else if (_debugDailyResetPending) {
+        await _queueDebugTimeSync();
+      }
+      if (!_ownsSession(_ownedSessionVersion)) {
+        workAvailabilityError.value = 'ログイン状態を確認して、育成画面を開き直してください。';
+        return false;
+      }
+      if (_debugDailyResetPending) {
+        workAvailabilityError.value = _debugTimeSyncError;
+        return false;
+      }
+      if (_isWorkSyncPending) {
+        workAvailabilityError.value = '前回の仕事が同期待ちです。画面上部の同期状態を確認してください。';
+        return false;
+      }
       final data = await _serverProvider.fetchCurrent(
         expectedSessionVersion: _ownedSessionVersion,
       );
       if (data == null || !_ownsSession(_ownedSessionVersion)) return false;
       // 可否と同じ応答に含まれるlock_version・パラメータも更新し、
       // 他端末操作後に古い状態で仕事を送信しないようにします。
-      if (!_initializeServerState(data)) return false;
+      if (!_initializeServerState(data)) {
+        workAvailabilityError.value = '育成段階を確認中です。状態を確認してからもう一度お試しください。';
+        return false;
+      }
       prepared = canWorkToday;
+      if (!prepared && _pendingStageIndex != null) {
+        workAvailabilityError.value = '育成段階の更新が完了するまでお待ちください。';
+      }
       return prepared;
     } catch (_) {
       if (_ownsSession(_ownedSessionVersion)) {
@@ -1692,6 +1714,8 @@ class TrainingGameController extends GetxController
     _isWorkAvailable = false;
     _isWorkSyncPending = false;
     _isWorkPreparationPending = false;
+    _debugDailyResetPending = false;
+    _debugTimeSyncError = '';
     _lowConditionTraining = 0;
     _dayCared = false;
     _zeroHours.updateAll((key, value) => 0);
@@ -3250,24 +3274,33 @@ class TrainingGameController extends GetxController
     logs.insert(0, '${minutes}分経過。メーターが自然に減少しました。');
     if (_isDisposed) return;
     if (day.value > previousDay) {
-      final previousSync = _debugTimeSync ?? Future<void>.value();
-      final sync =
-          previousSync.then((_) => _syncDebugTimeAndResetDailyActions());
-      _debugTimeSync = sync;
-      unawaited(sync.whenComplete(() {
-        if (identical(_debugTimeSync, sync)) _debugTimeSync = null;
-      }));
+      _debugDailyResetPending = true;
+      unawaited(_queueDebugTimeSync());
     } else {
       _syncServer();
     }
   }
 
+  Future<void> _queueDebugTimeSync() {
+    final previousSync = _debugTimeSync ?? Future<void>.value();
+    final sync = previousSync.then((_) => _syncDebugTimeAndResetDailyActions());
+    _debugTimeSync = sync;
+    return sync.whenComplete(() {
+      if (identical(_debugTimeSync, sync)) _debugTimeSync = null;
+    });
+  }
+
   /// デバッグでゲーム内日付を進めた場合だけ、日次アクション制限も解除します。
   Future<void> _syncDebugTimeAndResetDailyActions() async {
     final expectedSessionVersion = _ownedSessionVersion;
+    _debugDailyResetPending = true;
     try {
       await TrainingGameProvider.waitForPendingSync();
       if (!_ownsSession(expectedSessionVersion)) return;
+      if (pendingSyncActionCount > 0) {
+        _debugTimeSyncError = '前回の操作が同期待ちです。画面上部の同期状態を確認してから、もう一度仕事を押してください。';
+        return;
+      }
       final syncedData = await _serverProvider.syncDebugTime(
         stageCode: _stageCode,
         parameters: _serverParameters,
@@ -3280,9 +3313,16 @@ class TrainingGameController extends GetxController
       final data = await _serverProvider.resetDebugDailyActionUsage(
         expectedSessionVersion: expectedSessionVersion,
       );
-      if (_ownsSession(expectedSessionVersion)) _initializeServerState(data);
+      if (_ownsSession(expectedSessionVersion)) {
+        if (data['work_available'] is! bool || !_initializeServerState(data)) {
+          throw StateError('日次制限解除後の育成状態を確認できませんでした。');
+        }
+        _debugDailyResetPending = false;
+        _debugTimeSyncError = '';
+      }
     } catch (_) {
       if (_ownsSession(expectedSessionVersion)) {
+        _debugTimeSyncError = '時間変更を保存できませんでした。通信状態と接続先を確認して、もう一度仕事を押してください。';
         logs.insert(0, 'デバッグ用の日次アクション制限をリセットできませんでした。');
       }
     }
