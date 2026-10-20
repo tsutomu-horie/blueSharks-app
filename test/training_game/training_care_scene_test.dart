@@ -175,14 +175,17 @@ void main() {
               TrainingActionType.rest => 'ケア中…',
               _ => throw StateError('お世話対象外'),
             };
-            final progressChip = tester.getRect(find.ancestor(
-              of: find.text(progressLabel),
-              matching: find.byType(Container),
-            ).first);
+            final progressChip = tester.getRect(find
+                .ancestor(
+                  of: find.text(progressLabel),
+                  matching: find.byType(Container),
+                )
+                .first);
             expect(progressChip.top - sceneBounds.bottom,
                 closeTo(20 * size.height / 812, 0.01));
-            // 進行表示・スキップ操作を表示し、食事内容の選択は表示しない。
-            expect(find.text('スキップ'), findsOneWidget);
+            // タップによるスキップ案内を表示し、専用ボタンは表示しない。
+            expect(find.text('スキップ'), findsNothing);
+            expect(find.text('5秒で自動完了します。画面タップでスキップ'), findsOneWidget);
             if (action == TrainingActionType.meal) {
               expect(find.text('食事中…'), findsOneWidget);
               expect(find.text('食事内容を選ぶ'), findsNothing);
