@@ -68,6 +68,7 @@ class _PendingTrainingAction {
             'score': result!.score,
             'effect_multiplier': result!.effectMultiplier,
             'result_code': result!.resultCode,
+            ...?result!.tackleResult?.toJson(),
           },
       };
 }
@@ -622,12 +623,24 @@ class TrainingGameController extends GetxController
           summary == null) {
         return null;
       }
+      final tackleMetadata = TackleResultMetadata.fromJson(rawResult);
+      if (tackleMetadata != null &&
+          (resultType.first != MiniGameType.tackle ||
+              !score.isFinite ||
+              (score - tackleMetadata.penaltyMeanSeconds).abs() > 0.000000001 ||
+              rawResult['result_code'] != tackleMetadata.rank ||
+              !multiplier.isFinite ||
+              (multiplier - tackleMetadata.effectMultiplier).abs() >
+                  0.000000001)) {
+        throw const FormatException('Inconsistent tackle pending result');
+      }
       result = MiniGameResult(
         type: resultType.first,
         summary: summary,
         score: score,
         effectMultiplier: multiplier,
         resultCode: rawResult['result_code']?.toString(),
+        tackleResult: tackleMetadata,
       );
     }
 
@@ -2762,6 +2775,11 @@ class TrainingGameController extends GetxController
         actionScore: miniGameResult?.score,
         actionEffectMultiplier: miniGameResult?.effectMultiplier,
         actionResultCode: miniGameResult?.resultCode,
+        actionResultPolicy: miniGameResult?.tackleResult?.resultPolicy,
+        actionAttemptCount: miniGameResult?.tackleResult?.attemptCount,
+        actionSuccessCount: miniGameResult?.tackleResult?.successCount,
+        actionSuccessfulReactionTotalUs:
+            miniGameResult?.tackleResult?.successfulReactionTotalUs,
         debugBypassCooldown: bypassCooldown,
         status: isPositiveEnd
             ? 'positive_end'

@@ -243,6 +243,7 @@ flutter:
     - "assets/images/training_game/minigames/side_right_reach.png"
     - "assets/images/training_game/minigames/side_right_rest.png"
     - "assets/images/training_game/minigames/tackle_attack_normal.png"
+    - "assets/images/training_game/minigames/tackle_opponent_b.png"
     - "assets/images/training_game/scenes/clean_room.png"
     - "assets/images/training_game/scenes/gym_bench.png"
     - "assets/images/training_game/scenes/home_outdoor_day.png"
