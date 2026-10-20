@@ -4,7 +4,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 
 import '../models/mini_game_result.dart';
-import '../mini_game_character_asset.dart';
+import 'tackle_player_visual.dart';
 import 'tackle_game_logic.dart';
 import '../../models/training_game_clock.dart';
 
@@ -422,10 +422,10 @@ class _TackleGameScreenState extends State<TackleGameScreen>
             duration: _playerDuration,
             curve: Curves.easeOut,
             alignment: _playerAlignment,
-            child: const MiniGameCharacterAsset(
-              key: Key('tackle-player'),
-              pose: MiniGameCharacterPose.rightRest,
-              fontSize: 72,
+            child: TacklePlayerVisual(
+              key: const Key('tackle-player'),
+              attacking: _playerAlignment.y != 0,
+              downward: _playerAlignment.y > 0,
             ),
           ),
           AnimatedAlign(

@@ -1,4 +1,5 @@
 import 'package:get/get.dart';
+import 'package:intl/intl.dart';
 import 'package:koto_blue_sharks/app/services/auth_token.dart';
 import 'package:koto_blue_sharks/app/services/server_time_clock.dart';
 import 'package:koto_blue_sharks/utils/Constant.dart';
@@ -24,21 +25,29 @@ class TrainingGameProvider extends GetConnect {
   }
 
   /// 現在の育成状態を取得します。
-  Future<Map<String, dynamic>?> fetchCurrent() async {
+  Future<Map<String, dynamic>?> fetchCurrent(
+      {int? expectedSessionVersion}) async {
     // 直前のバックグラウンド保存を待ってから最新状態を取得します。
     await _pendingWrite;
-    final response = await get('game', headers: await _headers());
+    final headers = await _headers(expectedSessionVersion);
+    _assertSessionVersion(expectedSessionVersion);
+    final response = await get('game', headers: headers);
     return _data(response);
   }
 
   /// DBのクリア履歴から解放済みポジションを取得します。
-  Future<List<String>> fetchUnlockedPositions() async {
+  Future<List<String>> fetchUnlockedPositions(
+      {int? expectedSessionVersion}) async {
     // 直前の完了同期を待ち、履歴登録後の一覧を取得します。
     await _pendingWrite;
-    final response = await get('game/clear-history', headers: await _headers());
+    final headers = await _headers(expectedSessionVersion);
+    _assertSessionVersion(expectedSessionVersion);
+    final response = await get('game/clear-history', headers: headers);
     final data = _data(response);
     final positions = data?['positions'];
-    return positions is List ? positions.whereType<String>().toList() : <String>[];
+    return positions is List
+        ? positions.whereType<String>().toList()
+        : <String>[];
   }
 
   /// 新しい育成サイクルをサーバーへ作成します。
@@ -46,10 +55,13 @@ class TrainingGameProvider extends GetConnect {
     required String stageCode,
     required Map<String, double> parameters,
     bool forceRestart = false,
+    int? expectedSessionVersion,
   }) async {
     // 旧サイクルの同期完了前に新サイクルを作成すると、終了直前の状態で
     // 新しい開始状態が上書きされるため、書き込みを直列化します。
     await _pendingWrite;
+    final headers = await _headers(expectedSessionVersion);
+    _assertSessionVersion(expectedSessionVersion);
     final response = await post(
       'game/start',
       {
@@ -57,25 +69,32 @@ class TrainingGameProvider extends GetConnect {
         'parameters': parameters,
         if (forceRestart) 'force_restart': true,
       },
-      headers: await _headers(),
+      headers: headers,
     );
     return _data(response) ?? <String, dynamic>{};
   }
 
   /// デバッグ用に、ログイン会員の育成ゲームデータを初回状態へ削除します。
-  Future<Map<String, dynamic>> resetDebugState() async {
+  Future<Map<String, dynamic>> resetDebugState(
+      {int? expectedSessionVersion}) async {
     await _pendingWrite;
-    final response = await post('game/debug/reset', null, headers: await _headers());
+    final headers = await _headers(expectedSessionVersion);
+    _assertSessionVersion(expectedSessionVersion);
+    final response = await post('game/debug/reset', null, headers: headers);
     return _data(response) ?? <String, dynamic>{};
   }
 
   /// デバッグ用に、現在の育成サイクルの日次アクション利用履歴をリセットします。
-  Future<Map<String, dynamic>> resetDebugDailyActionUsage() async {
+  Future<Map<String, dynamic>> resetDebugDailyActionUsage({
+    int? expectedSessionVersion,
+  }) async {
     final write = _pendingWrite.then((_) async {
+      final headers = await _headers(expectedSessionVersion);
+      _assertSessionVersion(expectedSessionVersion);
       final response = await post(
         'game/debug/reset-daily-actions',
         null,
-        headers: await _headers(),
+        headers: headers,
       );
       return _data(response) ?? <String, dynamic>{};
     });
@@ -88,8 +107,11 @@ class TrainingGameProvider extends GetConnect {
     required String stageCode,
     required Map<String, double> parameters,
     required int lockVersion,
+    int? expectedSessionVersion,
   }) async {
     final write = _pendingWrite.then((_) async {
+      final headers = await _headers(expectedSessionVersion);
+      _assertSessionVersion(expectedSessionVersion);
       final response = await post(
         'game/debug/sync-time',
         {
@@ -97,7 +119,7 @@ class TrainingGameProvider extends GetConnect {
           'parameters': parameters,
           'lock_version': lockVersion,
         },
-        headers: await _headers(),
+        headers: headers,
       );
       return _data(response) ?? <String, dynamic>{};
     });
@@ -114,6 +136,8 @@ class TrainingGameProvider extends GetConnect {
     String? positionCode,
     String? branchCode,
     String? actionCode,
+    String? actionIdempotencyKey,
+    int? expectedSessionVersion,
     double? actionScore,
     double? actionEffectMultiplier,
     String? actionResultCode,
@@ -121,6 +145,8 @@ class TrainingGameProvider extends GetConnect {
     String status = 'playing',
   }) async {
     final write = _pendingWrite.then((_) async {
+      final headers = await _headers(expectedSessionVersion);
+      _assertSessionVersion(expectedSessionVersion);
       final response = await post(
         'game/sync',
         {
@@ -133,14 +159,16 @@ class TrainingGameProvider extends GetConnect {
           if (actionCode != null)
             'action': {
               'code': actionCode,
-              'idempotency_key': '$cycleNo-${_clock.elapsedMicroseconds}-$actionCode',
+              'idempotency_key': actionIdempotencyKey ??
+                  '$cycleNo-${_clock.elapsedMicroseconds}-$actionCode',
               'result_code': actionResultCode ?? 'completed',
               if (debugBypassCooldown) 'debug_bypass_cooldown': true,
               if (actionScore != null) 'score': actionScore,
-              if (actionEffectMultiplier != null) 'effect_multiplier': actionEffectMultiplier,
+              if (actionEffectMultiplier != null)
+                'effect_multiplier': actionEffectMultiplier,
             },
         },
-        headers: await _headers(),
+        headers: headers,
       );
       return _data(response) ?? <String, dynamic>{};
     });
@@ -150,8 +178,10 @@ class TrainingGameProvider extends GetConnect {
   }
 
   /// 認証ヘッダーを作成します。
-  Future<Map<String, String>> _headers() async {
+  Future<Map<String, String>> _headers([int? expectedSessionVersion]) async {
+    _assertSessionVersion(expectedSessionVersion);
     final token = await AuthToken().getAccessToken();
+    _assertSessionVersion(expectedSessionVersion);
     if (token == null || token.isEmpty) {
       throw Exception('認証が必要です。');
     }
@@ -162,6 +192,13 @@ class TrainingGameProvider extends GetConnect {
     };
   }
 
+  void _assertSessionVersion(int? expectedSessionVersion) {
+    if (expectedSessionVersion != null &&
+        AuthToken.sessionVersion != expectedSessionVersion) {
+      throw const AuthSessionChangedException();
+    }
+  }
+
   /// GetConnectのレスポンスをAPIデータへ変換します。
   Map<String, dynamic>? _data(Response<dynamic> response) {
     if (response.hasError) {
@@ -170,6 +207,7 @@ class TrainingGameProvider extends GetConnect {
       throw TrainingGameApiException(
         statusCode: response.statusCode,
         message: message ?? response.statusText ?? '育成ゲームAPIエラー',
+        retryAfter: parseRetryAfterHeader(response.headers),
       );
     }
     final body = response.body;
@@ -181,6 +219,40 @@ class TrainingGameProvider extends GetConnect {
     ServerTimeClock.instance.synchronizeFromPayload(result);
     return result;
   }
+
+  /// Retry-After を秒数または HTTP-date として読み取ります。
+  /// ヘッダー名はHTTP仕様に従い、大文字小文字を区別しません。
+  static Duration? parseRetryAfterHeader(
+    Map<String, String>? headers, {
+    DateTime? now,
+  }) {
+    if (headers == null) return null;
+    String? value;
+    for (final entry in headers.entries) {
+      if (entry.key.toLowerCase() == 'retry-after') {
+        value = entry.value.trim();
+        break;
+      }
+    }
+    if (value == null || value.isEmpty) return null;
+
+    final seconds = int.tryParse(value);
+    if (seconds != null) {
+      if (seconds < 0 || seconds > const Duration(days: 36500).inSeconds) {
+        return null;
+      }
+      return Duration(seconds: seconds);
+    }
+
+    try {
+      final retryAt = DateFormat("EEE, dd MMM yyyy HH:mm:ss 'GMT'", 'en_US')
+          .parseUtc(value);
+      final delay = retryAt.difference((now ?? DateTime.now()).toUtc());
+      return delay.isNegative ? Duration.zero : delay;
+    } on FormatException {
+      return null;
+    }
+  }
 }
 
 /// 育成ゲームAPIのHTTPエラーを、通信障害と業務エラーに分類できる例外です。
@@ -188,10 +260,12 @@ class TrainingGameApiException implements Exception {
   const TrainingGameApiException({
     required this.statusCode,
     required this.message,
+    this.retryAfter,
   });
 
   final int? statusCode;
   final String message;
+  final Duration? retryAfter;
 
   @override
   String toString() => 'TrainingGameApiException($statusCode): $message';

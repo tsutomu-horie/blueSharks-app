@@ -11,6 +11,12 @@ import 'package:koto_blue_sharks/app/views/views/custom_text_view.dart';
 import 'package:koto_blue_sharks/app/views/views/default_header_title_view.dart';
 import 'package:koto_blue_sharks/app/views/views/match/views/match_item_view.dart';
 import 'package:koto_blue_sharks/app/views/views/other/views/video_thumbnail_view.dart';
+import 'package:koto_blue_sharks/app/views/views/other/views/website_goods_section.dart';
+import 'package:koto_blue_sharks/app/views/views/other/views/website_matches_section.dart';
+import 'package:koto_blue_sharks/app/views/views/other/views/website_banners_section.dart';
+import 'package:koto_blue_sharks/utils/app_environment.dart';
+import 'package:koto_blue_sharks/app/views/views/other/views/website_players_section.dart';
+import 'package:koto_blue_sharks/app/views/views/other/views/website_standings_section.dart';
 import 'package:koto_blue_sharks/app/views/views/topic/views/topic_item_view.dart';
 import 'package:koto_blue_sharks/generated/locales.g.dart';
 import 'package:koto_blue_sharks/infrastructure/navigation/routes.dart';
@@ -49,7 +55,7 @@ class HomeScreen extends GetView<MainController> {
         onRefresh: () async {
           homeController.isLoading.value = true;
           homeController.getWallpaper();
-          homeController.screenInit();
+          homeController.screenInit(refreshWebsiteContent: true);
         },
         child: SingleChildScrollView(
             child: Column(
@@ -69,11 +75,18 @@ class HomeScreen extends GetView<MainController> {
                       );
               }),
             ),
+            Obx(() => WebsiteBannersSection(banners: homeController.websiteBanners.toList())),
             const HomePointCard(),
             _gameGuideEntry(),
             _trainingGameEntry(),
             DefaultHeaderTitleView(LocaleKeys.next_match.tr,
                 LocaleKeys.next_match_en.tr.toUpperCase()),
+            if (!AppEnvironment.usesProductionServices)
+              Obx(() => WebsiteMatchesSection(
+                schedule: homeController.websiteSchedule.value,
+                now: homeController.websiteClock(),
+              ))
+            else
             Obx(() {
               // Access the observable list value directly
               final nextMatchData = homeController.threeLatestMatch.value;
@@ -188,6 +201,7 @@ class HomeScreen extends GetView<MainController> {
                 );
               }
             }),
+            Obx(() => WebsiteStandingsSection(standings: homeController.websiteStandings.value)),
             SizedBox(
               height: 40.h,
             ),
@@ -288,6 +302,7 @@ class HomeScreen extends GetView<MainController> {
                 ),
               ],
             ),
+            if (AppEnvironment.usesProductionServices) ...[
             SizedBox(
               height: 39.h,
             ),
@@ -308,6 +323,7 @@ class HomeScreen extends GetView<MainController> {
             SizedBox(
               height: 16.h,
             ),
+            ],
             DefaultHeaderTitleView(
               LocaleKeys.featured_topics.tr,
               LocaleKeys.featured_topics_en.tr,
@@ -384,7 +400,15 @@ class HomeScreen extends GetView<MainController> {
             ),
             DefaultHeaderTitleView(LocaleKeys.promotion_video.tr,
                 LocaleKeys.promotion_video_en.tr),
-            const VideoThumbnailView(),
+            Obx(() => VideoThumbnailView(
+              videos: homeController.websiteVideos.toList(),
+            )),
+            Obx(() => WebsitePlayersSection(
+              data: homeController.websitePlayers.value,
+            )),
+            Obx(() => WebsiteGoodsSection(
+              goods: homeController.websiteGoods.toList(),
+            )),
             SizedBox(
               height: 27.h,
             ),

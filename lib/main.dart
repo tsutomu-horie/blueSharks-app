@@ -8,6 +8,7 @@ import 'package:koto_blue_sharks/app/data/models/media/media.dart';
 import 'package:koto_blue_sharks/app/data/models/member/member.dart';
 import 'package:koto_blue_sharks/app/services/analytics_service.dart';
 import 'package:koto_blue_sharks/utils/fcm_helper.dart';
+import 'package:koto_blue_sharks/utils/app_environment.dart';
 import 'package:koto_blue_sharks/utils/my_shared_pref.dart';
 
 import 'generated/locales.g.dart';
@@ -16,6 +17,7 @@ import 'infrastructure/navigation/routes.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
 Future<void> main() async {
+  AppEnvironment.validate();
   var initialRoute = await Routes.initialRoute;
 
   // Initialize Hive

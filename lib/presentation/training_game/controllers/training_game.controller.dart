@@ -5,6 +5,7 @@ import 'dart:math';
 import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
 import 'package:koto_blue_sharks/app/providers/training_game/training_game_provider.dart';
+import 'package:koto_blue_sharks/app/services/auth_token.dart';
 import 'package:koto_blue_sharks/app/services/server_time_clock.dart';
 import 'package:koto_blue_sharks/utils/my_shared_pref.dart';
 
@@ -12,9 +13,92 @@ import '../mini_games/models/mini_game_result.dart';
 import '../models/training_action_gate.dart';
 import '../models/training_game_models.dart';
 
+enum TrainingSyncStatus {
+  idle,
+  syncing,
+  rateLimited,
+  stopped,
+  queueFull,
+  outcomeUnknown,
+  rejected,
+  sessionChanged,
+}
+
+class _PendingTrainingAction {
+  _PendingTrainingAction({
+    required this.type,
+    required this.result,
+    required this.revision,
+    required this.idempotencyKey,
+    required this.sessionVersion,
+    required this.playerId,
+    required this.cycleNo,
+    required this.gameStartedAt,
+    required this.debugBypassCooldown,
+  });
+
+  final TrainingActionType type;
+  final MiniGameResult? result;
+  final int revision;
+  final String idempotencyKey;
+  final int sessionVersion;
+  final int? playerId;
+  final int? cycleNo;
+  final DateTime? gameStartedAt;
+  final bool debugBypassCooldown;
+  DateTime? retryNotBefore;
+  bool mayHaveBeenApplied = false;
+  bool requiresGameInstanceCheck = false;
+
+  Map<String, dynamic> toJson() => {
+        'action_code': TrainingGameController._actionCode(type),
+        'revision': revision,
+        'idempotency_key': idempotencyKey,
+        'player_id': playerId,
+        'cycle_no': cycleNo,
+        'game_started_at': gameStartedAt?.toUtc().toIso8601String(),
+        'debug_bypass_cooldown': debugBypassCooldown,
+        'may_have_been_applied': mayHaveBeenApplied,
+        'requires_game_instance_check': requiresGameInstanceCheck,
+        'retry_not_before': retryNotBefore?.toIso8601String(),
+        if (result != null)
+          'result': {
+            'type': result!.type.name,
+            'summary': result!.summary,
+            'score': result!.score,
+            'effect_multiplier': result!.effectMultiplier,
+            'result_code': result!.resultCode,
+          },
+      };
+}
+
+enum _CorruptJournalRecoveryResult {
+  completed,
+  journalChanged,
+  archiveFailed,
+  markerFailed,
+  clearFailed,
+  sessionChanged,
+}
+
 /// 育成ゲームの進行状態と行動結果を管理します。
 class TrainingGameController extends GetxController
     with WidgetsBindingObserver {
+  static Future<void> _pendingActionPersistence = Future<void>.value();
+  static final Map<String, Object> _pendingActionClaims = {};
+  static final Map<String, Object> _pendingGameQueueClaims = {};
+  static const maxQueuedSyncActions = 8;
+  static const maxAutomatic429Retries = 2;
+  static const maxAutomatic429Wait = Duration(seconds: 65);
+
+  static Future<T> _serializePendingActionPersistence<T>(
+    Future<T> Function() operation,
+  ) {
+    final write = _pendingActionPersistence.then<T>((_) => operation());
+    _pendingActionPersistence = write.then<void>((_) {}, onError: (_, __) {});
+    return write;
+  }
+
   /// 回数上限を設けず、連打だけを抑制するための暫定クールタイムです。
   /// 仕様では秒数が調整項目のため、正式値確定時にここだけ変更します。
   static const careCooldown = Duration(seconds: 60);
@@ -25,9 +109,8 @@ class TrainingGameController extends GetxController
 
   /// 1.5〜3秒の範囲から画面遷移用のロード時間を生成します。
   static Duration randomTransitionLoadingDuration() {
-    final range = transitionLoadingMaxMilliseconds -
-        transitionLoadingMinMilliseconds +
-        1;
+    final range =
+        transitionLoadingMaxMilliseconds - transitionLoadingMinMilliseconds + 1;
     return Duration(
       milliseconds: transitionLoadingMinMilliseconds + Random().nextInt(range),
     );
@@ -174,6 +257,8 @@ class TrainingGameController extends GetxController
   final timeSpeed = 1.obs;
   final isServerStateReady = false.obs;
   final isReturningHome = false.obs;
+  final syncStatus = TrainingSyncStatus.idle.obs;
+  final syncStatusMessage = ''.obs;
   final serverErrorMessage = ''.obs;
   final workAvailabilityError = ''.obs;
   // 仕事の実施可否は端末時計ではなく、APIが返すサーバー判定だけを使用します。
@@ -201,19 +286,55 @@ class TrainingGameController extends GetxController
   bool _isAppInBackground = false;
   Future<void> _syncChain = Future<void>.value();
   Future<void> _restoreChain = Future<void>.value();
-  final _queuedActions = <({TrainingActionType type, MiniGameResult? result})>[];
+  final _queuedActions = <_PendingTrainingAction>[];
+  _PendingTrainingAction? _activeSyncAction;
+  final Object _pendingActionClaimOwner = Object();
+  String? _pendingGameQueueClaimKey;
+  final Set<String> _claimedPendingActionKeys = {};
+  final Future<bool> Function(String) _writePendingActions;
+  final Future<bool> Function() _clearPendingActions;
+  final Future<bool> Function(String) _archivePendingActions;
+  bool _hasCorruptPendingActionQueue = false;
+  String? _corruptPendingActionRaw;
+  bool _hasForeignPendingAction = false;
+  bool _corruptPendingActionsNeedServerRefresh = false;
+  bool _pendingJournalRecoveryAwaitingAck = false;
+  bool _isAcknowledgingSyncNotice = false;
   bool _syncRequested = false;
   bool _syncRunning = false;
+  bool _syncActionInFlight = false;
+  DateTime? _syncRetryNotBefore;
+  bool _syncRequestMayHaveBeenApplied = false;
   Future<void>? _debugTimeSync;
   bool _syncBlockedUntilServerRestore = false;
   bool _hasUnsyncedLocalState = false;
-  bool _skipFinalSync = false;
   int _localStateRevision = 0;
   bool _isDisposed = false;
-  bool _finalSyncCompleted = false;
-  final TrainingGameProvider _serverProvider = TrainingGameProvider();
+  bool _sessionInvalidated = false;
+  bool _hasUnknownSyncOutcome = false;
+  late final int _ownedSessionVersion;
+  Timer? _retryWaitTimer;
+  Completer<bool>? _retryWaitCompleter;
+  final TrainingGameProvider _serverProvider;
+
+  TrainingGameController({
+    TrainingGameProvider? serverProvider,
+    Future<bool> Function(String)? writePendingActions,
+    Future<bool> Function()? clearPendingActions,
+    Future<bool> Function(String)? archivePendingActions,
+  })  : _serverProvider = serverProvider ?? TrainingGameProvider(),
+        _writePendingActions =
+            writePendingActions ?? MySharedPref.setTrainingGamePendingActions,
+        _clearPendingActions =
+            clearPendingActions ?? MySharedPref.clearTrainingGamePendingActions,
+        _archivePendingActions = archivePendingActions ??
+            MySharedPref.archiveTrainingGamePendingActions {
+    _ownedSessionVersion = AuthToken.sessionVersion;
+    AuthToken.addSessionChangeListener(_handleAuthSessionChanged);
+  }
   int? _serverPlayerId;
   int? _serverCycleNo;
+  DateTime? _serverGameStartedAt;
   int _serverLockVersion = 0;
   double? _serverRequiredWorkValue;
   int? _serverRequiredElapsedHours;
@@ -230,26 +351,1042 @@ class TrainingGameController extends GetxController
   /// 仕事の可否照会または専用画面への遷移中かを返します。
   bool get isWorkPreparationPending => _isWorkPreparationPending;
 
+  int get pendingSyncActionCount =>
+      _queuedActions.length + (_syncActionInFlight ? 1 : 0);
+
+  bool get canRetryPendingSync =>
+      !_isDisposed &&
+      !_sessionInvalidated &&
+      AuthToken.sessionVersion == _ownedSessionVersion &&
+      (syncStatus.value != TrainingSyncStatus.outcomeUnknown ||
+          isServerStateReady.value ||
+          _hasCorruptPendingActionQueue ||
+          _corruptPendingActionsNeedServerRefresh ||
+          _hasForeignPendingAction) &&
+      !_syncRunning &&
+      (_queuedActions.isNotEmpty ||
+          _syncRequested ||
+          _hasForeignPendingAction ||
+          _hasCorruptPendingActionQueue ||
+          _corruptPendingActionsNeedServerRefresh) &&
+      (syncStatus.value == TrainingSyncStatus.stopped ||
+          syncStatus.value == TrainingSyncStatus.outcomeUnknown);
+
+  bool get canDiscardPendingSync =>
+      !_isDisposed &&
+      !_sessionInvalidated &&
+      AuthToken.sessionVersion == _ownedSessionVersion &&
+      (!_syncRunning || _retryWaitTimer != null) &&
+      !_hasUnknownSyncOutcome &&
+      (_queuedActions.isNotEmpty || _syncRequested);
+
+  bool _ownsSession(int expectedVersion) =>
+      !_isDisposed &&
+      !_sessionInvalidated &&
+      expectedVersion == _ownedSessionVersion &&
+      AuthToken.sessionVersion == expectedVersion;
+
+  Future<void> _handleAuthSessionChanged(int sessionVersion) async {
+    if (_isDisposed || sessionVersion == _ownedSessionVersion) return;
+    final hadUnknownOutcome = _hasUnknownSyncOutcome;
+    _sessionInvalidated = true;
+    _cancelRetryWait();
+    _queuedActions.clear();
+    _releaseAllPendingActionClaims();
+    _releasePendingGameQueueClaim();
+    _hasForeignPendingAction = false;
+    _syncRequested = false;
+    _syncRequestMayHaveBeenApplied = false;
+    _syncBlockedUntilServerRestore = true;
+    _hasUnsyncedLocalState = false;
+    _hasUnknownSyncOutcome = false;
+    _syncActionInFlight = false;
+    _isWorkSyncPending = false;
+    _isWorkPreparationPending = false;
+    _actionGate.clear();
+    isServerStateReady.value = false;
+    final message = hadUnknownOutcome
+        ? 'ログイン状態が変わったため、結果不明の操作を破棄しました。前回操作は前のアカウントへ反映された可能性があります。'
+        : 'ログイン状態が変わったため、未送信操作を破棄しました。通信中だった操作は前のアカウントへ反映された可能性があります。';
+    syncStatus.value = TrainingSyncStatus.sessionChanged;
+    syncStatusMessage.value = message;
+    serverErrorMessage.value = message;
+    await MySharedPref.clearTrainingGameLocalState();
+    await MySharedPref.clearTrainingGameStartedAt();
+    await MySharedPref.clearTrainingGameDebugElapsedSeconds();
+  }
+
+  Future<bool> _waitForRetry(Duration duration) {
+    final completer = Completer<bool>();
+    _retryWaitCompleter = completer;
+    _retryWaitTimer = Timer(duration, () {
+      if (!completer.isCompleted) completer.complete(true);
+    });
+    return completer.future.whenComplete(() {
+      _retryWaitTimer?.cancel();
+      _retryWaitTimer = null;
+      if (identical(_retryWaitCompleter, completer)) {
+        _retryWaitCompleter = null;
+      }
+    });
+  }
+
+  void _cancelRetryWait() {
+    _retryWaitTimer?.cancel();
+    _retryWaitTimer = null;
+    final completer = _retryWaitCompleter;
+    _retryWaitCompleter = null;
+    if (completer != null && !completer.isCompleted) {
+      completer.complete(false);
+    }
+  }
+
+  bool _matchesPendingActionCycle(Object? value, int playerId, int cycleNo) {
+    if (value is! Map) return false;
+    final storedPlayerId = value['player_id'];
+    final storedCycleNo = value['cycle_no'];
+    return storedPlayerId is num &&
+        storedCycleNo is num &&
+        storedPlayerId.toInt() == playerId &&
+        storedCycleNo.toInt() == cycleNo;
+  }
+
+  DateTime? _gameStartedAtFrom(Object? value) {
+    if (value is DateTime) return value.toUtc();
+    if (value is! String) return null;
+    return DateTime.tryParse(value)?.toUtc();
+  }
+
+  String _currentPendingActionRecoveryMarker() => jsonEncode({
+        'player_id': _serverPlayerId,
+        'cycle_no': _serverCycleNo,
+        'game_started_at': _serverGameStartedAt?.toUtc().toIso8601String(),
+      });
+
+  bool _hasPendingActionRecoveryMarkerForCurrentGame() {
+    final raw = MySharedPref.getTrainingGamePendingActionsRecovery();
+    if (raw == null) return false;
+    try {
+      final decoded = jsonDecode(raw);
+      if (decoded is! Map) return true;
+      final playerId = decoded['player_id'];
+      final cycleNo = decoded['cycle_no'];
+      final startedAt = _gameStartedAtFrom(decoded['game_started_at']);
+      if (playerId is! num || cycleNo is! num || startedAt == null) {
+        return true;
+      }
+      return playerId.toInt() == _serverPlayerId &&
+          cycleNo.toInt() == _serverCycleNo &&
+          _sameGameInstance(startedAt, _serverGameStartedAt);
+    } catch (_) {
+      // 読めない停止マーカーは、安全側に倒して解除しません。
+      return true;
+    }
+  }
+
+  bool _sameGameInstance(DateTime? first, DateTime? second) =>
+      first != null && second != null && first.isAtSameMomentAs(second);
+
+  String? get _currentPendingGameQueueKey {
+    final playerId = _serverPlayerId;
+    final cycleNo = _serverCycleNo;
+    if (playerId == null || cycleNo == null) return null;
+    final startedAt = _serverGameStartedAt?.toUtc().toIso8601String() ?? '';
+    return '$playerId:$cycleNo:$startedAt';
+  }
+
+  bool _pendingGameQueueIsClaimedByAnotherController() {
+    final key = _currentPendingGameQueueKey;
+    final owner = key == null ? null : _pendingGameQueueClaims[key];
+    return owner != null && !identical(owner, _pendingActionClaimOwner);
+  }
+
+  bool _claimPendingGameQueue() {
+    final key = _currentPendingGameQueueKey;
+    if (key == null) return false;
+    final owner = _pendingGameQueueClaims[key];
+    if (owner != null && !identical(owner, _pendingActionClaimOwner)) {
+      _hasForeignPendingAction = true;
+      return false;
+    }
+    _pendingGameQueueClaims[key] = _pendingActionClaimOwner;
+    _pendingGameQueueClaimKey = key;
+    _hasForeignPendingAction = false;
+    return true;
+  }
+
+  void _releasePendingGameQueueClaim() {
+    final key = _pendingGameQueueClaimKey;
+    if (key != null &&
+        identical(_pendingGameQueueClaims[key], _pendingActionClaimOwner)) {
+      _pendingGameQueueClaims.remove(key);
+    }
+    _pendingGameQueueClaimKey = null;
+  }
+
+  bool _claimPendingAction(String key) {
+    final owner = _pendingActionClaims[key];
+    if (owner != null && !identical(owner, _pendingActionClaimOwner)) {
+      return false;
+    }
+    _pendingActionClaims[key] = _pendingActionClaimOwner;
+    _claimedPendingActionKeys.add(key);
+    return true;
+  }
+
+  bool _ownsPendingActionClaim(String key) =>
+      identical(_pendingActionClaims[key], _pendingActionClaimOwner);
+
+  void _releasePendingActionClaim(String key) {
+    if (identical(
+      _pendingActionClaims[key],
+      _pendingActionClaimOwner,
+    )) {
+      _pendingActionClaims.remove(key);
+    }
+    _claimedPendingActionKeys.remove(key);
+  }
+
+  void _releaseAllPendingActionClaims() {
+    for (final key in _claimedPendingActionKeys.toList()) {
+      _releasePendingActionClaim(key);
+    }
+  }
+
+  bool _hasPersistedPendingActionsFor(Map<String, dynamic> player) {
+    final raw = MySharedPref.getTrainingGamePendingActions();
+    if (raw == null) return false;
+    try {
+      final decoded = jsonDecode(raw);
+      if (decoded is! List) return true;
+      final playerId = (player['id'] as num?)?.toInt();
+      final cycleNo = (player['cycle_no'] as num?)?.toInt();
+      if (playerId == null || cycleNo == null) return true;
+      for (final entry in decoded) {
+        if (entry is! Map) return true;
+        final storedPlayerId = entry['player_id'];
+        final storedCycleNo = entry['cycle_no'];
+        if (storedPlayerId is! num || storedCycleNo is! num) return true;
+        if (storedPlayerId.toInt() == playerId &&
+            storedCycleNo.toInt() == cycleNo) {
+          return true;
+        }
+      }
+      return false;
+    } catch (_) {
+      // 壊れたキューは未送信と断定せず、ローカル状態で上書きしません。
+      return true;
+    }
+  }
+
+  _PendingTrainingAction? _pendingActionFromJson(Object? value) {
+    if (value is! Map) return null;
+    final actionCode = value['action_code']?.toString();
+    final type = actionCode == null ? null : _actionTypeFromCode(actionCode);
+    final key = value['idempotency_key']?.toString();
+    final playerId = (value['player_id'] as num?)?.toInt();
+    final cycleNo = (value['cycle_no'] as num?)?.toInt();
+    final revision = (value['revision'] as num?)?.toInt();
+    final mayHaveBeenApplied = value['may_have_been_applied'];
+    final gameStartedAt = _gameStartedAtFrom(value['game_started_at']);
+    final requiresGameInstanceCheck =
+        value['requires_game_instance_check'] == true ||
+            mayHaveBeenApplied == true;
+    if (type == null ||
+        key == null ||
+        key.isEmpty ||
+        playerId == null ||
+        cycleNo == null ||
+        revision == null ||
+        mayHaveBeenApplied is! bool ||
+        gameStartedAt == null) {
+      return null;
+    }
+
+    MiniGameResult? result;
+    final rawResult = value['result'];
+    if (rawResult != null) {
+      if (rawResult is! Map) return null;
+      final resultTypeName = rawResult['type']?.toString();
+      final resultType = MiniGameType.values.where(
+        (candidate) => candidate.name == resultTypeName,
+      );
+      final score = (rawResult['score'] as num?)?.toDouble();
+      final multiplier = (rawResult['effect_multiplier'] as num?)?.toDouble();
+      final summary = rawResult['summary']?.toString();
+      if (resultType.isEmpty ||
+          score == null ||
+          multiplier == null ||
+          summary == null) {
+        return null;
+      }
+      result = MiniGameResult(
+        type: resultType.first,
+        summary: summary,
+        score: score,
+        effectMultiplier: multiplier,
+        resultCode: rawResult['result_code']?.toString(),
+      );
+    }
+
+    final pending = _PendingTrainingAction(
+      type: type,
+      result: result,
+      revision: revision,
+      idempotencyKey: key,
+      sessionVersion: _ownedSessionVersion,
+      playerId: playerId,
+      cycleNo: cycleNo,
+      gameStartedAt: gameStartedAt,
+      debugBypassCooldown: value['debug_bypass_cooldown'] == true,
+    )
+      ..mayHaveBeenApplied = mayHaveBeenApplied
+      ..requiresGameInstanceCheck = requiresGameInstanceCheck;
+    final retryNotBefore = value['retry_not_before']?.toString();
+    if (retryNotBefore != null) {
+      pending.retryNotBefore = DateTime.tryParse(retryNotBefore);
+      if (pending.retryNotBefore == null) return null;
+    }
+    return pending;
+  }
+
+  Future<void> _restorePersistedPendingActions() async {
+    final raw = MySharedPref.getTrainingGamePendingActions();
+    final playerId = _serverPlayerId;
+    final cycleNo = _serverCycleNo;
+    _hasForeignPendingAction = _pendingGameQueueIsClaimedByAnotherController();
+    if (_hasPendingActionRecoveryMarkerForCurrentGame()) {
+      _pendingJournalRecoveryAwaitingAck = true;
+      _corruptPendingActionsNeedServerRefresh = true;
+      _hasUnknownSyncOutcome = true;
+      _hasUnsyncedLocalState = true;
+      if (raw != null) {
+        _corruptPendingActionRaw = raw;
+        try {
+          final decoded = jsonDecode(raw);
+          if (decoded is! List) {
+            throw const FormatException('Pending queue is not a list');
+          }
+        } catch (_) {
+          _hasCorruptPendingActionQueue = true;
+        }
+      }
+      if (!_hasForeignPendingAction && !_claimPendingGameQueue()) {
+        _hasForeignPendingAction = true;
+      }
+      syncStatus.value = TrainingSyncStatus.outcomeUnknown;
+      syncStatusMessage.value =
+          '以前の破損した操作記録は未確定のまま保全されています。サーバー状態の再確認後、確認して続けてください。';
+      return;
+    }
+    if (raw == null || playerId == null || cycleNo == null) {
+      if (_hasForeignPendingAction) {
+        _hasUnsyncedLocalState = true;
+        syncStatus.value = TrainingSyncStatus.stopped;
+        syncStatusMessage.value =
+            '別の画面で同じ育成の操作を処理中です。順序を守るため、この画面の操作を止めています。処理終了後に再試行してください。';
+      }
+      return;
+    }
+    try {
+      final decoded = jsonDecode(raw);
+      if (decoded is! List)
+        throw const FormatException('Pending queue is not a list');
+      final restored = <_PendingTrainingAction>[];
+      var foundStaleGeneration = false;
+      for (final entry in decoded) {
+        if (entry is! Map)
+          throw const FormatException('Invalid pending action');
+        final storedPlayerId = entry['player_id'];
+        final storedCycleNo = entry['cycle_no'];
+        if (storedPlayerId is! num || storedCycleNo is! num) {
+          throw const FormatException('Pending action identity is missing');
+        }
+        if (storedPlayerId.toInt() != playerId ||
+            storedCycleNo.toInt() != cycleNo) {
+          continue;
+        }
+        if (entry['quarantined'] == true) continue;
+        final storedStartedAt = _gameStartedAtFrom(entry['game_started_at']);
+        if (!_sameGameInstance(storedStartedAt, _serverGameStartedAt)) {
+          foundStaleGeneration = true;
+          final staleKey = entry['idempotency_key']?.toString();
+          if (staleKey != null) _releasePendingActionClaim(staleKey);
+          continue;
+        }
+        final pending = _pendingActionFromJson(entry);
+        if (pending == null)
+          throw const FormatException('Invalid pending action');
+        if (!_claimPendingAction(pending.idempotencyKey)) {
+          _hasForeignPendingAction = true;
+          continue;
+        }
+        if (!_claimPendingGameQueue()) {
+          _releasePendingActionClaim(pending.idempotencyKey);
+          _hasForeignPendingAction = true;
+          continue;
+        }
+        if (restored.every(
+          (existing) => existing.idempotencyKey != pending.idempotencyKey,
+        )) {
+          restored.add(pending);
+        }
+      }
+      final staleInMemory = _queuedActions
+          .where((action) => !_pendingActionMatchesCurrentGame(action))
+          .toList();
+      if (staleInMemory.isNotEmpty) {
+        foundStaleGeneration = true;
+        _queuedActions.removeWhere(
+          (action) => !_pendingActionMatchesCurrentGame(action),
+        );
+        for (final action in staleInMemory) {
+          _releasePendingActionClaim(action.idempotencyKey);
+        }
+      }
+      for (final action in restored) {
+        if (_queuedActions.every(
+          (existing) => existing.idempotencyKey != action.idempotencyKey,
+        )) {
+          _queuedActions.add(action);
+        }
+      }
+      if (foundStaleGeneration) {
+        try {
+          await _persistPendingActions(quarantineActions: staleInMemory);
+        } catch (_) {
+          // A mismatched generation remains blocked by its saved start time on the next restore.
+        }
+      }
+      if (_queuedActions.isEmpty) {
+        if (_hasForeignPendingAction) {
+          _syncRequested = false;
+          _hasUnsyncedLocalState = true;
+          syncStatus.value = TrainingSyncStatus.stopped;
+          syncStatusMessage.value =
+              '別の画面で同じ育成の保留操作を処理中です。順序を守るため、この画面の操作を止めています。処理終了後に再試行してください。';
+          return;
+        }
+        if (foundStaleGeneration) {
+          _syncRequested = false;
+          _syncRequestMayHaveBeenApplied = false;
+          _hasUnsyncedLocalState = false;
+          _hasUnknownSyncOutcome = false;
+          syncStatus.value = TrainingSyncStatus.idle;
+          syncStatusMessage.value = '初期化前の保留操作を隔離しました。新しい状態には再送しません。';
+        }
+        return;
+      }
+      _localStateRevision = _queuedActions.fold<int>(
+        _localStateRevision,
+        (revision, action) =>
+            action.revision > revision ? action.revision : revision,
+      );
+      _hasUnsyncedLocalState = true;
+      _hasUnknownSyncOutcome =
+          _queuedActions.any((action) => action.mayHaveBeenApplied);
+      syncStatus.value = _hasUnknownSyncOutcome
+          ? TrainingSyncStatus.outcomeUnknown
+          : TrainingSyncStatus.stopped;
+      syncStatusMessage.value = _hasUnknownSyncOutcome
+          ? '前回の操作結果が未確定です。サーバー状態を再取得済みです。同じ操作IDで再確認してください。'
+          : '未送信の保留操作を復元しました。同じ操作IDで再試行するか、破棄してください。';
+    } catch (_) {
+      _hasCorruptPendingActionQueue = true;
+      _corruptPendingActionRaw = raw;
+      _hasUnknownSyncOutcome = true;
+      syncStatus.value = TrainingSyncStatus.outcomeUnknown;
+      syncStatusMessage.value =
+          '端末に保存した操作記録を読み取れません。操作は未送信と断定できないため、新しい操作を停止しています。';
+      serverErrorMessage.value = syncStatusMessage.value;
+    }
+  }
+
+  Future<void> _persistPendingActions({
+    List<_PendingTrainingAction> quarantineActions = const [],
+    List<_PendingTrainingAction>? snapshotActions,
+    bool releaseGameClaimAfterWrite = false,
+  }) {
+    final playerId = _serverPlayerId;
+    final cycleNo = _serverCycleNo;
+    if (playerId == null || cycleNo == null) return Future<void>.value();
+    return _serializePendingActionPersistence(() async {
+      if (_hasCorruptPendingActionQueue) {
+        throw StateError('保存済みの保留操作キューを上書きできません。');
+      }
+      final raw = MySharedPref.getTrainingGamePendingActions();
+      var saved = <dynamic>[];
+      if (raw != null) {
+        final decoded = jsonDecode(raw);
+        if (decoded is! List) {
+          throw const FormatException('Pending queue is not a list');
+        }
+        saved = decoded;
+      }
+      final retainedEntries = <dynamic>[];
+      final quarantinedKeys = <String>{};
+      for (final entry in saved) {
+        if (entry is Map && entry['quarantined'] == true) {
+          retainedEntries.add(entry);
+          final key = entry['idempotency_key']?.toString();
+          if (key != null) quarantinedKeys.add(key);
+          continue;
+        }
+        final key = entry is Map ? entry['idempotency_key']?.toString() : null;
+        final ownedByThisController =
+            key != null && _claimedPendingActionKeys.contains(key);
+        if (_matchesPendingActionCycle(entry, playerId, cycleNo) &&
+            !_recordMatchesCurrentGame(entry)) {
+          if (entry is Map) {
+            retainedEntries.add(_quarantinePendingActionEntry(
+              entry,
+              'game_instance_changed',
+            ));
+            if (key != null) quarantinedKeys.add(key);
+          } else {
+            retainedEntries.add(entry);
+          }
+          continue;
+        }
+        if (ownedByThisController &&
+            entry is Map &&
+            !_matchesPendingActionCycle(entry, playerId, cycleNo)) {
+          retainedEntries.add(_quarantinePendingActionEntry(
+            entry,
+            'game_identity_changed',
+          ));
+          quarantinedKeys.add(key);
+          continue;
+        }
+        if (ownedByThisController) continue;
+        retainedEntries.add(entry);
+      }
+      final currentActions = <_PendingTrainingAction>[];
+      final seenKeys = <String>{};
+      void addCurrent(_PendingTrainingAction? action) {
+        if (action == null ||
+            action.playerId != playerId ||
+            action.cycleNo != cycleNo ||
+            !_pendingActionMatchesCurrentGame(action) ||
+            !seenKeys.add(action.idempotencyKey)) {
+          return;
+        }
+        if (!_claimPendingAction(action.idempotencyKey)) return;
+        currentActions.add(action);
+      }
+
+      if (snapshotActions != null) {
+        for (final action in snapshotActions) {
+          addCurrent(action);
+        }
+      } else {
+        addCurrent(_activeSyncAction);
+        for (final action in _queuedActions) {
+          addCurrent(action);
+        }
+      }
+      for (final action in quarantineActions) {
+        if (action.idempotencyKey.isEmpty ||
+            !quarantinedKeys.add(action.idempotencyKey)) {
+          continue;
+        }
+        retainedEntries.add({
+          ...action.toJson(),
+          'quarantined': true,
+          'quarantine_reason': 'game_identity_changed',
+        });
+      }
+      final updated = [
+        ...retainedEntries,
+        ...currentActions.map((action) => action.toJson()),
+      ];
+      if (updated.isEmpty) {
+        if (raw != null && !await _clearPendingActions()) {
+          throw StateError('保留操作を端末から削除できませんでした。');
+        }
+      } else if (!await _writePendingActions(
+        jsonEncode(updated),
+      )) {
+        throw StateError('保留操作を端末へ保存できませんでした。');
+      }
+      final currentKeys =
+          currentActions.map((action) => action.idempotencyKey).toSet();
+      if (_isDisposed) {
+        _releaseAllPendingActionClaims();
+        if (releaseGameClaimAfterWrite) _releasePendingGameQueueClaim();
+      } else {
+        for (final key in _claimedPendingActionKeys.toList()) {
+          if (!currentKeys.contains(key)) _releasePendingActionClaim(key);
+        }
+        if (currentActions.isEmpty &&
+            _activeSyncAction == null &&
+            _queuedActions.isEmpty) {
+          _releasePendingGameQueueClaim();
+        }
+      }
+    });
+  }
+
+  Map<String, dynamic> _quarantinePendingActionEntry(
+    Map entry,
+    String reason,
+  ) =>
+      {
+        ...Map<String, dynamic>.from(entry),
+        'quarantined': true,
+        'quarantine_reason': reason,
+      };
+
+  bool _recordMatchesCurrentGame(Object? value) {
+    if (value is! Map) return false;
+    final playerId = (value['player_id'] as num?)?.toInt();
+    final cycleNo = (value['cycle_no'] as num?)?.toInt();
+    return playerId == _serverPlayerId &&
+        cycleNo == _serverCycleNo &&
+        _sameGameInstance(
+          _gameStartedAtFrom(value['game_started_at']),
+          _serverGameStartedAt,
+        );
+  }
+
+  bool _pendingActionMatchesCurrentGame(_PendingTrainingAction action) =>
+      action.playerId == _serverPlayerId &&
+      action.cycleNo == _serverCycleNo &&
+      _sameGameInstance(action.gameStartedAt, _serverGameStartedAt);
+
+  void _startSyncDrain() {
+    if (_syncRunning || _isDisposed || !_ownsSession(_ownedSessionVersion)) {
+      return;
+    }
+    _syncRunning = true;
+    _syncChain = _drainSyncQueue().catchError((_) {
+      // 同期処理の失敗状態は、_drainSyncQueue 内で利用者向けに分類します。
+    });
+    TrainingGameProvider.registerPendingSync(_syncChain);
+    unawaited(_syncChain);
+  }
+
+  bool _pendingActionMatchesServerData(
+    _PendingTrainingAction action,
+    Map<String, dynamic> data,
+  ) {
+    final playerId = (data['id'] as num?)?.toInt();
+    final cycleNo = (data['cycle_no'] as num?)?.toInt();
+    final startedAt = _gameStartedAtFrom(data['started_at']);
+    return action.playerId == playerId &&
+        action.cycleNo == cycleNo &&
+        _sameGameInstance(action.gameStartedAt, startedAt);
+  }
+
+  Future<void> _quarantinePendingActions(
+    List<_PendingTrainingAction> actions,
+  ) async {
+    final quarantined = <String, _PendingTrainingAction>{};
+    for (final action in [
+      ...actions,
+      if (_activeSyncAction != null) _activeSyncAction!,
+      ..._queuedActions,
+    ]) {
+      quarantined[action.idempotencyKey] = action;
+    }
+    _queuedActions.clear();
+    _activeSyncAction = null;
+    _syncRequested = false;
+    _syncActionInFlight = false;
+    _syncRequestMayHaveBeenApplied = false;
+    _hasUnsyncedLocalState = false;
+    _hasUnknownSyncOutcome = false;
+    _actionGate.clear();
+    try {
+      await _persistPendingActions(
+        quarantineActions: quarantined.values.toList(),
+      );
+    } catch (_) {
+      // Saved actions still carry their old game timestamp and cannot be restored for sending.
+    }
+    for (final key in quarantined.keys) {
+      _releasePendingActionClaim(key);
+    }
+    syncStatus.value = TrainingSyncStatus.stopped;
+    syncStatusMessage.value = '初期化前の保留操作を隔離しました。新しい状態には再送しません。';
+  }
+
+  bool _isGameLockVersionConflict(Object error) =>
+      error is TrainingGameApiException &&
+      error.statusCode == 409 &&
+      error.message == '育成状態が別端末で更新されています。';
+
+  Future<void> _handleGameLockVersionConflict(
+    TrainingGameApiException error,
+    _PendingTrainingAction? pending,
+  ) async {
+    _activeSyncAction = null;
+    if (pending == null) {
+      _syncRequested = true;
+      _syncRequestMayHaveBeenApplied = true;
+    } else {
+      pending
+        ..mayHaveBeenApplied = true
+        ..requiresGameInstanceCheck = true;
+      _queuedActions.insert(0, pending);
+    }
+    try {
+      await _persistPendingActions();
+    } catch (_) {
+      // The pre-send journal remains; preserve the operation in memory as well.
+    }
+    await _handleSyncFailure(error, preservePending: true);
+    try {
+      final data = await _serverProvider.fetchCurrent(
+        expectedSessionVersion: _ownedSessionVersion,
+      );
+      if (!_ownsSession(_ownedSessionVersion)) return;
+      if (data == null) throw StateError('現在の育成状態を取得できません。');
+      if (pending != null && !_pendingActionMatchesServerData(pending, data)) {
+        _initializeServerState(data, restoreLocalStateOverride: false);
+        await _quarantinePendingActions(_queuedActions.toList());
+        return;
+      }
+      _initializeServerState(data, restoreLocalStateOverride: false);
+      // 明示的な再試行の前にも開始時刻を照合し、409後の初期化を見逃しません。
+      if (pending != null) pending.requiresGameInstanceCheck = true;
+      try {
+        await _persistPendingActions();
+      } catch (_) {
+        // Keep the same idempotency key in the pre-send journal.
+      }
+      syncStatus.value = TrainingSyncStatus.outcomeUnknown;
+      syncStatusMessage.value =
+          '別端末の更新を確認しました。最新状態を取得しました。操作結果は未確定なので、同じ操作IDで再確認してください。';
+    } catch (_) {
+      if (!_ownsSession(_ownedSessionVersion)) return;
+      isServerStateReady.value = false;
+      syncStatus.value = TrainingSyncStatus.outcomeUnknown;
+      syncStatusMessage.value =
+          '別端末の更新がありましたが、最新状態を取得できません。操作は同じIDで保留し、状態確認まで再送しません。';
+      serverErrorMessage.value = syncStatusMessage.value;
+    }
+  }
+
+  Future<bool> _checkGameInstanceBeforeRetry(
+    _PendingTrainingAction pending,
+  ) async {
+    try {
+      final data = await _serverProvider.fetchCurrent(
+        expectedSessionVersion: _ownedSessionVersion,
+      );
+      if (!_ownsSession(_ownedSessionVersion)) return false;
+      if (data == null) throw StateError('現在の育成状態を取得できません。');
+      if (!_pendingActionMatchesServerData(pending, data)) {
+        _initializeServerState(data, restoreLocalStateOverride: false);
+        await _quarantinePendingActions([pending]);
+        return false;
+      }
+      _initializeServerState(data, restoreLocalStateOverride: false);
+      pending.requiresGameInstanceCheck = false;
+      return true;
+    } catch (_) {
+      if (!_ownsSession(_ownedSessionVersion)) return false;
+      pending.requiresGameInstanceCheck = true;
+      _queuedActions.insert(0, pending);
+      _hasUnknownSyncOutcome = pending.mayHaveBeenApplied;
+      syncStatus.value = _hasUnknownSyncOutcome
+          ? TrainingSyncStatus.outcomeUnknown
+          : TrainingSyncStatus.stopped;
+      syncStatusMessage.value = '再送前の育成状態を確認できません。操作は端末に保持し、確認できるまで送信しません。';
+      isServerStateReady.value = false;
+      serverErrorMessage.value = syncStatusMessage.value;
+      try {
+        await _persistPendingActions();
+      } catch (_) {
+        // The previously saved record still requires an instance check.
+      }
+      return false;
+    }
+  }
+
+  Future<void> retryPendingSync() async {
+    if (!canRetryPendingSync) return;
+    if (_hasCorruptPendingActionQueue ||
+        _corruptPendingActionsNeedServerRefresh) {
+      await _recoverCorruptPendingActions();
+      return;
+    }
+    if (_hasForeignPendingAction) {
+      await _restoreServerState();
+      if (!_ownsSession(_ownedSessionVersion)) return;
+      if (_hasCorruptPendingActionQueue ||
+          _corruptPendingActionsNeedServerRefresh) {
+        return;
+      }
+      if (_hasForeignPendingAction) return;
+      if (_queuedActions.isEmpty) {
+        _hasUnsyncedLocalState = false;
+        syncStatus.value = TrainingSyncStatus.idle;
+        syncStatusMessage.value = '';
+        return;
+      }
+    }
+    final resolvingUnknownOutcome = _hasUnknownSyncOutcome;
+    final retryNotBefore = _queuedActions.isNotEmpty
+        ? _queuedActions.first.retryNotBefore
+        : _syncRetryNotBefore;
+    if (retryNotBefore != null && retryNotBefore.isAfter(DateTime.now())) {
+      final seconds = retryNotBefore.difference(DateTime.now()).inSeconds + 1;
+      syncStatusMessage.value = _hasUnknownSyncOutcome
+          ? '先行操作の通信結果は不明です。今回の429による再試行待ちです。あと約$seconds秒後に同じ操作IDで再確認できます。'
+          : 'サーバー指定の待機中です。あと約$seconds秒後に再試行できます。操作は未送信のまま保留しています。';
+      return;
+    }
+    if (_queuedActions.isNotEmpty) _queuedActions.first.retryNotBefore = null;
+    _syncRetryNotBefore = null;
+    syncStatus.value = TrainingSyncStatus.syncing;
+    syncStatusMessage.value = resolvingUnknownOutcome
+        ? '前回と同じ操作IDで再確認しています。サーバー状態と応答を確認します。'
+        : '保留中の操作を再試行しています。';
+    if (_queuedActions.isEmpty) _syncRequested = true;
+    _startSyncDrain();
+    if (_syncRunning) await _syncChain;
+  }
+
+  Future<void> _recoverCorruptPendingActions() async {
+    if (!_claimPendingGameQueue()) {
+      _hasForeignPendingAction = true;
+      syncStatus.value = TrainingSyncStatus.stopped;
+      syncStatusMessage.value = '別の画面で同じ育成の操作を処理中です。破損記録には触れず、処理終了後に再確認してください。';
+      return;
+    }
+    if (_hasCorruptPendingActionQueue) {
+      final raw = _corruptPendingActionRaw ??
+          MySharedPref.getTrainingGamePendingActions();
+      if (raw != null) {
+        final result = await _serializePendingActionPersistence(() async {
+          if (!_ownsSession(_ownedSessionVersion)) {
+            return _CorruptJournalRecoveryResult.sessionChanged;
+          }
+          bool archived;
+          try {
+            archived = await _archivePendingActions(raw);
+          } catch (_) {
+            archived = false;
+          }
+          if (!_ownsSession(_ownedSessionVersion)) {
+            return _CorruptJournalRecoveryResult.sessionChanged;
+          }
+          if (!archived) return _CorruptJournalRecoveryResult.archiveFailed;
+
+          final markerSaved =
+              await MySharedPref.setTrainingGamePendingActionsRecovery(
+            _currentPendingActionRecoveryMarker(),
+          );
+          if (!markerSaved) return _CorruptJournalRecoveryResult.markerFailed;
+          _pendingJournalRecoveryAwaitingAck = true;
+
+          if (!_ownsSession(_ownedSessionVersion)) {
+            return _CorruptJournalRecoveryResult.sessionChanged;
+          }
+          if (MySharedPref.getTrainingGamePendingActions() != raw) {
+            return _CorruptJournalRecoveryResult.journalChanged;
+          }
+          if (!await _clearPendingActions()) {
+            return _CorruptJournalRecoveryResult.clearFailed;
+          }
+          return _CorruptJournalRecoveryResult.completed;
+        });
+        if (!_ownsSession(_ownedSessionVersion)) return;
+        if (result == _CorruptJournalRecoveryResult.archiveFailed) {
+          syncStatus.value = TrainingSyncStatus.outcomeUnknown;
+          syncStatusMessage.value = '破損した操作記録を保全できません。原文は残したまま再送を停止しています。';
+          return;
+        }
+        if (result == _CorruptJournalRecoveryResult.markerFailed) {
+          syncStatus.value = TrainingSyncStatus.outcomeUnknown;
+          syncStatusMessage.value =
+              '破損記録の原文は保全しましたが、確認状態を端末に保存できません。元の記録を残して再送を停止しています。';
+          return;
+        }
+        if (result == _CorruptJournalRecoveryResult.clearFailed) {
+          syncStatus.value = TrainingSyncStatus.outcomeUnknown;
+          syncStatusMessage.value =
+              '破損記録の原文と確認状態を保全しましたが、元の記録を退避できません。再送は停止しています。';
+          return;
+        }
+        if (result == _CorruptJournalRecoveryResult.sessionChanged) return;
+        if (result == _CorruptJournalRecoveryResult.completed ||
+            result == _CorruptJournalRecoveryResult.journalChanged) {
+          _hasCorruptPendingActionQueue = false;
+          _corruptPendingActionRaw = null;
+          _corruptPendingActionsNeedServerRefresh = true;
+        }
+      }
+    }
+
+    _hasUnknownSyncOutcome = true;
+    _syncBlockedUntilServerRestore = true;
+    isServerStateReady.value = false;
+    syncStatus.value = TrainingSyncStatus.outcomeUnknown;
+    syncStatusMessage.value =
+        '破損した操作記録を退避しました。以前の操作の適用有無は未確定です。再送せず、サーバー状態を確認します。';
+    await _restoreServerState();
+    if (!_ownsSession(_ownedSessionVersion)) return;
+    if (!isServerStateReady.value) {
+      _corruptPendingActionsNeedServerRefresh = true;
+      syncStatus.value = TrainingSyncStatus.outcomeUnknown;
+      syncStatusMessage.value =
+          '破損した操作記録は保全済みですが、サーバー状態を確認できません。通信復旧後に再確認してください。';
+      return;
+    }
+
+    _corruptPendingActionsNeedServerRefresh = false;
+    _hasUnknownSyncOutcome = true;
+    // 既存UIの確認ボタンで、未確定結果を理解したうえで続行する意思を確認します。
+    syncStatus.value = TrainingSyncStatus.rejected;
+    syncStatusMessage.value =
+        '破損した操作記録の原文を保全し、サーバー状態を再取得しました。以前の操作の適用有無は未確定で、自動再送していません。状態を確認して続けてください。';
+  }
+
+  Future<void> discardPendingSync() async {
+    if (!canDiscardPendingSync) return;
+    final discardedUnknownOutcome = _hasUnknownSyncOutcome;
+    final discardedActions = List<_PendingTrainingAction>.of(_queuedActions);
+    _cancelRetryWait();
+    _queuedActions.clear();
+    _syncRequested = false;
+    _syncRetryNotBefore = null;
+    _syncRequestMayHaveBeenApplied = false;
+    _actionGate.clear();
+    _hasUnsyncedLocalState = false;
+    try {
+      await _persistPendingActions();
+    } catch (_) {
+      _queuedActions.insertAll(0, discardedActions);
+      _hasUnsyncedLocalState = true;
+      syncStatus.value = TrainingSyncStatus.stopped;
+      syncStatusMessage.value = '保留操作を端末から削除できなかったため、再送待ちのまま保持しています。';
+      return;
+    }
+    await MySharedPref.clearTrainingGameLocalState();
+    if (!_ownsSession(_ownedSessionVersion)) return;
+    try {
+      final current = await _serverProvider.fetchCurrent(
+        expectedSessionVersion: _ownedSessionVersion,
+      );
+      if (!_ownsSession(_ownedSessionVersion)) return;
+      if (current != null) {
+        _initializeServerState(current, restoreLocalStateOverride: false);
+      }
+      syncStatus.value = discardedUnknownOutcome
+          ? TrainingSyncStatus.outcomeUnknown
+          : TrainingSyncStatus.rejected;
+      syncStatusMessage.value = discardedUnknownOutcome
+          ? '再送待ちを破棄し、サーバー状態を再取得しました。前回操作は反映済みの可能性があり、未送信とは断定できません。'
+          : '未送信の保留操作を破棄し、確認できたサーバー状態へ戻しました。';
+    } catch (_) {
+      _syncBlockedUntilServerRestore = true;
+      isServerStateReady.value = false;
+      serverErrorMessage.value =
+          '保留操作は破棄しましたが、サーバー状態を確認できません。通信復旧後に状態を再取得してください。';
+      syncStatus.value = TrainingSyncStatus.outcomeUnknown;
+      syncStatusMessage.value = discardedUnknownOutcome
+          ? '再送待ちを破棄しましたが、前回操作の成否は不明でサーバー状態も確認できません。通信復旧後に再取得してください。'
+          : serverErrorMessage.value;
+      serverErrorMessage.value = syncStatusMessage.value;
+    }
+  }
+
+  Future<void> acknowledgeSyncNotice() async {
+    if (_isAcknowledgingSyncNotice ||
+        _isDisposed ||
+        !_ownsSession(_ownedSessionVersion)) {
+      return;
+    }
+    if (syncStatus.value == TrainingSyncStatus.rejected ||
+        syncStatus.value == TrainingSyncStatus.outcomeUnknown) {
+      // 不明な操作のキーを捨てると、前回の処理有無を後から照合できません。
+      // サーバー状態を確認し、同じ操作IDで結果を再確認するまで解除しません。
+      if (syncStatus.value == TrainingSyncStatus.outcomeUnknown) return;
+      if (!isServerStateReady.value) return;
+      _isAcknowledgingSyncNotice = true;
+      try {
+        final acknowledgeJournalRecovery = _pendingJournalRecoveryAwaitingAck;
+        if (acknowledgeJournalRecovery) {
+          final cleared =
+              await MySharedPref.clearTrainingGamePendingActionsRecovery();
+          if (!_ownsSession(_ownedSessionVersion)) return;
+          if (!cleared) {
+            syncStatusMessage.value =
+                '確認状態を端末から削除できません。操作を停止したまま、もう一度確認してください。';
+            return;
+          }
+          _pendingJournalRecoveryAwaitingAck = false;
+          _hasUnknownSyncOutcome = true;
+          _syncBlockedUntilServerRestore = true;
+          syncStatus.value = TrainingSyncStatus.outcomeUnknown;
+          syncStatusMessage.value =
+              '保全したjournalを再確認しています。保留操作の読み込みが終わるまで次の操作を停止しています。';
+          await _restoreServerState();
+          if (!_ownsSession(_ownedSessionVersion)) return;
+          if (!isServerStateReady.value) {
+            _corruptPendingActionsNeedServerRefresh = true;
+            _hasUnknownSyncOutcome = true;
+            syncStatus.value = TrainingSyncStatus.outcomeUnknown;
+            syncStatusMessage.value = '保留操作の再取得に失敗しました。通信復旧後にもう一度状態を確認してください。';
+            return;
+          }
+          if (_hasCorruptPendingActionQueue ||
+              _corruptPendingActionsNeedServerRefresh ||
+              _hasForeignPendingAction) {
+            return;
+          }
+          if (_queuedActions.isNotEmpty || _activeSyncAction != null) {
+            return;
+          }
+          _hasUnknownSyncOutcome = false;
+          _syncBlockedUntilServerRestore = false;
+          syncStatus.value = TrainingSyncStatus.idle;
+          syncStatusMessage.value = '';
+          _releasePendingGameQueueClaim();
+          return;
+        }
+        _hasUnknownSyncOutcome = false;
+        syncStatus.value = TrainingSyncStatus.idle;
+        syncStatusMessage.value = '';
+        if (_queuedActions.isEmpty &&
+            _activeSyncAction == null &&
+            !_syncRequested &&
+            !_syncRunning) {
+          _releasePendingGameQueueClaim();
+        }
+      } finally {
+        _isAcknowledgingSyncNotice = false;
+      }
+    }
+  }
+
   /// 仕事画面を開く直前に、サーバー時刻による実施可否を取得します。
   Future<bool> prepareWork() async {
     final debugTimeSync = _debugTimeSync;
     if (debugTimeSync != null) await debugTimeSync;
-    if (_isWorkPreparationPending || _isWorkSyncPending || _isDisposed) {
+    if (_isWorkPreparationPending ||
+        _isWorkSyncPending ||
+        !_ownsSession(_ownedSessionVersion)) {
       return false;
     }
     _isWorkPreparationPending = true;
     var prepared = false;
     workAvailabilityError.value = '';
     try {
-      final data = await _serverProvider.fetchCurrent();
-      if (data == null || _isDisposed) return false;
+      final data = await _serverProvider.fetchCurrent(
+        expectedSessionVersion: _ownedSessionVersion,
+      );
+      if (data == null || !_ownsSession(_ownedSessionVersion)) return false;
       // 可否と同じ応答に含まれるlock_version・パラメータも更新し、
       // 他端末操作後に古い状態で仕事を送信しないようにします。
       if (!_initializeServerState(data)) return false;
       prepared = canWorkToday;
       return prepared;
     } catch (_) {
-      if (!_isDisposed) {
+      if (_ownsSession(_ownedSessionVersion)) {
         workAvailabilityError.value = '仕事の実施可否を確認できませんでした。通信状態を確認してください。';
         logs.insert(0, '仕事の実施可否を確認できませんでした。通信状態を確認してください。');
       }
@@ -379,14 +1516,11 @@ class TrainingGameController extends GetxController
         // サーバー状態だけを反映します。
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (_isDisposed) return;
-          _initializeServerState(state, forceNewCycle: true);
-          // 新サイクル開始レスポンスに旧クールタイムが混在していても引き継がない。
-          _actionGate.clear();
-          cooldownTick.value++;
+          unawaited(_restoreInitialServerState(state, forceNewCycle: true));
         });
       } else {
         // 遷移元で取得済みの状態を利用し、初期表示時の重複通信を避けます。
-        _initializeServerState(state);
+        unawaited(_restoreInitialServerState(state));
       }
     } else {
       unawaited(_restoreServerState());
@@ -407,6 +1541,40 @@ class TrainingGameController extends GetxController
     });
   }
 
+  /// 起動元が取得した状態でも、操作を許可する前に永続キューを復元します。
+  Future<void> _restoreInitialServerState(
+    Map<String, dynamic> state, {
+    bool forceNewCycle = false,
+  }) async {
+    try {
+      await _pendingActionPersistence;
+      if (!_ownsSession(_ownedSessionVersion)) return;
+      final hasPendingActions = _hasPersistedPendingActionsFor(state);
+      if (!_initializeServerState(
+        state,
+        forceNewCycle: forceNewCycle,
+        restoreLocalStateOverride: hasPendingActions ? false : null,
+      )) {
+        return;
+      }
+      isServerStateReady.value = false;
+      if (forceNewCycle) {
+        // 新サイクル開始レスポンスに旧クールタイムが混在していても引き継がない。
+        _actionGate.clear();
+        cooldownTick.value++;
+      }
+      await _restorePersistedPendingActions();
+      if (_ownsSession(_ownedSessionVersion)) {
+        isServerStateReady.value = true;
+      }
+    } catch (_) {
+      if (_ownsSession(_ownedSessionVersion)) {
+        isServerStateReady.value = false;
+        serverErrorMessage.value = '育成状態の復元に失敗しました。もう一度お試しください。';
+      }
+    }
+  }
+
   /// チュートリアルタイマー1回分の進行を処理します。
   void tickTutorialTimer() {
     cooldownTick.value++;
@@ -419,32 +1587,86 @@ class TrainingGameController extends GetxController
   /// Controller破棄時にチュートリアルのリアルタイム進行を停止します。
   @override
   void onClose() {
-    // 破棄後にタイマーやライフサイクル通知から状態を更新しないよう先に停止します。
+    // 破棄後は待機中の再送を止め、新しい同期要求を作らないよう先に無効化します。
     _isDisposed = true;
+    AuthToken.removeSessionChangeListener(_handleAuthSessionChanged);
+    _cancelRetryWait();
     WidgetsBinding.instance.removeObserver(this);
     _tutorialTimer?.cancel();
     _mainTimer?.cancel();
-    // 画面終了直前の最新状態だけを、既存の同期処理の後ろへ追加します。
-    // 画面側で最新同期が完了済みなら、同じ状態をもう一度送信しません。
-    if (!_skipFinalSync && !_finalSyncCompleted) _queueSync(force: true);
+    final pendingJournalSnapshot = <_PendingTrainingAction>[
+      if (_activeSyncAction != null) _activeSyncAction!,
+      ..._queuedActions,
+    ];
+    final hasUnsentState = _queuedActions.isNotEmpty ||
+        _syncRequested ||
+        _syncActionInFlight ||
+        _hasUnsyncedLocalState;
+    if (pendingJournalSnapshot.isNotEmpty) {
+      unawaited(_persistPendingActions(
+        snapshotActions: pendingJournalSnapshot,
+        releaseGameClaimAfterWrite: true,
+      ).catchError((Object _) {
+        // 送信前に保存済みの操作だけが次のControllerで復元対象になります。
+        _releaseAllPendingActionClaims();
+        _releasePendingGameQueueClaim();
+      }));
+    } else {
+      _releaseAllPendingActionClaims();
+      _releasePendingGameQueueClaim();
+    }
+    _queuedActions.clear();
+    _syncRequested = false;
+    _syncActionInFlight = false;
+    _syncBlockedUntilServerRestore = true;
+    _hasUnsyncedLocalState = false;
+    _actionGate.clear();
+    if (hasUnsentState) unawaited(MySharedPref.clearTrainingGameLocalState());
     super.onClose();
   }
 
   /// デバッグ用に、サーバー・端末の育成データを初期パラメータ付きで初期化します。
   Future<Map<String, dynamic>?> resetDebugGame() {
-    if (_isDisposed) return Future<Map<String, dynamic>?>.value();
+    if (!_ownsSession(_ownedSessionVersion)) {
+      return Future<Map<String, dynamic>?>.value();
+    }
     // 先行する同期を完了させてから削除し、古い状態の再保存を防ぎます。
     return TrainingGameProvider.waitForPendingSync()
-        .then((_) => _serverProvider.resetDebugState())
+        .then((_) => _serverProvider.resetDebugState(
+              expectedSessionVersion: _ownedSessionVersion,
+            ))
         .then<Map<String, dynamic>?>((initialState) async {
-      _skipFinalSync = true;
+      if (!_ownsSession(_ownedSessionVersion)) return null;
       await MySharedPref.clearTrainingGameStartedAt();
+      if (!_ownsSession(_ownedSessionVersion)) return null;
       await MySharedPref.clearTrainingGameDebugElapsedSeconds();
+      if (!_ownsSession(_ownedSessionVersion)) return null;
       await MySharedPref.clearTrainingGameLocalState();
+      if (!_ownsSession(_ownedSessionVersion)) return null;
+      final oldActions = <_PendingTrainingAction>[
+        if (_activeSyncAction != null) _activeSyncAction!,
+        ..._queuedActions,
+      ];
+      _queuedActions.clear();
+      _activeSyncAction = null;
+      _syncRequested = false;
+      _syncRequestMayHaveBeenApplied = false;
+      _syncActionInFlight = false;
+      _hasUnknownSyncOutcome = false;
+      _releaseAllPendingActionClaims();
       // 画面遷移を挟まず、APIが返した初期状態を現在のControllerへ反映します。
       _resetLocalProgressForNewCycle();
       _initializeServerState(initialState);
-      _skipFinalSync = false;
+      try {
+        await _persistPendingActions(quarantineActions: oldActions);
+      } catch (_) {
+        // Old timestamps remain in the journal; restoration will still quarantine them.
+      }
+      if (_queuedActions.isEmpty) {
+        syncStatus.value = TrainingSyncStatus.idle;
+        syncStatusMessage.value =
+            oldActions.isEmpty ? '' : '初期化前の保留操作を隔離しました。新しい状態には再送しません。';
+      }
       return initialState;
     }, onError: (_, __) {
       // 初期化失敗時は現在のゲームを維持し、誤って画面遷移しないようにします。
@@ -475,6 +1697,8 @@ class TrainingGameController extends GetxController
     _zeroHours.updateAll((key, value) => 0);
     _tutorialZeroSeconds.updateAll((key, value) => 0);
     _actionGate.clear();
+    _releasePendingGameQueueClaim();
+    _hasForeignPendingAction = false;
     _pendingStageIndex = null;
     _pendingStageSyncQueued = false;
     ended.value = false;
@@ -501,7 +1725,6 @@ class TrainingGameController extends GetxController
     _syncBlockedUntilServerRestore = false;
     isServerStateReady.value = false;
     serverErrorMessage.value = '';
-    _finalSyncCompleted = false;
   }
 
   /// 初期値と異なる場合だけ、可変Mapへ差し替えます。
@@ -569,14 +1792,34 @@ class TrainingGameController extends GetxController
   }
 
   /// ホームへ戻る前に状態を同期し、1.5〜3秒のロード表示を維持します。
-  Future<void> syncBeforeReturningHome() async {
-    if (isReturningHome.value) return;
+  Future<bool> syncBeforeReturningHome() async {
+    if (isReturningHome.value) return false;
     isReturningHome.value = true;
     pauseLocalProgress();
-    await Future.wait<void>([
-      syncNow(),
-      Future<void>.delayed(randomTransitionLoadingDuration()),
-    ]);
+    var complete = false;
+    try {
+      await Future.wait<void>([
+        _queueSync(),
+        Future<void>.delayed(randomTransitionLoadingDuration()),
+      ]);
+      if (!_ownsSession(_ownedSessionVersion)) return false;
+      complete = _queuedActions.isEmpty &&
+          !_syncRequested &&
+          !_syncRunning &&
+          syncStatus.value == TrainingSyncStatus.idle;
+      return complete;
+    } finally {
+      if (!complete && _ownsSession(_ownedSessionVersion)) {
+        isReturningHome.value = false;
+        final lifecycle = WidgetsBinding.instance.lifecycleState;
+        _isAppInBackground =
+            lifecycle != null && lifecycle != AppLifecycleState.resumed;
+        if (!_isAppInBackground && isServerStateReady.value) {
+          _waitingForServerRestore = false;
+          _resetActiveMainProgressBaseline();
+        }
+      }
+    }
   }
 
   /// アプリがバックグラウンドへ移る前に育成状態を保存します。
@@ -612,27 +1855,39 @@ class TrainingGameController extends GetxController
   /// 終了済みプレイヤーが取得できないことを理由に新しい育成サイクルを開始しません。
   /// 新規開始は卵獲得画面で明示的に行います。
   Future<void> _restoreServerState() async {
+    if (!_ownsSession(_ownedSessionVersion)) return;
     serverErrorMessage.value = '';
     // 復帰イベントが短時間に複数回発生しても、取得処理を直列化します。
     _restoreChain = _restoreChain.then((_) async {
-      if (_isDisposed) return;
+      if (!_ownsSession(_ownedSessionVersion)) return;
       // 復帰直前のローカル操作を先に保存してからサーバー状態を読み込みます。
       await _syncChain;
-      if (_isDisposed) return;
-      final data = await _serverProvider.fetchCurrent();
-      if (_isDisposed) return;
+      if (!_ownsSession(_ownedSessionVersion)) return;
+      // Controller破棄時に予約されたjournal書き込みも反映してから復元します。
+      await _pendingActionPersistence;
+      if (!_ownsSession(_ownedSessionVersion)) return;
+      final data = await _serverProvider.fetchCurrent(
+        expectedSessionVersion: _ownedSessionVersion,
+      );
+      if (!_ownsSession(_ownedSessionVersion)) return;
       if (data != null) {
-        if (!_initializeServerState(data)) return;
+        final hasPendingActions = _hasPersistedPendingActionsFor(data);
+        if (!_initializeServerState(
+          data,
+          restoreLocalStateOverride: hasPendingActions ? false : null,
+        )) {
+          return;
+        }
+        await _restorePersistedPendingActions();
       } else if (!ended.value) {
         isServerStateReady.value = false;
-        serverErrorMessage.value =
-            '育成データが見つかりません。ゲーム開始画面からやり直してください。';
+        serverErrorMessage.value = '育成データが見つかりません。ゲーム開始画面からやり直してください。';
         return;
       }
       isServerStateReady.value = true;
     }).catchError((_) {
       // 仕様どおり、通信不可時はローカル状態だけでプレイを継続しません。
-      if (!_isDisposed) {
+      if (_ownsSession(_ownedSessionVersion)) {
         isServerStateReady.value = false;
         serverErrorMessage.value = '通信状態を確認して、もう一度お試しください。';
       }
@@ -641,19 +1896,24 @@ class TrainingGameController extends GetxController
   }
 
   /// 通信エラー画面からサーバー状態の取得を再試行します。
-  void retryRestoreServerState() {
-    if (_isDisposed) return;
-    unawaited(_restoreServerState());
+  Future<void> retryRestoreServerState() async {
+    if (!_ownsSession(_ownedSessionVersion)) return;
+    await _restoreServerState();
   }
 
   /// 初期状態をサーバーへ保存します。
-  Future<void> _startServerState() async {
+  Future<void> _startServerState({
+    required int expectedSessionVersion,
+  }) async {
     final data = await _serverProvider.start(
       stageCode: _stageCode,
       parameters: _serverParameters,
+      expectedSessionVersion: expectedSessionVersion,
     );
+    if (!_ownsSession(expectedSessionVersion)) return;
     _serverPlayerId = (data['id'] as num?)?.toInt();
     _serverCycleNo = (data['cycle_no'] as num?)?.toInt();
+    _serverGameStartedAt = _gameStartedAtFrom(data['started_at']);
     _serverLockVersion = (data['lock_version'] as num?)?.toInt() ?? 0;
     _applyServerState(data);
     _refreshUnlockedPositionsInBackground();
@@ -666,11 +1926,14 @@ class TrainingGameController extends GetxController
     bool? restoreLocalStateOverride,
   }) {
     final serverCycleNo = (data['cycle_no'] as num?)?.toInt();
-    final isNewCycle =
-        forceNewCycle ||
+    final serverStartedAt = _gameStartedAtFrom(data['started_at']);
+    final isNewCycle = forceNewCycle ||
         (serverCycleNo != null &&
             _serverCycleNo != null &&
-            serverCycleNo != _serverCycleNo);
+            serverCycleNo != _serverCycleNo) ||
+        (serverStartedAt != null &&
+            _serverGameStartedAt != null &&
+            !_sameGameInstance(serverStartedAt, _serverGameStartedAt));
     final hasStaleLocalCycle = _hasStaleLocalCycle(serverCycleNo);
     if (isNewCycle || hasStaleLocalCycle) {
       _resetLocalProgressForNewCycle();
@@ -679,11 +1942,12 @@ class TrainingGameController extends GetxController
     }
     _serverPlayerId = (data['id'] as num?)?.toInt();
     _serverCycleNo = serverCycleNo ?? _serverCycleNo;
+    _serverGameStartedAt = serverStartedAt ?? _serverGameStartedAt;
     _serverLockVersion = (data['lock_version'] as num?)?.toInt() ?? 0;
     if (!_applyServerState(
       data,
-      restoreLocalState: restoreLocalStateOverride ??
-          (!isNewCycle && !hasStaleLocalCycle),
+      restoreLocalState:
+          restoreLocalStateOverride ?? (!isNewCycle && !hasStaleLocalCycle),
       restoreDebugElapsed: !isNewCycle && !hasStaleLocalCycle,
     )) {
       return false;
@@ -845,10 +2109,10 @@ class TrainingGameController extends GetxController
     restoreProgressCounters = restoreProgressCounters || _hasUnsyncedLocalState;
     // 同期未完了のスナップショットだけは、通信失敗した行動結果を失わないよう復元します。
     final serverParameters = serverData['parameters'];
-    final serverHasBulk =
-        serverParameters is Map && serverParameters.containsKey('tendency_bulk');
-    final serverHasTech =
-        serverParameters is Map && serverParameters.containsKey('tendency_tech');
+    final serverHasBulk = serverParameters is Map &&
+        serverParameters.containsKey('tendency_bulk');
+    final serverHasTech = serverParameters is Map &&
+        serverParameters.containsKey('tendency_tech');
     if (_hasUnsyncedLocalState) {
       _restoreDoubleValue(localState, 'hunger', '食事', target: meters);
       _restoreDoubleValue(localState, 'cleanliness', '清潔', target: meters);
@@ -917,13 +2181,11 @@ class TrainingGameController extends GetxController
     final progress = data['stage_progress'];
     if (progress is Map) {
       final requiredWork = progress['required_work_value'];
-      _serverRequiredWorkValue = requiredWork is num
-          ? requiredWork.toDouble()
-          : null;
+      _serverRequiredWorkValue =
+          requiredWork is num ? requiredWork.toDouble() : null;
       final requiredElapsed = progress['required_elapsed_hours'];
-      _serverRequiredElapsedHours = requiredElapsed is num
-          ? requiredElapsed.toInt()
-          : null;
+      _serverRequiredElapsedHours =
+          requiredElapsed is num ? requiredElapsed.toInt() : null;
       _serverNextStageCode = progress['next_stage_code'] as String?;
     } else {
       _serverRequiredWorkValue = null;
@@ -950,7 +2212,8 @@ class TrainingGameController extends GetxController
     if (status == 'positive_end') {
       ended.value = true;
       endingStep.value = 0;
-      clearPosition.value = _positionNameFromCode(data['position_code']) ?? position;
+      clearPosition.value =
+          _positionNameFromCode(data['position_code']) ?? position;
       endingMessage.value = '育成完了。${clearPosition.value}として図鑑に登録されました。';
       return;
     }
@@ -1046,9 +2309,11 @@ class TrainingGameController extends GetxController
 
   /// 専用APIから取得した解放済みポジションを画面状態へ反映します。
   Future<void> refreshUnlockedPositions() async {
-    if (_isDisposed) return;
-    final positions = await _serverProvider.fetchUnlockedPositions();
-    if (_isDisposed) return;
+    if (!_ownsSession(_ownedSessionVersion)) return;
+    final positions = await _serverProvider.fetchUnlockedPositions(
+      expectedSessionVersion: _ownedSessionVersion,
+    );
+    if (!_ownsSession(_ownedSessionVersion)) return;
     unlockedPositions.assignAll(positions.toSet());
   }
 
@@ -1099,41 +2364,327 @@ class TrainingGameController extends GetxController
   Future<void> _queueSync({
     TrainingActionType? action,
     MiniGameResult? miniGameResult,
-    bool force = false,
   }) {
-    if ((_isDisposed && !force) || _syncBlockedUntilServerRestore) {
+    if (!_ownsSession(_ownedSessionVersion) || _syncBlockedUntilServerRestore) {
+      return Future<void>.value();
+    }
+    if (_pendingGameQueueIsClaimedByAnotherController()) {
+      _hasForeignPendingAction = true;
+      syncStatus.value = TrainingSyncStatus.stopped;
+      syncStatusMessage.value = '別の画面で同じ育成の操作を処理中です。順序を守るため同期を停止しています。';
+      return Future<void>.value();
+    }
+    if (action != null && !_claimPendingGameQueue()) {
+      syncStatus.value = TrainingSyncStatus.stopped;
+      syncStatusMessage.value =
+          '別の画面で同じ育成の操作を処理中です。順序を守るため今回の操作を同期キューへ追加しませんでした。';
+      return Future<void>.value();
+    }
+    if (_hasUnknownSyncOutcome) return Future<void>.value();
+    if (syncStatus.value == TrainingSyncStatus.stopped ||
+        syncStatus.value == TrainingSyncStatus.rateLimited ||
+        syncStatus.value == TrainingSyncStatus.outcomeUnknown ||
+        syncStatus.value == TrainingSyncStatus.rejected ||
+        syncStatus.value == TrainingSyncStatus.sessionChanged) {
+      return Future<void>.value();
+    }
+    if (action != null && pendingSyncActionCount >= maxQueuedSyncActions) {
+      syncStatus.value = TrainingSyncStatus.queueFull;
+      syncStatusMessage.value =
+          '同期待ちが上限（$maxQueuedSyncActions件）です。今回の操作は実行していません。通信中の操作が確定するまでお待ちください。';
       return Future<void>.value();
     }
     // 連続操作中も各アクションを順番に保持し、効果を失わないようにします。
-    if (action != null) {
-      _actionGate.markPending(action);
-      _queuedActions.add((type: action, result: miniGameResult));
-    }
+    if (action != null) _actionGate.markPending(action);
     _syncRequested = true;
     _hasUnsyncedLocalState = true;
-    _finalSyncCompleted = false;
     _localStateRevision++;
-    if (_syncRunning) return _syncChain;
-    _syncRunning = true;
-    _syncChain = _drainSyncQueue().catchError((_) {
-      // 同期失敗時も画面上のローカル状態を保持します。
-    });
-    TrainingGameProvider.registerPendingSync(_syncChain);
-    unawaited(_syncChain);
+    if (action != null) {
+      _queuedActions.add(_PendingTrainingAction(
+        type: action,
+        result: miniGameResult,
+        revision: _localStateRevision,
+        sessionVersion: _ownedSessionVersion,
+        playerId: _serverPlayerId,
+        cycleNo: _serverCycleNo,
+        gameStartedAt: _serverGameStartedAt,
+        debugBypassCooldown: _bypassesServerCooldown(action),
+        idempotencyKey: '${(_serverPlayerId ?? 0).toRadixString(36)}-'
+            '${(_serverCycleNo ?? 0).toRadixString(36)}-'
+            '${DateTime.now().microsecondsSinceEpoch.toRadixString(36)}-'
+            '${_localStateRevision.toRadixString(36)}',
+      ));
+      _claimPendingAction(_queuedActions.last.idempotencyKey);
+      final journalSnapshot = <_PendingTrainingAction>[
+        if (_activeSyncAction != null) _activeSyncAction!,
+        ..._queuedActions,
+      ];
+      unawaited(_persistPendingActions(snapshotActions: journalSnapshot)
+          .catchError((Object _) {
+        if (!_ownsSession(_ownedSessionVersion)) return;
+        syncStatus.value = TrainingSyncStatus.stopped;
+        syncStatusMessage.value = '操作を端末に保存できませんでした。再試行するまで追加操作を停止しています。';
+      }));
+    }
+    syncStatus.value = TrainingSyncStatus.syncing;
+    syncStatusMessage.value = '育成状態を同期しています。';
+    _startSyncDrain();
     return _syncChain;
   }
 
-  /// 保留中の同期要求を1回の通信へ集約します。
+  /// 保留中の同期要求を有限回だけ処理し、未確定操作を明示して停止します。
   Future<void> _drainSyncQueue() async {
+    var automaticRetries = 0;
+    var automaticWait = Duration.zero;
     try {
       while (_syncRequested || _queuedActions.isNotEmpty) {
+        if (!_ownsSession(_ownedSessionVersion)) return;
         _syncRequested = false;
-        final pending = _queuedActions.isEmpty ? null : _queuedActions.removeAt(0);
-        await syncNow(action: pending?.type, miniGameResult: pending?.result);
+        final pending =
+            _queuedActions.isEmpty ? null : _queuedActions.removeAt(0);
+        final hadUnknownOutcomeBeforeSend =
+            pending?.mayHaveBeenApplied ?? false;
+        if (pending != null &&
+            !_ownsPendingActionClaim(pending.idempotencyKey) &&
+            !_claimPendingAction(pending.idempotencyKey)) {
+          _queuedActions.insert(0, pending);
+          syncStatus.value = TrainingSyncStatus.stopped;
+          syncStatusMessage.value = '別のControllerが同じ操作を処理中です。重複送信を止めて保留しています。';
+          return;
+        }
+        if (pending != null &&
+            (pending.sessionVersion != _ownedSessionVersion ||
+                pending.playerId != _serverPlayerId ||
+                pending.cycleNo != _serverCycleNo ||
+                !_sameGameInstance(
+                  pending.gameStartedAt,
+                  _serverGameStartedAt,
+                ))) {
+          await _quarantinePendingActions([pending]);
+          return;
+        }
+        final retryNotBefore = pending?.retryNotBefore ??
+            (pending == null ? _syncRetryNotBefore : null);
+        if (retryNotBefore != null && retryNotBefore.isAfter(DateTime.now())) {
+          if (pending != null) _queuedActions.insert(0, pending);
+          if (pending == null) _syncRequested = true;
+          syncStatus.value = TrainingSyncStatus.stopped;
+          syncStatusMessage.value =
+              'サーバー指定の待機が上限を超えたため自動再試行を停止しました。操作は未送信のまま保留しています。';
+          return;
+        }
+        if (pending != null) pending.retryNotBefore = null;
+        if (pending == null) _syncRetryNotBefore = null;
+        if (pending != null && pending.requiresGameInstanceCheck) {
+          if (!await _checkGameInstanceBeforeRetry(pending)) return;
+        }
+        if (pending != null) {
+          _activeSyncAction = pending;
+          // 送信前に結果不明として保存し、プロセス終了後も同じ操作IDを復元します。
+          pending.mayHaveBeenApplied = true;
+          try {
+            await _persistPendingActions();
+          } catch (_) {
+            _activeSyncAction = null;
+            pending.mayHaveBeenApplied = hadUnknownOutcomeBeforeSend;
+            pending.requiresGameInstanceCheck = hadUnknownOutcomeBeforeSend ||
+                pending.requiresGameInstanceCheck;
+            _queuedActions.insert(0, pending);
+            _syncActionInFlight = false;
+            _hasUnknownSyncOutcome = hadUnknownOutcomeBeforeSend;
+            syncStatus.value = hadUnknownOutcomeBeforeSend
+                ? TrainingSyncStatus.outcomeUnknown
+                : TrainingSyncStatus.stopped;
+            syncStatusMessage.value = hadUnknownOutcomeBeforeSend
+                ? '再試行前の保存に失敗しました。今回の送信はしていませんが、先行操作の適用有無は未確定のままです。同じ操作IDを保持しています。'
+                : '操作を端末に保存できなかったため、サーバーへ送信していません。保存先を確認して再試行してください。';
+            return;
+          }
+          if (!_ownsSession(_ownedSessionVersion)) return;
+        }
+        _syncActionInFlight = pending != null;
+        try {
+          await syncNow(
+            action: pending?.type,
+            miniGameResult: pending?.result,
+            stateRevision: pending?.revision,
+            idempotencyKey: pending?.idempotencyKey,
+            sessionVersion: pending?.sessionVersion ?? _ownedSessionVersion,
+            debugBypassCooldown: pending?.debugBypassCooldown,
+          );
+        } on AuthSessionChangedException {
+          _syncActionInFlight = false;
+          if (!_isDisposed &&
+              AuthToken.sessionVersion != _ownedSessionVersion) {
+            await _handleAuthSessionChanged(AuthToken.sessionVersion);
+          }
+          return;
+        } on TrainingGameApiException catch (error) {
+          _syncActionInFlight = false;
+          if (!_ownsSession(_ownedSessionVersion)) return;
+          if (_isGameLockVersionConflict(error)) {
+            await _handleGameLockVersionConflict(error, pending);
+            return;
+          }
+          if (error.statusCode != 429 &&
+              _isDefinitelyRejected(error) &&
+              !_hasUnknownSyncOutcome) {
+            _activeSyncAction = null;
+            await _handleSyncFailure(error);
+            try {
+              await _persistPendingActions();
+            } catch (_) {
+              // 古いジャーナルが残っても、再起動後は同じ操作IDを使います。
+            }
+            return;
+          }
+          if (error.statusCode != 429) {
+            _activeSyncAction = null;
+            if (pending != null) {
+              pending.mayHaveBeenApplied = true;
+              pending.requiresGameInstanceCheck = true;
+              _queuedActions.insert(0, pending);
+            } else {
+              _syncRequested = true;
+              _syncRequestMayHaveBeenApplied = true;
+            }
+            try {
+              await _persistPendingActions();
+            } catch (_) {
+              // 送信前に保存した不明状態のジャーナルを維持します。
+            }
+            await _handleSyncFailure(error, preservePending: true);
+            return;
+          }
+          final retryAfter = error.retryAfter ?? const Duration(seconds: 5);
+          final requestedWait = retryAfter + const Duration(seconds: 1);
+          final safeWait =
+              requestedWait.isNegative ? Duration.zero : requestedWait;
+          final notBefore = DateTime.now().add(safeWait);
+          if (pending != null) {
+            pending.mayHaveBeenApplied = hadUnknownOutcomeBeforeSend;
+            pending.requiresGameInstanceCheck = true;
+            pending.retryNotBefore = notBefore;
+            _activeSyncAction = null;
+            _queuedActions.insert(0, pending);
+            try {
+              await _persistPendingActions();
+            } catch (_) {
+              // 送信前ジャーナルが残るため、同じ操作IDでのみ再試行します。
+            }
+          } else {
+            _syncRequested = true;
+            _syncRetryNotBefore = notBefore;
+          }
+          syncStatus.value = TrainingSyncStatus.rateLimited;
+          syncStatusMessage.value = _hasUnknownSyncOutcome
+              ? '先行操作の通信結果は不明です。今回の再試行は429で未受理となり、同じ操作IDで保留しています。'
+              : 'サーバーが混雑しています。操作を未送信として保留しています。';
+          if (automaticRetries >= maxAutomatic429Retries ||
+              automaticWait + safeWait > maxAutomatic429Wait) {
+            syncStatus.value = _hasUnknownSyncOutcome
+                ? TrainingSyncStatus.outcomeUnknown
+                : TrainingSyncStatus.stopped;
+            syncStatusMessage.value = _hasUnknownSyncOutcome
+                ? '429の自動再試行上限（${maxAutomatic429Retries}回、待機合計${maxAutomatic429Wait.inSeconds}秒）に達しました。先行操作の結果は不明です。保留中の再送は同じ操作IDを使います。'
+                : '429の自動再試行上限（${maxAutomatic429Retries}回、待機合計${maxAutomatic429Wait.inSeconds}秒）に達しました。操作は未送信のまま保留中です。再試行するか、破棄してください。';
+            return;
+          }
+          automaticRetries++;
+          automaticWait += safeWait;
+          final waitCompleted = await _waitForRetry(safeWait);
+          if (!waitCompleted || !_ownsSession(_ownedSessionVersion)) return;
+          continue;
+        } catch (error) {
+          _syncActionInFlight = false;
+          if (!_ownsSession(_ownedSessionVersion)) return;
+          _activeSyncAction = null;
+          if (pending != null) {
+            pending.mayHaveBeenApplied = true;
+            pending.requiresGameInstanceCheck = true;
+            _queuedActions.insert(0, pending);
+          } else {
+            _syncRequested = true;
+            _syncRequestMayHaveBeenApplied = true;
+          }
+          try {
+            await _persistPendingActions();
+          } catch (_) {
+            // 送信前ジャーナルが残るため、同じ操作IDを失いません。
+          }
+          await _handleSyncFailure(error, preservePending: true);
+          return;
+        }
+        _syncActionInFlight = false;
+        if (!_ownsSession(_ownedSessionVersion)) return;
+        _activeSyncAction = null;
+        if (pending == null) {
+          _syncRequestMayHaveBeenApplied = false;
+        } else {
+          pending.mayHaveBeenApplied = false;
+          try {
+            await _persistPendingActions();
+          } catch (_) {
+            pending.mayHaveBeenApplied = true;
+            pending.requiresGameInstanceCheck = true;
+            _queuedActions.insert(0, pending);
+            _hasUnknownSyncOutcome = true;
+            syncStatus.value = TrainingSyncStatus.outcomeUnknown;
+            syncStatusMessage.value =
+                'サーバー応答を受け取りましたが、端末の操作記録を更新できませんでした。結果を確認できるまで同じ操作IDを保持します。';
+            return;
+          }
+        }
+        _hasUnknownSyncOutcome = _syncRequestMayHaveBeenApplied ||
+            _queuedActions.any((action) => action.mayHaveBeenApplied);
+      }
+      if (_ownsSession(_ownedSessionVersion) && _queuedActions.isEmpty) {
+        _hasUnknownSyncOutcome = false;
+        syncStatus.value = TrainingSyncStatus.idle;
+        syncStatusMessage.value = '';
       }
     } finally {
       _syncRunning = false;
+      _syncActionInFlight = false;
     }
+  }
+
+  Future<void> _handleSyncFailure(
+    Object error, {
+    bool preservePending = false,
+  }) async {
+    final knownRejected =
+        _isDefinitelyRejected(error) && !_hasUnknownSyncOutcome;
+    if (knownRejected) {
+      if (!preservePending) {
+        _queuedActions.clear();
+        _syncRequested = false;
+        _syncRequestMayHaveBeenApplied = false;
+      }
+      _syncRetryNotBefore = null;
+      _actionGate.clear();
+      syncStatus.value = TrainingSyncStatus.rejected;
+      syncStatusMessage.value = error is TrainingGameApiException &&
+              error.message.contains('クールタイム')
+          ? 'サーバーがクールタイム解除を受け付けませんでした。今回の効果は保存されていません。後続の未送信操作は破棄しました。サーバー状態を確認してから続けてください。'
+          : 'サーバーが操作を拒否しました。後続の未送信操作は破棄しました。サーバー状態を確認してから続けてください。';
+    } else {
+      _hasUnknownSyncOutcome = true;
+      syncStatus.value = TrainingSyncStatus.outcomeUnknown;
+      syncStatusMessage.value = isServerStateReady.value
+          ? '通信結果が不明です。未送信とは断定できません。保留操作を同じ操作IDで再確認し、サーバー状態と応答を確認してください。'
+          : '通信結果が不明です。未送信とは断定できません。保留操作は同じ操作IDを保持し、サーバー状態を確認できるまで再送を待ちます。通信復旧後に状態を再取得してください。';
+    }
+    if (!isServerStateReady.value) {
+      serverErrorMessage.value = syncStatusMessage.value;
+    }
+  }
+
+  bool _isDefinitelyRejected(Object error) {
+    if (error is! TrainingGameApiException) return false;
+    // 408や未監査の4xxは、仲介サーバーが応答した可能性もあるため不明扱いにします。
+    // 409も理由ごとの意味を確認するため、結果不明として操作を保持します。
+    return const {401, 403, 404, 422}.contains(error.statusCode);
   }
 
   /// 画面離脱時の同期をキューへ追加します。
@@ -1142,7 +2693,16 @@ class TrainingGameController extends GetxController
   }
 
   /// 画面終了前に最新状態の同期完了を待ちます。
-  Future<void> syncNow({TrainingActionType? action, MiniGameResult? miniGameResult}) async {
+  Future<void> syncNow({
+    TrainingActionType? action,
+    MiniGameResult? miniGameResult,
+    int? stateRevision,
+    String? idempotencyKey,
+    int? sessionVersion,
+    bool? debugBypassCooldown,
+  }) async {
+    final expectedSessionVersion = sessionVersion ?? _ownedSessionVersion;
+    if (!_ownsSession(expectedSessionVersion)) return;
     // 仕事はサーバー受理前に楽観更新するため、その結果が確定するまで
     // 退室など別経路の同期で増分を送信しないようにします。
     if (_syncBlockedUntilServerRestore ||
@@ -1150,16 +2710,20 @@ class TrainingGameController extends GetxController
       return;
     }
     if (_serverPlayerId == null) {
-      if (_isDisposed) return;
-      await _startServerState();
+      await _startServerState(expectedSessionVersion: expectedSessionVersion);
       return;
     }
     // 後続の行動と区別できるよう、この通信が受け取る状態世代を記録します。
-    final syncingRevision = _localStateRevision;
+    final syncingRevision = stateRevision ?? _localStateRevision;
+    // 操作時の設定を使い、待機中の設定変更や再起動後も同じ要求で再送します。
+    final bypassCooldown = debugBypassCooldown ??
+        (action != null && _bypassesServerCooldown(action));
     // APIに未保存の進行カウンターも、通信失敗時に失わないよう先に保持します。
     _hasUnsyncedLocalState = true;
     await _saveLocalGameState();
+    if (!_ownsSession(expectedSessionVersion)) return;
     final isPositiveEnd = clearPosition.value != null;
+    var deferredForRateLimit = false;
     try {
       final data = await _serverProvider.sync(
         stageCode: _stageCode,
@@ -1169,17 +2733,19 @@ class TrainingGameController extends GetxController
         positionCode: _positionCode,
         branchCode: _branchCode,
         actionCode: action == null ? null : _actionCode(action),
+        actionIdempotencyKey: idempotencyKey,
+        expectedSessionVersion: expectedSessionVersion,
         actionScore: miniGameResult?.score,
         actionEffectMultiplier: miniGameResult?.effectMultiplier,
         actionResultCode: miniGameResult?.resultCode,
-        debugBypassCooldown:
-            action != null && _bypassesServerCooldown(action),
+        debugBypassCooldown: bypassCooldown,
         status: isPositiveEnd
             ? 'positive_end'
             : ended.value
                 ? 'negative_end'
                 : 'playing',
       );
+      if (!_ownsSession(expectedSessionVersion)) return;
       // 先行操作がある場合は状態全体をまだ上書きしませんが、サーバーが確定した
       // クールタイムだけは直ちに反映し、同じ行動の再送を防ぎます。
       _restoreServerCooldowns(
@@ -1208,34 +2774,33 @@ class TrainingGameController extends GetxController
           // 新しい冪等キーで再送せず、現在のサーバー状態を再取得します。
           Map<String, dynamic>? current;
           try {
-            current = await _serverProvider.fetchCurrent();
+            current = await _serverProvider.fetchCurrent(
+              expectedSessionVersion: expectedSessionVersion,
+            );
           } catch (_) {
             // 再取得に失敗しても、通信復旧後に再利用できるよう
             // 未同期のローカル状態は削除せず保持します。
-            if (!_isDisposed) {
+            if (_ownsSession(expectedSessionVersion)) {
               isServerStateReady.value = false;
               serverErrorMessage.value = '通信状態を確認して、もう一度お試しください。';
             }
             _hasUnsyncedLocalState = true;
-            _finalSyncCompleted = false;
             await _saveLocalGameState();
             return;
           }
-          if (!_isDisposed && current != null) {
+          if (_ownsSession(expectedSessionVersion) && current != null) {
             final currentApplied = _initializeServerState(
               current,
               restoreLocalStateOverride: false,
             );
             if (currentApplied) {
               _hasUnsyncedLocalState = false;
-              _finalSyncCompleted = true;
               await _saveLocalGameState();
               return;
             }
           }
           // 再取得できない場合は、次回の同期対象としてローカル状態を保持します。
           _hasUnsyncedLocalState = true;
-          _finalSyncCompleted = false;
           await _saveLocalGameState();
           return;
         }
@@ -1246,16 +2811,32 @@ class TrainingGameController extends GetxController
       _restoreWorkAvailability(data);
       // 後続行動がなければサーバー優先へ戻し、ある場合は未送信状態を保持します。
       _hasUnsyncedLocalState = syncingRevision != _localStateRevision;
-      _finalSyncCompleted = !_hasUnsyncedLocalState;
       await _saveLocalGameState();
       // 図鑑はポジティブ終了時だけ再取得し、通常同期の余分な通信を省きます。
-      if (isPositiveEnd && !_isDisposed) await refreshUnlockedPositions();
+      if (isPositiveEnd && _ownsSession(expectedSessionVersion)) {
+        await refreshUnlockedPositions();
+      }
     } catch (error) {
+      if (error is AuthSessionChangedException) rethrow;
+      if (!_ownsSession(expectedSessionVersion)) return;
       if (action != null &&
           error is TrainingGameApiException &&
-          _isCooldownRejection(action, error)) {
-        await _handleCooldownRejection(action);
+          _isCooldownRejection(action, error) &&
+          !bypassCooldown) {
+        await _handleCooldownRejection(
+          action,
+          expectedSessionVersion: expectedSessionVersion,
+        );
         return;
+      }
+      if (error is TrainingGameApiException && error.statusCode == 429) {
+        // レート制限は通信断ではなく未処理のリクエストです。
+        // ローカル状態を保持し、キュー側でRetry-After後に同じ操作を再送します。
+        deferredForRateLimit = true;
+        if (!_ownsSession(expectedSessionVersion)) rethrow;
+        _hasUnsyncedLocalState = true;
+        await _saveLocalGameState();
+        rethrow;
       }
       if (action == TrainingActionType.work) {
         // サーバーに拒否された楽観更新を捨てます。後続アクションで、
@@ -1266,44 +2847,57 @@ class TrainingGameController extends GetxController
         // 再適用しないよう、対象スナップショットを先に破棄します。
         await MySharedPref.clearTrainingGameLocalState();
         try {
-          final serverData = await _serverProvider.fetchCurrent();
-          if (serverData != null && !_isDisposed) {
+          final serverData = await _serverProvider.fetchCurrent(
+            expectedSessionVersion: expectedSessionVersion,
+          );
+          if (serverData != null && _ownsSession(expectedSessionVersion)) {
             _initializeServerState(serverData);
           }
         } catch (_) {
           // サーバー状態を取得できるまで画面操作を停止します。拒否済み仕事の
           // 楽観更新を残したまま、別アクションで同期することを防ぎます。
-          if (!_isDisposed) {
+          if (_ownsSession(expectedSessionVersion)) {
             _syncBlockedUntilServerRestore = true;
             isServerStateReady.value = false;
             serverErrorMessage.value = '通信状態を確認して、もう一度お試しください。';
           }
         }
         await _saveLocalGameState();
-      } else if (!_isDisposed) {
-        await _restoreAuthoritativeStateAfterSyncFailure();
+      } else if (_ownsSession(expectedSessionVersion)) {
+        await _restoreAuthoritativeStateAfterSyncFailure(
+          expectedSessionVersion: expectedSessionVersion,
+        );
       }
       rethrow;
     } finally {
-      if (action != null) _actionGate.clearPending(action);
-      if (action == TrainingActionType.work) _isWorkSyncPending = false;
+      if (action != null && !deferredForRateLimit) {
+        _actionGate.clearPending(action);
+      }
+      if (action == TrainingActionType.work && !deferredForRateLimit) {
+        _isWorkSyncPending = false;
+      }
     }
   }
 
   /// サーバー側で拒否されたクールタイムを、通信障害として扱わず同期します。
-  Future<void> _handleCooldownRejection(TrainingActionType action) async {
+  Future<void> _handleCooldownRejection(
+    TrainingActionType action, {
+    required int expectedSessionVersion,
+  }) async {
     // 同じ行動が既にキューへ積まれていれば、同じ422を繰り返し発生させない。
     _queuedActions.removeWhere((pending) => pending.type == action);
     _actionGate.mergeServerCooldowns({
       action: _serverNow().add(careCooldown),
     });
-    if (!_isDisposed) {
+    if (_ownsSession(expectedSessionVersion)) {
       logs.insert(0, '${_labelFor(action)}はサーバー側でクールタイム中です。');
     }
 
     try {
-      final data = await _serverProvider.fetchCurrent();
-      if (_isDisposed || data == null) return;
+      final data = await _serverProvider.fetchCurrent(
+        expectedSessionVersion: expectedSessionVersion,
+      );
+      if (!_ownsSession(expectedSessionVersion) || data == null) return;
       _serverLockVersion =
           (data['lock_version'] as num?)?.toInt() ?? _serverLockVersion;
       _restoreServerCooldowns(data['cooldowns'], preserveLocalCooldowns: true);
@@ -1312,7 +2906,6 @@ class TrainingGameController extends GetxController
         // 後続操作がなければ、拒否された操作の楽観更新を正本へ戻します。
         _initializeServerState(data, restoreLocalStateOverride: false);
         _hasUnsyncedLocalState = false;
-        _finalSyncCompleted = true;
         await _saveLocalGameState();
       }
     } catch (_) {
@@ -1334,15 +2927,23 @@ class TrainingGameController extends GetxController
       isCooldownAction(type) && !isCooldownEnabled(type);
 
   /// 同期に失敗した場合は端末側の先行変更を破棄し、サーバー状態へ戻します。
-  Future<void> _restoreAuthoritativeStateAfterSyncFailure() async {
+  Future<void> _restoreAuthoritativeStateAfterSyncFailure({
+    required int expectedSessionVersion,
+  }) async {
     _pendingStageIndex = null;
     _pendingStageSyncQueued = false;
+    if (!_ownsSession(expectedSessionVersion)) return;
     await MySharedPref.clearTrainingGameLocalState();
+    if (!_ownsSession(expectedSessionVersion)) return;
     try {
-      final data = await _serverProvider.fetchCurrent();
-      if (!_isDisposed && data != null) _initializeServerState(data);
+      final data = await _serverProvider.fetchCurrent(
+        expectedSessionVersion: expectedSessionVersion,
+      );
+      if (_ownsSession(expectedSessionVersion) && data != null) {
+        _initializeServerState(data, restoreLocalStateOverride: false);
+      }
     } catch (_) {
-      if (!_isDisposed) {
+      if (_ownsSession(expectedSessionVersion)) {
         isServerStateReady.value = false;
         serverErrorMessage.value = '通信状態を確認して、もう一度お試しください。';
       }
@@ -1351,6 +2952,7 @@ class TrainingGameController extends GetxController
 
   /// 同じ育成サイクルだけを対象に、途中進行のローカル復元情報を保存します。
   Future<void> _saveLocalGameState() {
+    if (!_ownsSession(_ownedSessionVersion)) return Future<void>.value();
     final playerId = _serverPlayerId;
     if (playerId == null) return Future<void>.value();
     return MySharedPref.setTrainingGameLocalState(jsonEncode({
@@ -1429,7 +3031,7 @@ class TrainingGameController extends GetxController
       }[branch];
 
   /// 行動種別をDBコードへ変換します。
-  String _actionCode(TrainingActionType type) => const {
+  static String _actionCode(TrainingActionType type) => const {
         TrainingActionType.meal: 'meal',
         TrainingActionType.clean: 'clean',
         TrainingActionType.rest: 'rest',
@@ -1440,7 +3042,7 @@ class TrainingGameController extends GetxController
       }[type]!;
 
   /// 保存済みコードを行動種別へ戻します。
-  TrainingActionType? _actionTypeFromCode(String code) => const {
+  static TrainingActionType? _actionTypeFromCode(String code) => const {
         'meal': TrainingActionType.meal,
         'clean': TrainingActionType.clean,
         'rest': TrainingActionType.rest,
@@ -1464,6 +3066,32 @@ class TrainingGameController extends GetxController
   /// 指定した行動を実行し、メーターと傾向値を更新します。
   void perform(TrainingActionType type, {MiniGameResult? miniGameResult}) {
     if (ended.value || evolutionStage.value != null) return;
+    if (!_ownsSession(_ownedSessionVersion)) {
+      syncStatusMessage.value = 'ログイン状態が変わったため、この画面では操作できません。';
+      return;
+    }
+    if (!isServerStateReady.value) {
+      logs.insert(0, 'サーバー状態を確認してから操作してください。');
+      return;
+    }
+    if (syncStatus.value == TrainingSyncStatus.rateLimited ||
+        syncStatus.value == TrainingSyncStatus.stopped ||
+        syncStatus.value == TrainingSyncStatus.outcomeUnknown ||
+        syncStatus.value == TrainingSyncStatus.rejected ||
+        syncStatus.value == TrainingSyncStatus.sessionChanged) {
+      logs.insert(0, '同期状態を確認してから次の操作をしてください。');
+      return;
+    }
+    if (_hasUnknownSyncOutcome) {
+      logs.insert(0, '前回操作の結果が未確定です。同じ操作IDでの再確認が必要です。');
+      return;
+    }
+    if (pendingSyncActionCount >= maxQueuedSyncActions) {
+      syncStatus.value = TrainingSyncStatus.queueFull;
+      syncStatusMessage.value =
+          '同期待ちが上限（$maxQueuedSyncActions件）です。今回の操作は実行していません。同期が進むまでお待ちください。';
+      return;
+    }
     if (_pendingStageIndex != null ||
         _waitingForServerRestore ||
         _syncBlockedUntilServerRestore) {
@@ -1486,6 +3114,13 @@ class TrainingGameController extends GetxController
     }
     if (type == TrainingActionType.work && !canWorkToday) {
       logs.insert(0, '仕事は1日1回までです。');
+      return;
+    }
+
+    if (!_claimPendingGameQueue()) {
+      syncStatus.value = TrainingSyncStatus.stopped;
+      syncStatusMessage.value = '別の画面で同じ育成の操作を処理中です。順序を守るため、新しい操作を停止しています。';
+      logs.insert(0, '先行操作の同期状態を確認してから続けてください。');
       return;
     }
 
@@ -1616,7 +3251,8 @@ class TrainingGameController extends GetxController
     if (_isDisposed) return;
     if (day.value > previousDay) {
       final previousSync = _debugTimeSync ?? Future<void>.value();
-      final sync = previousSync.then((_) => _syncDebugTimeAndResetDailyActions());
+      final sync =
+          previousSync.then((_) => _syncDebugTimeAndResetDailyActions());
       _debugTimeSync = sync;
       unawaited(sync.whenComplete(() {
         if (identical(_debugTimeSync, sync)) _debugTimeSync = null;
@@ -1628,19 +3264,25 @@ class TrainingGameController extends GetxController
 
   /// デバッグでゲーム内日付を進めた場合だけ、日次アクション制限も解除します。
   Future<void> _syncDebugTimeAndResetDailyActions() async {
+    final expectedSessionVersion = _ownedSessionVersion;
     try {
       await TrainingGameProvider.waitForPendingSync();
+      if (!_ownsSession(expectedSessionVersion)) return;
       final syncedData = await _serverProvider.syncDebugTime(
         stageCode: _stageCode,
         parameters: _serverParameters,
         lockVersion: _serverLockVersion,
+        expectedSessionVersion: expectedSessionVersion,
       );
+      if (!_ownsSession(expectedSessionVersion)) return;
       _serverLockVersion =
           (syncedData['lock_version'] as num?)?.toInt() ?? _serverLockVersion;
-      final data = await _serverProvider.resetDebugDailyActionUsage();
-      if (!_isDisposed) _initializeServerState(data);
+      final data = await _serverProvider.resetDebugDailyActionUsage(
+        expectedSessionVersion: expectedSessionVersion,
+      );
+      if (_ownsSession(expectedSessionVersion)) _initializeServerState(data);
     } catch (_) {
-      if (!_isDisposed) {
+      if (_ownsSession(expectedSessionVersion)) {
         logs.insert(0, 'デバッグ用の日次アクション制限をリセットできませんでした。');
       }
     }
@@ -1648,7 +3290,8 @@ class TrainingGameController extends GetxController
 
   /// デバッグ操作として育成期の初期状態にします。
   Future<void> debugStartAtTraining() async {
-    if (_pendingStageIndex != null) return;
+    if (_pendingStageIndex != null || !_ownsSession(_ownedSessionVersion))
+      return;
     try {
       final data = await _serverProvider.start(
         stageCode: 'training',
@@ -1664,12 +3307,15 @@ class TrainingGameController extends GetxController
           'tendency_tech': 0.0,
         },
         forceRestart: true,
+        expectedSessionVersion: _ownedSessionVersion,
       );
-      if (_isDisposed) return;
+      if (!_ownsSession(_ownedSessionVersion)) return;
       _resetLocalProgressForNewCycle();
       _initializeServerState(data);
     } catch (_) {
-      if (!_isDisposed) logs.insert(0, '育成期のデバッグ開始に失敗しました。');
+      if (_ownsSession(_ownedSessionVersion)) {
+        logs.insert(0, '育成期のデバッグ開始に失敗しました。');
+      }
     }
   }
 
@@ -1698,9 +3344,7 @@ class TrainingGameController extends GetxController
   }
 
   /// サーバー同期後に端末側の状態が変更されたことを記録します。
-  void _markLocalStateChanged() {
-    _finalSyncCompleted = false;
-  }
+  void _markLocalStateChanged() {}
 
   /// 状態係数、清潔補正、行動回数補正を適用して傾向値を加算します。
   void _addTrend(
@@ -1817,8 +3461,8 @@ class TrainingGameController extends GetxController
             : trainingCount.value >= 15 &&
                 ['食事', '清潔', '体調'].every((name) => meters[name]! >= 60);
     if (!ready) return;
-    _pendingStageIndex = _stageIndexFromCode(_serverNextStageCode) ??
-        stageIndex.value + 1;
+    _pendingStageIndex =
+        _stageIndexFromCode(_serverNextStageCode) ?? stageIndex.value + 1;
     secondsInStage.value = 0;
     trainingCount.value = 0;
     actionsToday.value = 0;
@@ -1880,8 +3524,7 @@ class TrainingGameController extends GetxController
     final base = _activeMainProgressBaseSeconds;
     if (base == null) return;
     final elapsedSeconds = _currentServerElapsedSeconds - base;
-    _processedActiveMainHours =
-        elapsedSeconds < 0 ? 0 : elapsedSeconds ~/ 3600;
+    _processedActiveMainHours = elapsedSeconds < 0 ? 0 : elapsedSeconds ~/ 3600;
   }
 
   /// 新しい本編段階または復帰後のサーバー時刻を進行基準にします。
@@ -1897,8 +3540,7 @@ class TrainingGameController extends GetxController
 
   /// サーバー応答の経過時間とデバッグ加算だけを、画面時計へ反映します。
   void _updateElapsedTimeFromStart() {
-    mainElapsedSeconds.value =
-        _serverElapsedSeconds +
+    mainElapsedSeconds.value = _serverElapsedSeconds +
         _elapsedTimeOffsetSeconds +
         ServerTimeClock.instance.elapsedSinceSync.inSeconds;
   }
@@ -1941,8 +3583,8 @@ class TrainingGameController extends GetxController
 
     if (stageIndex.value < stages.length - 1) {
       if (_pendingStageIndex != null) return;
-      _pendingStageIndex = _stageIndexFromCode(_serverNextStageCode) ??
-          stageIndex.value + 1;
+      _pendingStageIndex =
+          _stageIndexFromCode(_serverNextStageCode) ?? stageIndex.value + 1;
       daysInStage.value = 0;
       logs.insert(0, '成長条件を満たしました。サーバー確認後に次の段階へ進みます。');
       _queuePendingStageSync();
@@ -2031,20 +3673,34 @@ class TrainingGameController extends GetxController
 
   /// 終了状態がサーバーで育成中でなくなったことを確認します。
   Future<void> _confirmEndingSync() async {
+    final expectedSessionVersion = _ownedSessionVersion;
     try {
-      await _queueSync();
-      if (_isDisposed) return;
-      final current = await _serverProvider.fetchCurrent();
+      if (canRetryPendingSync) {
+        await retryPendingSync();
+      } else if (_syncRunning) {
+        await _syncChain;
+      } else {
+        await _queueSync();
+      }
+      if (!_ownsSession(expectedSessionVersion)) return;
+      final current = await _serverProvider.fetchCurrent(
+        expectedSessionVersion: expectedSessionVersion,
+      );
+      if (!_ownsSession(expectedSessionVersion)) return;
       if (current != null) {
-        throw StateError('終了状態がサーバーへ反映されていません。');
+        throw StateError(_hasUnknownSyncOutcome
+            ? '終了時の通信結果が不明です。同じ操作IDで再確認してください。'
+            : '終了状態がサーバーへ反映されていません。');
       }
     } catch (_) {
-      if (!_isDisposed) {
-        endingSyncError.value =
-            '終了状態を保存できません。通信状態を確認して再試行してください。';
+      if (_ownsSession(expectedSessionVersion)) {
+        endingSyncError.value = _hasUnknownSyncOutcome
+            ? '終了時の操作が反映されたか確認できません。同じ操作IDで再確認してください。'
+            : '終了状態を保存できません。通信状態を確認して再試行してください。';
       }
     } finally {
-      if (!_isDisposed) isEndingSyncPending.value = false;
+      if (_ownsSession(expectedSessionVersion))
+        isEndingSyncPending.value = false;
     }
   }
 

@@ -85,8 +85,8 @@ class SplashController extends GetxController {
       PackageInfo packageInfo = await PackageInfo.fromPlatform();
       String appVersion = packageInfo.version;
       String platform = Platform.isAndroid ? "android" : "ios";
-      String firebaseVersionKey = "${platform}_${Constants.isRelease ? "production" : "debug"}_version";
-      String isMajorKey = "${platform}_${Constants.isRelease ? "production" : "debug"}_is_major";
+      String firebaseVersionKey = "${platform}_${Constants.remoteConfigEnvironment}_version";
+      String isMajorKey = "${platform}_${Constants.remoteConfigEnvironment}_is_major";
 
       debugPrint("jakdsa ${firebaseVersionKey} ${isMajorKey}");
 
@@ -279,7 +279,7 @@ class NotificationService {
       actionButtons: actionButtons,
       schedule: scheduled
           ? NotificationInterval(
-              interval: interval,
+              interval: interval == null ? null : Duration(seconds: interval),
               repeats: false,
             )
           : null,

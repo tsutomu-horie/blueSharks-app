@@ -7,6 +7,7 @@ import 'package:koto_blue_sharks/infrastructure/navigation/routes.dart';
 
 import 'controllers/training_game.controller.dart';
 import 'controllers/training_game_new_game.controller.dart';
+import 'training_hatching_scene.dart';
 
 /// ワイヤーフレーム①「アプリ内 ゲーム起動」を表示します。
 class TrainingGameLaunchScreen extends StatefulWidget {
@@ -163,58 +164,259 @@ class _TrainingGameLaunchScreenState extends State<TrainingGameLaunchScreen> {
   }
 }
 
-/// ワイヤーフレーム②「卵獲得・ニューゲーム」を表示します。
-class TrainingGameNewGameScreen extends GetView<TrainingGameNewGameController> {
-  /// ニューゲーム画面を作成します。
+/// 新しい出会いと孵化演出を表示し、保存成功後に幼体の育成へ進みます。
+class TrainingGameNewGameScreen extends StatefulWidget {
   const TrainingGameNewGameScreen({super.key});
 
   @override
+  State<TrainingGameNewGameScreen> createState() =>
+      _TrainingGameNewGameScreenState();
+}
+
+class _TrainingGameNewGameScreenState extends State<TrainingGameNewGameScreen>
+    with WidgetsBindingObserver {
+  late final TrainingGameNewGameController _controller;
+  late final bool _forceRestart;
+  late final int _session;
+  bool _busy = false;
+  bool _hatching = false;
+  bool _hatched = false;
+  bool _foreground = true;
+  bool _didNavigate = false;
+  Map<String, dynamic>? _startedState;
+  int _sceneGeneration = 0;
+  bool _sceneLoadFailed = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = Get.find<TrainingGameNewGameController>();
+    final arguments = Get.arguments;
+    _forceRestart = arguments is Map && arguments['debugRestart'] == true;
+    _session = AuthToken.sessionVersion;
+    _foreground = WidgetsBinding.instance.lifecycleState == null ||
+        WidgetsBinding.instance.lifecycleState == AppLifecycleState.resumed;
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    _foreground = state == AppLifecycleState.resumed;
+    if (_foreground) _openStartedGame();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('ニューゲーム')),
-      body: Obx(
-        () => Padding(
-          padding: EdgeInsets.all(20.w),
-          child: Column(
-            children: [
-              const Spacer(),
-              Text('🥚', style: TextStyle(fontSize: 96.sp)),
-              SizedBox(height: 16.h),
-              const Text('新しい卵を手に入れました。'),
-              if (controller.errorMessage.value.isNotEmpty) ...[
-                SizedBox(height: 12.h),
-                Text(controller.errorMessage.value, textAlign: TextAlign.center),
-              ],
-              const Spacer(),
-              SizedBox(
-                width: double.infinity,
-                height: 52.h,
-                child: ElevatedButton(
-                  onPressed: controller.isStarting.value ? null : _startGame,
-                  child: controller.isStarting.value
-                      ? const CircularProgressIndicator()
-                      : const Text('はじめる'),
+    return PopScope(
+      canPop: !_busy,
+      child: Scaffold(
+        appBar: AppBar(title: const Text('新しい出会い')),
+        body: Stack(
+          fit: StackFit.expand,
+          children: [
+            Image.asset(
+              'assets/images/training_game/scenes/home_outdoor_day.png',
+              fit: BoxFit.cover,
+              excludeFromSemantics: true,
+            ),
+            const DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Color(0xf2effaff),
+                    Color(0xe6f5fcff),
+                    Color(0xf2ffffff),
+                  ],
                 ),
               ),
-            ],
-          ),
+            ),
+            SafeArea(
+              child: LayoutBuilder(builder: (context, constraints) {
+                return SingleChildScrollView(
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(
+                      minHeight: constraints.maxHeight,
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Column(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 7,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withValues(alpha: .85),
+                                  borderRadius: BorderRadius.circular(24),
+                                ),
+                                child: const Text(
+                                  '鮫太朗とのものがたり',
+                                  style: TextStyle(
+                                    color: Color(0xff26769a),
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 20),
+                              TrainingHatchingScene(
+                                key: ValueKey(_sceneGeneration),
+                                isPlaying: _hatching,
+                                onCompleted: _onHatched,
+                                onLoadFailed: _onSceneLoadFailed,
+                              ),
+                            ],
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.only(top: 24),
+                            child: Obx(() => Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                if (_controller.errorMessage.value.isNotEmpty)
+                                  Padding(
+                                    padding: const EdgeInsets.only(bottom: 16),
+                                    child: Semantics(
+                                      liveRegion: true,
+                                      child: Text(_controller.errorMessage.value,
+                                        textAlign: TextAlign.center,
+                                        style: const TextStyle(color: Color(0xffa12b2b))),
+                                    ),
+                                  ),
+                                SizedBox(
+                                  width: double.infinity,
+                                  height: 54,
+                                  child: ElevatedButton(
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: const Color(0xff126694),
+                                      foregroundColor: Colors.white,
+                                      disabledBackgroundColor: const Color(0xff6b9db7),
+                                      disabledForegroundColor: Colors.white,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(16),
+                                      ),
+                                    ),
+                                    onPressed: _busy ? null : _startGame,
+                                    child: Row(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        if (_controller.isStarting.value) ...[
+                                          const SizedBox(
+                                            width: 18,
+                                            height: 18,
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 2,
+                                              color: Colors.white,
+                                            ),
+                                          ),
+                                          const SizedBox(width: 10),
+                                        ],
+                                        Text(_controller.isStarting.value
+                                            ? '育成を準備しています…'
+                                            : _busy
+                                                ? '卵がかえっています…'
+                                                : _hatched
+                                                    ? 'もう一度接続する'
+                                                    : 'はじめる',
+                                            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            )),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              }),
+            ),
+          ],
         ),
       ),
     );
   }
 
-  /// 開始APIの成功後にだけ育成画面へ遷移します。
   void _startGame() {
-    final arguments = Get.arguments;
-    final forceRestart = arguments is Map && arguments['debugRestart'] == true;
-    controller.startNewGame(forceRestart: forceRestart).then((startedState) {
-      if (startedState == null) return;
-      // 開始APIのレスポンスを引き渡し、画面表示時の再取得を省略します。
-      // 新サイクルであることを明示し、旧ローカル状態の復元を禁止します。
-      final newCycleState = Map<String, dynamic>.from(startedState)
-        ..['_new_cycle'] = true;
-      Get.offNamed(Routes.TRAINING_GAME, arguments: newCycleState);
+    if (_busy) return;
+    _controller.errorMessage.value = '';
+    setState(() {
+      _busy = true;
+      _hatching = true;
+      if (_sceneLoadFailed) {
+        _sceneGeneration++;
+        _sceneLoadFailed = false;
+      }
     });
+    if (_hatched) _submitStart();
+  }
+
+  void _onHatched() {
+    if (!mounted || _hatched) return;
+    _hatched = true;
+    _submitStart();
+  }
+
+  void _onSceneLoadFailed() {
+    if (!mounted) return;
+    _controller.errorMessage.value = '素材を読み込めませんでした。もう一度お試しください。';
+    setState(() {
+      _busy = false;
+      _hatching = false;
+      _sceneLoadFailed = true;
+    });
+  }
+
+  Future<void> _submitStart() async {
+    if (!mounted) return;
+    if (_session != AuthToken.sessionVersion) {
+      _controller.errorMessage.value =
+          'ログイン状態が変わりました。画面を閉じて、もう一度お試しください。';
+      setState(() => _busy = false);
+      return;
+    }
+    final state = await _controller.startNewGame(forceRestart: _forceRestart);
+    if (!mounted) return;
+    if (_session != AuthToken.sessionVersion) {
+      _controller.errorMessage.value =
+          'ログイン状態が変わりました。画面を閉じて、もう一度お試しください。';
+      setState(() => _busy = false);
+      return;
+    }
+    if (state == null) {
+      setState(() => _busy = false);
+      return;
+    }
+    _startedState = state;
+    _openStartedGame();
+  }
+
+  void _openStartedGame() {
+    if (!mounted || !_foreground || _didNavigate || _startedState == null) return;
+    if (_session != AuthToken.sessionVersion) {
+      _controller.errorMessage.value =
+          'ログイン状態が変わりました。画面を閉じて、もう一度お試しください。';
+      setState(() {
+        _busy = false;
+        _startedState = null;
+      });
+      return;
+    }
+    _didNavigate = true;
+    // 通常再開の冪等応答には_new_cycleを付けず、保存済み進行を維持します。
+    Get.offNamed(Routes.TRAINING_GAME, arguments: _startedState);
   }
 }
 

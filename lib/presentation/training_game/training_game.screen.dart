@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
@@ -13,6 +14,8 @@ import 'mini_games/pass_and_run/pass_and_run_game.screen.dart';
 import 'mini_games/tackle/tackle_game.screen.dart';
 import 'models/training_game_models.dart';
 import 'sametaroh_asset.dart';
+import 'training_home_background.dart';
+import 'training_home_roaming_character.dart';
 
 /// 参照HTMLのスマートフォン画面部分だけをアプリ用に再現します。
 class TrainingGameScreen extends GetView<TrainingGameController> {
@@ -37,9 +40,24 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
                           ? _buildEndingFlow(context)
                           : Column(
                               children: [
-                                _buildStatusBar(context),
-                                _buildHud(context),
-                                Expanded(child: _buildRoom(context)),
+                                Expanded(
+                                  child: Stack(
+                                    children: [
+                                      const Positioned.fill(
+                                        child: TrainingHomeBackground(),
+                                      ),
+                                      Column(
+                                        children: [
+                                          if (controller.syncStatusMessage.value
+                                              .isNotEmpty)
+                                            _buildSyncStatusBanner(context),
+                                          _buildHud(context),
+                                          Expanded(child: _buildRoom(context)),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                ),
                                 _buildCareBar(context),
                               ],
                             )
@@ -95,6 +113,8 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
 
   /// 通信必須の育成ゲームで、接続失敗時に再試行を案内します。
   Widget _buildConnectionError() {
+    final sessionChanged =
+        controller.syncStatus.value == TrainingSyncStatus.sessionChanged;
     return Center(
       child: Padding(
         padding: EdgeInsets.all(24.w),
@@ -107,11 +127,61 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
             ),
             SizedBox(height: 16.h),
             ElevatedButton(
-              onPressed: controller.retryRestoreServerState,
-              child: const Text('再試行'),
+              onPressed: sessionChanged
+                  ? () => Get.back<void>()
+                  : controller.retryRestoreServerState,
+              child: Text(sessionChanged ? '閉じる' : '再試行'),
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildSyncStatusBanner(BuildContext context) {
+    final status = controller.syncStatus.value;
+    return Container(
+      width: double.infinity,
+      color: const Color(0xfffff2cc),
+      padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            controller.syncStatusMessage.value,
+            style: TextStyle(fontSize: 12.sp),
+          ),
+          if (status == TrainingSyncStatus.stopped ||
+              status == TrainingSyncStatus.rateLimited ||
+              status == TrainingSyncStatus.rejected ||
+              status == TrainingSyncStatus.outcomeUnknown)
+            Wrap(
+              spacing: 8.w,
+              children: [
+                if (controller.canRetryPendingSync)
+                  TextButton(
+                    onPressed: controller.retryPendingSync,
+                    child: Text(status == TrainingSyncStatus.outcomeUnknown
+                        ? controller.pendingSyncActionCount > 0
+                            ? '同じ操作IDで再確認'
+                            : 'サーバー状態を再確認'
+                        : '再試行'),
+                  ),
+                if (controller.canDiscardPendingSync &&
+                    (status == TrainingSyncStatus.stopped ||
+                        status == TrainingSyncStatus.rateLimited))
+                  TextButton(
+                    onPressed: controller.discardPendingSync,
+                    child: const Text('未送信操作を破棄'),
+                  ),
+                if (status == TrainingSyncStatus.rejected)
+                  TextButton(
+                    onPressed: controller.acknowledgeSyncNotice,
+                    child: const Text('確認して続ける'),
+                  ),
+              ],
+            ),
+        ],
       ),
     );
   }
@@ -204,7 +274,14 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
           if (syncError.isNotEmpty) syncError,
         ].join('\n\n'),
         buttonLabel: syncError.isNotEmpty
-            ? '再試行'
+            ? controller.syncStatus.value ==
+                        TrainingSyncStatus.outcomeUnknown &&
+                    controller.pendingSyncActionCount > 0
+                ? '同じ操作IDで再確認'
+                : controller.syncStatus.value ==
+                        TrainingSyncStatus.outcomeUnknown
+                    ? 'サーバー状態を再確認'
+                    : '再試行'
             : isPositive
                 ? '図鑑へ登録'
                 : '次の卵へ',
@@ -389,98 +466,76 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
     );
   }
 
-  /// 参照画面上部のステータスバーとホーム戻り操作を表示します。
-  Widget _buildStatusBar(BuildContext context) {
-    return Container(
-      color: const Color(0xffe9e9e9),
-      padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 6.h),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Row(
-            children: [
-              Text(
-                '鮫太朗育成',
-                style: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.w700),
-              ),
-              IconButton(
-                onPressed: () => _showDebugMenu(context),
-                tooltip: 'デバッグコマンド',
-                visualDensity: VisualDensity.compact,
-                padding: EdgeInsets.zero,
-                constraints: BoxConstraints(minWidth: 32.w, minHeight: 32.h),
-                icon: Icon(Icons.bug_report_outlined, size: 18.sp),
-              ),
-            ],
-          ),
-          Row(
-            children: [
-              Text(
-                controller.clockLabel,
-                style: TextStyle(fontSize: 11.sp, fontWeight: FontWeight.w700),
-              ),
-              SizedBox(width: 12.w),
-              Text(
-                '▮▮▮ ᯤ 🔋',
-                style: TextStyle(fontSize: 11.sp, fontWeight: FontWeight.w700),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  /// 4つの可視パラメータと退出ボタンを表示します。
+  /// 退出ボタンと、Debugビルド限定のパラメータ・開発操作を表示します。
   Widget _buildHud(BuildContext context) {
     return Container(
-      color: const Color(0xfffafafa),
-      padding: EdgeInsets.all(8.w),
+      padding: EdgeInsets.fromLTRB(8.w, 16.h, 8.w, 8.w),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
-            child: Container(
-              padding: EdgeInsets.all(6.w),
-              decoration: BoxDecoration(
-                border: Border.all(color: Colors.black, width: 2),
-                borderRadius: BorderRadius.circular(4.r),
-              ),
-              child: GridView.count(
-                crossAxisCount: 2,
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                childAspectRatio: 2.2,
-                children: const ['食事', '仕事', '清潔', '体調']
-                    .map((name) => _buildMeterByName(name))
-                    .toList(),
-              ),
-            ),
-          ),
-          SizedBox(width: 8.w),
-          SizedBox(
-            width: 52.w,
-            height: 52.w,
-            child: ElevatedButton(
-              onPressed: controller.isReturningHome.value
-                  ? null
-                  : () => _returnHomeAfterSync(context),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xff5ee05e),
-                foregroundColor: Colors.black,
-                padding: EdgeInsets.zero,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(6.r),
+          if (kDebugMode) ...[
+            Expanded(
+              child: Container(
+                padding: EdgeInsets.all(6.w),
+                decoration: BoxDecoration(
+                  color: const Color(0xfffafafa),
+                  border: Border.all(color: Colors.black, width: 2),
+                  borderRadius: BorderRadius.circular(4.r),
+                ),
+                child: GridView.count(
+                  crossAxisCount: 2,
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  childAspectRatio: 2.2,
+                  children: const ['食事', '仕事', '清潔', '体調']
+                      .map((name) => _buildMeterByName(name))
+                      .toList(),
                 ),
               ),
-              child: controller.isReturningHome.value
-                  ? SizedBox(
-                      width: 22.w,
-                      height: 22.w,
-                      child: const CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : Text('🚪', style: TextStyle(fontSize: 22.sp)),
             ),
+            SizedBox(width: 8.w),
+          ] else
+            const Spacer(),
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              SizedBox(
+                width: 52.w,
+                height: 52.w,
+                child: ElevatedButton(
+                  onPressed: controller.isReturningHome.value
+                      ? null
+                      : () => _returnHomeAfterSync(context),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xff5ee05e),
+                    foregroundColor: Colors.black,
+                    padding: EdgeInsets.zero,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(6.r),
+                    ),
+                  ),
+                  child: controller.isReturningHome.value
+                      ? SizedBox(
+                          width: 22.w,
+                          height: 22.w,
+                          child:
+                              const CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : Text('🚪', style: TextStyle(fontSize: 22.sp)),
+                ),
+              ),
+              if (kDebugMode) ...[
+                SizedBox(height: 36.h),
+                IconButton(
+                  onPressed: () => _showDebugMenu(context),
+                  tooltip: 'デバッグコマンド',
+                  visualDensity: VisualDensity.compact,
+                  padding: EdgeInsets.zero,
+                  constraints: BoxConstraints(minWidth: 32.w, minHeight: 32.h),
+                  icon: Icon(Icons.bug_report_outlined, size: 18.sp),
+                ),
+              ],
+            ],
           ),
         ],
       ),
@@ -490,17 +545,18 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
   /// 最新状態の同期完了後にホームへ戻ります。
   Future<void> _returnHomeAfterSync(BuildContext context) async {
     if (controller.isReturningHome.value) return;
+    var synchronized = false;
     try {
-      await controller.syncBeforeReturningHome();
+      synchronized = await controller.syncBeforeReturningHome();
     } catch (_) {
-      // 通信失敗時も画面を閉じ、次回起動時の再同期へ委ねます。
-    } finally {
-      // 戻る操作で先に画面が閉じられても、別画面を誤って閉じないようにします。
-      if (context.mounted &&
-          (ModalRoute.of(context)?.isCurrent ?? false) &&
-          Get.currentRoute == Routes.TRAINING_GAME) {
-        Get.back<void>();
-      }
+      // 未確定の操作がある間は画面を閉じず、状態確認または破棄を案内します。
+    }
+    if (!synchronized) return;
+    // 戻る操作で先に画面が閉じられても、別画面を誤って閉じないようにします。
+    if (context.mounted &&
+        (ModalRoute.of(context)?.isCurrent ?? false) &&
+        Get.currentRoute == Routes.TRAINING_GAME) {
+      Get.back<void>();
     }
   }
 
@@ -584,45 +640,12 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
     );
   }
 
-  /// 壁・床・図鑑・キャラクター・練習ボタンを配置します。
+  /// 支給屋外背景・図鑑・キャラクター・練習ボタンを配置します。
   Widget _buildRoom(BuildContext context) {
     final canTrain =
         controller.stageIndex.value >= 2 && !controller.ended.value;
     return Stack(
       children: [
-        Positioned.fill(
-          child: Column(
-            children: [
-              Expanded(child: Container(color: const Color(0xffd8d8d8))),
-              Expanded(child: Container(color: const Color(0xff8a5a2b))),
-            ],
-          ),
-        ),
-        Positioned(
-          top: 70.h,
-          left: 0,
-          right: 0,
-          child: Center(
-            child: Text(
-              '壁',
-              style: TextStyle(
-                color: const Color(0xff8d8d8d),
-                fontSize: 15.sp,
-              ),
-            ),
-          ),
-        ),
-        Positioned(
-          top: 235.h,
-          left: 60.w,
-          child: Text(
-            '床',
-            style: TextStyle(
-              color: const Color(0xfff0e3d4),
-              fontSize: 15.sp,
-            ),
-          ),
-        ),
         Positioned(
           left: 12.w,
           bottom: 12.h,
@@ -635,19 +658,34 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
           left: 0,
           right: 0,
           bottom: 126.h,
-          child: Column(
-            children: [
-              _buildCharacterBadge(),
-              _buildCharacterVisual(),
-              Text(
-                controller.currentStage.name,
-                style: TextStyle(
-                  fontSize: 10.sp,
-                  color: const Color(0xff0b3a5b),
-                  backgroundColor: Colors.white70,
-                ),
+          child: TrainingHomeRoamingCharacter(
+            enabled: canTrain,
+            width: 220.w,
+            height: 224.h,
+            travelDistance: 28.w,
+            preparationKey: _bodyKey ?? 'normal',
+            prepareWalk: (context) =>
+                TrainingHomeCharacterFrameSet.forBodyKey(_bodyKey)
+                    .precache(context),
+            builder: (context, isWalking) => Align(
+              alignment: Alignment.bottomCenter,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (kDebugMode) _buildCharacterBadge(),
+                  _buildCharacterVisual(isWalking: isWalking),
+                  if (kDebugMode)
+                    Text(
+                      controller.currentStage.name,
+                      style: TextStyle(
+                        fontSize: 10.sp,
+                        color: const Color(0xff0b3a5b),
+                        backgroundColor: Colors.white70,
+                      ),
+                    ),
+                ],
               ),
-            ],
+            ),
           ),
         ),
         Positioned(
@@ -690,12 +728,14 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
   }
 
   /// 確定した大別の立ち絵を表示し、未判定はノーマルを保持します。
-  Widget _buildCharacterVisual() {
+  Widget _buildCharacterVisual({bool isWalking = false}) {
     if (controller.stageIndex.value == 1) {
-      return _buildSuppliedStatic(
-        SametarohAssets.newbornFrame,
-        width: 92,
-        height: 184,
+      return TrainingHomeIdleMotion(
+        child: _buildSuppliedStatic(
+          SametarohAssets.newbornFrame,
+          width: 92,
+          height: 184,
+        ),
       );
     }
     if (controller.stageIndex.value < 2) {
@@ -705,12 +745,13 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
       );
     }
     final bodyKey = _bodyKey;
-    return SametarohAnimatedImage(
-      frames: SametarohAssets.idleFramesForBodyKey(bodyKey),
-      width: bodyKey == null ? 92.w : 128.w,
+    final frames = TrainingHomeCharacterFrameSet.forBodyKey(bodyKey);
+    return TrainingHomeCharacterAnimation(
+      key: ValueKey<String>(bodyKey ?? 'normal'),
+      frameSet: frames,
+      isWalking: isWalking,
+      width: 128.w,
       height: 184.h,
-      fit: bodyKey == null ? BoxFit.cover : BoxFit.contain,
-      alignment: bodyKey == null ? Alignment.center : Alignment.bottomCenter,
       semanticLabel: '鮫太朗',
     );
   }
@@ -937,8 +978,12 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
       padding: EdgeInsets.symmetric(vertical: 8.h, horizontal: 4.w),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children:
-            careActions.map((type) => _buildCareButton(context, type)).toList(),
+        children: careActions
+            .where((type) =>
+                controller.stageIndex.value != 1 ||
+                SametarohAssets.childCareActions.contains(type))
+            .map((type) => _buildCareButton(context, type))
+            .toList(),
       ),
     );
   }
@@ -1020,6 +1065,10 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
     BuildContext context,
     TrainingActionType type,
   ) async {
+    // 幼体から保持された古いcallbackでも、仕事の照会・画面を開きません。
+    if (controller.stageIndex.value < 2 && type == TrainingActionType.work) {
+      return;
+    }
     if (type == TrainingActionType.tackle ||
         type == TrainingActionType.passAndRun) {
       final screen = type == TrainingActionType.tackle
@@ -1036,7 +1085,7 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
     if (type == TrainingActionType.work) {
       if (controller.isWorkPreparationPending) return;
       final canWork = await controller.prepareWork();
-      if (!context.mounted) {
+      if (!context.mounted || controller.stageIndex.value < 2) {
         controller.finishWorkPreparation();
         return;
       }
@@ -1061,7 +1110,9 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
         MaterialPageRoute(
           builder: (_) => TrainingGameCareActionScreen(
             actionType: type,
-            bodyKey: _bodyKey,
+            bodyKey: controller.stageIndex.value == 1
+                ? SametarohAssets.childBodyKey
+                : _bodyKey,
           ),
         ),
       );

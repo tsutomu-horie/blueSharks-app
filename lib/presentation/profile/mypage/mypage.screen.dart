@@ -121,13 +121,14 @@ class MypageScreen extends GetView<MypageController> {
                         AspectRatio(
                             aspectRatio: 16 / 10,
                             child: DottedBorder(
-                              borderType: BorderType.RRect,
-                              radius: Radius.circular(12.r),
-                              padding: EdgeInsets.zero,
-                              color: isEitherMatched ?
-                              DangerColor.main : WarningColor.main,
-                              strokeWidth: 1,
-                              dashPattern: const [5, 5],
+                              options: RoundedRectDottedBorderOptions(
+                                radius: Radius.circular(12.r),
+                                padding: EdgeInsets.zero,
+                                color: isEitherMatched ?
+                                    DangerColor.main : WarningColor.main,
+                                strokeWidth: 1,
+                                dashPattern: const [5, 5],
+                              ),
                               child: Container(
                                 padding: EdgeInsets.symmetric(
                                     horizontal: isEitherMatched ? 16.w : 20.w,
@@ -925,16 +926,12 @@ Widget notVerifiedUserCard(MypageController controller) {
                     .main,),
               SizedBox(height: 30.h,),
               DottedBorder(
-                color: Colors.blue,
-                // Border color
-                strokeWidth: 1.w,
-                // Border thickness
-                dashPattern: const [6, 3],
-                // Dash and gap lengths
-                borderType: BorderType.RRect,
-                // Rounded Rectangular border
-                radius: Radius.circular(12.r),
-                // Corner radius for rounded rectangle
+                options: RoundedRectDottedBorderOptions(
+                  color: Colors.blue,
+                  strokeWidth: 1.w,
+                  dashPattern: const [6, 3],
+                  radius: Radius.circular(12.r),
+                ),
                 child: Container(
                     padding: EdgeInsets.symmetric(
                         horizontal: 20.w, vertical: 26.h),

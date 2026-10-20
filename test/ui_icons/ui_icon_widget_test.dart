@@ -139,13 +139,15 @@ void main() {
           .rootSemanticsNode!);
       final tabs = nodes
           .where((node) =>
-              node.hasFlag(SemanticsFlag.isButton) &&
+              node.flagsCollection.isButton &&
               labels.any((label) => node.label.contains(label)))
           .toList();
       expect(tabs, hasLength(6));
-      expect(tabs.where((node) => node.hasFlag(SemanticsFlag.isSelected)),
+      expect(
+          tabs.where(
+              (node) => node.flagsCollection.isSelected == ui.Tristate.isTrue),
           hasLength(1));
-      expect(tabs[selected].hasFlag(SemanticsFlag.isSelected), isTrue);
+      expect(tabs[selected].flagsCollection.isSelected, ui.Tristate.isTrue);
       semantics.dispose();
       expect(tester.takeException(), isNull);
     });
