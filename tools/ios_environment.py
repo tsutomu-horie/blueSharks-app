@@ -20,8 +20,8 @@ FILES = (
     "ios/Flutter/ephemeral/flutter_native_integration.env",
 )
 KEYS = ("APP_ENV", "USE_LOCAL_AUTH_API", "LOCAL_AUTH_API_HOST")
-PRESETS = ("local", "test-server", "ota-test")
-DEFAULT_HOST = "192.168.11.20"
+PRESETS = ("local", "test", "production")
+LEGACY_PRESETS = {"test-server": "test", "ota-test": "test"}
 SELECTION = "ios/Flutter/SelectedEnvironment.xcconfig"
 SELECTION_HEADER = "// Selected by tools/ios_environment.py; rerun select if other defines change.\n"
 LINE = re.compile(r'^(?:DART_DEFINES=([^\r\n]*)|export "DART_DEFINES=([^"\r\n]*)")\r?$', re.M)
@@ -69,31 +69,33 @@ def valid_host(host):
     )) and len(host) <= 253
 
 
+def normalize(preset):
+    return LEGACY_PRESETS.get(preset, preset)
+
+
 def desired(preset, host=None):
+    preset = normalize(preset)
     if host is not None and preset != "local":
         raise ConfigurationError("--host is available only for local.")
     if preset == "local":
-        host = DEFAULT_HOST if host is None else host
-        if not valid_host(host):
-            raise ConfigurationError("Use an IPv4 address or hostname, without a scheme, port, or path.")
-        return {"USE_LOCAL_AUTH_API": "true", "LOCAL_AUTH_API_HOST": host}
-    if preset == "test-server":
-        return {}
-    if preset == "ota-test":
-        return {"APP_ENV": "ota-test"}
+        if host is None or not valid_host(host):
+            raise ConfigurationError("local requires --host with an IPv4 address or hostname, without a scheme, port, or path.")
+        return {"APP_ENV": "local", "LOCAL_AUTH_API_HOST": host}
+    if preset in ("test", "production"):
+        return {"APP_ENV": preset}
     raise ConfigurationError("Unknown preset.")
 
 
 def classify(values):
-    if values == {}:
-        return "test-server"
-    if values == {"APP_ENV": "ota-test"}:
-        return "ota-test"
-    if (set(values) == {"USE_LOCAL_AUTH_API", "LOCAL_AUTH_API_HOST"}
-            and values["USE_LOCAL_AUTH_API"] == "true"
+    if values in ({"APP_ENV": "test"}, {"APP_ENV": "ota-test"}):
+        return "test"
+    if values == {"APP_ENV": "production"}:
+        return "production"
+    if (set(values) == {"APP_ENV", "LOCAL_AUTH_API_HOST"}
+            and values["APP_ENV"] == "local"
             and valid_host(values["LOCAL_AUTH_API_HOST"])):
         return "local"
-    raise ConfigurationError("Stale, conflicting, or unsupported managed defines; select a preset.")
+    raise ConfigurationError("Select local, test, or production explicitly; managed defines are missing or conflicting.")
 
 
 @dataclass
@@ -183,21 +185,29 @@ def read_selection(root):
     try:
         text = path.read_text(encoding="utf-8")
         match = re.fullmatch(re.escape(SELECTION_HEADER) +
-                             r"BS_IOS_PRESET=(local|test-server|ota-test)\nDART_DEFINES=([^\r\n]*)\n", text)
+                             r"BS_IOS_PRESET=(local|test|production|test-server|ota-test)\nDART_DEFINES=([^\r\n]*)\n", text)
         if match is None:
             raise ConfigurationError("Persistent selection is malformed; preserve it and inspect before proceeding.")
         tokens = decode(match.group(2))
-        if classify(targets(tokens)) != match.group(1):
+        values = targets(tokens)
+        # 旧設定はselectによる移行のためだけに読み取ります。
+        legacy_local = (match.group(1) == "local"
+                        and set(values) == {"USE_LOCAL_AUTH_API", "LOCAL_AUTH_API_HOST"}
+                        and values["USE_LOCAL_AUTH_API"] == "true"
+                        and valid_host(values["LOCAL_AUTH_API_HOST"]))
+        legacy_test = match.group(1) == "test-server" and not values
+        if not (legacy_local or legacy_test) and classify(values) != normalize(match.group(1)):
             raise ConfigurationError("Persistent preset and managed defines disagree.")
         if selection_text(match.group(1), tokens) != text:
             raise ConfigurationError("Persistent selection is not canonical.")
-        return {"path": path, "preset": match.group(1), "tokens": tokens}
+        return {"path": path, "preset": normalize(match.group(1)), "tokens": tokens}
     except UnicodeError:
         raise ConfigurationError("Persistent selection is not UTF-8.") from None
 
 
 def verify_persistent(configs, selection, expected=None, inherited=None):
     values = targets(selection["tokens"])
+    classify(values)  # 旧ローカル設定のままビルドして起動時に失敗することを防ぎます。
     for config in configs:
         if unrelated(config.tokens) != unrelated(selection["tokens"]):
             raise ConfigurationError("Other defines changed after selection; rerun select to preserve them before building.")
@@ -280,22 +290,18 @@ def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     commands = parser.add_subparsers(dest="command", required=True)
     choose = commands.add_parser("select", help="update only the three managed define keys")
-    choose.add_argument("preset", choices=PRESETS)
-    choose.add_argument("--host", help=f"local IPv4/hostname (default {DEFAULT_HOST}; reachability is not tested)")
+    choose.add_argument("preset", choices=(*PRESETS, *LEGACY_PRESETS))
+    choose.add_argument("--host", help="required for local: reachable IPv4/hostname (reachability is not tested)")
     choose.add_argument("--dry-run", action="store_true")
     commands.add_parser("status", help="check effective selection in all three generated files")
     check = commands.add_parser("check", help="require a consistent preset")
     check.add_argument("--expect", choices=PRESETS)
-    commands.add_parser("ota-check", help="OTA-only preflight; requires explicit APP_ENV=ota-test; never builds")
+    commands.add_parser("ota-check", help="compatibility alias for check --expect test; never builds")
     commands.add_parser("xcode-check", help="Flutter build-phase guard for the persistent selection; never builds")
     args = parser.parse_args(argv)
     try:
         root = Path(__file__).resolve().parents[1]
         selection = read_selection(root)
-        if args.command == "xcode-check" and selection is None:
-            print(json.dumps({"persistent_selection": False, "default_build_unchanged": True,
-                              "build_or_network_started": False}))
-            return 0
         configs = read_all(root)
         if args.command == "select":
             values = desired(args.preset, args.host)
@@ -307,18 +313,20 @@ def main(argv=None):
             result = select(configs, values, args.dry_run, root)
             if not args.dry_run:
                 result["files_checked"] = verify_persistent(read_all(root), read_selection(root),
-                                                          args.preset)["files_checked"]
+                                                          normalize(args.preset))["files_checked"]
         else:
-            expected = "ota-test" if args.command == "ota-check" else getattr(args, "expect", None)
+            expected = "test" if args.command == "ota-check" else getattr(args, "expect", None)
             if args.command == "ota-check" and selection is None:
-                raise ConfigurationError("OTA requires a persistent selection; run select ota-test first.")
+                raise ConfigurationError("Select test before the OTA compatibility check.")
             inherited = os.environ.get("DART_DEFINES")
             if args.command == "xcode-check" and inherited is None:
                 raise ConfigurationError("Xcode did not resolve DART_DEFINES; do not build.")
             result = (verify_persistent(configs, selection, expected, inherited) if selection is not None
                       else verify(configs, expected, inherited))
-            if args.command == "ota-check":
-                result["required_flutter_argument"] = "--dart-define=APP_ENV=ota-test"
+            values = result["managed_defines"]
+            result["required_flutter_arguments"] = [
+                f"--dart-define={key}={value}" for key, value in values.items()
+            ]
         result["build_or_network_started"] = False
         print(json.dumps(result, ensure_ascii=False, indent=2))
         return 0

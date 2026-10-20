@@ -5,15 +5,7 @@ import 'app_environment.dart';
 class Constants {
   static const isRelease = kReleaseMode;
 
-  // Debugビルドでdart-defineを指定した場合だけローカルAPIを使います。
-  static const useLocalAuthApi = !kReleaseMode &&
-      bool.fromEnvironment('USE_LOCAL_AUTH_API', defaultValue: false);
-
-  // Android実機などからLAN内のローカルAPIへ接続するためのホスト指定です。
-  // 例: --dart-define=LOCAL_AUTH_API_HOST=192.168.1.10
-  static const _localAuthApiHost = String.fromEnvironment(
-    'LOCAL_AUTH_API_HOST',
-  );
+  static const useLocalAuthApi = AppEnvironment.usesLocalServices;
 
   static const baseUrl = AppEnvironment.wordpressApiBaseUrl;
   static const remoteConfigEnvironment = AppEnvironment.remoteConfigEnvironment;
@@ -21,16 +13,7 @@ class Constants {
   /// 実行端末から到達できる認証APIのURLを返します。
   static String get baseUrlAuthApi {
     AppEnvironment.validate();
-    if (!useLocalAuthApi) {
-      return AppEnvironment.authApiBaseUrl;
-    }
-    // 指定がない場合は、既存どおりAndroidエミュレーター用アドレスを使用します。
-    final host = _localAuthApiHost.isNotEmpty
-        ? _localAuthApiHost
-        : defaultTargetPlatform == TargetPlatform.android
-            ? '10.0.2.2'
-            : '127.0.0.1';
-    return 'http://$host:8000/api/mobile/v1/';
+    return AppEnvironment.authApiBaseUrl;
   }
 
   static const topic = AppEnvironment.notificationTopic;

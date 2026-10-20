@@ -6,19 +6,6 @@ import 'package:koto_blue_sharks/utils/constant.dart';
 void main() {
   test('auth API URL follows the selected connection environment', () {
     AppEnvironment.validate();
-    if (Constants.useLocalAuthApi) {
-      const host = String.fromEnvironment('LOCAL_AUTH_API_HOST');
-      final effectiveHost = host.isNotEmpty
-          ? host
-          : defaultTargetPlatform == TargetPlatform.android
-              ? '10.0.2.2'
-              : '127.0.0.1';
-      expect(
-        Constants.baseUrlAuthApi,
-        'http://$effectiveHost:8000/api/mobile/v1/',
-      );
-      return;
-    }
     expect(Constants.baseUrlAuthApi, AppEnvironment.authApiBaseUrl);
   });
 
@@ -43,7 +30,7 @@ void main() {
       expect(Constants.isRelease, kReleaseMode);
       expect(
         Constants.useLocalAuthApi,
-        !kReleaseMode && const bool.fromEnvironment('USE_LOCAL_AUTH_API'),
+        AppEnvironment.usesLocalServices,
       );
       expect(Constants.shopUrl, 'https://bluesharks.base.shop/');
       expect(
