@@ -66,8 +66,10 @@ class MenuScreen extends GetView<MenuListController> {
                   child: Obx(() {
                     return AnimatedContainer(
                       duration: const Duration(milliseconds: 300),
+                      constraints: BoxConstraints(minHeight: 44.h),
+                      alignment: Alignment.center,
                       padding:
-                      EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+                      EdgeInsets.symmetric(horizontal: 16.w, vertical: 6.h),
                       decoration: BoxDecoration(
                         border: Border(
                           bottom: BorderSide(
@@ -83,7 +85,7 @@ class MenuScreen extends GetView<MenuListController> {
                           Text(
                             tabs[index],
                             style: TextStyle(
-                              fontSize: 7.sp,
+                              fontSize: 14.sp,
                               fontWeight: FontWeight.w500,
                               color: controller.selectedIndex.value == index
                                   ? Colors.white
