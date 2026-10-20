@@ -309,32 +309,6 @@ void main() {
     expect(c.websiteSchedule.value!.matches, hasLength(26));
     c.onDelete();
   });
-  testWidgets('320/375/430幅で4試合が同時に収まり、5件目以降へ横送りできる', (tester) async {
-    tester.view.devicePixelRatio = 1;
-    addTearDown(tester.view.resetPhysicalSize);
-    addTearDown(tester.view.resetDevicePixelRatio);
-    final data = WebsiteSchedule.parse(source, url)!;
-    for (final width in [320.0, 375.0, 430.0]) {
-      tester.view.physicalSize = Size(width, 1400);
-      await tester.pumpWidget(app(data, key: ValueKey(width)));
-      await tester.pumpAndSettle();
-      for (var index = 0; index < 4; index++) {
-        final card =
-            tester.getRect(find.byKey(ValueKey('website-match-card-$index')));
-        expect(card.left, greaterThanOrEqualTo(0));
-        expect(card.right, lessThanOrEqualTo(width));
-      }
-      final fifth = find.byKey(const ValueKey('website-match-card-4'));
-      expect(tester.getRect(fifth).right, greaterThan(width));
-      final list = find.byKey(const ValueKey('website-matches-list'));
-      await tester.dragFrom(
-          tester.getTopLeft(list) + Offset(width / 2, 12), Offset(-width, 0));
-      await tester.pumpAndSettle();
-      expect(tester.getRect(fifth).left, lessThan(width));
-      expect(tester.takeException(), isNull);
-    }
-  });
-
   testWidgets('320/375/430幅・文字1/2倍で長い原文と4ボタンが溢れず横送りできる', (tester) async {
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
@@ -351,9 +325,8 @@ void main() {
         expect(find.text('2026 – 2027 シーズン'), findsOneWidget);
         expect(find.text('K.O 未定'), findsWidgets);
         expect(tester.takeException(), isNull, reason: '$width/$scale');
-        final list = find.byKey(const ValueKey('website-matches-list'));
-        await tester.dragFrom(
-            tester.getTopLeft(list) + Offset(width / 2, 12), Offset(-width, 0));
+        await tester.drag(find.byKey(const ValueKey('website-matches-list')),
+            Offset(-width, 0));
         await tester.pumpAndSettle();
         expect(tester.takeException(), isNull);
       }
