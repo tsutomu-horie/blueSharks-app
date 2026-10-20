@@ -48,10 +48,10 @@ class EnvironmentSwitchTest(unittest.TestCase):
         return [(self.root / name).read_bytes() for name in env.FILES]
 
     def select(self, preset, host=None, dry_run=False):
-        return env.select(env.read_all(self.root), env.desired(preset, host), dry_run)
+        return env.select(env.read_all(self.root), env.desired(preset, ("192.168.11.20" if host is None and preset == "local" else host)), dry_run)
 
     def test_all_presets_and_repeated_switches_preserve_other_settings(self):
-        for preset in ["local", "ota-test", "test-server", "local", "test-server"]:
+        for preset in ["local", "test", "production", "local", "test"]:
             with self.subTest(preset=preset):
                 self.select(preset)
                 configs = env.read_all(self.root)
@@ -72,36 +72,37 @@ class EnvironmentSwitchTest(unittest.TestCase):
         self.assertEqual(self.snapshots(), before)
 
     def test_current_test_server_selection_is_idempotent(self):
+        self.select("test")
         before = [(self.root / name).stat().st_mtime_ns for name in env.FILES]
-        self.assertEqual(self.select("test-server")["files_changed"], 0)
+        self.assertEqual(self.select("test")["files_changed"], 0)
         self.assertEqual([(self.root / name).stat().st_mtime_ns for name in env.FILES], before)
 
     def test_managed_duplicates_and_stale_values_are_removed(self):
-        self.make_files(["APP_ENV=ota-test", "USE_LOCAL_AUTH_API=true", "USE_LOCAL_AUTH_API=false", "LOCAL_AUTH_API_HOST=old-host"])
+        self.make_files(["APP_ENV=test", "USE_LOCAL_AUTH_API=true", "USE_LOCAL_AUTH_API=false", "LOCAL_AUTH_API_HOST=old-host"])
         with self.assertRaises(env.ConfigurationError):
             env.verify(env.read_all(self.root))
-        self.select("test-server")
-        self.assertEqual(env.verify(env.read_all(self.root))["managed_defines"], {})
+        self.select("test")
+        self.assertEqual(env.verify(env.read_all(self.root))["managed_defines"], {"APP_ENV": "test"})
 
     def test_ota_preflight_rejects_missing_flag_local_and_conflicting_flags(self):
         for managed in [[], ["USE_LOCAL_AUTH_API=true", "LOCAL_AUTH_API_HOST=192.168.11.20"],
-                        ["APP_ENV=ota-test", "USE_LOCAL_AUTH_API=true"],
-                        ["APP_ENV=ota-test", "LOCAL_AUTH_API_HOST=192.168.11.20"]]:
+                        ["APP_ENV=test", "USE_LOCAL_AUTH_API=true"],
+                        ["APP_ENV=test", "LOCAL_AUTH_API_HOST=192.168.11.20"]]:
             with self.subTest(managed=managed):
                 self.make_files(managed)
                 with self.assertRaises(env.ConfigurationError):
-                    env.verify(env.read_all(self.root), "ota-test")
+                    env.verify(env.read_all(self.root), "test")
 
     def test_three_file_disagreement_and_inherited_override_are_rejected(self):
-        self.select("ota-test")
+        self.select("test")
         configs = env.read_all(self.root)
         configs[0].path.write_bytes(configs[0].replacement({}))
         with self.assertRaises(env.ConfigurationError):
-            env.verify(env.read_all(self.root), "ota-test")
-        self.select("ota-test")
+            env.verify(env.read_all(self.root), "test")
+        self.select("test")
         with self.assertRaises(env.ConfigurationError):
-            env.verify(env.read_all(self.root), "ota-test", encode("USE_LOCAL_AUTH_API=true"))
-        env.verify(env.read_all(self.root), "ota-test", encode("APP_ENV=ota-test"))
+            env.verify(env.read_all(self.root), "test", encode("USE_LOCAL_AUTH_API=true"))
+        env.verify(env.read_all(self.root), "test", encode("APP_ENV=test"))
 
     def test_invalid_file_aborts_before_any_write(self):
         for defect in ["DART_DEFINES=not-base64!\n", "DART_DEFINES=\nDART_DEFINES=\n"]:
@@ -131,7 +132,7 @@ class EnvironmentSwitchTest(unittest.TestCase):
         configs[0].path.write_bytes(configs[0].original + b"USER_EDIT=1\n")
         before = self.snapshots()
         with self.assertRaises(env.ConfigurationError):
-            env.select(configs, env.desired("local"))
+            env.select(configs, env.desired("local", "192.168.11.20"))
         self.assertEqual(self.snapshots(), before)
         self.make_files()
         before = self.snapshots()
@@ -158,16 +159,16 @@ class EnvironmentSwitchTest(unittest.TestCase):
             self.select("local", dry_run=True)
             self.select("local")
             env.verify(env.read_all(self.root), "local")
-            self.select("ota-test")
-            env.verify(env.read_all(self.root), "ota-test")
+            self.select("test")
+            env.verify(env.read_all(self.root), "test")
 
     def test_bad_hosts_and_nonlocal_host_argument_are_rejected(self):
         for host in ["", "http://host", "host:8000", "user@host", "host/path", "999.999.999.999", "$(touch bad)"]:
             with self.subTest(host=host), self.assertRaises(env.ConfigurationError):
                 env.desired("local", host)
-        for preset in ["test-server", "ota-test"]:
+        for preset in ["test", "production"]:
             with self.assertRaises(env.ConfigurationError):
-                env.desired(preset, env.DEFAULT_HOST)
+                env.desired(preset, "192.168.11.20")
 
     def test_cli_ota_gate_and_output_do_not_expose_other_defines(self):
         script = self.root / "tools/ios_environment.py"
@@ -175,8 +176,8 @@ class EnvironmentSwitchTest(unittest.TestCase):
         script.write_bytes(SCRIPT.read_bytes())
         process_env = os.environ.copy()
         process_env.pop("DART_DEFINES", None)
-        for arguments, expected in [(["ota-check"], 2), (["select", "ota-test", "--dry-run"], 0),
-                                    (["select", "ota-test"], 0), (["ota-check"], 0)]:
+        for arguments, expected in [(["ota-check"], 2), (["select", "test", "--dry-run"], 0),
+                                    (["select", "test"], 0), (["ota-check"], 0)]:
             result = subprocess.run([sys.executable, "-B", str(script), *arguments], env=process_env,
                                     text=True, capture_output=True)
             self.assertEqual(result.returncode, expected, result.stdout + result.stderr)
@@ -188,7 +189,7 @@ class EnvironmentSwitchTest(unittest.TestCase):
         with patch.dict(os.environ, {"DART_DEFINES": encode("USE_LOCAL_AUTH_API=true")}):
             output = io.StringIO()
             with patch.object(env, "__file__", str(script)), contextlib.redirect_stdout(output):
-                self.assertEqual(env.main(["select", "ota-test"]), 2)
+                self.assertEqual(env.main(["select", "test"]), 2)
 
 
 class PersistentSelectionTest(unittest.TestCase):
@@ -197,7 +198,7 @@ class PersistentSelectionTest(unittest.TestCase):
     make_files = EnvironmentSwitchTest.make_files
     snapshots = EnvironmentSwitchTest.snapshots
 
-    def persist(self, preset="ota-test", dry_run=False):
+    def persist(self, preset="test", dry_run=False):
         return env.select(env.read_all(self.root), env.desired(preset), dry_run, self.root)
 
     def selection(self):
@@ -208,11 +209,11 @@ class PersistentSelectionTest(unittest.TestCase):
         selection = self.selection()
         self.assertEqual(env.unrelated(selection["tokens"]), self.other)
         # Flutter may regenerate all three files without APP_ENV. The persistent
-        # resolved Xcode setting remains ota-test and the guard accepts it.
+        # resolved Xcode setting remains test and the guard accepts it.
         self.make_files()
-        result = env.verify_persistent(env.read_all(self.root), selection, "ota-test",
+        result = env.verify_persistent(env.read_all(self.root), selection, "test",
                                       ",".join(t for t, _, _ in selection["tokens"]))
-        self.assertEqual(result["preset"], "ota-test")
+        self.assertEqual(result["preset"], "test")
         self.assertTrue(result["persistent_selection"])
 
     def test_new_other_define_after_regeneration_requires_explicit_reselection(self):
@@ -223,7 +224,7 @@ class PersistentSelectionTest(unittest.TestCase):
             env.verify_persistent(env.read_all(self.root), self.selection())
         self.persist()
         self.assertEqual(env.unrelated(self.selection()["tokens"]), self.other)
-        env.verify_persistent(env.read_all(self.root), self.selection(), "ota-test")
+        env.verify_persistent(env.read_all(self.root), self.selection(), "test")
 
     def test_inconsistent_other_defines_abort_before_any_mutation(self):
         path = self.root / env.FILES[1]
@@ -254,8 +255,8 @@ class PersistentSelectionTest(unittest.TestCase):
 
     def test_malformed_or_symlink_selection_is_not_overwritten(self):
         p = self.root / env.SELECTION
-        for text in ["USER_EDIT=keep\n", env.SELECTION_HEADER + "BS_IOS_PRESET=ota-test\nDART_DEFINES=" +
-                     ",".join([encode("APP_ENV=ota-test")] * 2) + "\n"]:
+        for text in ["USER_EDIT=keep\n", env.SELECTION_HEADER + "BS_IOS_PRESET=test\nDART_DEFINES=" +
+                     ",".join([encode("APP_ENV=test")] * 2) + "\n"]:
             p.write_text(text)
             before = self.snapshots()
             with self.assertRaises(env.ConfigurationError):
@@ -275,7 +276,7 @@ class PersistentSelectionTest(unittest.TestCase):
             data = (self.root / name).read_bytes()
             self.assertTrue(data.startswith(b"# Flutter regenerated\r\nOTHER_SETTING=preserve\r\n"))
             self.assertEqual(data.count(b"DART_DEFINES="), 1)
-        env.verify_persistent(env.read_all(self.root), self.selection(), "ota-test")
+        env.verify_persistent(env.read_all(self.root), self.selection(), "test")
 
     def test_fourth_file_write_failure_restores_three_originals(self):
         before = self.snapshots()
@@ -308,7 +309,7 @@ class PersistentSelectionTest(unittest.TestCase):
                                     text=True, capture_output=True)
             self.assertEqual(result.returncode, 0, result.stdout)
             value = json.loads(result.stdout)
-            self.assertEqual(value["preset"], "ota-test")
+            self.assertEqual(value["preset"], "test")
             self.assertTrue(value["persistent_selection"])
             self.assertNotIn("PRIVATE_CANARY", result.stdout)
             self.assertNotIn("do-not-print", result.stdout)
@@ -338,7 +339,7 @@ class PersistentSelectionTest(unittest.TestCase):
         self.assertEqual(good.returncode, 0, good.stdout + good.stderr)
         self.assertEqual(marker.read_text(), "passed")
 
-    def test_without_persistent_selection_default_build_guard_is_noop(self):
+    def test_without_selection_or_generated_files_build_guard_fails(self):
         script = self.root / "tools/ios_environment.py"
         script.parent.mkdir(parents=True)
         script.write_bytes(SCRIPT.read_bytes())
@@ -346,8 +347,66 @@ class PersistentSelectionTest(unittest.TestCase):
             (self.root / name).unlink()
         result = subprocess.run([sys.executable, "-B", str(script), "xcode-check"],
                                 text=True, capture_output=True)
-        self.assertEqual(result.returncode, 0)
-        self.assertTrue(json.loads(result.stdout)["default_build_unchanged"])
+        self.assertEqual(result.returncode, 2)
+        self.assertIn("error", json.loads(result.stdout))
+
+
+class ExplicitEnvironmentTest(unittest.TestCase):
+    setUp = EnvironmentSwitchTest.setUp
+    tearDown = EnvironmentSwitchTest.tearDown
+    make_files = EnvironmentSwitchTest.make_files
+    select = EnvironmentSwitchTest.select
+    def test_production_is_an_explicit_selection(self):
+        self.select("production")
+        self.assertEqual(env.verify(env.read_all(self.root), "production")["managed_defines"],
+                         {"APP_ENV": "production"})
+
+    def test_local_requires_host_and_never_emits_build_mode_flags(self):
+        with self.assertRaises(env.ConfigurationError):
+            env.desired("local")
+        self.assertEqual(env.desired("local", "10.0.2.2"),
+                         {"APP_ENV": "local", "LOCAL_AUTH_API_HOST": "10.0.2.2"})
+
+    def test_unselected_or_cross_environment_flags_are_rejected(self):
+        for values in [{}, {"APP_ENV": "production", "LOCAL_AUTH_API_HOST": "host"},
+                       {"APP_ENV": "test", "USE_LOCAL_AUTH_API": "true"}]:
+            with self.subTest(values=values), self.assertRaises(env.ConfigurationError):
+                env.classify(values)
+
+    def test_existing_ota_selection_can_be_migrated(self):
+        self.make_files(["APP_ENV=ota-test"])
+        p = self.root / env.SELECTION
+        p.write_text(env.SELECTION_HEADER + "BS_IOS_PRESET=ota-test\nDART_DEFINES=" +
+                     ",".join(self.other + [encode("APP_ENV=ota-test")]) + "\n")
+        self.assertEqual(env.read_selection(self.root)["preset"], "test")
+        env.select(env.read_all(self.root), env.desired("test"), selection_root=self.root)
+        result = env.verify_persistent(env.read_all(self.root), env.read_selection(self.root), "test")
+        self.assertEqual(result["managed_defines"], {"APP_ENV": "test"})
+
+    def test_old_cli_names_select_test_explicitly(self):
+        for legacy in ["test-server", "ota-test"]:
+            self.assertEqual(env.desired(legacy), {"APP_ENV": "test"})
+
+    def test_legacy_local_selection_requires_migration_before_build(self):
+        managed = ["USE_LOCAL_AUTH_API=true", "LOCAL_AUTH_API_HOST=192.168.1.20"]
+        self.make_files(managed)
+        p = self.root / env.SELECTION
+        p.write_text(env.SELECTION_HEADER + "BS_IOS_PRESET=local\nDART_DEFINES=" +
+                     ",".join(self.other + [encode(item) for item in managed]) + "\n")
+        selection = env.read_selection(self.root)
+        with self.assertRaises(env.ConfigurationError):
+            env.verify_persistent(env.read_all(self.root), selection)
+        env.select(env.read_all(self.root), env.desired("local", "192.168.1.20"), selection_root=self.root)
+        env.verify_persistent(env.read_all(self.root), env.read_selection(self.root), "local")
+
+    def test_legacy_empty_test_selection_can_be_migrated(self):
+        p = self.root / env.SELECTION
+        p.write_text(env.SELECTION_HEADER + "BS_IOS_PRESET=test-server\nDART_DEFINES=" +
+                     ",".join(self.other) + "\n")
+        with self.assertRaises(env.ConfigurationError):
+            env.verify_persistent(env.read_all(self.root), env.read_selection(self.root))
+        env.select(env.read_all(self.root), env.desired("test"), selection_root=self.root)
+        env.verify_persistent(env.read_all(self.root), env.read_selection(self.root), "test")
 
 
 if __name__ == "__main__":

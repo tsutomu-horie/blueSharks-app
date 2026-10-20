@@ -1,4 +1,4 @@
-// Run with Dart VM defines to verify real Debug/Release/OTA selections without
+// Run with Dart VM defines to verify real Debug/Release environment selections without
 // launching Flutter, Firebase, network requests, or an iOS build.
 import 'dart:io' show stdout;
 
@@ -18,6 +18,8 @@ void main() {
     return;
   }
 
+  check('build mode', const bool.fromEnvironment('dart.vm.product'),
+      const bool.fromEnvironment('EXPECT_PRODUCT'));
   const production = bool.fromEnvironment('EXPECT_PRODUCTION_SERVICES');
   check(
     'production selection',
@@ -25,10 +27,11 @@ void main() {
     production,
   );
   check(
-    'OTA selection',
-    AppEnvironment.isOtaTest,
-    const bool.fromEnvironment('EXPECT_OTA'),
+    'local selection',
+    AppEnvironment.usesLocalServices,
+    const bool.fromEnvironment('EXPECT_LOCAL'),
   );
+  check('badge', AppEnvironment.badgeLabel, production ? '' : 'DEBUG');
   final actual = <String, String>{
     'auth': AppEnvironment.authApiBaseUrl,
     'wordpress': AppEnvironment.wordpressApiBaseUrl,
@@ -55,8 +58,9 @@ void main() {
           'wordpressAdmin': 'https://blue-sharks.jp/wp-admin/',
         }
       : <String, String>{
-          'auth':
-              'https://memodevelop.com/bluesharks_web/index.php/api/mobile/v1/',
+          'auth': AppEnvironment.usesLocalServices
+              ? 'http://${const String.fromEnvironment('LOCAL_AUTH_API_HOST')}:8000/api/mobile/v1/'
+              : 'https://memodevelop.com/bluesharks_web/index.php/api/mobile/v1/',
           'wordpress': 'https://blue-sharks.donati.jp/wp-json/wp/v2/',
           'web': 'https://dev-blueshark.tmdsite.my.id/api',
           'topic': 'news_dev',

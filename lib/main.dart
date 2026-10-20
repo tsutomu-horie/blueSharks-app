@@ -9,6 +9,7 @@ import 'package:koto_blue_sharks/app/data/models/member/member.dart';
 import 'package:koto_blue_sharks/app/services/analytics_service.dart';
 import 'package:koto_blue_sharks/utils/fcm_helper.dart';
 import 'package:koto_blue_sharks/utils/app_environment.dart';
+import 'package:koto_blue_sharks/app/views/views/environment_badge.dart';
 import 'package:koto_blue_sharks/utils/my_shared_pref.dart';
 
 import 'generated/locales.g.dart';
@@ -45,7 +46,6 @@ class Main extends StatelessWidget {
   final String initialRoute;
   Main(this.initialRoute);
 
-
   @override
   Widget build(BuildContext context) {
     return ScreenUtilInit(
@@ -53,10 +53,12 @@ class Main extends StatelessWidget {
       minTextAdapt: true,
       splitScreenMode: false,
       child: GetMaterialApp(
+        debugShowCheckedModeBanner: false,
         builder: (context, child) {
           return MediaQuery(
-            data: MediaQuery.of(context).copyWith(textScaler: const TextScaler.linear(1.0)), // Fix text size
-            child: child!,
+            data: MediaQuery.of(context).copyWith(
+                textScaler: const TextScaler.linear(1.0)), // Fix text size
+            child: EnvironmentBadge(child: child!),
           );
         },
         theme: ThemeData(
@@ -70,9 +72,10 @@ class Main extends StatelessWidget {
         supportedLocales: const [
           Locale('ja', 'JP'),
         ],
-        translations:TranslationService(),  // Your translation class
+        translations: TranslationService(), // Your translation class
         locale: const Locale('ja', 'JP'),
-        fallbackLocale: const Locale('ja', 'JP'), // Fallback locale// Initial locale
+        fallbackLocale:
+            const Locale('ja', 'JP'), // Fallback locale// Initial locale
         initialRoute: initialRoute,
         getPages: Nav.routes,
       ),
