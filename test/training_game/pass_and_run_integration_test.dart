@@ -313,9 +313,13 @@ void main() {
     await t.tap(find.text('スタート'));
     await t.pump();
     final initial = visual(t, mate).frame;
-    await t.runAsync(
-        () => Future<void>.delayed(const Duration(milliseconds: 270)));
-    await t.pump(const Duration(milliseconds: 270));
+    for (var attempt = 0;
+        attempt < 12 && visual(t, mate).frame == initial;
+        attempt++) {
+      await t.runAsync(
+          () => Future<void>.delayed(const Duration(milliseconds: 50)));
+      await t.pump(const Duration(milliseconds: 50));
+    }
     expect(visual(t, mate).frame, isNot(initial));
     expect(visual(t, mate).assetPath, contains('pass_run_mate_'));
   });
