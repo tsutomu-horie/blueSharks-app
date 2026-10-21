@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import 'controllers/training_game.controller.dart';
+import 'training_debug_growth_dialog.dart';
 
 /// テスト用操作を用途別に並べます。保存・権限判定は既存処理に委ねます。
 class TrainingDebugMenu extends StatelessWidget {
@@ -151,6 +152,22 @@ class TrainingDebugMenu extends StatelessWidget {
                   subtitle: const Text('サーバー・端末の育成履歴を削除します。'),
                   onTap: () => _confirm(context, '初回プレイ状態へ初期化',
                       'サーバー・端末の現在の育成データと履歴を削除し、初期パラメータで開始します。', onReset),
+                ),
+                ListTile(
+                  leading: const Icon(Icons.alt_route),
+                  title: const Text('分岐を選んで成長期から開始'),
+                  subtitle: const Text('現在の育成を置き換えます。分岐と影響を確認してから開始します。'),
+                  onTap: () async {
+                    final started = await showDialog<bool>(
+                      context: context,
+                      barrierDismissible: false,
+                      builder: (_) =>
+                          TrainingDebugGrowthDialog(controller: controller),
+                    );
+                    if (started == true && context.mounted) {
+                      Navigator.pop(context);
+                    }
+                  },
                 ),
                 ListTile(
                   leading: const Icon(Icons.close),
