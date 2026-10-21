@@ -5,6 +5,7 @@ import 'package:koto_blue_sharks/app/data/models/match/match_result.dart';
 import 'package:koto_blue_sharks/app/providers/match/match_provider.dart';
 import 'package:koto_blue_sharks/app/providers/media/media_provider.dart';
 import 'package:koto_blue_sharks/utils/Constant.dart';
+import 'package:koto_blue_sharks/app/data/models/website/renewal_website_content.dart';
 
 Map<String, dynamic> getStatusMatch(CustomField customField) {
   final team1 = customField.team_1 ?? [];
@@ -22,7 +23,6 @@ Map<String, dynamic> getStatusMatch(CustomField customField) {
         'opponentName': team2.first,
         'teamName': team1.first,
         'teamLogo': team1Logo.first,
-
       };
     } else {
       return {
@@ -42,28 +42,37 @@ Map<String, dynamic> getStatusMatch(CustomField customField) {
   }
 }
 
-Future<Map<String, String>> getAdditionalInfo(MediaProvider mediaProvider, MatchProvider matchProvider, String mediaId, String gameSerialId) async {
-
+Future<Map<String, String>> getAdditionalInfo(MediaProvider mediaProvider,
+    MatchProvider matchProvider, String mediaId, String gameSerialId) async {
   try {
-    final imageData = await mediaProvider.fetchMedia(mediaId);
-    final image = imageData.media_details.sizes.thumbnail.source_url;
+    final direct =
+        RenewalWebsiteContent.siteUrl(Uri.parse(Constants.baseUrl), mediaId);
+    final image = direct != null && direct.path.startsWith('/wp-content/')
+        ? direct.toString()
+        : (await mediaProvider.fetchMedia(mediaId))
+            .media_details
+            .sizes
+            .thumbnail
+            .source_url;
     print("there is error2 ${image}");
-    final matchStatus = gameSerialId != "" ? await matchProvider.getMatchStatus(gameSerialId) : Rendered(rendered: "");
+    final matchStatus = gameSerialId != ""
+        ? await matchProvider.getMatchStatus(gameSerialId)
+        : Rendered(rendered: "");
     print("there is error1 ${matchStatus}");
-    return {
-      'image': image,
-      'matchStatus': matchStatus.rendered
-    };
+    return {'image': image, 'matchStatus': matchStatus.rendered};
   } catch (e) {
     print("there is error ${e}");
-    return {
-      'image': "",
-      'matchStatus': ""
-    };
+    return {'image': "", 'matchStatus': ""};
   }
 }
 
-Future<String> getImage(MediaProvider mediaProvider, String mediaId, {int retries = 5}) async {
+Future<String> getImage(MediaProvider mediaProvider, String mediaId,
+    {int retries = 5}) async {
+  if (mediaId.isEmpty || mediaId == 'null') return '';
+  final direct =
+      RenewalWebsiteContent.siteUrl(Uri.parse(Constants.baseUrl), mediaId);
+  if (direct != null && direct.path.startsWith('/wp-content/'))
+    return direct.toString();
   print("getAdditional2 ${mediaId}");
 
   for (int attempt = 0; attempt < retries; attempt++) {
@@ -86,7 +95,8 @@ Future<String> getImage(MediaProvider mediaProvider, String mediaId, {int retrie
         return ""; // You can also return a placeholder image URL here
       }
       // Optionally, wait before retrying
-      await Future.delayed(Duration(seconds: 1)); // Wait 1 second before retrying
+      await Future.delayed(
+          Duration(seconds: 1)); // Wait 1 second before retrying
     }
   }
 

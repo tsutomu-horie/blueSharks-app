@@ -1,0 +1,90 @@
+[
+  {
+    "id": 44,
+    "count": 23,
+    "description": "",
+    "link": "https://blue-sharks.donati.jp/schedule-and-result/season/season_2019_2020/",
+    "name": "2019 - 2020 シーズン",
+    "slug": "season_2019_2020",
+    "taxonomy": "season",
+    "parent": 0,
+    "meta": []
+  },
+  {
+    "id": 45,
+    "count": 13,
+    "description": "",
+    "link": "https://blue-sharks.donati.jp/schedule-and-result/season/season_2020_2021/",
+    "name": "2020 - 2021 シーズン",
+    "slug": "season_2020_2021",
+    "taxonomy": "season",
+    "parent": 0,
+    "meta": []
+  },
+  {
+    "id": 46,
+    "count": 22,
+    "description": "",
+    "link": "https://blue-sharks.donati.jp/schedule-and-result/season/season_2021_2022/",
+    "name": "2021 – 2022 シーズン",
+    "slug": "season_2021_2022",
+    "taxonomy": "season",
+    "parent": 0,
+    "meta": []
+  },
+  {
+    "id": 47,
+    "count": 22,
+    "description": "",
+    "link": "https://blue-sharks.donati.jp/schedule-and-result/season/season_2022_2023/",
+    "name": "2022 – 2023 シーズン",
+    "slug": "season_2022_2023",
+    "taxonomy": "season",
+    "parent": 0,
+    "meta": []
+  },
+  {
+    "id": 48,
+    "count": 19,
+    "description": "",
+    "link": "https://blue-sharks.donati.jp/schedule-and-result/season/season_2023_2024/",
+    "name": "2023 – 2024 シーズン",
+    "slug": "season_2023_2024",
+    "taxonomy": "season",
+    "parent": 0,
+    "meta": []
+  },
+  {
+    "id": 49,
+    "count": 22,
+    "description": "",
+    "link": "https://blue-sharks.donati.jp/schedule-and-result/season/season_2024_2025/",
+    "name": "2024 – 2025 シーズン",
+    "slug": "season_2024_2025",
+    "taxonomy": "season",
+    "parent": 0,
+    "meta": []
+  },
+  {
+    "id": 50,
+    "count": 26,
+    "description": "",
+    "link": "https://blue-sharks.donati.jp/schedule-and-result/season/season_2025_2026/",
+    "name": "2025 – 2026 シーズン",
+    "slug": "season_2025_2026",
+    "taxonomy": "season",
+    "parent": 0,
+    "meta": []
+  },
+  {
+    "id": 51,
+    "count": 26,
+    "description": "",
+    "link": "https://blue-sharks.donati.jp/schedule-and-result/season/season_2026_2027/",
+    "name": "2026 – 2027 シーズン",
+    "slug": "season_2026_2027",
+    "taxonomy": "season",
+    "parent": 0,
+    "meta": []
+  }
+]

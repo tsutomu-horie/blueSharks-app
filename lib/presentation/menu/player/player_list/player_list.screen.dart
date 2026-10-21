@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:koto_blue_sharks/presentation/menu/widgets/menu_data_status.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import 'package:get/get.dart';
@@ -15,17 +16,19 @@ class PlayerListScreen extends GetView<PlayerListController> {
 
   @override
   Widget build(BuildContext context) {
-    final PlayerListController memberController = Get.put(PlayerListController());
+    final PlayerListController memberController =
+        Get.put(PlayerListController());
     final ScrollController scrollController = ScrollController();
 
     return Scaffold(
       backgroundColor: BackgroundColor.primary,
       body: RefreshIndicator(
         onRefresh: () async {
-          memberController.onReloadPage();
+          await memberController.onReloadPage();
         },
         child: SingleChildScrollView(
           controller: scrollController,
+          physics: const AlwaysScrollableScrollPhysics(),
           child: Column(
             children: [
               Container(
@@ -39,13 +42,27 @@ class PlayerListScreen extends GetView<PlayerListController> {
                 height: 1.h,
                 color: BorderColor.primary,
               ),
+              Obx(() {
+                if (memberController.errorMessage.value.isNotEmpty)
+                  return MenuDataStatus(
+                      message: memberController.errorMessage.value,
+                      onRetry: memberController.getAllMembers);
+                if (!memberController.isLoading.value &&
+                    memberController.categoryPlayers.values
+                        .every((players) => players.isEmpty))
+                  return const MenuDataStatus(message: '選手情報はまだ登録されていません。');
+                return const SizedBox.shrink();
+              }),
               MemberListView(
                 memberController,
                 isSetWallpaper: false,
                 onSet: onSet,
-                scrollController: scrollController, // Pass the scroll controller
+                scrollController:
+                    scrollController, // Pass the scroll controller
               ),
-              SizedBox(height: 24.h,),
+              SizedBox(
+                height: 24.h,
+              ),
             ],
           ),
         ),

@@ -12,12 +12,16 @@ import 'package:koto_blue_sharks/presentation/menu/player/player_detail/player_d
 import 'package:koto_blue_sharks/utils/match+extensions.dart';
 
 class PlayerListController extends GetxController {
+  PlayerListController({MemberProvider? memberProvider})
+      : memberProvider = memberProvider ?? MemberProvider();
+  final errorMessage = ''.obs;
+  int _request = 0;
   final selectedPosition = LocaleKeys.all_position.tr.obs;
   Box<Category>? categoryBox;
   Box<Member>? playerBox;
   final MediaProvider mediaProvider = MediaProvider();
-  final MemberProvider memberProvider = MemberProvider();
-  final Map<String, GlobalKey> groupKeys = <String, GlobalKey>{}.obs;
+  final MemberProvider memberProvider;
+  final Map<String, GlobalKey> groupKeys = <String, GlobalKey>{};
 
   final RxList<Category> categories = <Category>[].obs;
   final RxMap<int, List<Member>> categoryPlayers = <int, List<Member>>{}.obs;
@@ -38,7 +42,7 @@ class PlayerListController extends GetxController {
   final isImageLoading = true.obs;
 
   void addGroupKey(String identifier) {
-    groupKeys[identifier] = GlobalKey();
+    groupKeys.putIfAbsent(identifier, () => GlobalKey());
   }
 
   final Map<String, int> positionPriority = {
@@ -79,110 +83,67 @@ class PlayerListController extends GetxController {
     AnalyticsService.logPageView(Routes.MEMBER);
   }
 
-  void onReloadPage() {
-    categories.value = [];
-    categoryPlayers.value = {};
-    getAllMembers();
-  }
+  Future<void> onReloadPage() => getAllMembers();
 
   Future<void> getAllMembers() async {
+    final request = ++_request;
     isLoading.value = true;
-    int categoryPage = 1;
-    bool hasMoreCategories = true;
-
+    errorMessage.value = '';
+    final nextCategories = <Category>[];
+    final nextPlayers = <int, List<Member>>{};
     try {
-      while (hasMoreCategories) {
-        // **Fetch categories**
-        final List<Category> categoryList =
-            await memberProvider.getCategories(page: categoryPage);
-
-        if (categoryList.isEmpty) {
-          hasMoreCategories = false;
-          continue;
-        }
-
-        // ✅ **Sort categories BEFORE fetching players**
-        categoryList.sort((a, b) {
-          int priorityA = positionPriority[a.slug.toLowerCase()] ?? 999;
-          int priorityB = positionPriority[b.slug.toLowerCase()] ?? 999;
-          return priorityA.compareTo(priorityB);
-        });
-
-        // ✅ **Fetch players for each sorted category**
-        for (Category category in categoryList) {
-          categories.add(category);
-          await fetchPlayersForCategory(
-              category.id, category.slug, category.name);
-        }
-
-        categoryPage++;
+      for (var page = 1;; page++) {
+        final values = await memberProvider.getCategories(page: page);
+        if (isClosed || request != _request) return;
+        nextCategories.addAll(values);
+        if (values.length < 100) break;
       }
-    } catch (e) {
-      print('Error loading categories and players: $e');
+      nextCategories.sort((a, b) =>
+          (positionPriority[a.slug.toLowerCase()] ?? 999)
+              .compareTo(positionPriority[b.slug.toLowerCase()] ?? 999));
+      for (final category in nextCategories) {
+        nextPlayers[category.id] = await fetchPlayersForCategory(
+            category.id, category.slug, category.name);
+        if (isClosed || request != _request) return;
+      }
+      categories.assignAll(nextCategories);
+      categoryPlayers.assignAll(nextPlayers);
+    } catch (_) {
+      if (!isClosed && request == _request)
+        errorMessage.value = '選手情報を取得できませんでした。';
     } finally {
-      isLoading.value = false;
+      if (!isClosed && request == _request) isLoading.value = false;
     }
   }
 
-  Future<void> fetchPlayersForCategory(
+  Future<List<Member>> fetchPlayersForCategory(
       int categoryId, String categorySlug, String categoryName) async {
-    int playerPage = 1;
-    bool hasMorePlayers = true;
-    final List<Member> allPlayers = [];
-    Set<int> addedPlayerIds =
-        categoryPlayers[categoryId]?.map((player) => player.id).toSet() ?? {};
-
-    while (hasMorePlayers) {
-      final List<Member> players = await memberProvider
-          .getPlayersByCategory(categoryId, page: playerPage);
-
-      if (players.isEmpty) {
-        hasMorePlayers = false;
-      } else {
-        print("Fetching players for category: $categoryName");
-
-        // **Sort players before adding**
-        players.sort((a, b) {
-          int priorityA =
-              positionPriority[a.categorySlug?.toLowerCase() ?? ""] ?? 999;
-          int priorityB =
-              positionPriority[b.categorySlug?.toLowerCase() ?? ""] ?? 999;
-
-          if (priorityA == priorityB) {
-            return a.title.rendered.compareTo(
-                b.title.rendered); // Sort alphabetically if same priority
-          }
-          return priorityA.compareTo(priorityB);
-        });
-
-        // **Create categorized players**
-        final List<Member> categorizedPlayers = players
-            .map((player) {
-              return Member(
-                  id: player.id,
-                  date: player.date,
-                  modified: player.modified,
-                  slug: player.slug,
-                  status: player.status,
-                  type: player.type,
-                  link: player.link,
-                  title: player.title,
-                  categoryId: categoryId,
-                  categorySlug: categorySlug,
-                  categoryName: categoryName,
-                  custom_field: player.custom_field);
-            })
-            .where((player) => !addedPlayerIds.contains(player.id))
-            .toList();
-
-        addedPlayerIds.addAll(categorizedPlayers.map((player) => player.id));
-        allPlayers.addAll(categorizedPlayers);
-        playerPage++;
+    final result = <Member>[];
+    final ids = <int>{};
+    for (var page = 1;; page++) {
+      final players =
+          await memberProvider.getPlayersByCategory(categoryId, page: page);
+      for (final player in players) {
+        if (!ids.add(player.id))
+          throw const FormatException('Repeated member page.');
+        result.add(player.copyWith(
+            categoryId: categoryId,
+            categorySlug: categorySlug,
+            categoryName: categoryName));
       }
+      if (players.length < 100) break;
     }
+    result.sort((a, b) => a.title.rendered.compareTo(b.title.rendered));
+    return result;
+  }
 
-    // ✅ **Assign the sorted players to categoryPlayers**
-    categoryPlayers[categoryId] = allPlayers;
+  @override
+  void onClose() {
+    _request++;
+    memberProvider.renewal.httpClient.close();
+    memberProvider.httpClient.close();
+    mediaProvider.httpClient.close();
+    super.onClose();
   }
 
   void onSelectPosition(String selectedPos) {
