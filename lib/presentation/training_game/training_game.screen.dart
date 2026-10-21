@@ -279,7 +279,7 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
                 semanticLabel: isPositive ? '旅立つ鮫太朗' : '鮫太朗',
               ),
         message: [
-          isPositive ? '育成した鮫太朗が旅立ちます。' : '育成を終え、次の卵へ進みます。',
+          '鮫太郎と過ごした日々を胸に、新たな出会いへ。',
           if (isSyncPending) '終了状態を保存しています…',
           if (syncError.isNotEmpty) syncError,
         ].join('\n\n'),
