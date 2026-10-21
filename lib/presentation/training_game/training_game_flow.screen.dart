@@ -12,7 +12,11 @@ import 'training_hatching_scene.dart';
 /// ワイヤーフレーム①「アプリ内 ゲーム起動」を表示します。
 class TrainingGameLaunchScreen extends StatefulWidget {
   /// 起動画面を作成します。
-  const TrainingGameLaunchScreen({super.key});
+  const TrainingGameLaunchScreen(
+      {super.key, this.autoStart = false, this.provider});
+
+  final bool autoStart;
+  final TrainingGameProvider? provider;
 
   @override
   State<TrainingGameLaunchScreen> createState() =>
@@ -22,11 +26,27 @@ class TrainingGameLaunchScreen extends StatefulWidget {
 class _TrainingGameLaunchScreenState extends State<TrainingGameLaunchScreen> {
   late final Future<String?> _accessTokenFuture;
   bool _isLaunching = false;
+  bool _autoStartPending = false;
+  bool _didReplaceLaunch = false;
+  late final int _session;
 
   @override
   void initState() {
     super.initState();
+    _session = AuthToken.sessionVersion;
+    _autoStartPending = widget.autoStart;
     _accessTokenFuture = AuthToken().getAccessToken();
+    if (widget.autoStart) {
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        final token = await _accessTokenFuture;
+        if (!mounted) return;
+        if (token?.isNotEmpty == true && _session == AuthToken.sessionVersion) {
+          await _openGame();
+        } else {
+          setState(() => _autoStartPending = false);
+        }
+      });
+    }
   }
 
   @override
@@ -34,11 +54,15 @@ class _TrainingGameLaunchScreenState extends State<TrainingGameLaunchScreen> {
     return PopScope(
       canPop: !_isLaunching,
       child: Scaffold(
-        appBar: AppBar(title: const Text('アプリ ｜ ゲーム')),
+        appBar:
+            AppBar(title: Text(_autoStartPending ? 'ゲームを起動中…' : 'アプリ ｜ ゲーム')),
         body: FutureBuilder<String?>(
           future: _accessTokenFuture,
           builder: (context, snapshot) {
             if (snapshot.connectionState != ConnectionState.done) {
+              return const Center(child: CircularProgressIndicator());
+            }
+            if (_autoStartPending) {
               return const Center(child: CircularProgressIndicator());
             }
             final authenticated = snapshot.data?.isNotEmpty == true;
@@ -60,18 +84,15 @@ class _TrainingGameLaunchScreenState extends State<TrainingGameLaunchScreen> {
                       ),
                       SizedBox(height: 8.h),
                       Text(
-                        authenticated
-                            ? 'ゲームを開始できます。'
-                            : 'ゲームを起動するには会員認証が必要です。',
+                        authenticated ? 'ゲームを開始できます。' : 'ゲームを起動するには会員認証が必要です。',
                       ),
                       const Spacer(),
                       SizedBox(
                         width: double.infinity,
                         height: 52.h,
                         child: ElevatedButton(
-                          onPressed: authenticated && !_isLaunching
-                              ? _openGame
-                              : null,
+                          onPressed:
+                              authenticated && !_isLaunching ? _openGame : null,
                           child: _isLaunching
                               ? Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
@@ -144,22 +165,37 @@ class _TrainingGameLaunchScreenState extends State<TrainingGameLaunchScreen> {
     );
     try {
       await TrainingGameProvider.waitForPendingSync();
-      final current = await TrainingGameProvider().fetchCurrent();
+      final current = await (widget.provider ?? TrainingGameProvider())
+          .fetchCurrent(expectedSessionVersion: _session);
       await loadingDelay;
-      if (!mounted) return;
+      if (!mounted || _session != AuthToken.sessionVersion) return;
       if (current == null) {
-        Get.toNamed(Routes.TRAINING_GAME_NEW);
+        _navigateToGame(Routes.TRAINING_GAME_NEW);
       } else {
         // 取得済み状態を引き渡し、育成画面での同一API再取得を省略します。
-        Get.toNamed(Routes.TRAINING_GAME, arguments: current);
+        _navigateToGame(Routes.TRAINING_GAME, arguments: current);
       }
     } catch (_) {
       await loadingDelay;
-      if (!mounted) return;
+      if (!mounted || _session != AuthToken.sessionVersion) return;
       // サーバー未接続時は新規開始画面へ進めます。
-      Get.toNamed(Routes.TRAINING_GAME_NEW);
+      _navigateToGame(Routes.TRAINING_GAME_NEW);
     } finally {
-      if (mounted) setState(() => _isLaunching = false);
+      if (mounted && !_didReplaceLaunch) {
+        setState(() {
+          _isLaunching = false;
+          _autoStartPending = false;
+        });
+      }
+    }
+  }
+
+  void _navigateToGame(String route, {Object? arguments}) {
+    if (widget.autoStart) {
+      _didReplaceLaunch = true;
+      Get.offNamed(route, arguments: arguments);
+    } else {
+      Get.toNamed(route, arguments: arguments);
     }
   }
 }

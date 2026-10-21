@@ -409,5 +409,5 @@ class HomeScreen extends GetView<MainController> {
   Widget _trainingGameEntry() => _designBanner(
       'assets/images/renewal/training_banner.jpg',
       '鮫太朗育成計画',
-      () => Get.toNamed(Routes.TRAINING_GAME_LAUNCH));
+      () => Get.toNamed(Routes.TRAINING_GAME_LAUNCH, arguments: true));
 }

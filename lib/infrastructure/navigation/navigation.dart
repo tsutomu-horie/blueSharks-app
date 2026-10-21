@@ -29,7 +29,7 @@ class Nav {
     ),
     GetPage(
       name: Routes.TRAINING_GAME_LAUNCH,
-      page: () => const TrainingGameLaunchScreen(),
+      page: () => TrainingGameLaunchScreen(autoStart: Get.arguments == true),
     ),
     GetPage(
       name: Routes.TRAINING_GAME_NEW,
