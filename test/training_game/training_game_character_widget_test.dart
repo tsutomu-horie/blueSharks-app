@@ -134,7 +134,7 @@ void main() {
       final mealRect = tester.getRect(meal);
       final characterRect = tester.getRect(find.byType(SametarohFrameImage));
       final exitRect =
-          tester.getRect(find.widgetWithText(ElevatedButton, '🚪'));
+          tester.getRect(find.byKey(const ValueKey('training-home-exit')));
       final debugRect = tester.getRect(find.byTooltip('デバッグコマンド'));
       expect(backgroundRect.top, 0);
       expect(backgroundRect.width, size.width);
@@ -157,8 +157,8 @@ void main() {
       expect(tester.getRect(background), backgroundRect);
       expect(tester.getRect(meal), mealRect);
       expect(tester.getRect(find.byType(SametarohFrameImage)), characterRect);
-      expect(
-          tester.getRect(find.widgetWithText(ElevatedButton, '🚪')), exitRect);
+      expect(tester.getRect(find.byKey(const ValueKey('training-home-exit'))),
+          exitRect);
       final indicatorRect = tester.getRect(find.byType(TrainingSyncIndicator));
       expect(backgroundRect.contains(indicatorRect.topLeft), isTrue);
       expect(indicatorRect.overlaps(exitRect), isFalse);
@@ -647,7 +647,7 @@ void main() {
     controller.clearPosition.value = null;
     await tester.pump();
     await preload(tester, SametarohAssets.normalFrames);
-    await tester.tap(find.text('📙'));
+    await tester.tap(find.byKey(const ValueKey('training-home-dex')));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
     expect(find.byType(Dialog), findsOneWidget);
