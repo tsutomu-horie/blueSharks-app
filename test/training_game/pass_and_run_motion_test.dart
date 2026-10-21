@@ -13,7 +13,7 @@ void main() {
           lessThanOrEqualTo(.28 * math.pi * 2 / oldPeriod * .5 + 1e-12));
     }
     expect(PassAndRunRules.roundDuration, const Duration(seconds: 15));
-    expect(PassAndRunRules.missPenalty, const Duration(seconds: 2));
+    expect(PassAndRunRules.missPenalty, const Duration(seconds: 1));
   });
   test('80ms向き補間は反転点の両側で連続し、終了後に新方向へ固定', () {
     for (final runner in PassRunRunner.values) {

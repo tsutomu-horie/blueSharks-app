@@ -31,7 +31,7 @@ abstract final class PassAndRunRules {
   static const roundDuration = Duration(seconds: 15);
 
   /// 方向ミス後にパスできない時間です。
-  static const missPenalty = Duration(seconds: 2);
+  static const missPenalty = Duration(seconds: 1);
 
   /// フリックとして扱う最低移動距離です。
   static const minimumDistance = 24.0;

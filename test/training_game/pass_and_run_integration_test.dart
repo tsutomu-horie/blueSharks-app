@@ -469,13 +469,13 @@ void main() {
     expect(ball, findsOneWidget);
   });
 
-  testWidgets('上下移動の向きに関係なく攻撃方向への投球は無得点・2秒制限', (t) async {
+  testWidgets('上下移動の向きに関係なく攻撃方向への投球は無得点・1秒制限', (t) async {
     await start(t);
     for (final wait in [0, 3500]) {
       if (wait > 0) await step(t, wait);
       await t.flingFrom(t.getCenter(player), const Offset(100, -1), 2000);
       await t.pump();
-      expect(find.text('前方パス　2秒間パス不可'), findsOneWidget);
+      expect(find.text('前方パス　1秒間パス不可'), findsOneWidget);
       expect(trail, findsNothing);
       expect(visual(t, player).holding, isTrue);
       expect(find.textContaining('PASS 0'), findsOneWidget);
@@ -490,6 +490,23 @@ void main() {
     expect(visual(t, player).holding, isFalse);
   });
 
+  testWidgets('前方ミスの入力禁止は999msまで、1000msで解除する', (t) async {
+    await start(t);
+    await t.flingFrom(t.getCenter(player), const Offset(100, -10), 2000);
+    await t.pump();
+    expect(find.text('前方パス　1秒間パス不可'), findsOneWidget);
+    await step(t, 999);
+    await t.flingFrom(t.getCenter(player), const Offset(-100, 0), 2000);
+    await t.pump();
+    expect(trail, findsNothing);
+    expect(find.text('前方パス　1秒間パス不可'), findsOneWidget);
+    await step(t, 1);
+    await t.flingFrom(t.getCenter(player), const Offset(-100, 0), 2000);
+    await t.pump();
+    expect(trail, findsOneWidget);
+    expect(find.text('前方パス　1秒間パス不可'), findsNothing);
+  });
+
   testWidgets('復路で攻撃を反転し、正背面表示や移動方向と分離する', (t) async {
     await start(t);
     await step(t, 15100);
@@ -500,7 +517,7 @@ void main() {
     expect(visual(t, mate).facing, PassRunFacing.back);
     await t.flingFrom(t.getCenter(player), const Offset(-100, 1), 2000);
     await t.pump();
-    expect(find.text('前方パス　2秒間パス不可'), findsOneWidget);
+    expect(find.text('前方パス　1秒間パス不可'), findsOneWidget);
     expect(trail, findsNothing);
     await step(t, 2100);
     await t.flingFrom(t.getCenter(player), const Offset(100, -20), 2000);

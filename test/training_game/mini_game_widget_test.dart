@@ -211,7 +211,7 @@ void main() {
     // 成否は発射時の方向ではなく、ボールが仲間に当たるかで判定されます。
     expect(find.text('ボール移動中…'), findsOneWidget);
     await advance(tester, const Duration(milliseconds: 400));
-    expect(find.text('MISS　2秒間パス不可'), findsOneWidget);
+    expect(find.text('MISS　1秒間パス不可'), findsOneWidget);
     // 失敗パスは画面外へ抜けた後、ペナルティ終了時にプレイヤーへ戻ります。
     await advance(tester, const Duration(milliseconds: 2100));
     expect(find.byKey(const Key('pass-ball')), findsOneWidget);
