@@ -5,6 +5,9 @@ on:
     paths:
       - '.github/workflows/tackle.yml'
       - 'lib/presentation/training_game/**'
+      - 'lib/utils/app_environment.dart'
+      - 'test/support/app_environment_probe.dart'
+      - 'tools/tests/test_app_environment.py'
       - 'lib/app/providers/training_game/**'
       - 'test/training_game/**'
       - 'assets/images/training_game/minigames/tackle*.png'
@@ -76,3 +79,9 @@ jobs:
           test/training_game/training_game_sync_queue_test.dart
           test/training_game/training_work_debug_day_test.dart
           test/training_game/mini_game_widget_test.dart
+
+      - name: Check training debug visibility in test and production
+        run: |
+          flutter test --no-pub test/training_game/training_debug_ui_test.dart
+          flutter test --no-pub --dart-define=APP_ENV=production test/training_game/training_debug_ui_test.dart
+          python3 -m unittest tools.tests.test_app_environment

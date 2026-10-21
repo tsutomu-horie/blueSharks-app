@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:flutter/foundation.dart';
+import 'package:koto_blue_sharks/utils/app_environment.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
@@ -466,7 +466,7 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
     );
   }
 
-  /// パラメータと退出ボタン、Debugビルド限定の開発操作を表示します。
+  /// パラメータと退出ボタン、検証環境限定の開発操作を表示します。
   Widget _buildHud(BuildContext context) {
     return Container(
       padding: EdgeInsets.fromLTRB(8.w, 16.h, 8.w, 8.w),
@@ -521,7 +521,7 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
                       : Text('🚪', style: TextStyle(fontSize: 22.sp)),
                 ),
               ),
-              if (kDebugMode) ...[
+              if (AppEnvironment.showsTrainingDebugUi) ...[
                 SizedBox(height: 36.h),
                 IconButton(
                   onPressed: () => _showDebugMenu(context),
@@ -669,9 +669,10 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  if (kDebugMode) _buildCharacterBadge(),
+                  if (AppEnvironment.showsTrainingDebugUi)
+                    _buildCharacterBadge(),
                   _buildCharacterVisual(isWalking: isWalking),
-                  if (kDebugMode)
+                  if (AppEnvironment.showsTrainingDebugUi)
                     Text(
                       controller.currentStage.name,
                       style: TextStyle(
