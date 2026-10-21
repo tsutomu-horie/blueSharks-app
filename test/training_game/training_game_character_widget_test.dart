@@ -13,6 +13,7 @@ import 'package:koto_blue_sharks/presentation/training_game/sametaroh_asset.dart
 import 'package:koto_blue_sharks/presentation/training_game/training_game_care_action.screen.dart';
 import 'package:koto_blue_sharks/presentation/training_game/training_home_background.dart';
 import 'package:koto_blue_sharks/presentation/training_game/training_home_roaming_character.dart';
+import 'package:koto_blue_sharks/presentation/training_game/training_sync_indicator.dart';
 
 Widget host(Widget child) => ScreenUtilInit(
       designSize: const Size(375, 812),
@@ -148,9 +149,35 @@ void main() {
       expect(find.text(controller.clockLabel), findsNothing);
       expect(find.text('▮▮▮ ᯤ 🔋'), findsNothing);
 
+      controller.syncStatus.value = TrainingSyncStatus.syncing;
+      controller.syncStatusMessage.value = '育成状態を同期しています。';
+      await tester.pump();
+      expect(find.text('育成状態を同期しています。'), findsNothing);
+      expect(find.byType(TrainingSyncIndicator), findsOneWidget);
+      expect(tester.getRect(background), backgroundRect);
+      expect(tester.getRect(meal), mealRect);
+      expect(tester.getRect(find.byType(SametarohFrameImage)), characterRect);
+      expect(
+          tester.getRect(find.widgetWithText(ElevatedButton, '🚪')), exitRect);
+      final indicatorRect = tester.getRect(find.byType(TrainingSyncIndicator));
+      expect(backgroundRect.contains(indicatorRect.topLeft), isTrue);
+      expect(indicatorRect.overlaps(exitRect), isFalse);
+      expect(indicatorRect.overlaps(debugRect), isFalse);
+      expect(
+          indicatorRect.overlaps(tester.getRect(find.byType(GridView).first)),
+          isFalse);
+
+      controller.syncStatus.value = TrainingSyncStatus.idle;
+      controller.syncStatusMessage.value = '';
+      await tester.pump();
+      expect(find.byType(TrainingSyncIndicator), findsNothing);
+      expect(tester.getRect(find.byType(SametarohFrameImage)), characterRect);
+
+      controller.syncStatus.value = TrainingSyncStatus.stopped;
       controller.syncStatusMessage.value = 'サーバーへ同期中';
       await tester.pump();
       expect(find.text('サーバーへ同期中'), findsOneWidget);
+      expect(find.byType(TrainingSyncIndicator), findsNothing);
       expect(tester.getRect(background), backgroundRect);
       expect(tester.getRect(meal), mealRect);
       final updatedCharacterRect =
@@ -166,6 +193,34 @@ void main() {
       expect(tester.takeException(), isNull);
     });
   }
+
+  testWidgets('同期アイコンは白い背景で2秒に1周し、動きを減らす設定では停止する', (tester) async {
+    configurePhone(tester);
+    Widget indicator({bool disableAnimations = false}) => host(MediaQuery(
+          data: MediaQueryData(disableAnimations: disableAnimations),
+          child: const Center(child: TrainingSyncIndicator()),
+        ));
+    await tester.pumpWidget(indicator());
+    final rotation = find.descendant(
+      of: find.byType(TrainingSyncIndicator),
+      matching: find.byType(RotationTransition),
+    );
+    double turns() => tester.widget<RotationTransition>(rotation).turns.value;
+    expect(turns(), 0);
+    await tester.pump(const Duration(milliseconds: 500));
+    expect(turns(), closeTo(-0.25, .001));
+    final container = tester.widget<Container>(find.descendant(
+      of: find.byType(TrainingSyncIndicator),
+      matching: find.byType(Container),
+    ));
+    expect((container.decoration! as BoxDecoration).color, Colors.white);
+    await tester.pumpWidget(indicator(disableAnimations: true));
+    final stoppedTurns = turns();
+    await tester.pump(const Duration(seconds: 1));
+    expect(turns(), stoppedTurns);
+    await tester.pumpWidget(const SizedBox());
+    expect(tester.takeException(), isNull);
+  });
 
   testWidgets('同bodyの親再buildでは食事2コマの連番を保持し、disposeでtimer停止', (tester) async {
     configurePhone(tester);

@@ -16,6 +16,7 @@ import 'models/training_game_models.dart';
 import 'sametaroh_asset.dart';
 import 'training_home_background.dart';
 import 'training_home_roaming_character.dart';
+import 'training_sync_indicator.dart';
 
 /// 参照HTMLのスマートフォン画面部分だけをアプリ用に再現します。
 class TrainingGameScreen extends GetView<TrainingGameController> {
@@ -49,7 +50,9 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
                                       Column(
                                         children: [
                                           if (controller.syncStatusMessage.value
-                                              .isNotEmpty)
+                                                  .isNotEmpty &&
+                                              controller.syncStatus.value !=
+                                                  TrainingSyncStatus.syncing)
                                             _buildSyncStatusBanner(context),
                                           _buildHud(context),
                                           Expanded(child: _buildRoom(context)),
@@ -468,6 +471,20 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
 
   /// パラメータと退出ボタン、検証環境限定の開発操作を表示します。
   Widget _buildHud(BuildContext context) {
+    return Stack(
+      children: [
+        _buildHudContent(context),
+        if (controller.syncStatus.value == TrainingSyncStatus.syncing)
+          Positioned(
+            top: 16.h + 52.w + 3.h,
+            right: 22.w,
+            child: const IgnorePointer(child: TrainingSyncIndicator()),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildHudContent(BuildContext context) {
     return Container(
       padding: EdgeInsets.fromLTRB(8.w, 16.h, 8.w, 8.w),
       child: Row(
