@@ -33,6 +33,9 @@ abstract final class PassAndRunRules {
   /// 方向ミス後にパスできない時間です。
   static const missPenalty = Duration(seconds: 1);
 
+  /// フィールド幅の半分を飛ぶ基準時間。投球・返球とも同じ一定球速です。
+  static const standardPassDuration = Duration(milliseconds: 440);
+
   /// フリックとして扱う最低移動距離です。
   static const minimumDistance = 24.0;
 

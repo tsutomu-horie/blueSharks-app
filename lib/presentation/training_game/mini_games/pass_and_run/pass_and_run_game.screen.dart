@@ -28,7 +28,9 @@ class PassAndRunGameScreen extends StatefulWidget {
 
 class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
     with WidgetsBindingObserver {
-  static const _passArrivalDuration = Duration(milliseconds: 220);
+  static const _passArrivalDuration = PassAndRunRules.standardPassDuration;
+  // Keep the validated collision-radius blend independent of ball speed.
+  static const _collisionBlendDuration = Duration(milliseconds: 220);
   static const _catchSettleDuration = Duration(milliseconds: 80);
   static const _displayScale = .75;
   static const _turnDuration = Duration(milliseconds: 480);
@@ -631,7 +633,7 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
         _collisionRadiusAt(PassRunCharacter.normal, _motionSeconds);
     final to = _collisionRadiusAt(PassRunCharacter.companion, _motionSeconds);
     final progress =
-        (_passElapsed.inMicroseconds / _passArrivalDuration.inMicroseconds)
+        (_passElapsed.inMicroseconds / _collisionBlendDuration.inMicroseconds)
             .clamp(0, 1);
     return from + (to - from) * progress;
   }
@@ -930,6 +932,8 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
         final mate = _mateOffset;
         final ball = _ballOffset;
         final actorSize = _characterSize;
+        final labelScale = math.min(1.0,
+            math.max(0.0, _fieldSize.height * .22 - actorSize / 2 - 2) / 16);
         final frame = _frameAt(_motionSeconds);
         final ballGeometry = _ballGeometry;
         return GestureDetector(
@@ -997,18 +1001,29 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
                 ),
                 Positioned(
                   left: player.dx - actorSize / 2,
-                  top: player.dy + actorSize / 2 + 1,
+                  top: player.dy - actorSize / 2 - 16 * labelScale - 2,
                   width: actorSize,
-                  child: const IgnorePointer(
-                    child: Text(
-                      '鮫太郎',
-                      key: Key('pass-player-label'),
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 10,
-                        height: 1.2,
-                        fontWeight: FontWeight.w500,
-                        color: Color(0xff153d5b),
+                  child: IgnorePointer(
+                    child: Center(
+                      child: Container(
+                        padding: EdgeInsets.symmetric(
+                            horizontal: 6 * labelScale,
+                            vertical: 2 * labelScale),
+                        decoration: BoxDecoration(
+                          color: const Color(0xff153d5b),
+                          borderRadius: BorderRadius.circular(5),
+                        ),
+                        child: Text(
+                          '鮫太郎',
+                          key: Key('pass-player-label'),
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 10 * labelScale,
+                            height: 1.2,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
+                          ),
+                        ),
                       ),
                     ),
                   ),

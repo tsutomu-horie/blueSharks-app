@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:koto_blue_sharks/app/services/server_time_clock.dart';
 import 'package:koto_blue_sharks/presentation/training_game/mini_games/pass_and_run/pass_and_run_motion.dart';
+import 'package:koto_blue_sharks/presentation/training_game/mini_games/pass_and_run/pass_and_run_logic.dart';
 import 'package:koto_blue_sharks/presentation/training_game/mini_games/pass_and_run/pass_and_run_character_visual.dart';
 import 'package:koto_blue_sharks/presentation/training_game/mini_games/pass_and_run/pass_and_run_game.screen.dart';
 
@@ -61,18 +62,25 @@ void main() {
   Future<void> throwToMate(WidgetTester t, double seconds) async {
     final field = t.getRect(find.byKey(const Key('pass-field')));
     final origin = t.getCenter(ball);
-    // Target the moving receiver about 200ms ahead, not its old location.
-    final futureY = PassRunMotion.yAt(seconds + .20, PassRunRunner.companion);
-    final target = Offset(
-      t.getCenter(mate).dx,
-      field.top + field.height * futureY,
-    );
+    final speed = field.width *
+        .5 /
+        (PassAndRunRules.standardPassDuration.inMicroseconds / 1000000);
+    var travel = .44;
+    var target = Offset.zero;
+    for (var i = 0; i < 24; i++) {
+      target = Offset(
+          t.getCenter(mate).dx,
+          field.top +
+              field.height *
+                  PassRunMotion.yAt(seconds + travel, PassRunRunner.companion));
+      travel = (target - origin).distance / speed;
+    }
     await t.flingFrom(t.getCenter(player), target - origin, 2000);
     await t.pump();
   }
 
   Future<void> catchAtMate(WidgetTester t) async {
-    for (var i = 0; i < 60 && !visual(t, mate).holding; i++) {
+    for (var i = 0; i < 140 && !visual(t, mate).holding; i++) {
       await step(t, 8);
     }
     expect(visual(t, mate).holding, isTrue);
@@ -99,7 +107,9 @@ void main() {
             .ignoring,
         isTrue);
     final relative = t.getCenter(label) - t.getCenter(player);
-    expect(t.getRect(label).top, greaterThan(t.getRect(player).bottom));
+    expect(t.getRect(label).bottom, lessThan(t.getRect(player).top));
+    expect(t.widget<Text>(label).style!.color, Colors.white);
+    expect(t.widget<Text>(label).style!.fontWeight, FontWeight.w700);
     await step(t, 640);
     expect((t.getCenter(label) - t.getCenter(player) - relative).distance,
         lessThan(.001));
@@ -107,6 +117,28 @@ void main() {
     await t.pump();
     expect(ball, findsOneWidget);
     expect(trail, findsOneWidget);
+  });
+
+  testWidgets('球速半減後も距離・角度によらず同じ速度で飛ぶ', (t) async {
+    for (final delta in [const Offset(-100, 0), const Offset(-100, 60)]) {
+      await start(t);
+      final width = t.getSize(find.byKey(const Key('pass-field'))).width;
+      await t.flingFrom(t.getCenter(player), delta, 2000);
+      await t.pump();
+      final origin = t.getCenter(ball);
+      await step(t, 40);
+      final first = t.getCenter(ball);
+      await step(t, 40);
+      final second = t.getCenter(ball);
+      final expected = width * .5 / .44 * .04;
+      expect((first - origin).distance, closeTo(expected, .001));
+      expect((second - first).distance, closeTo(expected, .001));
+      expect(PassAndRunRules.roundDuration, const Duration(seconds: 15));
+      expect(PassAndRunRules.mateCollisionRadius, 24);
+      expect(ball, findsOneWidget);
+      await t.pumpWidget(const SizedBox());
+      await t.pump();
+    }
   });
 
   testWidgets('折り返しを連続移動し、停止復帰でも球1個と復路15秒を守る', (t) async {
@@ -363,9 +395,9 @@ void main() {
     }
 
     // The same held ball stays single while both direction-specific pairs run.
-    await at(3400);
+    await at(3500);
     expectFrame('front', 'hold', 'a');
-    await at(3640);
+    await at(3740);
     expectFrame('front', 'hold', 'b');
     await at(3920);
     expectFrame('back', 'hold', 'a');
@@ -416,7 +448,7 @@ void main() {
     expect(release.longAxis, heldGeometry.longAxis);
     expect(release.shortAxis, heldGeometry.shortAxis);
     var settling = false;
-    for (var i = 0; i < 80 && !visual(t, mate).holding; i++) {
+    for (var i = 0; i < 160 && !visual(t, mate).holding; i++) {
       await step(t, 4);
       expect(ball, findsOneWidget);
       if (find.textContaining('PASS 1').evaluate().isNotEmpty &&
@@ -438,7 +470,7 @@ void main() {
     await start(t);
     await throwToMate(t, 0);
     for (var i = 0;
-        i < 80 && find.textContaining('PASS 1').evaluate().isEmpty;
+        i < 160 && find.textContaining('PASS 1').evaluate().isEmpty;
         i++) {
       await step(t, 4);
     }
@@ -634,8 +666,11 @@ void main() {
       addTearDown(t.view.resetDevicePixelRatio);
       await start(t);
       final field = t.getRect(find.byKey(const Key('pass-field')));
-      for (var i = 0; i < 14; i++) {
+      for (var i = 0; i < 27; i++) {
         await step(t, 200);
+        final labelRect = t.getRect(find.byKey(const Key('pass-player-label')));
+        expect(labelRect.top, greaterThanOrEqualTo(field.top - .000001));
+        expect(labelRect.bottom, lessThan(t.getRect(player).top));
         for (final actor in [player, mate]) {
           final rect = t.getRect(actor);
           expect(rect.left, greaterThanOrEqualTo(field.left - .000001));

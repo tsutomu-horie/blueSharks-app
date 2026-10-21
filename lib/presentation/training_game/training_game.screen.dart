@@ -11,6 +11,7 @@ import 'training_game_care_action.screen.dart';
 import 'mini_games/mini_game_selection_thumbnail.dart';
 import 'mini_games/models/mini_game_result.dart';
 import 'mini_games/pass_and_run/pass_and_run_game.screen.dart';
+import 'mini_games/pass_and_run/pass_and_run_logic.dart';
 import 'mini_games/tackle/tackle_game.screen.dart';
 import 'models/training_game_models.dart';
 import 'sametaroh_asset.dart';
@@ -844,7 +845,7 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
                 tag: 'フリック・パス回し系',
                 thumbnailType: MiniGameSelectionThumbnailType.passAndRun,
                 description:
-                    '縦2レーンを上下に並走。仲間にボールを当てると成功。外れたボールは2秒間パス不可。15秒×往復2セットです。',
+                    '縦2レーンを上下に並走。仲間にボールを当てると成功。外れたボールは${PassAndRunRules.missPenalty.inSeconds}秒間パス不可。15秒×往復2セットです。',
               ),
             ],
           ),
