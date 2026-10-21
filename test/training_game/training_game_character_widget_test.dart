@@ -494,6 +494,8 @@ void main() {
       await tester.pump();
       await preload(tester, move);
       expect(shownAsset(tester), move.first.asset);
+      expect(find.text('鮫太郎と過ごした日々を胸に、新たな出会いへ。'), findsOneWidget);
+      expect(find.text('図鑑へ登録'), findsOneWidget);
       expect(tester.takeException(), isNull, reason: '${entry.key}');
     }
   });
@@ -613,6 +615,7 @@ void main() {
         expect(shownAsset(tester), frames.first.asset);
       }
       expect(find.text('次の卵へ'), findsOneWidget);
+      expect(find.text('鮫太郎と過ごした日々を胸に、新たな出会いへ。'), findsOneWidget);
       expect(
           find.byWidgetPredicate((widget) =>
               widget is Image &&
