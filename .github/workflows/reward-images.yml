@@ -28,8 +28,11 @@ jobs:
           test "$(git -C "$RUNNER_TEMP/flutter" rev-parse HEAD)" = d3b14c876900e553bc736ca19295fc09e3853e8e
           echo "$RUNNER_TEMP/flutter/bin" >> "$GITHUB_PATH"
       - run: flutter pub get --enforce-lockfile
-      - name: Isolate Firebase from widget tests
-        run: cp test/support/firebase_options_test_stub.dart lib/firebase_options.dart
+      - name: Prepare isolated widget dependencies
+        run: |
+          cp test/support/firebase_options_test_stub.dart lib/firebase_options.dart
+          # Existing transitive screens use legacy casing; keep this alias CI-only.
+          ln -s constant.dart lib/utils/Constant.dart
       - name: Check affected Dart formatting
         run: >-
           dart format --output=none --set-exit-if-changed

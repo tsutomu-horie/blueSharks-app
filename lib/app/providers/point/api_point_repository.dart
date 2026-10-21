@@ -3,7 +3,7 @@ import 'package:get/get.dart';
 import 'package:koto_blue_sharks/app/data/models/point/point_models.dart';
 import 'package:koto_blue_sharks/app/providers/point/point_repository.dart';
 import 'package:koto_blue_sharks/app/services/auth_token.dart';
-import 'package:koto_blue_sharks/utils/Constant.dart';
+import 'package:koto_blue_sharks/utils/constant.dart';
 
 class ApiPointRepository extends GetConnect implements PointRepository {
   ApiPointRepository._() {
