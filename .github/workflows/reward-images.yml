@@ -1,0 +1,55 @@
+name: Reward images
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/reward-images.yml'
+      - 'lib/app/data/models/point/**'
+      - 'lib/app/providers/point/**'
+      - 'lib/presentation/point/**'
+      - 'test/point/**'
+      - 'test/support/firebase_options_test_stub.dart'
+      - 'pubspec.yaml'
+      - 'pubspec.lock'
+
+permissions:
+  contents: read
+
+jobs:
+  reward-images:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install the validated Flutter SDK
+        shell: bash
+        run: |
+          git clone --depth 1 --branch 3.47.2 https://github.com/flutter/flutter.git "$RUNNER_TEMP/flutter"
+          test "$(git -C "$RUNNER_TEMP/flutter" rev-parse HEAD)" = d3b14c876900e553bc736ca19295fc09e3853e8e
+          echo "$RUNNER_TEMP/flutter/bin" >> "$GITHUB_PATH"
+      - run: flutter pub get --enforce-lockfile
+      - name: Prepare isolated widget dependencies
+        run: |
+          cp test/support/firebase_options_test_stub.dart lib/firebase_options.dart
+          # Existing transitive screens use legacy casing; keep this alias CI-only.
+          ln -s constant.dart lib/utils/Constant.dart
+          ln -s string+extensions.dart lib/utils/String+extensions.dart
+      - name: Check affected Dart formatting
+        run: >-
+          dart format --output=none --set-exit-if-changed
+          lib/app/data/models/point/point_models.dart
+          lib/app/providers/point/api_point_repository.dart
+          lib/presentation/point/point_screens.dart
+          lib/presentation/point/widgets/point_reward_image.dart
+          test/point/reward_image_test.dart
+          test/support/firebase_options_test_stub.dart
+      - name: Analyze affected code
+        run: >-
+          flutter analyze --no-pub --no-fatal-infos
+          lib/app/data/models/point/point_models.dart
+          lib/app/providers/point/api_point_repository.dart
+          lib/presentation/point/point_screens.dart
+          lib/presentation/point/widgets/point_reward_image.dart
+          test/point/reward_image_test.dart
+      - name: Verify image loading, fallback and point compatibility
+        run: flutter test --no-pub --reporter expanded test/point/reward_image_test.dart test/point/mock_point_repository_test.dart

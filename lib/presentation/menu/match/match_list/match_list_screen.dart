@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:koto_blue_sharks/presentation/menu/widgets/menu_data_status.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
@@ -15,25 +16,20 @@ import 'package:shimmer/shimmer.dart';
 
 import 'package:koto_blue_sharks/presentation/screens.dart';
 
-
 class MatchListScreen extends GetView<MatchListController> {
   const MatchListScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final MatchListController gameInfoController = Get.put(MatchListController());
+    final MatchListController gameInfoController =
+        Get.put(MatchListController());
 
     return Scaffold(
         backgroundColor: BackgroundColor.primary,
         body: RefreshIndicator(
-          onRefresh: () async {
-            // int currentYear = DateTime.now().year; // Get the current year
-            // int nextYear = currentYear + 1; // Calculate the next year
-            // gameInfoController.seasonSlug.value = 'season_${currentYear}_${nextYear}'; // Construct the slug for the season
-
-            gameInfoController.fetchMatchResult();
-          },
+          onRefresh: gameInfoController.fetchMatchResult,
           child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
             child: Column(
               children: [
                 Container(
@@ -46,7 +42,8 @@ class MatchListScreen extends GetView<MatchListController> {
                 ),
                 Container(
                   color: BackgroundColor.primary,
-                  padding: EdgeInsets.symmetric(vertical: 12.h, horizontal: 16.w),
+                  padding:
+                      EdgeInsets.symmetric(vertical: 12.h, horizontal: 16.w),
                   child: OutlinedButton(
                     onPressed: () {
                       showYearFilterBottomSheet(context);
@@ -109,6 +106,18 @@ class MatchListScreen extends GetView<MatchListController> {
                   height: 20.h,
                 ),
                 Obx(() {
+                  if (!gameInfoController.isLoading.value &&
+                      gameInfoController.errorMessage.value.isNotEmpty) {
+                    return MenuDataStatus(
+                        message: gameInfoController.errorMessage.value,
+                        onRetry: gameInfoController.fetchMatchResult);
+                  }
+                  if (!gameInfoController.isLoading.value &&
+                      gameInfoController.listMatch.value.isEmpty) {
+                    return MenuDataStatus(
+                        message: 'このシーズンの試合はありません。',
+                        onRetry: gameInfoController.fetchMatchResult);
+                  }
                   if (gameInfoController.isLoading.value) {
                     return Column(
                       children: [
@@ -184,8 +193,8 @@ class MatchListScreen extends GetView<MatchListController> {
                                 if (snapshot.connectionState ==
                                     ConnectionState.waiting) {
                                   return Padding(
-                                    padding:
-                                        EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
+                                    padding: EdgeInsets.symmetric(
+                                        horizontal: 12.w, vertical: 8.h),
                                     child: shimmer(),
                                   );
                                 } else if (snapshot.hasError) {
@@ -202,7 +211,8 @@ class MatchListScreen extends GetView<MatchListController> {
                                   );
                                 } else {
                                   // Use the actual image URL returned from the Future
-                                  final opponentLogo = snapshot.data?['image'] ??
+                                  final opponentLogo = snapshot
+                                          .data?['image'] ??
                                       'https://example.com/placeholder.png'; // Fallback in case of null
 
                                   return MatchItemView(
@@ -232,7 +242,8 @@ class MatchListScreen extends GetView<MatchListController> {
                                         homeStatus:
                                             snapshot.data?['matchStatus'] ?? "",
                                       ));
-                                    }, isFromHome: false,
+                                    },
+                                    isFromHome: false,
                                   );
                                 }
                               },
@@ -244,7 +255,9 @@ class MatchListScreen extends GetView<MatchListController> {
                         });
                   }
                 }),
-                SizedBox(height: 24.h,),
+                SizedBox(
+                  height: 24.h,
+                ),
               ],
             ),
           ),

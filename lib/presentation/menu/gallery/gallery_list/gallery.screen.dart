@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:koto_blue_sharks/presentation/menu/widgets/menu_data_status.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import 'package:get/get.dart';
-import 'package:hive/hive.dart';
 import 'package:koto_blue_sharks/app/views/views/custom_image_view.dart';
 import 'package:koto_blue_sharks/app/views/views/custom_text_view.dart';
 import 'package:koto_blue_sharks/app/views/views/default_header_title_view.dart';
@@ -23,19 +23,10 @@ class GalleryScreen extends GetView<GalleryController> {
   Widget build(BuildContext context) {
     final GalleryController galleryController = Get.put(GalleryController());
 
-    galleryController.selectedYear.value = "";
-
-    if (Get.isRegistered<YearFilterController>()) {
-      Get.find<YearFilterController>().reset();
-    }
-
-    galleryController.onSwitch(1, LocaleKeys.game.toUpperCase().tr);
     return Scaffold(
         backgroundColor: Colors.white,
         body: RefreshIndicator(
-          onRefresh: () async {
-            controller.onRefresh();
-          },
+          onRefresh: galleryController.onRefresh,
           child: SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
             child: Column(
@@ -43,11 +34,13 @@ class GalleryScreen extends GetView<GalleryController> {
                 DefaultHeaderTitleView(LocaleKeys.gallery.tr,
                     LocaleKeys.gallery_en.tr.toUpperCase()),
                 Obx(() {
-                  if (galleryController.isLoading.value && galleryController.album.isEmpty) {
+                  if (galleryController.isLoading.value &&
+                      galleryController.album.isEmpty) {
                     return Column(
                       children: [
                         Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
+                          padding: EdgeInsets.symmetric(
+                              horizontal: 16.w, vertical: 16.h),
                           child: Container(
                             padding: EdgeInsets.all(3.w),
                             width: 343.w,
@@ -56,13 +49,16 @@ class GalleryScreen extends GetView<GalleryController> {
                               // Background color
                               borderRadius: BorderRadius.circular(30),
                               // Rounded container
-                              border:
-                              Border.all(color: Colors.grey.shade300), // Outer border
+                              border: Border.all(
+                                  color: Colors.grey.shade300), // Outer border
                             ),
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                buildToggleOption(LocaleKeys.game.tr.toUpperCase(), 1, galleryController),
+                                buildToggleOption(
+                                    LocaleKeys.game.tr.toUpperCase(),
+                                    1,
+                                    galleryController),
                                 SizedBox(
                                   width: 8.w,
                                 ),
@@ -75,86 +71,9 @@ class GalleryScreen extends GetView<GalleryController> {
                                   width: 8.w,
                                 ),
                                 buildToggleOption(
-                                    LocaleKeys.event_en.tr.toUpperCase(), 2, galleryController),
-                                SizedBox(
-                                  width: 8.w,
-                                ),
-                                Container(
-                                  width: 1.w,
-                                  height: 16.h,
-                                  color: BorderColor.primary,
-                                ),
-                                SizedBox(
-                                  width: 8.w,
-                                ),
-                                buildToggleOption(LocaleKeys.other.tr.toUpperCase(), 3, galleryController),
-                              ],
-                            ),
-                          ),
-                        ),
-                        YearFilter(
-                          years: List.generate(DateTime.now().year - 2019 + 1,
-                                  (index) => DateTime.now().year - index),
-                          // Generate year list dynamically
-                          initialSelectedYear: 0,
-                          selectedColor: BrandColor.main,
-                          unselectedColor: Colors.grey.shade200,
-                          selectedTextColor: Colors.white,
-                          unselectedTextColor: TextColor.secondary,
-                          onYearSelected: (selectedYear) {
-                            // Handle year selection
-                            if (selectedYear == 0) {
-                              galleryController.selectedYear.value =
-                              "";
-                              galleryController.getGalleryList();
-                              print("Selected Year: $selectedYear");
-                            } else {
-                              galleryController.selectedYear.value =
-                              "$selectedYear";
-                              galleryController.getGalleryList();
-                              print("Selected Year: $selectedYear");
-                            }
-                          }, selectedYear: galleryController.selectedYear,
-                        ),
-                        SizedBox(height: 16.h,),
-                        Row(
-                          children: [
-                            SizedBox(width: 16.w,),
-                            Flexible(child: SizedBox(height: 200.h, child: shimmer())),
-                            SizedBox(width: 16.w,),
-                          ],
-                        ),
-                        SizedBox(height: 16.h,),
-                        Row(
-                          children: [
-                            SizedBox(width: 16.w,),
-                            Flexible(child: SizedBox(height: 200.h, child: shimmer())),
-                            SizedBox(width: 16.w,),
-                          ],
-                        ),
-                      ],
-                    );
-                  } else {
-                    return Column(
-                      mainAxisSize: MainAxisSize.max,
-                      children: [
-                        Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
-                          child: Container(
-                            padding: EdgeInsets.all(3.w),
-                            width: 343.w,
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              // Background color
-                              borderRadius: BorderRadius.circular(30),
-                              // Rounded container
-                              border:
-                              Border.all(color: Colors.grey.shade300), // Outer border
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                buildToggleOption(LocaleKeys.game.tr.toUpperCase(), 1, galleryController),
+                                    LocaleKeys.event_en.tr.toUpperCase(),
+                                    2,
+                                    galleryController),
                                 SizedBox(
                                   width: 8.w,
                                 ),
@@ -167,19 +86,9 @@ class GalleryScreen extends GetView<GalleryController> {
                                   width: 8.w,
                                 ),
                                 buildToggleOption(
-                                    LocaleKeys.event_en.tr.toUpperCase(), 2, galleryController),
-                                SizedBox(
-                                  width: 8.w,
-                                ),
-                                Container(
-                                  width: 1.w,
-                                  height: 16.h,
-                                  color: BorderColor.primary,
-                                ),
-                                SizedBox(
-                                  width: 8.w,
-                                ),
-                                buildToggleOption(LocaleKeys.other.tr.toUpperCase(), 3, galleryController),
+                                    LocaleKeys.other.tr.toUpperCase(),
+                                    3,
+                                    galleryController),
                               ],
                             ),
                           ),
@@ -196,47 +105,161 @@ class GalleryScreen extends GetView<GalleryController> {
                           onYearSelected: (selectedYear) {
                             // Handle year selection
                             if (selectedYear == 0) {
-                              galleryController.selectedYear.value =
-                              "";
+                              galleryController.selectedYear.value = "";
                               galleryController.getGalleryList();
                               print("Selected Year: $selectedYear");
                             } else {
                               galleryController.selectedYear.value =
-                              "$selectedYear";
+                                  "$selectedYear";
                               galleryController.getGalleryList();
                               print("Selected Year: $selectedYear");
                             }
-                          }, selectedYear: galleryController.selectedYear,
+                          },
+                          selectedYear: galleryController.selectedYear,
+                        ),
+                        SizedBox(
+                          height: 16.h,
+                        ),
+                        Row(
+                          children: [
+                            SizedBox(
+                              width: 16.w,
+                            ),
+                            Flexible(
+                                child:
+                                    SizedBox(height: 200.h, child: shimmer())),
+                            SizedBox(
+                              width: 16.w,
+                            ),
+                          ],
+                        ),
+                        SizedBox(
+                          height: 16.h,
+                        ),
+                        Row(
+                          children: [
+                            SizedBox(
+                              width: 16.w,
+                            ),
+                            Flexible(
+                                child:
+                                    SizedBox(height: 200.h, child: shimmer())),
+                            SizedBox(
+                              width: 16.w,
+                            ),
+                          ],
+                        ),
+                      ],
+                    );
+                  } else {
+                    return Column(
+                      mainAxisSize: MainAxisSize.max,
+                      children: [
+                        Padding(
+                          padding: EdgeInsets.symmetric(
+                              horizontal: 16.w, vertical: 16.h),
+                          child: Container(
+                            padding: EdgeInsets.all(3.w),
+                            width: 343.w,
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              // Background color
+                              borderRadius: BorderRadius.circular(30),
+                              // Rounded container
+                              border: Border.all(
+                                  color: Colors.grey.shade300), // Outer border
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                buildToggleOption(
+                                    LocaleKeys.game.tr.toUpperCase(),
+                                    1,
+                                    galleryController),
+                                SizedBox(
+                                  width: 8.w,
+                                ),
+                                Container(
+                                  width: 1.w,
+                                  height: 16.h,
+                                  color: BorderColor.primary,
+                                ),
+                                SizedBox(
+                                  width: 8.w,
+                                ),
+                                buildToggleOption(
+                                    LocaleKeys.event_en.tr.toUpperCase(),
+                                    2,
+                                    galleryController),
+                                SizedBox(
+                                  width: 8.w,
+                                ),
+                                Container(
+                                  width: 1.w,
+                                  height: 16.h,
+                                  color: BorderColor.primary,
+                                ),
+                                SizedBox(
+                                  width: 8.w,
+                                ),
+                                buildToggleOption(
+                                    LocaleKeys.other.tr.toUpperCase(),
+                                    3,
+                                    galleryController),
+                              ],
+                            ),
+                          ),
+                        ),
+                        YearFilter(
+                          years: List.generate(DateTime.now().year - 2019 + 1,
+                              (index) => DateTime.now().year - index),
+                          // Generate year list dynamically
+                          initialSelectedYear: 0,
+                          selectedColor: BrandColor.main,
+                          unselectedColor: Colors.grey.shade200,
+                          selectedTextColor: Colors.white,
+                          unselectedTextColor: TextColor.secondary,
+                          onYearSelected: (selectedYear) {
+                            // Handle year selection
+                            if (selectedYear == 0) {
+                              galleryController.selectedYear.value = "";
+                              galleryController.getGalleryList();
+                              print("Selected Year: $selectedYear");
+                            } else {
+                              galleryController.selectedYear.value =
+                                  "$selectedYear";
+                              galleryController.getGalleryList();
+                              print("Selected Year: $selectedYear");
+                            }
+                          },
+                          selectedYear: galleryController.selectedYear,
                         ),
                         Padding(
                           padding: EdgeInsets.symmetric(horizontal: 16.w),
                           child: Obx(() {
+                            if (galleryController.isLoading.value) {
+                              return const Padding(
+                                  padding: EdgeInsets.all(40),
+                                  child: CircularProgressIndicator());
+                            }
+                            if (galleryController
+                                .errorMessage.value.isNotEmpty) {
+                              return MenuDataStatus(
+                                  message: galleryController.errorMessage.value,
+                                  onRetry: galleryController.getGalleryList);
+                            }
                             if (controller.album.isEmpty) {
-                              return SingleChildScrollView(
-                                child: ConstrainedBox(
-                                  constraints: BoxConstraints(
-                                    minHeight: MediaQuery.of(context).size.height/2, // Set minimum height
-                                  ),
-                                  child: const IntrinsicHeight(
-                                    child: Column(
-                                      children: [
-                                        Expanded(
-                                          child: Center(
-                                            child: CustomTextView("表示イメージはございません。"),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              );
+                              return MenuDataStatus(
+                                  message: 'この条件の写真はまだ登録されていません。',
+                                  onRetry: galleryController.getGalleryList);
                             }
 
                             return ListView.builder(
                                 shrinkWrap: true,
                                 physics: const NeverScrollableScrollPhysics(),
                                 itemCount: galleryController.album.length,
-                                itemBuilder: (BuildContext context, int index) =>
+                                itemBuilder: (BuildContext context,
+                                        int index) =>
                                     Column(
                                       children: [
                                         SizedBox(
@@ -244,11 +267,10 @@ class GalleryScreen extends GetView<GalleryController> {
                                         ),
                                         InkWell(
                                           onTap: () {
-                                            Get.to(() =>
-                                                GalleryDetailScreen(
-                                                    galleryController.album[index],
-                                                    galleryController
-                                                        .selectedName.value));
+                                            Get.to(() => GalleryDetailScreen(
+                                                galleryController.album[index],
+                                                galleryController
+                                                    .selectedName.value));
                                           },
                                           child: Stack(
                                             children: [
@@ -259,22 +281,30 @@ class GalleryScreen extends GetView<GalleryController> {
                                                     SizedBox(
                                                       width: double.infinity,
                                                       child: CustomImageView(
-                                                          customFit: BoxFit.fitWidth,
+                                                          customFit:
+                                                              BoxFit.fitWidth,
                                                           radius: 12.r,
-                                                          image: controller.imageCompressor(galleryController
-                                                                  .album[index].photo ??
-                                                              "")),
+                                                          image: controller
+                                                              .imageCompressor(
+                                                                  galleryController
+                                                                          .album[
+                                                                              index]
+                                                                          .photo ??
+                                                                      "")),
                                                     ),
                                                     Container(
-                                                        decoration: const BoxDecoration(
-                                                            gradient: LinearGradient(
-                                                              begin: Alignment.bottomCenter,
-                                                              end: Alignment.topCenter,
-                                                              colors: [
-                                                                Colors.black,
-                                                                Colors.transparent,
-                                                              ],
-                                                            ))),
+                                                        decoration:
+                                                            const BoxDecoration(
+                                                                gradient:
+                                                                    LinearGradient(
+                                                      begin: Alignment
+                                                          .bottomCenter,
+                                                      end: Alignment.topCenter,
+                                                      colors: [
+                                                        Colors.black,
+                                                        Colors.transparent,
+                                                      ],
+                                                    ))),
                                                   ],
                                                 ),
                                               ),
@@ -291,8 +321,10 @@ class GalleryScreen extends GetView<GalleryController> {
                                                         Container(
                                                           padding: EdgeInsets
                                                               .symmetric(
-                                                                  horizontal: 8.w,
-                                                                  vertical: 4.h),
+                                                                  horizontal:
+                                                                      8.w,
+                                                                  vertical:
+                                                                      4.h),
                                                           decoration:
                                                               BoxDecoration(
                                                             color:
@@ -329,13 +361,12 @@ class GalleryScreen extends GetView<GalleryController> {
                                                           width: 8.w,
                                                         ),
                                                         FutureBuilder<String>(
-                                                          future:
-                                                              convertToJapaneseFormat(
-                                                                  galleryController
-                                                                          .album[
-                                                                              index]
-                                                                          .date ??
-                                                                      ""),
+                                                          future: convertToJapaneseFormat(
+                                                              galleryController
+                                                                      .album[
+                                                                          index]
+                                                                      .date ??
+                                                                  ""),
                                                           builder: (BuildContext
                                                                   context,
                                                               AsyncSnapshot<
@@ -369,12 +400,13 @@ class GalleryScreen extends GetView<GalleryController> {
                                                       height: 6.h,
                                                     ),
                                                     CustomTextView(
-                                                      galleryController.album[index]
+                                                      galleryController
+                                                              .album[index]
                                                               .name ??
                                                           "",
                                                       maxLine: 2,
-                                                      type:
-                                                          TDSFontType.titleLarge,
+                                                      type: TDSFontType
+                                                          .titleLarge,
                                                       color: Colors.white,
                                                     )
                                                   ],
@@ -394,15 +426,19 @@ class GalleryScreen extends GetView<GalleryController> {
                     );
                   }
                 }),
-                SizedBox(height: 24.h,),
+                SizedBox(
+                  height: 24.h,
+                ),
               ],
             ),
           ),
         ));
   }
 
-  Widget buildToggleOption(String text, int index, GalleryController galleryController) {
+  Widget buildToggleOption(
+      String text, int index, GalleryController galleryController) {
     return GestureDetector(
+      key: ValueKey('gallery-category-$index'),
       onTap: () => galleryController.onSwitch(index, text),
       child: Obx(() {
         bool isSelected = galleryController.selectedIndex.value == index;

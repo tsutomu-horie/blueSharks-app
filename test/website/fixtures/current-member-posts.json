@@ -1,0 +1,1703 @@
+[
+  {
+    "id": 17338,
+    "date": "2024-01-03T10:35:00",
+    "date_gmt": "2024-01-03T01:35:00",
+    "guid": {
+      "rendered": "https://test-blue-sharks.com/?p=17338"
+    },
+    "modified": "2025-11-20T15:01:58",
+    "modified_gmt": "2025-11-20T06:01:58",
+    "slug": "%e5%90%89%e5%bb%a3%e3%80%80%e5%ba%83%e5%be%81",
+    "status": "publish",
+    "type": "member",
+    "link": "https://blue-sharks.donati.jp/members/staff/2024/01/17338/",
+    "title": {
+      "rendered": "吉廣　広征"
+    },
+    "template": "",
+    "member_position": [
+      55
+    ]
+  },
+  {
+    "id": 19838,
+    "date": "2024-01-04T11:01:00",
+    "date_gmt": "2024-01-04T02:01:00",
+    "guid": {
+      "rendered": "https://test-blue-sharks.com/?p=19838"
+    },
+    "modified": "2025-11-20T15:01:58",
+    "modified_gmt": "2025-11-20T06:01:58",
+    "slug": "%e3%82%bb%e3%82%b3%e3%81%ba%e3%83%bb%e3%82%b1%e3%83%97",
+    "status": "publish",
+    "type": "member",
+    "link": "https://blue-sharks.donati.jp/members/staff/2024/01/19838/",
+    "title": {
+      "rendered": "Sekope Kepu"
+    },
+    "template": "",
+    "member_position": [
+      55
+    ]
+  },
+  {
+    "id": 19817,
+    "date": "2024-01-05T10:46:00",
+    "date_gmt": "2024-01-05T01:46:00",
+    "guid": {
+      "rendered": "https://test-blue-sharks.com/?p=19817"
+    },
+    "modified": "2025-11-20T15:01:59",
+    "modified_gmt": "2025-11-20T06:01:59",
+    "slug": "%e6%a8%a9%e4%b8%88%e3%80%80%e5%a4%aa%e9%83%8e",
+    "status": "publish",
+    "type": "member",
+    "link": "https://blue-sharks.donati.jp/members/staff/2024/01/19817/",
+    "title": {
+      "rendered": "権丈　太郎"
+    },
+    "template": "",
+    "member_position": [
+      55
+    ]
+  },
+  {
+    "id": 17344,
+    "date": "2024-01-06T10:44:00",
+    "date_gmt": "2024-01-06T01:44:00",
+    "guid": {
+      "rendered": "https://test-blue-sharks.com/?p=17344"
+    },
+    "modified": "2025-11-20T15:01:59",
+    "modified_gmt": "2025-11-20T06:01:59",
+    "slug": "%e5%ae%ae%e6%9c%ac%e3%80%80%e8%aa%89%e4%b9%85",
+    "status": "publish",
+    "type": "member",
+    "link": "https://blue-sharks.donati.jp/members/staff/2024/01/17344/",
+    "title": {
+      "rendered": "宮本　誉久"
+    },
+    "template": "",
+    "member_position": [
+      55
+    ]
+  },
+  {
+    "id": 17350,
+    "date": "2024-01-07T10:57:00",
+    "date_gmt": "2024-01-07T01:57:00",
+    "guid": {
+      "rendered": "https://test-blue-sharks.com/?p=17350"
+    },
+    "modified": "2025-11-20T15:01:59",
+    "modified_gmt": "2025-11-20T06:01:59",
+    "slug": "%e5%9d%82%e6%9c%ac%e3%80%80%e5%92%8c%e5%9f%8e",
+    "status": "publish",
+    "type": "member",
+    "link": "https://blue-sharks.donati.jp/members/staff/2024/01/17350/",
+    "title": {
+      "rendered": "坂本　和城"
+    },
+    "template": "",
+    "member_position": [
+      55
+    ]
+  },
+  {
+    "id": 17348,
+    "date": "2024-01-09T10:51:00",
+    "date_gmt": "2024-01-09T01:51:00",
+    "guid": {
+      "rendered": "https://test-blue-sharks.com/?p=17348"
+    },
+    "modified": "2025-11-20T15:02:00",
+    "modified_gmt": "2025-11-20T06:02:00",
+    "slug": "%e9%bb%92%e7%94%b0%e3%80%80%e6%a0%84%e5%8f%b2",
+    "status": "publish",
+    "type": "member",
+    "link": "https://blue-sharks.donati.jp/members/staff/2024/01/17348/",
+    "title": {
+      "rendered": "黒田　栄史"
+    },
+    "template": "",
+    "member_position": [
+      55
+    ]
+  },
+  {
+    "id": 20489,
+    "date": "2024-01-08T16:40:00",
+    "date_gmt": "2024-01-08T07:40:00",
+    "guid": {
+      "rendered": "https://test-blue-sharks.com/?p=20489"
+    },
+    "modified": "2025-11-20T15:02:00",
+    "modified_gmt": "2025-11-20T06:02:00",
+    "slug": "greg-feek",
+    "status": "publish",
+    "type": "member",
+    "link": "https://blue-sharks.donati.jp/members/staff/2024/01/20489/",
+    "title": {
+      "rendered": "GREG FEEK"
+    },
+    "template": "",
+    "member_position": [
+      55
+    ]
+  },
+  {
+    "id": 17330,
+    "date": "2024-01-12T09:35:00",
+    "date_gmt": "2024-01-12T00:35:00",
+    "guid": {
+      "rendered": "https://test-blue-sharks.com/?p=17330"
+    },
+    "modified": "2025-11-20T15:02:02",
+    "modified_gmt": "2025-11-20T06:02:02",
+    "slug": "%e5%a5%a5%e5%8e%9f%e3%80%80%e5%b0%9a%e4%b9%8b",
+    "status": "publish",
+    "type": "member",
+    "link": "https://blue-sharks.donati.jp/members/staff/2024/01/17330/",
+    "title": {
+      "rendered": "奥原　尚之"
+    },
+    "template": "",
+    "member_position": [
+      55
+    ]
+  },
+  {
+    "id": 17332,
+    "date": "2024-01-14T09:39:00",
+    "date_gmt": "2024-01-14T00:39:00",
+    "guid": {
+      "rendered": "https://test-blue-sharks.com/?p=17332"
+    },
+    "modified": "2025-11-20T15:02:03",
+    "modified_gmt": "2025-11-20T06:02:03",
+    "slug": "%e9%bd%8a%e8%97%a4%e3%80%80%e5%ba%b7%e5%a4%aa",
+    "status": "publish",
+    "type": "member",
+    "link": "https://blue-sharks.donati.jp/members/staff/2024/01/17332/",
+    "title": {
+      "rendered": "齊藤　康太"
+    },
+    "template": "",
+    "member_position": [
+      55
+    ]
+  },
+  {
+    "id": 19047,
+    "date": "2024-01-15T12:03:00",
+    "date_gmt": "2024-01-15T03:03:00",
+    "guid": {
+      "rendered": "https://test-blue-sharks.com/?p=19047"
+    },
+    "modified": "2025-11-20T15:02:03",
+    "modified_gmt": "2025-11-20T06:02:03",
+    "slug": "%e5%8c%97%e5%b4%8e%e3%80%80%e6%82%a0%e5%a3%ab",
+    "status": "publish",
+    "type": "member",
+    "link": "https://blue-sharks.donati.jp/members/staff/2024/01/19047/",
+    "title": {
+      "rendered": "北崎　悠士"
+    },
+    "template": "",
+    "member_position": [
+      55
+    ]
+  },
+  {
+    "id": 19051,
+    "date": "2024-01-16T12:03:00",
+    "date_gmt": "2024-01-16T03:03:00",
+    "guid": {
+      "rendered": "https://test-blue-sharks.com/?p=19051"
+    },
+    "modified": "2025-11-20T15:02:04",
+    "modified_gmt": "2025-11-20T06:02:04",
+    "slug": "%e6%b1%9f%e8%97%a4%e3%80%80%e5%8f%8b%e5%93%89",
+    "status": "publish",
+    "type": "member",
+    "link": "https://blue-sharks.donati.jp/members/staff/2024/01/19051/",
+    "title": {
+      "rendered": "江藤　友哉"
+    },
+    "template": "",
+    "member_position": [
+      55
+    ]
+  },
+  {
+    "id": 17346,
+    "date": "2024-01-19T10:48:00",
+    "date_gmt": "2024-01-19T01:48:00",
+    "guid": {
+      "rendered": "https://test-blue-sharks.com/?p=17346"
+    },
+    "modified": "2025-11-20T15:02:05",
+    "modified_gmt": "2025-11-20T06:02:05",
+    "slug": "%e9%8c%a6%e7%b9%94%e3%80%80%e6%ad%a3%e6%86%b2",
+    "status": "publish",
+    "type": "member",
+    "link": "https://blue-sharks.donati.jp/members/staff/2024/01/17346/",
+    "title": {
+      "rendered": "錦織　正憲"
+    },
+    "template": "",
+    "member_position": [
+      55
+    ]
+  },
+  {
+    "id": 17364,
+    "date": "2024-01-21T11:18:00",
+    "date_gmt": "2024-01-21T02:18:00",
+    "guid": {
+      "rendered": "https://test-blue-sharks.com/?p=17364"
+    },
+    "modified": "2025-11-20T15:02:06",
+    "modified_gmt": "2025-11-20T06:02:06",
+    "slug": "%e8%97%a4%e7%94%b0%e3%80%80%e3%82%b3%e3%83%8a%e3%83%b3",
+    "status": "publish",
+    "type": "member",
+    "link": "https://blue-sharks.donati.jp/members/staff/2024/01/17364/",
+    "title": {
+      "rendered": "藤田　コナン"
+    },
+    "template": "",
+    "member_position": [
+      55
+    ]
+  },
+  {
+    "id": 19844,
+    "date": "2024-01-22T11:18:00",
+    "date_gmt": "2024-01-22T02:18:00",
+    "guid": {
+      "rendered": "https://test-blue-sharks.com/?p=19844"
+    },
+    "modified": "2025-11-20T15:02:08",
+    "modified_gmt": "2025-11-20T06:02:08",
+    "slug": "%e4%b8%8a%e9%87%8e%e3%80%80%e9%9b%84%e5%a4%aa-2",
+    "status": "publish",
+    "type": "member",
+    "link": "https://blue-sharks.donati.jp/members/staff/2024/01/19844/",
+    "title": {
+      "rendered": "上野　雄太"
+    },
+    "template": "",
+    "member_position": [
+      55
+    ]
+  },
+  {
+    "id": 17334,
+    "date": "2024-01-24T09:42:00",
+    "date_gmt": "2024-01-24T00:42:00",
+    "guid": {
+      "rendered": "https://test-blue-sharks.com/?p=17334"
+    },
+    "modified": "2025-11-20T15:02:09",
+    "modified_gmt": "2025-11-20T06:02:09",
+    "slug": "%e6%b5%a6%e9%87%8e%e3%80%80%e9%be%8d%e5%9f%ba",
+    "status": "publish",
+    "type": "member",
+    "link": "https://blue-sharks.donati.jp/members/staff/2024/01/17334/",
+    "title": {
+      "rendered": "浦野　龍基"
+    },
+    "template": "",
+    "member_position": [
+      55
+    ]
+  },
+  {
+    "id": 19827,
+    "date": "2024-01-25T10:51:00",
+    "date_gmt": "2024-01-25T01:51:00",
+    "guid": {
+      "rendered": "https://test-blue-sharks.com/?p=19827"
+    },
+    "modified": "2025-11-20T15:02:09",
+    "modified_gmt": "2025-11-20T06:02:09",
+    "slug": "%e4%ba%ba%e8%a6%8b%e3%80%80%e6%8b%b3%e7%9f%a2",
+    "status": "publish",
+    "type": "member",
+    "link": "https://blue-sharks.donati.jp/members/staff/2024/01/19827/",
+    "title": {
+      "rendered": "人見　拳矢"
+    },
+    "template": "",
+    "member_position": [
+      55
+    ]
+  },
+  {
+    "id": 18876,
+    "date": "2025-01-06T14:53:00",
+    "date_gmt": "2025-01-06T05:53:00",
+    "guid": {
+      "rendered": "https://test-blue-sharks.com/?p=18876"
+    },
+    "modified": "2025-11-20T15:02:23",
+    "modified_gmt": "2025-11-20T06:02:23",
+    "slug": "%e6%9d%be%e5%b0%be%e3%80%80%e7%a3%a8%e4%ba%ba",
+    "status": "publish",
+    "type": "member",
+    "link": "https://blue-sharks.donati.jp/members/scrumhalf/2025/01/18876/",
+    "title": {
+      "rendered": "松尾　磨人"
+    },
+    "template": "",
+    "member_position": [
+      54
+    ]
+  },
+  {
+    "id": 23465,
+    "date": "2025-11-05T17:49:36",
+    "date_gmt": "2025-11-05T08:49:36",
+    "guid": {
+      "rendered": "https://test-blue-sharks.com/?p=23465"
+    },
+    "modified": "2025-11-20T15:02:28",
+    "modified_gmt": "2025-11-20T06:02:28",
+    "slug": "sione-talitui",
+    "status": "publish",
+    "type": "member",
+    "link": "https://blue-sharks.donati.jp/members/flanker/2025/11/23465/",
+    "title": {
+      "rendered": "Sione Talitui"
+    },
+    "template": "",
+    "member_position": [
+      59
+    ]
+  },
+  {
+    "id": 18869,
+    "date": "2025-01-05T14:54:00",
+    "date_gmt": "2025-01-05T05:54:00",
+    "guid": {
+      "rendered": "https://test-blue-sharks.com/?p=18869"
+    },
+    "modified": "2025-11-20T15:13:46",
+    "modified_gmt": "2025-11-20T06:13:46",
+    "slug": "%e9%87%91%e7%af%89%e3%80%80%e9%81%94%e4%b9%9f",
+    "status": "publish",
+    "type": "member",
+    "link": "https://blue-sharks.donati.jp/members/scrumhalf/2025/01/18869/",
+    "title": {
+      "rendered": "金築　達也"
+    },
+    "template": "",
+    "member_position": [
+      54
+    ]
+  },
+  {
+    "id": 19842,
+    "date": "2024-01-13T11:07:00",
+    "date_gmt": "2024-01-13T02:07:00",
+    "guid": {
+      "rendered": "https://test-blue-sharks.com/?p=19842"
+    },
+    "modified": "2025-11-21T09:47:27",
+    "modified_gmt": "2025-11-21T00:47:27",
+    "slug": "%e7%9f%b3%e9%bb%92-%e6%ad%a3%e9%ab%98",
+    "status": "publish",
+    "type": "member",
+    "link": "https://blue-sharks.donati.jp/members/staff/2024/01/19842/",
+    "title": {
+      "rendered": "石黒 正高"
+    },
+    "template": "",
+    "member_position": [
+      55
+    ]
+  },
+  {
+    "id": 17356,
+    "date": "2024-01-28T11:09:00",
+    "date_gmt": "2024-01-28T02:09:00",
+    "guid": {
+      "rendered": "https://test-blue-sharks.com/?p=17356"
+    },
+    "modified": "2025-11-21T13:02:31",
+    "modified_gmt": "2025-11-21T04:02:31",
+    "slug": "%e6%bb%9d%e6%b2%a2%e3%80%80%e7%a5%90%e6%a8%b9",
+    "status": "publish",
+    "type": "member",
+    "link": "https://blue-sharks.donati.jp/members/staff/2024/01/17356/",
+    "title": {
+      "rendered": "滝沢　祐樹"
+    },
+    "template": "",
+    "member_position": [
+      55
+    ]
+  },
+  {
+    "id": 23688,
+    "date": "2024-11-09T17:40:00",
+    "date_gmt": "2024-11-09T08:40:00",
+    "guid": {
+      "rendered": "https://test-blue-sharks.com/?p=23687"
+    },
+    "modified": "2025-11-21T15:32:59",
+    "modified_gmt": "2025-11-21T06:32:59",
+    "slug": "%e5%be%85%e5%b1%b1%e3%80%80%e7%a5%90%e4%b8%80%e9%83%8e",
+    "status": "publish",
+    "type": "member",
+    "link": "https://blue-sharks.donati.jp/members/staff/2024/11/23688/",
+    "title": {
+      "rendered": "待山　祐一郎"
+    },
+    "template": "",
+    "member_position": [
+      55
+    ]
+  },
+  {
+    "id": 23695,
+    "date": "2024-11-09T17:41:00",
+    "date_gmt": "2024-11-09T08:41:00",
+    "guid": {
+      "rendered": "https://test-blue-sharks.com/?p=23561"
+    },
+    "modified": "2025-11-21T15:33:11",
+    "modified_gmt": "2025-11-21T06:33:11",
+    "slug": "%e5%90%89%e6%9d%91%e3%80%80%e5%ba%b7%e5%b5%a9",
+    "status": "publish",
+    "type": "member",
+    "link": "https://blue-sharks.donati.jp/members/staff/2024/11/23695/",
+    "title": {
+      "rendered": "吉村　康嵩"
+    },
+    "template": "",
+    "member_position": [
+      55
+    ]
+  },
+  {
+    "id": 17669,
+    "date": "2024-01-18T14:45:00",
+    "date_gmt": "2024-01-18T05:45:00",
+    "guid": {
+      "rendered": "https://test-blue-sharks.com/?p=17669"
+    },
+    "modified": "2025-11-21T15:39:36",
+    "modified_gmt": "2025-11-21T06:39:36",
+    "slug": "%e6%bd%ae%e7%94%b0",
+    "status": "publish",
+    "type": "member",
+    "link": "https://blue-sharks.donati.jp/members/staff/2024/01/17669/",
+    "title": {
+      "rendered": "潮田　小波"
+    },
+    "template": "",
+    "member_position": [
+      55
+    ]
+  },
+  {
+    "id": 17372,
+    "date": "2024-01-29T11:30:00",
+    "date_gmt": "2024-01-29T02:30:00",
+    "guid": {
+      "rendered": "https://test-blue-sharks.com/?p=17372"
+    },
+    "modified": "2025-11-21T15:47:51",
+    "modified_gmt": "2025-11-21T06:47:51",
+    "slug": "%e6%ab%bb%e4%ba%95%e3%80%80%e6%9c%8b%e5%ba%83",
+    "status": "publish",
+    "type": "member",
+    "link": "https://blue-sharks.donati.jp/members/staff/2024/01/17372/",
+    "title": {
+      "rendered": "櫻井　朋広"
+    },
+    "template": "",
+    "member_position": [
+      55
+    ]
+  },
+  {
+    "id": 23883,
+    "date": "2024-01-24T11:00:00",
+    "date_gmt": "2024-01-24T02:00:00",
+    "guid": {
+      "rendered": "https://blue-sharks.donati.jp/?p=23883"
+    },
+    "modified": "2026-01-05T17:14:49",
+    "modified_gmt": "2026-01-05T08:14:49",
+    "slug": "%e4%ba%95%e4%b8%8a%e3%80%80%e6%95%a6%e5%8f%b2",
+    "status": "publish",
+    "type": "member",
+    "link": "https://blue-sharks.donati.jp/members/staff/2024/01/23883/",
+    "title": {
+      "rendered": "井上　敦史"
+    },
+    "template": "",
+    "member_position": [
+      55
+    ]
+  },
+  {
+    "id": 23696,
+    "date": "2024-01-18T15:00:00",
+    "date_gmt": "2024-01-18T06:00:00",
+    "guid": {
+      "rendered": "https://test-blue-sharks.com/?p=23565"
+    },
+    "modified": "2026-04-24T18:43:37",
+    "modified_gmt": "2026-04-24T09:43:37",
+    "slug": "%e5%b1%b1%e5%8f%a3%e3%80%80%e3%82%8f%e3%81%8b%e3%81%b0",
+    "status": "publish",
+    "type": "member",
+    "link": "https://blue-sharks.donati.jp/members/staff/2024/01/23696/",
+    "title": {
+      "rendered": "山口　わかば"
+    },
+    "template": "",
+    "member_position": [
+      55
+    ]
+  },
+  {
+    "id": 24001,
+    "date": "2024-01-24T10:55:00",
+    "date_gmt": "2024-01-24T01:55:00",
+    "guid": {
+      "rendered": "https://blue-sharks.donati.jp/?p=24001"
+    },
+    "modified": "2026-04-24T18:44:09",
+    "modified_gmt": "2026-04-24T09:44:09",
+    "slug": "%e5%ae%89%e8%97%a4-%e6%95%ac%e4%bb%8b",
+    "status": "publish",
+    "type": "member",
+    "link": "https://blue-sharks.donati.jp/members/staff/2024/01/24001/",
+    "title": {
+      "rendered": "安藤　敬介"
+    },
+    "template": "",
+    "member_position": [
+      55
+    ]
+  },
+  {
+    "id": 24592,
+    "date": "2026-04-24T18:45:04",
+    "date_gmt": "2026-04-24T09:45:04",
+    "guid": {
+      "rendered": "https://blue-sharks.donati.jp/?p=24592"
+    },
+    "modified": "2026-04-24T18:45:06",
+    "modified_gmt": "2026-04-24T09:45:06",
+    "slug": "%e5%b0%8f%e8%a5%bf%e3%80%80%e6%b3%b0%e8%aa%a0",
+    "status": "publish",
+    "type": "member",
+    "link": "https://blue-sharks.donati.jp/members/no8/2026/04/24592/",
+    "title": {
+      "rendered": "小西　泰誠"
+    },
+    "template": "",
+    "member_position": [
+      52
+    ]
+  },
+  {
+    "id": 24598,
+    "date": "2026-04-24T18:45:12",
+    "date_gmt": "2026-04-24T09:45:12",
+    "guid": {
+      "rendered": "https://blue-sharks.donati.jp/?p=24598"
+    },
+    "modified": "2026-04-24T18:45:14",
+    "modified_gmt": "2026-04-24T09:45:14",
+    "slug": "%e6%9e%97%e3%80%80%e6%85%b6%e9%9f%b3",
+    "status": "publish",
+    "type": "member",
+    "link": "https://blue-sharks.donati.jp/members/no8/2026/04/24598/",
+    "title": {
+      "rendered": "林　慶音"
+    },
+    "template": "",
+    "member_position": [
+      52
+    ]
+  },
+  {
+    "id": 24622,
+    "date": "2026-04-24T18:45:31",
+    "date_gmt": "2026-04-24T09:45:31",
+    "guid": {
+      "rendered": "https://blue-sharks.donati.jp/?p=24622"
+    },
+    "modified": "2026-04-24T18:45:32",
+    "modified_gmt": "2026-04-24T09:45:32",
+    "slug": "%e5%a4%a7%e7%ab%b9%e3%80%80%e6%85%b6%e5%ae%a3",
+    "status": "publish",
+    "type": "member",
+    "link": "https://blue-sharks.donati.jp/members/flanker/2026/04/24622/",
+    "title": {
+      "rendered": "大竹　慶宣"
+    },
+    "template": "",
+    "member_position": [
+      59
+    ]
+  },
+  {
+    "id": 24610,
+    "date": "2026-04-24T18:46:07",
+    "date_gmt": "2026-04-24T09:46:07",
+    "guid": {
+      "rendered": "https://blue-sharks.donati.jp/?p=24610"
+    },
+    "modified": "2026-04-24T18:46:08",
+    "modified_gmt": "2026-04-24T09:46:08",
+    "slug": "%e4%bc%8a%e8%97%a4%e3%80%80%e6%bd%a4%e4%b9%83%e5%8a%a9",
+    "status": "publish",
+    "type": "member",
+    "link": "https://blue-sharks.donati.jp/members/prop/2026/04/24610/",
+    "title": {
+      "rendered": "伊藤　潤乃助"
+    },
+    "template": "",
+    "member_position": [
+      61
+    ]
+  },
+  {
+    "id": 24633,
+    "date": "2026-04-24T18:46:36",
+    "date_gmt": "2026-04-24T09:46:36",
+    "guid": {
+      "rendered": "https://blue-sharks.donati.jp/?p=24633"
+    },
+    "modified": "2026-04-24T18:46:38",
+    "modified_gmt": "2026-04-24T09:46:38",
+    "slug": "%e4%bd%90%e5%90%88%e3%80%80%e6%a8%b9",
+    "status": "publish",
+    "type": "member",
+    "link": "https://blue-sharks.donati.jp/members/staff/2026/04/24633/",
+    "title": {
+      "rendered": "佐合　樹"
+    },
+    "template": "",
+    "member_position": [
+      55
+    ]
+  },
+  {
+    "id": 24637,
+    "date": "2026-04-24T18:46:45",
+    "date_gmt": "2026-04-24T09:46:45",
+    "guid": {
+      "rendered": "https://blue-sharks.donati.jp/?p=24637"
+    },
+    "modified": "2026-04-24T18:46:46",
+    "modified_gmt": "2026-04-24T09:46:46",
+    "slug": "%e6%b0%b8%e7%94%b0%e3%80%80%e9%9a%86%e4%b8%80%e9%83%8e",
+    "status": "publish",
+    "type": "member",
+    "link": "https://blue-sharks.donati.jp/members/staff/2026/04/24637/",
+    "title": {
+      "rendered": "永田　隆一郎"
+    },
+    "template": "",
+    "member_position": [
+      55
+    ]
+  },
+  {
+    "id": 24628,
+    "date": "2026-04-24T18:45:41",
+    "date_gmt": "2026-04-24T09:45:41",
+    "guid": {
+      "rendered": "https://blue-sharks.donati.jp/?p=24628"
+    },
+    "modified": "2026-04-24T18:48:46",
+    "modified_gmt": "2026-04-24T09:48:46",
+    "slug": "%e6%b2%b3%e6%9d%91%e3%80%80%e3%83%8e%e3%82%a8%e3%83%ab",
+    "status": "publish",
+    "type": "member",
+    "link": "https://blue-sharks.donati.jp/members/flanker/2026/04/24628/",
+    "title": {
+      "rendered": "河村　ノエル"
+    },
+    "template": "",
+    "member_position": [
+      59
+    ]
+  },
+  {
+    "id": 24616,
+    "date": "2026-04-24T18:46:18",
+    "date_gmt": "2026-04-24T09:46:18",
+    "guid": {
+      "rendered": "https://blue-sharks.donati.jp/?p=24616"
+    },
+    "modified": "2026-07-09T15:01:46",
+    "modified_gmt": "2026-07-09T06:01:46",
+    "slug": "%e5%bc%93%e9%83%a8%e3%80%80%e6%99%ba%e5%b8%8c",
+    "status": "publish",
+    "type": "member",
+    "link": "https://blue-sharks.donati.jp/members/prop/2026/04/24616/",
+    "title": {
+      "rendered": "弓部　智希"
+    },
+    "template": "",
+    "member_position": [
+      61
+    ]
+  },
+  {
+    "id": 24641,
+    "date": "2026-04-24T18:46:56",
+    "date_gmt": "2026-04-24T09:46:56",
+    "guid": {
+      "rendered": "https://blue-sharks.donati.jp/?p=24641"
+    },
+    "modified": "2026-09-01T12:02:17",
+    "modified_gmt": "2026-09-01T03:02:17",
+    "slug": "%e5%a3%81%e8%b0%b7%e3%80%80%e6%a1%9c%e5%ad%90",
+    "status": "publish",
+    "type": "member",
+    "link": "https://blue-sharks.donati.jp/members/staff/2026/04/24641/",
+    "title": {
+      "rendered": "伏見　桜子"
+    },
+    "template": "",
+    "member_position": [
+      55
+    ]
+  },
+  {
+    "id": 17265,
+    "date": "2025-01-02T10:58:00",
+    "date_gmt": "2025-01-02T01:58:00",
+    "guid": {
+      "rendered": "https://test-blue-sharks.com/?p=17265"
+    },
+    "modified": "2026-10-16T10:58:46",
+    "modified_gmt": "2026-10-16T01:58:46",
+    "slug": "%e5%bf%97%e6%9d%91%e3%80%80%e5%a4%aa%e5%9f%ba",
+    "status": "publish",
+    "type": "member",
+    "link": "https://blue-sharks.donati.jp/members/prop/2025/01/17265/",
+    "title": {
+      "rendered": "志村　太基"
+    },
+    "template": "",
+    "member_position": [
+      61
+    ]
+  },
+  {
+    "id": 17277,
+    "date": "2025-01-03T16:08:00",
+    "date_gmt": "2025-01-03T07:08:00",
+    "guid": {
+      "rendered": "https://test-blue-sharks.com/?p=17277"
+    },
+    "modified": "2026-10-16T10:59:17",
+    "modified_gmt": "2026-10-16T01:59:17",
+    "slug": "%e8%8f%85%e5%8e%9f%e3%80%80%e5%b4%87%e8%81%96",
+    "status": "publish",
+    "type": "member",
+    "link": "https://blue-sharks.donati.jp/members/prop/2025/01/17277/",
+    "title": {
+      "rendered": "菅原　崇聖"
+    },
+    "template": "",
+    "member_position": [
+      61
+    ]
+  },
+  {
+    "id": 17231,
+    "date": "2025-01-04T11:38:00",
+    "date_gmt": "2025-01-04T02:38:00",
+    "guid": {
+      "rendered": "https://test-blue-sharks.com/?p=17231"
+    },
+    "modified": "2026-10-16T10:59:28",
+    "modified_gmt": "2026-10-16T01:59:28",
+    "slug": "%e5%90%89%e5%b7%9d%e3%80%80%e8%b1%aa%e4%ba%ba",
+    "status": "publish",
+    "type": "member",
+    "link": "https://blue-sharks.donati.jp/members/prop/2025/01/17231/",
+    "title": {
+      "rendered": "吉川 豪人"
+    },
+    "template": "",
+    "member_position": [
+      61
+    ]
+  },
+  {
+    "id": 17312,
+    "date": "2025-01-05T16:50:00",
+    "date_gmt": "2025-01-05T07:50:00",
+    "guid": {
+      "rendered": "https://test-blue-sharks.com/?p=17312"
+    },
+    "modified": "2026-10-16T10:59:39",
+    "modified_gmt": "2026-10-16T01:59:39",
+    "slug": "%e9%87%8e%e6%9d%91%e3%80%80%e4%b8%89%e5%9b%9b%e9%83%8e",
+    "status": "publish",
+    "type": "member",
+    "link": "https://blue-sharks.donati.jp/members/prop/2025/01/17312/",
+    "title": {
+      "rendered": "野村　三四郎"
+    },
+    "template": "",
+    "member_position": [
+      61
+    ]
+  },
+  {
+    "id": 17324,
+    "date": "2025-01-06T17:08:00",
+    "date_gmt": "2025-01-06T08:08:00",
+    "guid": {
+      "rendered": "https://test-blue-sharks.com/?p=17324"
+    },
+    "modified": "2026-10-16T11:01:16",
+    "modified_gmt": "2026-10-16T02:01:16",
+    "slug": "%e9%bd%8a%e8%97%a4%e3%80%80%e9%81%bc%e5%a4%aa",
+    "status": "publish",
+    "type": "member",
+    "link": "https://blue-sharks.donati.jp/members/prop/2025/01/17324/",
+    "title": {
+      "rendered": "齊藤　遼太"
+    },
+    "template": "",
+    "member_position": [
+      61
+    ]
+  },
+  {
+    "id": 17318,
+    "date": "2025-01-07T16:57:00",
+    "date_gmt": "2025-01-07T07:57:00",
+    "guid": {
+      "rendered": "https://test-blue-sharks.com/?p=17318"
+    },
+    "modified": "2026-10-16T11:01:29",
+    "modified_gmt": "2026-10-16T02:01:29",
+    "slug": "%e6%9d%8e%e3%80%80%e5%84%aa%e6%b2%b3",
+    "status": "publish",
+    "type": "member",
+    "link": "https://blue-sharks.donati.jp/members/prop/2025/01/17318/",
+    "title": {
+      "rendered": "李　優河"
+    },
+    "template": "",
+    "member_position": [
+      61
+    ]
+  },
+  {
+    "id": 17284,
+    "date": "2025-01-08T16:17:00",
+    "date_gmt": "2025-01-08T07:17:00",
+    "guid": {
+      "rendered": "https://test-blue-sharks.com/?p=17284"
+    },
+    "modified": "2026-10-16T11:01:47",
+    "modified_gmt": "2026-10-16T02:01:47",
+    "slug": "%e5%a4%a7%e5%92%8c%e3%80%80%e5%a4%a7%e7%a5%90",
+    "status": "publish",
+    "type": "member",
+    "link": "https://blue-sharks.donati.jp/members/prop/2025/01/17284/",
+    "title": {
+      "rendered": "大和　大祐"
+    },
+    "template": "",
+    "member_position": [
+      61
+    ]
+  },
+  {
+    "id": 18883,
+    "date": "2025-01-09T14:53:00",
+    "date_gmt": "2025-01-09T05:53:00",
+    "guid": {
+      "rendered": "https://test-blue-sharks.com/?p=18883"
+    },
+    "modified": "2026-10-16T11:02:14",
+    "modified_gmt": "2026-10-16T02:02:14",
+    "slug": "%e5%a5%88%e8%89%af%e3%80%80%e7%9c%9f%e5%bc%a5",
+    "status": "publish",
+    "type": "member",
+    "link": "https://blue-sharks.donati.jp/members/prop/2025/01/18883/",
+    "title": {
+      "rendered": "奈良　真弥"
+    },
+    "template": "",
+    "member_position": [
+      61
+    ]
+  },
+  {
+    "id": 22627,
+    "date": "2025-01-10T10:10:11",
+    "date_gmt": "2025-01-10T01:10:11",
+    "guid": {
+      "rendered": "https://test-blue-sharks.com/?p=21669"
+    },
+    "modified": "2026-10-16T11:02:25",
+    "modified_gmt": "2026-10-16T02:02:25",
+    "slug": "%e9%ba%bb%e7%94%9f%e3%80%80%e5%b0%9a%e5%ae%8f",
+    "status": "publish",
+    "type": "member",
+    "link": "https://blue-sharks.donati.jp/members/prop/2025/01/22627/",
+    "title": {
+      "rendered": "麻生　尚宏"
+    },
+    "template": "",
+    "member_position": [
+      61
+    ]
+  },
+  {
+    "id": 21698,
+    "date": "2025-01-11T10:27:26",
+    "date_gmt": "2025-01-11T01:27:26",
+    "guid": {
+      "rendered": "https://test-blue-sharks.com/?p=21698"
+    },
+    "modified": "2026-10-16T11:02:39",
+    "modified_gmt": "2026-10-16T02:02:39",
+    "slug": "%e4%b8%ad%e6%a3%ae%e3%80%80%e6%a8%b9%e7%94%9f",
+    "status": "publish",
+    "type": "member",
+    "link": "https://blue-sharks.donati.jp/members/prop/2025/01/21698/",
+    "title": {
+      "rendered": "中森　樹生"
+    },
+    "template": "",
+    "member_position": [
+      61
+    ]
+  },
+  {
+    "id": 17305,
+    "date": "2025-01-01T16:41:00",
+    "date_gmt": "2025-01-01T07:41:00",
+    "guid": {
+      "rendered": "https://test-blue-sharks.com/?p=17305"
+    },
+    "modified": "2026-10-16T11:03:46",
+    "modified_gmt": "2026-10-16T02:03:46",
+    "slug": "%e7%99%bd%e5%ad%90%e3%80%80%e9%9b%84%e5%a4%aa%e9%83%8e",
+    "status": "publish",
+    "type": "member",
+    "link": "https://blue-sharks.donati.jp/members/no8/2025/01/17305/",
+    "title": {
+      "rendered": "白子　雄太郎"
+    },
+    "template": "",
+    "member_position": [
+      52
+    ]
+  },
+  {
+    "id": 19809,
+    "date": "2025-01-03T10:19:00",
+    "date_gmt": "2025-01-03T01:19:00",
+    "guid": {
+      "rendered": "https://test-blue-sharks.com/?p=19809"
+    },
+    "modified": "2026-10-16T11:04:38",
+    "modified_gmt": "2026-10-16T02:04:38",
+    "slug": "%e3%82%a8%e3%83%83%e3%82%bb%e3%83%b3%e3%83%89%e3%83%b3%e3%83%bb%e3%83%88%e3%82%a5%e3%82%a4%e3%83%88%e3%82%a5%e3%83%9d%e3%82%a6",
+    "status": "publish",
+    "type": "member",
+    "link": "https://blue-sharks.donati.jp/members/wing/2025/01/19809/",
+    "title": {
+      "rendered": "Essendon tuitupou"
+    },
+    "template": "",
+    "member_position": [
+      53
+    ]
+  },
+  {
+    "id": 17244,
+    "date": "2025-01-04T15:21:00",
+    "date_gmt": "2025-01-04T06:21:00",
+    "guid": {
+      "rendered": "https://test-blue-sharks.com/?p=17244"
+    },
+    "modified": "2026-10-16T11:04:52",
+    "modified_gmt": "2026-10-16T02:04:52",
+    "slug": "%e9%ab%99%e4%ba%95%e3%80%80%e5%84%aa%e5%bf%97",
+    "status": "publish",
+    "type": "member",
+    "link": "https://blue-sharks.donati.jp/members/wing/2025/01/17244/",
+    "title": {
+      "rendered": "髙井　優志"
+    },
+    "template": "",
+    "member_position": [
+      53
+    ]
+  },
+  {
+    "id": 17221,
+    "date": "2025-01-02T11:05:00",
+    "date_gmt": "2025-01-02T02:05:00",
+    "guid": {
+      "rendered": "https://test-blue-sharks.com/?p=17221"
+    },
+    "modified": "2026-10-16T11:05:16",
+    "modified_gmt": "2026-10-16T02:05:16",
+    "slug": "%e8%87%bc%e4%ba%95-%e7%a4%bc%e4%ba%8c%e6%9c%97",
+    "status": "publish",
+    "type": "member",
+    "link": "https://blue-sharks.donati.jp/members/scrumhalf/2025/01/17221/",
+    "title": {
+      "rendered": "臼井　礼二朗"
+    },
+    "template": "",
+    "member_position": [
+      54
+    ]
+  },
+  {
+    "id": 17254,
+    "date": "2025-01-04T16:59:00",
+    "date_gmt": "2025-01-04T07:59:00",
+    "guid": {
+      "rendered": "https://test-blue-sharks.com/?p=17254"
+    },
+    "modified": "2026-10-16T11:05:29",
+    "modified_gmt": "2026-10-16T02:05:29",
+    "slug": "%e5%9d%82%e5%8e%9f%e3%80%80%e6%98%a5%e5%85%89",
+    "status": "publish",
+    "type": "member",
+    "link": "https://blue-sharks.donati.jp/members/scrumhalf/2025/01/17254/",
+    "title": {
+      "rendered": "坂原　春光"
+    },
+    "template": "",
+    "member_position": [
+      54
+    ]
+  },
+  {
+    "id": 17259,
+    "date": "2025-01-02T18:35:00",
+    "date_gmt": "2025-01-02T09:35:00",
+    "guid": {
+      "rendered": "https://test-blue-sharks.com/?p=17259"
+    },
+    "modified": "2026-10-16T11:06:04",
+    "modified_gmt": "2026-10-16T02:06:04",
+    "slug": "%e5%b1%b1%e7%94%b0%e3%80%80%e9%9b%85%e4%b9%9f",
+    "status": "publish",
+    "type": "member",
+    "link": "https://blue-sharks.donati.jp/members/standoff/2025/01/17259/",
+    "title": {
+      "rendered": "山田　雅也"
+    },
+    "template": "",
+    "member_position": [
+      56
+    ]
+  },
+  {
+    "id": 17241,
+    "date": "2025-01-03T15:16:00",
+    "date_gmt": "2025-01-03T06:16:00",
+    "guid": {
+      "rendered": "https://test-blue-sharks.com/?p=17241"
+    },
+    "modified": "2026-10-16T11:06:15",
+    "modified_gmt": "2026-10-16T02:06:15",
+    "slug": "%e6%a1%91%e7%94%b0%e3%80%80%e5%ae%97%e4%b8%80%e9%83%8e",
+    "status": "publish",
+    "type": "member",
+    "link": "https://blue-sharks.donati.jp/members/standoff/2025/01/17241/",
+    "title": {
+      "rendered": "桑田　宗一郎"
+    },
+    "template": "",
+    "member_position": [
+      56
+    ]
+  },
+  {
+    "id": 23577,
+    "date": "2025-11-05T17:12:33",
+    "date_gmt": "2025-11-05T08:12:33",
+    "guid": {
+      "rendered": "https://test-blue-sharks.com/?p=23448"
+    },
+    "modified": "2026-10-16T11:06:32",
+    "modified_gmt": "2026-10-16T02:06:32",
+    "slug": "billy-burns",
+    "status": "publish",
+    "type": "member",
+    "link": "https://blue-sharks.donati.jp/members/standoff/2025/11/23577/",
+    "title": {
+      "rendered": "Billy Burns"
+    },
+    "template": "",
+    "member_position": [
+      56
+    ]
+  },
+  {
+    "id": 17238,
+    "date": "2025-01-01T15:11:00",
+    "date_gmt": "2025-01-01T06:11:00",
+    "guid": {
+      "rendered": "https://test-blue-sharks.com/?p=17238"
+    },
+    "modified": "2026-10-16T11:06:50",
+    "modified_gmt": "2026-10-16T02:06:50",
+    "slug": "%e9%87%91%e6%9d%91%e3%80%80%e6%8b%93%e8%80%b6",
+    "status": "publish",
+    "type": "member",
+    "link": "https://blue-sharks.donati.jp/members/center/2025/01/17238/",
+    "title": {
+      "rendered": "金村　拓耶"
+    },
+    "template": "",
+    "member_position": [
+      57
+    ]
+  },
+  {
+    "id": 17398,
+    "date": "2025-01-04T11:32:00",
+    "date_gmt": "2025-01-04T02:32:00",
+    "guid": {
+      "rendered": "https://test-blue-sharks.com/?p=17398"
+    },
+    "modified": "2026-10-16T11:07:02",
+    "modified_gmt": "2026-10-16T02:07:02",
+    "slug": "%e3%82%b7%e3%82%a2%e3%83%ac%e3%83%bb%e3%83%94%e3%82%a6%e3%82%bf%e3%82%a6",
+    "status": "publish",
+    "type": "member",
+    "link": "https://blue-sharks.donati.jp/members/center/2025/01/17398/",
+    "title": {
+      "rendered": "Siale Piutau "
+    },
+    "template": "",
+    "member_position": [
+      57
+    ]
+  },
+  {
+    "id": 19797,
+    "date": "2025-01-05T10:04:00",
+    "date_gmt": "2025-01-05T01:04:00",
+    "guid": {
+      "rendered": "https://test-blue-sharks.com/?p=19797"
+    },
+    "modified": "2026-10-16T11:07:15",
+    "modified_gmt": "2026-10-16T02:07:15",
+    "slug": "%e3%83%8e%e3%82%a2%e3%83%bb%e3%83%95%e3%82%a9%e3%82%b9%e3%82%bf%e3%83%bc",
+    "status": "publish",
+    "type": "member",
+    "link": "https://blue-sharks.donati.jp/members/center/2025/01/19797/",
+    "title": {
+      "rendered": "Noah Foster"
+    },
+    "template": "",
+    "member_position": [
+      57
+    ]
+  },
+  {
+    "id": 19799,
+    "date": "2025-01-06T10:04:00",
+    "date_gmt": "2025-01-06T01:04:00",
+    "guid": {
+      "rendered": "https://test-blue-sharks.com/?p=19799"
+    },
+    "modified": "2026-10-16T11:07:26",
+    "modified_gmt": "2026-10-16T02:07:26",
+    "slug": "%e3%83%86%e3%83%ac%e3%83%b3%e3%82%b9%e3%83%bb%e3%81%b8%e3%83%97%e3%83%86%e3%83%9e",
+    "status": "publish",
+    "type": "member",
+    "link": "https://blue-sharks.donati.jp/members/center/2025/01/19799/",
+    "title": {
+      "rendered": "Terrence Hepetema"
+    },
+    "template": "",
+    "member_position": [
+      57
+    ]
+  },
+  {
+    "id": 23602,
+    "date": "2025-01-07T14:23:14",
+    "date_gmt": "2025-01-07T05:23:14",
+    "guid": {
+      "rendered": "https://test-blue-sharks.com/?p=21727"
+    },
+    "modified": "2026-10-16T11:07:45",
+    "modified_gmt": "2026-10-16T02:07:45",
+    "slug": "%e8%97%a4%e5%b2%a1-%e7%ab%9c%e4%b9%9f",
+    "status": "publish",
+    "type": "member",
+    "link": "https://blue-sharks.donati.jp/members/center/2025/01/23602/",
+    "title": {
+      "rendered": "藤岡 竜也"
+    },
+    "template": "",
+    "member_position": [
+      57
+    ]
+  },
+  {
+    "id": 23603,
+    "date": "2025-11-05T17:31:03",
+    "date_gmt": "2025-11-05T08:31:03",
+    "guid": {
+      "rendered": "https://test-blue-sharks.com/?p=23453"
+    },
+    "modified": "2026-10-16T11:07:58",
+    "modified_gmt": "2026-10-16T02:07:58",
+    "slug": "maritino-nemani",
+    "status": "publish",
+    "type": "member",
+    "link": "https://blue-sharks.donati.jp/members/center/2025/11/23603/",
+    "title": {
+      "rendered": "Maritino Nemani"
+    },
+    "template": "",
+    "member_position": [
+      57
+    ]
+  },
+  {
+    "id": 17392,
+    "date": "2025-01-01T11:22:00",
+    "date_gmt": "2025-01-01T02:22:00",
+    "guid": {
+      "rendered": "https://test-blue-sharks.com/?p=17392"
+    },
+    "modified": "2026-10-16T11:08:50",
+    "modified_gmt": "2026-10-16T02:08:50",
+    "slug": "%e7%ab%8b%e5%b7%9d%e3%80%80%e7%9b%b4%e9%81%93",
+    "status": "publish",
+    "type": "member",
+    "link": "https://blue-sharks.donati.jp/members/hooker/2025/01/17392/",
+    "title": {
+      "rendered": "立川　直道"
+    },
+    "template": "",
+    "member_position": [
+      58
+    ]
+  },
+  {
+    "id": 17281,
+    "date": "2025-01-02T16:13:00",
+    "date_gmt": "2025-01-02T07:13:00",
+    "guid": {
+      "rendered": "https://test-blue-sharks.com/?p=17281"
+    },
+    "modified": "2026-10-16T11:09:07",
+    "modified_gmt": "2026-10-16T02:09:07",
+    "slug": "%e5%a4%a7%e8%a5%bf%e3%80%80%e8%a8%93%e5%b9%b3",
+    "status": "publish",
+    "type": "member",
+    "link": "https://blue-sharks.donati.jp/members/hooker/2025/01/17281/",
+    "title": {
+      "rendered": "大西　訓平"
+    },
+    "template": "",
+    "member_position": [
+      58
+    ]
+  },
+  {
+    "id": 17294,
+    "date": "2025-01-04T16:28:00",
+    "date_gmt": "2025-01-04T07:28:00",
+    "guid": {
+      "rendered": "https://test-blue-sharks.com/?p=17294"
+    },
+    "modified": "2026-10-16T11:09:21",
+    "modified_gmt": "2026-10-16T02:09:21",
+    "slug": "%e7%94%b0%e6%a3%ae%e3%80%80%e6%b5%b7%e9%9f%b3",
+    "status": "publish",
+    "type": "member",
+    "link": "https://blue-sharks.donati.jp/members/hooker/2025/01/17294/",
+    "title": {
+      "rendered": "田森　海音"
+    },
+    "template": "",
+    "member_position": [
+      58
+    ]
+  },
+  {
+    "id": 17262,
+    "date": "2025-01-05T10:44:00",
+    "date_gmt": "2025-01-05T01:44:00",
+    "guid": {
+      "rendered": "https://test-blue-sharks.com/?p=17262"
+    },
+    "modified": "2026-10-16T11:09:35",
+    "modified_gmt": "2026-10-16T02:09:35",
+    "slug": "%e5%b1%b1%e6%9c%ac%e3%80%80%e6%b3%b0%e4%b9%8b",
+    "status": "publish",
+    "type": "member",
+    "link": "https://blue-sharks.donati.jp/members/hooker/2025/01/17262/",
+    "title": {
+      "rendered": "山本　泰之"
+    },
+    "template": "",
+    "member_position": [
+      58
+    ]
+  },
+  {
+    "id": 22689,
+    "date": "2025-01-06T14:04:32",
+    "date_gmt": "2025-01-06T05:04:32",
+    "guid": {
+      "rendered": "https://test-blue-sharks.com/?p=21714"
+    },
+    "modified": "2026-10-16T11:09:47",
+    "modified_gmt": "2026-10-16T02:09:47",
+    "slug": "%e9%87%91%e3%80%80%e5%8b%87%e5%93%b2",
+    "status": "publish",
+    "type": "member",
+    "link": "https://blue-sharks.donati.jp/members/hooker/2025/01/22689/",
+    "title": {
+      "rendered": "金　勇哲"
+    },
+    "template": "",
+    "member_position": [
+      58
+    ]
+  },
+  {
+    "id": 23428,
+    "date": "2025-11-05T16:16:14",
+    "date_gmt": "2025-11-05T07:16:14",
+    "guid": {
+      "rendered": "https://test-blue-sharks.com/?p=23428"
+    },
+    "modified": "2026-10-16T11:10:04",
+    "modified_gmt": "2026-10-16T02:10:04",
+    "slug": "mahe-vailanu",
+    "status": "publish",
+    "type": "member",
+    "link": "https://blue-sharks.donati.jp/members/hooker/2025/11/23428/",
+    "title": {
+      "rendered": "Mahe Vailanu"
+    },
+    "template": "",
+    "member_position": [
+      58
+    ]
+  },
+  {
+    "id": 17268,
+    "date": "2025-01-01T11:27:00",
+    "date_gmt": "2025-01-01T02:27:00",
+    "guid": {
+      "rendered": "https://test-blue-sharks.com/?p=17268"
+    },
+    "modified": "2026-10-16T11:12:05",
+    "modified_gmt": "2026-10-16T02:12:05",
+    "slug": "%e6%9d%be%e5%9c%9f%e3%80%80%e6%b2%bb%e6%a8%b9",
+    "status": "publish",
+    "type": "member",
+    "link": "https://blue-sharks.donati.jp/members/flanker/2025/01/17268/",
+    "title": {
+      "rendered": "松土　治樹"
+    },
+    "template": "",
+    "member_position": [
+      59
+    ]
+  },
+  {
+    "id": 17327,
+    "date": "2025-01-03T17:12:00",
+    "date_gmt": "2025-01-03T08:12:00",
+    "guid": {
+      "rendered": "https://test-blue-sharks.com/?p=17327"
+    },
+    "modified": "2026-10-16T11:22:15",
+    "modified_gmt": "2026-10-16T02:22:15",
+    "slug": "%e9%ab%99%e6%a9%8b%e3%80%80%e5%ba%83%e5%a4%a7",
+    "status": "publish",
+    "type": "member",
+    "link": "https://blue-sharks.donati.jp/members/flanker/2025/01/17327/",
+    "title": {
+      "rendered": "髙橋　広大"
+    },
+    "template": "",
+    "member_position": [
+      59
+    ]
+  },
+  {
+    "id": 17291,
+    "date": "2025-01-04T16:24:00",
+    "date_gmt": "2025-01-04T07:24:00",
+    "guid": {
+      "rendered": "https://test-blue-sharks.com/?p=17291"
+    },
+    "modified": "2026-10-16T11:22:32",
+    "modified_gmt": "2026-10-16T02:22:32",
+    "slug": "%e9%95%b7%e8%b0%b7%e3%80%80%e9%8a%80%e6%ac%a1%e6%9c%97",
+    "status": "publish",
+    "type": "member",
+    "link": "https://blue-sharks.donati.jp/members/flanker/2025/01/17291/",
+    "title": {
+      "rendered": "長谷　銀次朗"
+    },
+    "template": "",
+    "member_position": [
+      59
+    ]
+  },
+  {
+    "id": 17309,
+    "date": "2025-01-01T16:46:00",
+    "date_gmt": "2025-01-01T07:46:00",
+    "guid": {
+      "rendered": "https://test-blue-sharks.com/?p=17309"
+    },
+    "modified": "2026-10-16T11:23:16",
+    "modified_gmt": "2026-10-16T02:23:16",
+    "slug": "%e5%b0%be%ef%a8%91%e3%80%80%e9%81%94%e6%b4%8b",
+    "status": "publish",
+    "type": "member",
+    "link": "https://blue-sharks.donati.jp/members/fullback/2025/01/17309/",
+    "title": {
+      "rendered": "尾﨑　達洋"
+    },
+    "template": "",
+    "member_position": [
+      60
+    ]
+  },
+  {
+    "id": 21738,
+    "date": "2025-01-04T14:25:17",
+    "date_gmt": "2025-01-04T05:25:17",
+    "guid": {
+      "rendered": "https://test-blue-sharks.com/?p=21738"
+    },
+    "modified": "2026-10-16T11:23:32",
+    "modified_gmt": "2026-10-16T02:23:32",
+    "slug": "%e8%a5%bf%e7%ab%af-%e7%8e%84%e6%b1%b0",
+    "status": "publish",
+    "type": "member",
+    "link": "https://blue-sharks.donati.jp/members/fullback/2025/01/21738/",
+    "title": {
+      "rendered": "西端 玄汰"
+    },
+    "template": "",
+    "member_position": [
+      60
+    ]
+  },
+  {
+    "id": 23662,
+    "date": "2025-11-05T17:46:16",
+    "date_gmt": "2025-11-05T08:46:16",
+    "guid": {
+      "rendered": "https://test-blue-sharks.com/?p=23460"
+    },
+    "modified": "2026-10-16T11:23:44",
+    "modified_gmt": "2026-10-16T02:23:44",
+    "slug": "cameron-bailey",
+    "status": "publish",
+    "type": "member",
+    "link": "https://blue-sharks.donati.jp/members/fullback/2025/11/23662/",
+    "title": {
+      "rendered": "Cameron Bailey"
+    },
+    "template": "",
+    "member_position": [
+      60
+    ]
+  },
+  {
+    "id": 17257,
+    "date": "2025-01-01T18:11:00",
+    "date_gmt": "2025-01-01T09:11:00",
+    "guid": {
+      "rendered": "https://test-blue-sharks.com/?p=17257"
+    },
+    "modified": "2026-10-16T11:24:06",
+    "modified_gmt": "2026-10-16T02:24:06",
+    "slug": "%e5%b4%8e%e9%87%8e%e3%80%80%e8%ab%92%e5%a4%aa",
+    "status": "publish",
+    "type": "member",
+    "link": "https://blue-sharks.donati.jp/members/lock/2025/01/17257/",
+    "title": {
+      "rendered": "崎野　諒太"
+    },
+    "template": "",
+    "member_position": [
+      62
+    ]
+  },
+  {
+    "id": 17300,
+    "date": "2025-01-02T16:35:00",
+    "date_gmt": "2025-01-02T07:35:00",
+    "guid": {
+      "rendered": "https://test-blue-sharks.com/?p=17300"
+    },
+    "modified": "2026-10-16T11:24:25",
+    "modified_gmt": "2026-10-16T02:24:25",
+    "slug": "%e6%97%a5%e9%ab%99%e3%80%80%e9%a7%bf",
+    "status": "publish",
+    "type": "member",
+    "link": "https://blue-sharks.donati.jp/members/lock/2025/01/17300/",
+    "title": {
+      "rendered": "日髙　駿"
+    },
+    "template": "",
+    "member_position": [
+      62
+    ]
+  },
+  {
+    "id": 17287,
+    "date": "2025-01-03T16:21:00",
+    "date_gmt": "2025-01-03T07:21:00",
+    "guid": {
+      "rendered": "https://test-blue-sharks.com/?p=17287"
+    },
+    "modified": "2026-10-16T11:24:43",
+    "modified_gmt": "2026-10-16T02:24:43",
+    "slug": "%e5%a4%a7%ef%a8%91%e3%80%80%e5%93%b2%e5%be%b3",
+    "status": "publish",
+    "type": "member",
+    "link": "https://blue-sharks.donati.jp/members/lock/2025/01/17287/",
+    "title": {
+      "rendered": "大﨑　哲徳"
+    },
+    "template": "",
+    "member_position": [
+      62
+    ]
+  },
+  {
+    "id": 17635,
+    "date": "2025-01-04T14:10:00",
+    "date_gmt": "2025-01-04T05:10:00",
+    "guid": {
+      "rendered": "https://test-blue-sharks.com/?p=17635"
+    },
+    "modified": "2026-10-16T11:24:54",
+    "modified_gmt": "2026-10-16T02:24:54",
+    "slug": "%e3%83%88%e3%83%a0%e3%83%bb%e3%83%ad%e3%82%a6",
+    "status": "publish",
+    "type": "member",
+    "link": "https://blue-sharks.donati.jp/members/lock/2025/01/17635/",
+    "title": {
+      "rendered": "Tom Rowe"
+    },
+    "template": "",
+    "member_position": [
+      62
+    ]
+  },
+  {
+    "id": 18855,
+    "date": "2025-01-05T14:54:00",
+    "date_gmt": "2025-01-05T05:54:00",
+    "guid": {
+      "rendered": "https://test-blue-sharks.com/?p=18855"
+    },
+    "modified": "2026-10-16T11:25:04",
+    "modified_gmt": "2026-10-16T02:25:04",
+    "slug": "%e5%ae%89%e9%81%94%e3%80%80%e8%88%aa%e6%b4%8b",
+    "status": "publish",
+    "type": "member",
+    "link": "https://blue-sharks.donati.jp/members/lock/2025/01/18855/",
+    "title": {
+      "rendered": "安達　航洋"
+    },
+    "template": "",
+    "member_position": [
+      62
+    ]
+  },
+  {
+    "id": 19753,
+    "date": "2025-01-06T17:03:00",
+    "date_gmt": "2025-01-06T08:03:00",
+    "guid": {
+      "rendered": "https://test-blue-sharks.com/?p=19753"
+    },
+    "modified": "2026-10-16T11:25:21",
+    "modified_gmt": "2026-10-16T02:25:21",
+    "slug": "%e5%ae%89%e9%81%94%e3%80%80%e8%88%aa%e6%b4%8b-2",
+    "status": "publish",
+    "type": "member",
+    "link": "https://blue-sharks.donati.jp/members/lock/2025/01/19753/",
+    "title": {
+      "rendered": "Ed Holmes"
+    },
+    "template": "",
+    "member_position": [
+      62
+    ]
+  },
+  {
+    "id": 23466,
+    "date": "2025-01-07T14:16:14",
+    "date_gmt": "2025-01-07T05:16:14",
+    "guid": {
+      "rendered": "https://test-blue-sharks.com/?p=21722"
+    },
+    "modified": "2026-10-16T11:25:32",
+    "modified_gmt": "2026-10-16T02:25:32",
+    "slug": "%e4%bd%90%e8%97%a4-%e5%a4%a7%e5%9c%b0",
+    "status": "publish",
+    "type": "member",
+    "link": "https://blue-sharks.donati.jp/members/lock/2025/01/23466/",
+    "title": {
+      "rendered": "佐藤　大地"
+    },
+    "template": "",
+    "member_position": [
+      62
+    ]
+  },
+  {
+    "id": 23467,
+    "date": "2025-11-05T16:14:36",
+    "date_gmt": "2025-11-05T07:14:36",
+    "guid": {
+      "rendered": "https://test-blue-sharks.com/?p=23435"
+    },
+    "modified": "2026-10-16T11:25:42",
+    "modified_gmt": "2026-10-16T02:25:42",
+    "slug": "ika-motulalo-takau",
+    "status": "publish",
+    "type": "member",
+    "link": "https://blue-sharks.donati.jp/members/lock/2025/11/23467/",
+    "title": {
+      "rendered": "Ika Motulalo Takau"
+    },
+    "template": "",
+    "member_position": [
+      62
+    ]
+  }
+]
