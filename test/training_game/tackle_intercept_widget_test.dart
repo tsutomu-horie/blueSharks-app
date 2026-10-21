@@ -127,8 +127,9 @@ void main() {
       await tester.pump(const Duration(milliseconds: 1));
       expect(find.text('>> タップして次へ <<'), findsOneWidget);
       expect(find.textContaining('MISS'), findsOneWidget);
-      expect(find.text('MISS　時間切れ'), findsOneWidget);
+      expect(find.text('MISS　突破された！'), findsOneWidget);
       expect(find.textContaining('早すぎた'), findsNothing);
+      expect(find.textContaining('時間切れ'), findsNothing);
     });
   }
 
@@ -150,8 +151,9 @@ void main() {
     expect(parent.alignment.resolve(TextDirection.ltr),
         const Alignment(-1.35, .58));
     await tester.pump(const Duration(milliseconds: 130));
-    expect(find.text('MISS　早すぎた'), findsOneWidget);
+    expect(find.text('MISS　突破された！'), findsOneWidget);
     expect(find.textContaining('時間切れ'), findsNothing);
+    expect(find.textContaining('早すぎた'), findsNothing);
   });
 
   for (final down in [false, true]) {
@@ -165,15 +167,16 @@ void main() {
       await tester.tap(find.text(down ? '下をタップ ▼' : '上をタップ ▲'));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 650));
-      expect(find.text('MISS　早すぎた'), findsOneWidget);
+      expect(find.text('MISS　突破された！'), findsOneWidget);
       expect(find.textContaining('時間切れ'), findsNothing);
       await tester.tap(find.text('>> タップして次へ <<'));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 1350));
       await tester.pump(const Duration(milliseconds: 750));
       await tester.pump(const Duration(milliseconds: 650));
-      expect(find.text('MISS　時間切れ'), findsOneWidget);
+      expect(find.text('MISS　突破された！'), findsOneWidget);
       expect(find.textContaining('早すぎた'), findsNothing);
+      expect(find.textContaining('時間切れ'), findsNothing);
     });
   }
 
