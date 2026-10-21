@@ -654,7 +654,7 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
         ),
         Positioned(
           right: 8.w,
-          bottom: 4.h,
+          bottom: 12.h,
           child: _buildTrainingMenuButton(context, canTrain),
         ),
         if (controller.ended.value)
