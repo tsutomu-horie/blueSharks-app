@@ -1,0 +1,50 @@
+name: Mini-game selection
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/minigame-selection.yml'
+      - 'lib/presentation/training_game/training_game.screen.dart'
+      - 'lib/presentation/training_game/mini_games/mini_game_selection_sheet.dart'
+      - 'test/training_game/mini_game_selection*'
+      - 'assets/images/training_game/selection/**'
+      - 'pubspec.yaml'
+      - 'pubspec.lock'
+
+permissions:
+  contents: read
+
+jobs:
+  selection:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install the validated Flutter SDK
+        shell: bash
+        run: |
+          git clone --depth 1 --branch 3.47.2 https://github.com/flutter/flutter.git "$RUNNER_TEMP/flutter"
+          test "$(git -C "$RUNNER_TEMP/flutter" rev-parse HEAD)" = d3b14c876900e553bc736ca19295fc09e3853e8e
+          echo "$RUNNER_TEMP/flutter/bin" >> "$GITHUB_PATH"
+      - run: flutter pub get --enforce-lockfile
+      - run: dart tool/update_asset_inputs.dart --check
+      - name: Check formatting
+        run: >-
+          dart format --output=none --set-exit-if-changed
+          lib/presentation/training_game/mini_games/mini_game_selection_sheet.dart
+          lib/presentation/training_game/training_game.screen.dart
+          test/training_game/mini_game_selection_sheet_test.dart
+          test/training_game/mini_game_selection_integration_test.dart
+      - name: Analyze selection widget and tests
+        run: >-
+          flutter analyze --no-pub
+          lib/presentation/training_game/mini_games/mini_game_selection_sheet.dart
+          test/training_game/mini_game_selection_sheet_test.dart
+          test/training_game/mini_game_selection_integration_test.dart
+      - name: Test selection, navigation and existing HOME controls
+        run: >-
+          flutter test --no-pub
+          test/training_game/mini_game_selection_sheet_test.dart
+          test/training_game/mini_game_selection_integration_test.dart
+          test/training_game/training_home_controls_test.dart
+          test/assets/asset_inputs_test.dart

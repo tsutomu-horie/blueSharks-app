@@ -8,7 +8,7 @@ import 'package:koto_blue_sharks/infrastructure/navigation/routes.dart';
 
 import 'controllers/training_game.controller.dart';
 import 'training_game_care_action.screen.dart';
-import 'mini_games/mini_game_selection_thumbnail.dart';
+import 'mini_games/mini_game_selection_sheet.dart';
 import 'mini_games/models/mini_game_result.dart';
 import 'mini_games/pass_and_run/pass_and_run_game.screen.dart';
 import 'mini_games/tackle/tackle_game.screen.dart';
@@ -810,110 +810,11 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
         label: const Text('練習 / MG'),
       );
 
-  /// 2種のルールを集約した⑤ミニゲーム選択画面を表示します。
+  /// 選択画面を閉じた後、既存のゲーム開始処理へ渡します。
   Future<void> _showMiniGameSelection(BuildContext context) async {
-    final selected = await showModalBottomSheet<TrainingActionType>(
-      context: context,
-      isScrollControlled: true,
-      builder: (sheetContext) => SafeArea(
-        child: Padding(
-          padding: EdgeInsets.fromLTRB(16.w, 18.h, 16.w, 24.h),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text(
-                'ミニゲームを選ぶ',
-                style: TextStyle(fontSize: 17.sp, fontWeight: FontWeight.w700),
-              ),
-              SizedBox(height: 12.h),
-              _buildMiniGameCard(
-                context: sheetContext,
-                type: TrainingActionType.tackle,
-                title: '① タックル',
-                tag: 'タイミング・反応系',
-                thumbnailType: MiniGameSelectionThumbnailType.tackle,
-                description:
-                    '踏み込み（フェイント）の反対＝相手が実際に動く方向を、0.5秒以内に上／下タップ。全3セットの平均反応速度でスコア化。',
-              ),
-              SizedBox(height: 10.h),
-              _buildMiniGameCard(
-                context: sheetContext,
-                type: TrainingActionType.passAndRun,
-                title: '② パス＆ラン',
-                tag: 'フリック・パス回し系',
-                thumbnailType: MiniGameSelectionThumbnailType.passAndRun,
-                description:
-                    '縦2レーンを上下に並走。仲間にボールを当てると成功。外れたボールは2秒間パス不可。15秒×往復2セットです。',
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
+    final selected = await showMiniGameSelectionSheet(context);
     if (selected == null || !context.mounted) return;
     await _handleAction(context, selected);
-  }
-
-  /// ミニゲーム選択画面のルールカードを作成します。
-  Widget _buildMiniGameCard({
-    required BuildContext context,
-    required TrainingActionType type,
-    required String title,
-    required String tag,
-    required MiniGameSelectionThumbnailType thumbnailType,
-    required String description,
-  }) {
-    return InkWell(
-      onTap: () => Navigator.pop(context, type),
-      borderRadius: BorderRadius.circular(10.r),
-      child: Container(
-        padding: EdgeInsets.all(12.w),
-        decoration: BoxDecoration(
-          color: const Color(0xfff5f7fa),
-          border: Border.all(color: const Color(0xffc8d0d9)),
-          borderRadius: BorderRadius.circular(10.r),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    title,
-                    style:
-                        TextStyle(fontSize: 18.sp, fontWeight: FontWeight.w800),
-                  ),
-                ),
-                Container(
-                  padding:
-                      EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
-                  decoration: BoxDecoration(
-                    color: const Color(0xfff6f2ff),
-                    border: Border.all(color: const Color(0xffc9bfe0)),
-                    borderRadius: BorderRadius.circular(20.r),
-                  ),
-                  child: Text(
-                    tag,
-                    style: TextStyle(
-                        fontSize: 11.sp, color: const Color(0xff6b5aa0)),
-                  ),
-                ),
-              ],
-            ),
-            SizedBox(height: 6.h),
-            MiniGameSelectionThumbnail(type: thumbnailType),
-            SizedBox(height: 10.h),
-            Text(
-              description,
-              style: TextStyle(
-                  fontSize: 14.sp, height: 1.55, fontWeight: FontWeight.w600),
-            ),
-          ],
-        ),
-      ),
-    );
   }
 
   /// 5種類のお世話ボタンを参照画面と同じ下部配置で表示します。
