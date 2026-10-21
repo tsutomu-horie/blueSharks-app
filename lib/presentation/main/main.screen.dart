@@ -1,14 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 
 import 'package:get/get.dart';
 import 'package:koto_blue_sharks/app/data/models/info/post.dart';
-import 'package:koto_blue_sharks/app/views/views/supplied_ui_icon.dart';
 import 'main_header_icon_button.dart';
 import 'package:koto_blue_sharks/app/views/views/app_bottom_navigation_bar.dart';
-import 'package:koto_blue_sharks/generated/locales.g.dart';
 import 'package:koto_blue_sharks/presentation/screens.dart';
 import 'package:koto_blue_sharks/utils/app_color.dart';
 
@@ -25,6 +22,8 @@ class MainScreen extends StatefulWidget {
 
 class _MainScreenState extends State<MainScreen> {
   final MainController controller = Get.put(MainController());
+  int? _menuSection;
+  int _menuVisit = 0;
 
   @override
   void initState() {
@@ -35,37 +34,50 @@ class _MainScreenState extends State<MainScreen> {
   }
 
   void selectTopic(Post? data) {
-    print("selectTopic ${data?.id}");
-    controller.selectedTopicId.value = data?.id;
-    if (data?.id != null) {
-      controller.selectedIndex.value =
-          1; // Set the bottom nav index to 1 (Topics tab)
-      controller.selectedPost.value = data;
-    }
+    setState(() {
+      if (data != null) _menuSection = 0;
+      controller.selectedTopicId.value = data?.id;
+      if (data != null) {
+        controller.selectedIndex.value = 1;
+        controller.selectedPost.value = data;
+      }
+    });
   }
 
   void _onItemTapped(int index) {
     setState(() {
+      if (index == 1) {
+        _menuSection = null;
+        _menuVisit++;
+      }
       controller.selectedTopicId.value = null;
       controller.selectedIndex.value = index;
     });
+  }
+
+  void _openTopics() {
+    setState(() {
+      _menuSection = 0;
+      controller.selectedTopicId.value = null;
+      controller.selectedIndex.value = 1;
+    });
+  }
+
+  void _openGuide() {
+    controller.selectedTopicId.value = null;
+    controller.selectedIndex.value = 5;
   }
 
   @override
   Widget build(BuildContext context) {
     controller.refreshUnreadMessageCount();
     final List<Widget> _pages = [
-      HomeScreen((value) {
-        selectTopic(value);
-      }, () {
-        controller.selectedIndex.value = 1;
-      }, () {
-        controller.selectedTopicId.value = null;
-        controller.selectedIndex.value = 5;
-      }), // Home page
-      MenuScreen((value) {
-        selectTopic(value);
-      }),
+      HomeScreen(selectTopic, _openTopics, _openGuide),
+      MenuScreen(selectTopic,
+          key: ValueKey('menu-$_menuSection-$_menuVisit'),
+          initialSection: _menuSection,
+          overviewBuilder: (showTopics) =>
+              HomeScreen(selectTopic, showTopics, _openGuide)),
       const MypageScreen(),
       const StadiumScreen(),
       CalendarScreen(),
@@ -95,149 +107,18 @@ class _MainScreenState extends State<MainScreen> {
         return Scaffold(
           backgroundColor: BackgroundColor.primary,
           appBar: AppBar(
-            backgroundColor: BrandColor.hover,
-            toolbarHeight: 64.h,
-            title: Stack(
-              children: [
-                Positioned(
-                  left: 0,
-                  right: 30.w,
-                  child: SvgPicture.asset(
-                    width: 93.w,
-                    height: 64.h,
-                    'assets/vectors/background_toolbar.svg', // Replace with your SVG file path
-                  ),
-                ),
-                Row(
-                  children: [
-                    Row(
-                      children: [
-                        SizedBox(
-                          width: 9.5.w,
-                        ),
-                        Column(
-                          children: [
-                            SizedBox(
-                              height: 10.h,
-                            ),
-                            SvgPicture.asset(
-                              width: 44.w,
-                              height: 44.h,
-                              fit: BoxFit.fitHeight,
-                              'assets/vectors/app_logo.svg', // Replace with your SVG file path
-                            ),
-                            SizedBox(
-                              height: 10.h,
-                            ),
-                          ],
-                        ),
-                        SizedBox(
-                          width: 9.5.w,
-                        ),
-                      ],
-                    ),
-                    Flexible(
-                      child: Row(
-                        mainAxisSize: MainAxisSize.max,
-                        children: [
-                          Obx(() {
-                            final unreadMessageCount =
-                                controller.unreadMessage.value;
-                            return Stack(
-                              children: [
-                                toolbarButton(
-                                  SuppliedUiIcon(
-                                    fileName: 'news_icon.png',
-                                    color: Colors.white,
-                                    width: 24.w,
-                                    height: 24.h,
-                                  ),
-                                  LocaleKeys.news_title.tr,
-                                  () {
-                                    controller.navigateToNotification();
-                                  },
-                                ),
-                                if (unreadMessageCount > 0)
-                                  Positioned(
-                                    right: 0,
-                                    top: 0,
-                                    child: Container(
-                                      padding: EdgeInsets.all(2.w),
-                                      decoration: BoxDecoration(
-                                        color: Colors.red,
-                                        borderRadius:
-                                            BorderRadius.circular(12.w),
-                                      ),
-                                      constraints: BoxConstraints(
-                                        minWidth: 24.w,
-                                        minHeight: 24.h,
-                                      ),
-                                      child: Center(
-                                        child: Text(
-                                          unreadMessageCount > 9
-                                              ? '9+'
-                                              : "$unreadMessageCount",
-                                          // Replace with dynamic count if needed
-                                          style: TextStyle(
-                                            color: Colors.white,
-                                            fontSize: 12.sp,
-                                          ),
-                                          textAlign: TextAlign.center,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                              ],
-                            );
-                          }),
-                        ],
-                      ),
-                    ),
-                    Row(
-                      children: [
-                        toolbarButton(
-                            SuppliedUiIcon(
-                              fileName: 'fanclub_icon.png',
-                              color: Colors.white,
-                              width: 24.w,
-                              height: 24.h,
-                            ),
-                            LocaleKeys.fan_club.tr, () {
-                          // Get.to(() => const FanclubScreen());
-                          controller.launchFanClub();
-                        }),
-                        SizedBox(
-                          width: 8.w,
-                        ),
-                        toolbarButton(
-                            SuppliedUiIcon(
-                              fileName: 'ticket_icon.png',
-                              color: Colors.white,
-                              width: 24.w,
-                              height: 24.h,
-                            ),
-                            LocaleKeys.ticket.tr, () {
-                          controller.launchTicket();
-                        }),
-                        SizedBox(
-                          width: 8.w,
-                        ),
-                        toolbarButton(
-                            SuppliedUiIcon(
-                              fileName: 'goods_icon.png',
-                              color: Colors.white,
-                              width: 24.w,
-                              height: 24.h,
-                            ),
-                            LocaleKeys.goods.tr, () {
-                          controller.launchGood();
-                        }),
-                      ],
-                    )
-                  ],
-                ),
-              ],
-            ),
+            backgroundColor: Colors.white,
+            surfaceTintColor: Colors.white,
+            systemOverlayStyle: SystemUiOverlayStyle.dark,
+            toolbarHeight: 60.h,
+            titleSpacing: 8.w,
+            automaticallyImplyLeading: false,
+            title: MainHeaderBar(
+                onNews: controller.navigateToNotification,
+                onFanClub: controller.launchFanClub,
+                onTicket: controller.launchTicket,
+                onGoods: controller.launchGood,
+                unreadCount: controller.unreadMessage.value),
           ),
           body: controller.selectedTopicId.value == null
               ? _pages[controller.selectedIndex.value]
@@ -251,14 +132,6 @@ class _MainScreenState extends State<MainScreen> {
           ),
         );
       }),
-    );
-  }
-
-  Widget toolbarButton(Widget icon, String text, VoidCallback onPress) {
-    return MainHeaderIconButton(
-      icon: icon,
-      text: text,
-      onPressed: onPress,
     );
   }
 }

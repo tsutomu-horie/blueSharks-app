@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:koto_blue_sharks/app/data/models/home/website_goods.dart';
-import 'package:koto_blue_sharks/app/views/views/default_header_title_view.dart';
+import 'package:koto_blue_sharks/presentation/home/widgets/renewal_home_design.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class WebsiteGoodsSection extends StatelessWidget {
@@ -14,14 +14,14 @@ class WebsiteGoodsSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        DefaultHeaderTitleView('グッズ', 'GOODS'),
+        const RenewalHomeHeading('グッズ', 'GOODS'),
         LayoutBuilder(builder: (context, constraints) {
-          final width = (constraints.maxWidth * .72).clamp(200.0, 320.0);
+          final width = (constraints.maxWidth * .55).clamp(170.0, 260.0);
           final textScaler = MediaQuery.textScalerOf(context);
           final textHeight =
-              40 + textScaler.scale(15) * 2.6 + textScaler.scale(16) * 1.3;
+              40 + textScaler.scale(15) * 2.6 + textScaler.scale(20) * 1.3;
           return SizedBox(
-            height: width * .75 + textHeight,
+            height: width + textHeight,
             child: ListView.separated(
               key: const ValueKey('website-goods-list'),
               scrollDirection: Axis.horizontal,
@@ -33,7 +33,9 @@ class WebsiteGoodsSection extends StatelessWidget {
                 return SizedBox(
                   width: width,
                   child: Material(
-                    color: Colors.white,
+                    color: RenewalHomeDesign.cyan,
+                    borderRadius: BorderRadius.circular(10),
+                    clipBehavior: Clip.antiAlias,
                     child: InkWell(
                       key: ValueKey('goods-${product.url.path}'),
                       onTap: () => _openProduct(context, product.url),
@@ -41,7 +43,7 @@ class WebsiteGoodsSection extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
                           AspectRatio(
-                            aspectRatio: 4 / 3,
+                            aspectRatio: 1,
                             child: Image.network(
                               product.imageUrl.toString(),
                               fit: BoxFit.contain,
@@ -54,17 +56,31 @@ class WebsiteGoodsSection extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(height: 8),
-                          Text(product.name,
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                              style:
-                                  const TextStyle(fontSize: 15, height: 1.3)),
+                          Padding(
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 8),
+                              child: Text(product.name,
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 15,
+                                      height: 1.3))),
                           const SizedBox(height: 6),
-                          Text(product.priceLabel,
-                              style: const TextStyle(
-                                  fontSize: 16,
-                                  height: 1.3,
-                                  fontWeight: FontWeight.bold)),
+                          Padding(
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 8),
+                              child: FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  alignment: Alignment.centerRight,
+                                  child: Text(product.priceLabel,
+                                      maxLines: 1,
+                                      textAlign: TextAlign.right,
+                                      style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 20,
+                                          height: 1.3,
+                                          fontWeight: FontWeight.bold)))),
                         ],
                       ),
                     ),

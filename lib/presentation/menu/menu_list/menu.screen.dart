@@ -10,32 +10,66 @@ import 'package:koto_blue_sharks/utils/app_color.dart';
 
 import 'controllers/menu.controller.dart';
 
-
-class MenuScreen extends GetView<MenuListController> {
-  const MenuScreen(this.onOpenDetail, {super.key});
-
+class MenuScreen extends StatefulWidget {
+  const MenuScreen(this.onOpenDetail,
+      {super.key, this.overviewBuilder, this.initialSection});
   final Function(Post) onOpenDetail;
+  final Widget Function(VoidCallback showTopics)? overviewBuilder;
+  final int? initialSection;
+
+  @override
+  State<MenuScreen> createState() => _MenuScreenState();
+}
+
+class _MenuScreenState extends State<MenuScreen> {
+  late final MenuListController controller;
+  late bool _showOverview;
+
+  @override
+  void initState() {
+    super.initState();
+    controller = Get.put(MenuListController());
+    _showOverview =
+        widget.overviewBuilder != null && widget.initialSection == null;
+    if (widget.initialSection != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && controller.pageController.hasClients) {
+          controller.changeTab(widget.initialSection!);
+        }
+      });
+    }
+  }
+
+  void _selectSection(int index) {
+    if (_showOverview) {
+      setState(() => _showOverview = false);
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && controller.pageController.hasClients) {
+          controller.changeTab(index);
+        }
+      });
+    } else {
+      controller.changeTab(index);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    final MenuListController controller = Get.put(MenuListController());
-
-    controller.onInit();
-
     final List<String> tabs = [
-      'Topics',
-      'Game Info',
-      'Player',
-      'Gallery',
-      'Team',
-      'Partner',
+      'TOPICS',
+      'GAME INFO',
+      'MEMBER',
+      'GALLERY',
+      'TEAM',
+      'PARTNER',
       "",
       ""
     ];
 
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: PrimaryColor.hover,
+        backgroundColor: const Color(0xff002b6d),
+        surfaceTintColor: Colors.transparent,
         // Replace with your BrandColor.hover
         toolbarHeight: 44.h,
         titleSpacing: 0,
@@ -45,33 +79,44 @@ class MenuScreen extends GetView<MenuListController> {
             children: List.generate(tabs.length, (index) {
               if (index == 6) {
                 return IconButton(
-                  icon: Icon(IconsaxPlusLinear.instagram, color: BrandColor.border, size: 20.w,), onPressed: () { controller.launchInstagram(); },
+                  icon: Icon(
+                    IconsaxPlusLinear.instagram,
+                    color: BrandColor.border,
+                    size: 20.w,
+                  ),
+                  onPressed: () {
+                    controller.launchInstagram();
+                  },
                 );
               } else if (index == 7) {
                 return IconButton(
-                  icon: SvgPicture.asset("assets/vectors/ic_x_twitter.svg"), onPressed: () { controller.launchTwitter(); },
+                  icon: SvgPicture.asset("assets/vectors/ic_x_twitter.svg"),
+                  onPressed: () {
+                    controller.launchTwitter();
+                  },
                 );
               } else {
                 return InkWell(
                   onTap: () => {
-                    if (index == 5) {
-                      controller.launchPartner()
-                    } else if (index == 4) {
-                      controller.launchTeam()
-                    } else
-                      {
-                        controller.changeTab(index)
-                      }
+                    if (index == 5)
+                      {controller.launchPartner()}
+                    else if (index == 4)
+                      {controller.launchTeam()}
+                    else
+                      {_selectSection(index)}
                   },
                   child: Obx(() {
                     return AnimatedContainer(
                       duration: const Duration(milliseconds: 300),
+                      constraints: BoxConstraints(minHeight: 44.h),
+                      alignment: Alignment.center,
                       padding:
-                      EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+                          EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
                       decoration: BoxDecoration(
                         border: Border(
                           bottom: BorderSide(
-                            color: controller.selectedIndex.value == index
+                            color: !_showOverview &&
+                                    controller.selectedIndex.value == index
                                 ? Colors.white
                                 : Colors.transparent,
                             width: 2.0, // Underline thickness
@@ -83,18 +128,22 @@ class MenuScreen extends GetView<MenuListController> {
                           Text(
                             tabs[index],
                             style: TextStyle(
-                              fontSize: 14.sp,
-                              fontWeight: FontWeight.w500,
+                              fontSize: 13.sp,
+                              fontWeight: FontWeight.w800,
                               color: controller.selectedIndex.value == index
                                   ? Colors.white
                                   : PrimaryColor
-                                  .border, // Selected/Unselected Color
+                                      .border, // Selected/Unselected Color
                             ),
                           ),
                           if (index == 5 || index == 4)
                             Padding(
                               padding: EdgeInsets.symmetric(horizontal: 8.w),
-                              child: SvgPicture.asset("assets/vectors/ic_external_link.svg", width: 16.w, height: 16.h,),
+                              child: SvgPicture.asset(
+                                "assets/vectors/ic_external_link.svg",
+                                width: 16.w,
+                                height: 16.h,
+                              ),
                             )
                         ],
                       ),
@@ -106,20 +155,22 @@ class MenuScreen extends GetView<MenuListController> {
           ),
         ),
       ),
-      body: PageView(
-        controller: controller.pageController,
-        onPageChanged: controller.onPageChanged, // Sync tab with page
-        children: [
-          TopicListScreen(
-            onOpenDetail: (value) {
-              onOpenDetail(value);
-            },
-          ),
-          const MatchListScreen(),
-          const PlayerListScreen(null),
-          const GalleryScreen(),
-        ],
-      ),
+      body: _showOverview
+          ? widget.overviewBuilder!(() => _selectSection(0))
+          : PageView(
+              controller: controller.pageController,
+              onPageChanged: controller.onPageChanged, // Sync tab with page
+              children: [
+                TopicListScreen(
+                  onOpenDetail: (value) {
+                    widget.onOpenDetail(value);
+                  },
+                ),
+                const MatchListScreen(),
+                const PlayerListScreen(null),
+                const GalleryScreen(),
+              ],
+            ),
     );
   }
 }

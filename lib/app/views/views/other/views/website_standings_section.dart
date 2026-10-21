@@ -1,3 +1,4 @@
+import 'package:koto_blue_sharks/presentation/home/widgets/renewal_home_design.dart';
 import 'package:flutter/material.dart';
 import 'package:koto_blue_sharks/app/data/models/home/website_standings.dart';
 import 'package:koto_blue_sharks/app/providers/home/website_video_provider.dart';
@@ -15,23 +16,47 @@ class WebsiteStandingsSection extends StatelessWidget {
     return Padding(
         padding: const EdgeInsets.all(16),
         child: Column(children: [
-          Text(data.title,
-              style:
-                  const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-          SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: DataTable(
-                  columnSpacing: 20,
-                  horizontalMargin: 12,
-                  columns: data.headers
-                      .map((text) => DataColumn(label: Text(text)))
-                      .toList(),
-                  rows: [
-                    DataRow(
-                        cells: data.values
-                            .map((text) => DataCell(Text(text)))
-                            .toList())
-                  ])),
+          Align(
+              alignment: Alignment.centerLeft,
+              child: Text(data.title,
+                  style: const TextStyle(
+                      color: RenewalHomeDesign.navy,
+                      fontSize: 22,
+                      fontWeight: FontWeight.w900))),
+          const SizedBox(height: 12),
+          Table(
+              border: TableBorder.all(color: const Color(0xffcccccc)),
+              defaultVerticalAlignment: TableCellVerticalAlignment.middle,
+              children: [
+                TableRow(
+                    decoration:
+                        const BoxDecoration(color: RenewalHomeDesign.navy),
+                    children: [
+                      for (final header in data.headers)
+                        Padding(
+                            padding: const EdgeInsets.symmetric(
+                                vertical: 14, horizontal: 4),
+                            child: Text(header,
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w700))),
+                    ]),
+                TableRow(children: [
+                  for (final value in data.values)
+                    Padding(
+                        padding: const EdgeInsets.symmetric(
+                            vertical: 18, horizontal: 4),
+                        child: Text(value,
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                                color: Colors.black,
+                                fontSize: 26,
+                                fontWeight: FontWeight.w900))),
+                ]),
+              ]),
+          const SizedBox(height: 20),
           SizedBox(
               width: double.infinity,
               child: TextButton(

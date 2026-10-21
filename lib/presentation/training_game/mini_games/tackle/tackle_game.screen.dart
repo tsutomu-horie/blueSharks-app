@@ -829,7 +829,7 @@ class _TackleGameScreenState extends State<TackleGameScreen>
     }
     final reaction = _latestAttempt!.reaction;
     final reactionLabel = reaction == null
-        ? '時間切れ'
+        ? '突破された！'
         : '${(reaction.inMicroseconds / Duration.microsecondsPerSecond).toStringAsFixed(2)}秒';
     return SizedBox(
       height: 96,

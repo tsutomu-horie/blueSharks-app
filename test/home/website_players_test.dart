@@ -199,7 +199,7 @@ void main() {
         await tester.pumpWidget(
             app(content, scale: scale, key: ValueKey('$scale-$width')));
         await tester.pumpAndSettle();
-        expect(find.text('TOP PLAYERS'), findsOneWidget);
+        expect(find.text('MEMBER'), findsOneWidget);
         expect(find.text(long.kana), findsOneWidget);
         expect(find.byIcon(Icons.person_outline), findsWidgets);
         expect(tester.takeException(), isNull, reason: '$scale/$width');
@@ -213,13 +213,13 @@ void main() {
   testWidgets('空状態は欄もVIEW ALLも追加せず、実リンク欠損ならボタンを追加しない', (tester) async {
     await tester.pumpWidget(app(null));
     await tester.pumpAndSettle();
-    expect(find.text('TOP PLAYERS'), findsNothing);
+    expect(find.text('MEMBER'), findsNothing);
     expect(find.byType(ListView), findsNothing);
     expect(find.text('VIEW ALL'), findsNothing);
     final data = WebsitePlayers.parseHomepage(fixture, home)!;
     await tester.pumpWidget(app(WebsitePlayers(players: data.players)));
     await tester.pumpAndSettle();
-    expect(find.text('TOP PLAYERS'), findsOneWidget);
+    expect(find.text('MEMBER'), findsOneWidget);
     expect(find.text('VIEW ALL'), findsNothing);
     expect(tester.takeException(), isNull);
   });

@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:koto_blue_sharks/app/views/views/supplied_ui_icon.dart';
-import 'package:koto_blue_sharks/generated/locales.g.dart';
-import 'package:koto_blue_sharks/utils/app_color.dart';
-import 'package:get/get.dart';
 
 class AppBottomNavigationBar extends StatelessWidget {
   const AppBottomNavigationBar({
@@ -17,6 +14,9 @@ class AppBottomNavigationBar extends StatelessWidget {
   final ValueChanged<int> onTap;
   final bool enabled;
 
+  int get _activeIndex =>
+      selectedIndex >= 0 && selectedIndex < 5 ? selectedIndex : 0;
+
   @override
   Widget build(BuildContext context) {
     return IgnorePointer(
@@ -24,29 +24,18 @@ class AppBottomNavigationBar extends StatelessWidget {
       child: Opacity(
         opacity: enabled ? 1 : 0.6,
         child: BottomNavigationBar(
-          backgroundColor: BackgroundColor.primary,
+          backgroundColor: const Color(0xff002b6d),
+          showSelectedLabels: false,
+          showUnselectedLabels: false,
           type: BottomNavigationBarType.fixed,
-          currentIndex: selectedIndex,
+          currentIndex: _activeIndex,
           onTap: onTap,
           items: [
-            _imageItem('home', LocaleKeys.home.tr, 0),
-            _imageItem('menu', LocaleKeys.menu_en.tr, 1),
-            _imageItem('mypage', LocaleKeys.my_page.tr, 2),
-            _imageItem('stdium', LocaleKeys.stadium.tr, 3),
-            _imageItem('calendar', LocaleKeys.calendar.tr, 4),
-            BottomNavigationBarItem(
-              icon: _itemContent(
-                Icon(
-                  Icons.menu_book_outlined,
-                  size: 20.w,
-                  color:
-                      selectedIndex == 5 ? BrandColor.main : TextColor.disabled,
-                ),
-                '楽しみ方',
-                5,
-              ),
-              label: '',
-            ),
+            _imageItem('home', 'HOME', 0),
+            _imageItem('menu', 'MENU', 1),
+            _imageItem('mypage', 'MY PAGE', 2),
+            _imageItem('stdium', 'STADIUM', 3),
+            _imageItem('calendar', 'CALENDAR', 4),
           ],
         ),
       ),
@@ -57,10 +46,10 @@ class AppBottomNavigationBar extends StatelessWidget {
     return BottomNavigationBarItem(
       icon: _itemContent(
         SuppliedUiIcon(
-          fileName: '${name}_icon_${selectedIndex == index ? "on" : "off"}.png',
+          fileName: '${name}_icon_${_activeIndex == index ? "on" : "off"}.png',
           width: 20.w,
           height: 20.w,
-          color: selectedIndex == index ? BrandColor.main : TextColor.disabled,
+          color: _activeIndex == index ? Colors.white : const Color(0xff2c66bf),
         ),
         label,
         index,
@@ -78,9 +67,10 @@ class AppBottomNavigationBar extends StatelessWidget {
         Text(
           label,
           style: TextStyle(
-            fontSize: 12.sp,
+            fontSize: 9.sp,
+            fontWeight: FontWeight.w800,
             color:
-                selectedIndex == index ? BrandColor.main : TextColor.disabled,
+                _activeIndex == index ? Colors.white : const Color(0xff2c66bf),
           ),
         ),
       ],

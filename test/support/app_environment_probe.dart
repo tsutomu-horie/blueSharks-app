@@ -31,6 +31,7 @@ void main() {
     AppEnvironment.usesLocalServices,
     const bool.fromEnvironment('EXPECT_LOCAL'),
   );
+  check('training debug UI', AppEnvironment.showsTrainingDebugUi, !production);
   check('badge', AppEnvironment.badgeLabel, production ? '' : 'DEBUG');
   final actual = <String, String>{
     'auth': AppEnvironment.authApiBaseUrl,

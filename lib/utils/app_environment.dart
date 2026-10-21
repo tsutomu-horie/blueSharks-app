@@ -8,6 +8,10 @@ class AppEnvironment {
   static const usesProductionServices = name == 'production';
   static const usesLocalServices = name == 'local';
   static const badgeLabel = usesProductionServices ? '' : 'DEBUG';
+
+  /// 検証版の育成UI。Flutterのビルド方式やサーバーの操作権限とは独立。
+  /// 通常版ではDebugビルドでも表示しません。API側の権限判定は維持します。
+  static const showsTrainingDebugUi = name == 'test' || name == 'local';
   static const localAuthApiHost = String.fromEnvironment('LOCAL_AUTH_API_HOST');
 
   // localでは会員APIのみPCへ接続し、他のサービスはテスト環境を使います。
