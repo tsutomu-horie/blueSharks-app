@@ -1,5 +1,3 @@
-import 'dart:math' as math;
-
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:koto_blue_sharks/app/services/server_time_clock.dart';
@@ -54,6 +52,7 @@ void main() {
         context,
       );
     });
+    await t.pump();
     await t.tap(find.text('スタート'));
     await t.pump();
     // Rendering a cached frame must not advance the authoritative test clock.
@@ -63,8 +62,7 @@ void main() {
     final field = t.getRect(find.byKey(const Key('pass-field')));
     final origin = t.getCenter(ball);
     // Target the moving receiver about 200ms ahead, not its old location.
-    final futureY = .5 +
-        .28 * math.sin((seconds + .20) * math.pi * 2 / 2.05 + math.pi * .65);
+    final futureY = PassRunMotion.yAt(seconds + .20, PassRunRunner.companion);
     final target = Offset(
       t.getCenter(mate).dx,
       field.top + field.height * futureY,
@@ -219,7 +217,7 @@ void main() {
 
   testWidgets('上下反転の保持球は位置を連続補間し、停止中も1個のまま', (t) async {
     await start(t);
-    await step(t, 640);
+    await step(t, 1290);
     expect(visual(t, player).facing, PassRunFacing.front);
     var before = t.getCenter(ball);
     await step(t, 10);
@@ -276,11 +274,11 @@ void main() {
 
   testWidgets('仲間の保持中も正面→背面反転と停止復帰で球を連続保持する', (t) async {
     await start(t);
-    await step(t, 1400);
-    await throwToMate(t, 1.4);
+    await step(t, 2800);
+    await throwToMate(t, 2.8);
     await catchAtMate(t);
     final elapsed = clock.difference(DateTime.utc(2026, 10, 20)).inMilliseconds;
-    await step(t, 1890 - elapsed);
+    await step(t, 3780 - elapsed);
     expect(visual(t, mate).holding, isTrue);
     expect(visual(t, mate).facing, PassRunFacing.front);
     var previous = t.getCenter(ball);
@@ -310,6 +308,13 @@ void main() {
   testWidgets('通常の同期済みサーバー時計でも仲間走行フレームが更新する', (t) async {
     ServerTimeClock.instance.synchronize(DateTime.utc(2026, 10, 21));
     await t.pumpWidget(const MaterialApp(home: PassAndRunGameScreen()));
+    await t.runAsync(() async {
+      for (final path in PassAndRunCharacterVisual.assets) {
+        await precacheImage(
+            AssetImage(path), t.element(find.byType(PassAndRunGameScreen)));
+      }
+    });
+    await t.pump();
     await t.tap(find.text('スタート'));
     await t.pump();
     final initial = visual(t, mate).frame;
@@ -343,12 +348,12 @@ void main() {
     await step(t, 240);
     expectFrame('back', 'free', 'b');
     // Front/free after the mate's independent direction reversal settles.
-    await step(t, 720);
+    await step(t, 1680);
     expectFrame('front', 'free', 'a');
     await step(t, 240);
     expectFrame('front', 'free', 'b');
-    await step(t, 100);
-    await throwToMate(t, 1.3);
+    await step(t, 640);
+    await throwToMate(t, 2.8);
     await catchAtMate(t);
     Future<void> at(int target) async {
       final elapsed =
@@ -358,13 +363,13 @@ void main() {
     }
 
     // The same held ball stays single while both direction-specific pairs run.
-    await at(1650);
+    await at(3400);
     expectFrame('front', 'hold', 'a');
-    await at(1850);
+    await at(3640);
     expectFrame('front', 'hold', 'b');
-    await at(1990);
+    await at(3920);
     expectFrame('back', 'hold', 'a');
-    await at(2230);
+    await at(4160);
     expectFrame('back', 'hold', 'b');
     expect(ball, findsOneWidget);
     await t.tap(find.byTooltip('一時停止'));
@@ -373,7 +378,7 @@ void main() {
     expectFrame('back', 'hold', 'b');
     await t.tap(find.text('再開'));
     await t.pump();
-    await step(t, 170);
+    await step(t, 160);
     expectFrame('back', 'hold', 'a');
     expect(ball, findsOneWidget);
   });
@@ -539,8 +544,8 @@ void main() {
 
   testWidgets('前方へしか返せない間Bは保持し、ラウンド終了で持ち越さない', (t) async {
     await start(t);
-    await step(t, 1400);
-    await throwToMate(t, 1.4);
+    await step(t, 2800);
+    await throwToMate(t, 2.8);
     await catchAtMate(t);
     await step(t, 160);
     expect(visual(t, mate).holding, isTrue);

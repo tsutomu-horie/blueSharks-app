@@ -7,8 +7,11 @@ enum PassRunRunner { player, companion }
 
 /// 既存の走行軌道を変えず、位置とその微分から表示方向を求めます。
 abstract final class PassRunMotion {
+  /// 操作の余裕を持たせるため、従来の移動速度を半分にします。
+  /// 15秒の制限時間や育成倍率・球速とは独立した表示/受球軌道の速度です。
+  static const movementRate = .5;
   static double _period(PassRunRunner runner) =>
-      runner == PassRunRunner.player ? 2.6 : 2.05;
+      (runner == PassRunRunner.player ? 2.6 : 2.05) / movementRate;
 
   static double _phase(PassRunRunner runner) =>
       runner == PassRunRunner.player ? 0 : math.pi * .65;

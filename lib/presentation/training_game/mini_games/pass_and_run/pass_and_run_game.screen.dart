@@ -64,6 +64,12 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
   int _roundIndex = 0;
   int _remainingMilliseconds = PassAndRunRules.roundDuration.inMilliseconds;
   bool _lastPassSucceeded = false;
+  bool _precacheStarted = false;
+  bool _assetsReady = false;
+  bool _assetLoadFailed = false;
+  bool _preparingImages = false;
+  final _pinnedImages =
+      <({ImageStream stream, ImageStreamListener listener})>[];
   bool _passInFlight = false;
   bool _passScoreConfirmed = false;
   bool _isBallLost = false;
@@ -111,8 +117,55 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_precacheStarted) {
+      _precacheStarted = true;
+      unawaited(_prepareImages());
+    }
+  }
+
+  Future<void> _prepareImages() async {
+    if (_preparingImages) return;
+    _preparingImages = true;
+    var failed = false;
+    final configuration = createLocalImageConfiguration(context);
+    // Pin each state immediately and wait for its decoded image, so cache
+    // eviction cannot race the transition from preparation into play.
+    await Future.wait(PassAndRunCharacterVisual.assets.map((path) {
+      final ready = Completer<void>();
+      final stream = AssetImage(path).resolve(configuration);
+      final listener = ImageStreamListener((image, synchronousCall) {
+        image.dispose();
+        if (!ready.isCompleted) ready.complete();
+      }, onError: (Object error, StackTrace? stack) {
+        failed = true;
+        if (!ready.isCompleted) ready.complete();
+      });
+      _pinnedImages.add((stream: stream, listener: listener));
+      stream.addListener(listener);
+      return ready.future;
+    }));
+    if (!mounted) return;
+    if (failed) {
+      for (final image in _pinnedImages) {
+        image.stream.removeListener(image.listener);
+      }
+      _pinnedImages.clear();
+    }
+    setState(() {
+      _preparingImages = false;
+      _assetsReady = !failed;
+      _assetLoadFailed = failed;
+    });
+  }
+
+  @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    for (final image in _pinnedImages) {
+      image.stream.removeListener(image.listener);
+    }
     _clockTimer?.cancel();
     _fieldTicker.dispose();
     _fieldTick.dispose();
@@ -131,6 +184,7 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
 
   /// 往路を開始し、制限時間と並走位置の更新を始めます。
   void _startGame() {
+    if (!_assetsReady) return;
     _roundIndex = 0;
     _roundScores
       ..clear()
@@ -1027,7 +1081,18 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
               ),
             ),
             const SizedBox(height: 20),
-            ElevatedButton(onPressed: _startGame, child: const Text('スタート')),
+            ElevatedButton(
+              onPressed: _assetsReady
+                  ? _startGame
+                  : _assetLoadFailed
+                      ? _prepareImages
+                      : null,
+              child: Text(_assetsReady
+                  ? 'スタート'
+                  : _assetLoadFailed
+                      ? '再読込'
+                      : '準備中…'),
+            ),
           ],
         ),
       ),

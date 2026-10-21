@@ -5,9 +5,20 @@ import 'package:koto_blue_sharks/presentation/training_game/mini_games/pass_and_
 import 'package:koto_blue_sharks/presentation/training_game/mini_games/pass_and_run/pass_and_run_motion.dart';
 
 void main() {
+  test('操作余裕を確保するため移動速度だけ従来の半分、範囲は同じ', () {
+    expect(PassRunMotion.movementRate, .5);
+    for (final runner in PassRunRunner.values) {
+      final oldPeriod = runner == PassRunRunner.player ? 2.6 : 2.05;
+      expect(PassRunMotion.velocityYAt(0, runner).abs(),
+          lessThanOrEqualTo(.28 * math.pi * 2 / oldPeriod * .5 + 1e-12));
+    }
+    expect(PassAndRunRules.roundDuration, const Duration(seconds: 15));
+    expect(PassAndRunRules.missPenalty, const Duration(seconds: 2));
+  });
   test('80ms向き補間は反転点の両側で連続し、終了後に新方向へ固定', () {
     for (final runner in PassRunRunner.values) {
-      final period = runner == PassRunRunner.player ? 2.6 : 2.05;
+      final period = (runner == PassRunRunner.player ? 2.6 : 2.05) /
+          PassRunMotion.movementRate;
       final phase = runner == PassRunRunner.player ? 0 : math.pi * .65;
       final turn = (math.pi * 2.5 - phase) * period / (math.pi * 2);
       expect(
@@ -42,7 +53,8 @@ void main() {
 
   test('両者の既存軌道・周期を維持し、速度が実移動方向と一致する', () {
     for (final runner in PassRunRunner.values) {
-      final period = runner == PassRunRunner.player ? 2.6 : 2.05;
+      final period = (runner == PassRunRunner.player ? 2.6 : 2.05) /
+          PassRunMotion.movementRate;
       final phase = runner == PassRunRunner.player ? 0 : math.pi * .65;
       for (var ms = 0; ms <= 15000; ms += 13) {
         final t = ms / 1000;
@@ -61,7 +73,8 @@ void main() {
 
   test('各走者の反転直前・頂点・直後で向きを連続して選択する', () {
     for (final runner in PassRunRunner.values) {
-      final period = runner == PassRunRunner.player ? 2.6 : 2.05;
+      final period = (runner == PassRunRunner.player ? 2.6 : 2.05) /
+          PassRunMotion.movementRate;
       final phase = runner == PassRunRunner.player ? 0 : math.pi * .65;
       final top = (math.pi * 2.5 - phase) * period / (math.pi * 2);
       final before = PassRunMotion.facingForVelocity(

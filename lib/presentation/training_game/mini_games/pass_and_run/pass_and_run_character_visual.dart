@@ -20,6 +20,20 @@ class PassAndRunCharacterVisual extends StatelessWidget {
   });
 
   static const canvasSize = 112.0;
+
+  static Iterable<String> get assets sync* {
+    for (final name in ['normal', 'mate']) {
+      for (final facing in ['front', 'back']) {
+        for (final state in ['hold', 'free']) {
+          for (final phase in ['a', 'b']) {
+            yield 'assets/images/training_game/minigames/pass_run_${name}_${facing}_${state}_$phase.png';
+          }
+        }
+      }
+    }
+    yield 'assets/images/training_game/minigames/pass_run_ball.png';
+  }
+
   final PassRunCharacter character;
   final bool holding;
   final int frame;
@@ -83,6 +97,7 @@ class PassAndRunCharacterVisual extends StatelessWidget {
           children: [
             Image.asset(
               assetPath,
+              gaplessPlayback: true,
               width: size,
               height: size,
               fit: BoxFit.contain,

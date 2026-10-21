@@ -22,6 +22,17 @@ void main() {
     await tester.pump(elapsed);
   }
 
+  Future<void> readyPass(WidgetTester tester) async {
+    if (find.byType(PassAndRunGameScreen).evaluate().isEmpty) return;
+    final context = tester.element(find.byType(PassAndRunGameScreen));
+    await tester.runAsync(() async {
+      for (final path in PassAndRunCharacterVisual.assets) {
+        await precacheImage(AssetImage(path), context);
+      }
+    });
+    await tester.pump();
+  }
+
   testWidgets('ミニゲーム選択用サムネイルを2種類表示できる', (tester) async {
     await tester.pumpWidget(
       const MaterialApp(
@@ -70,6 +81,7 @@ void main() {
     await tester.pumpWidget(
       const MaterialApp(home: TackleGameScreen()),
     );
+    await readyPass(tester);
     await tester.tap(find.text('スタート'));
     await advance(tester, const Duration(milliseconds: 1400));
     await tester.tap(find.text('上をタップ ▲'));
@@ -84,6 +96,7 @@ void main() {
     await tester.pumpWidget(
       const MaterialApp(home: TackleGameScreen()),
     );
+    await readyPass(tester);
     await tester.tap(find.text('スタート'));
     await tester.pump();
     await tester.tap(find.text('上をタップ ▲'));
@@ -96,6 +109,7 @@ void main() {
     await tester.pumpWidget(
       const MaterialApp(home: TackleGameScreen()),
     );
+    await readyPass(tester);
     await tester.tap(find.text('スタート'));
     await tester.pump();
 
@@ -113,6 +127,7 @@ void main() {
     await tester.pumpWidget(
       const MaterialApp(home: TackleGameScreen()),
     );
+    await readyPass(tester);
     await tester.tap(find.text('スタート'));
     await tester.pump();
     await tester.tap(find.text('上をタップ ▲'));
@@ -128,6 +143,7 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(home: PassAndRunGameScreen(now: () => serverTime)),
     );
+    await readyPass(tester);
     await tester.tap(find.text('スタート'));
     await tester.pump();
 
@@ -149,6 +165,7 @@ void main() {
     );
 
     expect(find.byKey(const Key('pass-ball')), findsOneWidget);
+    await readyPass(tester);
     await tester.tap(find.text('スタート'));
     await tester.pump();
     final player = tester.getCenter(find.byKey(const Key('pass-player')));
@@ -163,6 +180,7 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(home: PassAndRunGameScreen(now: () => serverTime)),
     );
+    await readyPass(tester);
     await tester.tap(find.text('スタート'));
     await tester.pump();
 
@@ -180,6 +198,7 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(home: PassAndRunGameScreen(now: () => serverTime)),
     );
+    await readyPass(tester);
     await tester.tap(find.text('スタート'));
     await tester.pump();
 
@@ -202,6 +221,7 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(home: PassAndRunGameScreen(now: () => serverTime)),
     );
+    await readyPass(tester);
     await tester.tap(find.text('スタート'));
     await tester.pump();
     final player = find.byKey(const Key('pass-player'));
@@ -225,6 +245,7 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(home: PassAndRunGameScreen(now: () => serverTime)),
     );
+    await readyPass(tester);
     await tester.tap(find.text('スタート'));
     await tester.pump();
     // Cross the deadline rather than landing within the real Stopwatch's
