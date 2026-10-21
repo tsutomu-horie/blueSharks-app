@@ -31,7 +31,10 @@ abstract final class PassAndRunRules {
   static const roundDuration = Duration(seconds: 15);
 
   /// 方向ミス後にパスできない時間です。
-  static const missPenalty = Duration(seconds: 2);
+  static const missPenalty = Duration(seconds: 1);
+
+  /// フィールド幅の半分を飛ぶ基準時間。投球・返球とも同じ一定球速です。
+  static const standardPassDuration = Duration(milliseconds: 440);
 
   /// フリックとして扱う最低移動距離です。
   static const minimumDistance = 24.0;
@@ -50,13 +53,28 @@ abstract final class PassAndRunRules {
     return flick.distance >= minimumDistance && flick.speed >= minimumVelocity;
   }
 
+  /// 前方は相手側デッドボールライン方向です（往路は上、復路は下）。
+  /// World Rugby Definitions / Law 11 を慣性のない2D投球へ簡略化し、
+  /// 攻撃方向との内積が正なら禁止、厳密に真横なら許可します。
+  /// 顔の向き・上下の歩行速度・独自の許容角度は判定に使いません。
+  static bool isForwardDirection({
+    required double deltaX,
+    required double deltaY,
+    required bool outbound,
+  }) {
+    if (!deltaX.isFinite || !deltaY.isFinite) return true;
+    return outbound ? deltaY < 0 : deltaY > 0;
+  }
+
   /// ボール中心と仲間の中心が、画面上の当たり判定で重なっているかを返します。
   static bool hasCollided({
     required double ballDeltaX,
     required double ballDeltaY,
+    double ballRadius = ballCollisionRadius,
+    double mateRadius = mateCollisionRadius,
   }) {
     // 中心間距離の二乗で比較し、毎フレームの平方根計算を避けます。
-    final collisionDistance = ballCollisionRadius + mateCollisionRadius;
+    final collisionDistance = ballRadius + mateRadius;
     final distanceSquared = ballDeltaX * ballDeltaX + ballDeltaY * ballDeltaY;
     return distanceSquared <= collisionDistance * collisionDistance;
   }

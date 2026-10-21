@@ -75,30 +75,6 @@ class TrainingGameProvider extends GetConnect {
     return _data(response) ?? <String, dynamic>{};
   }
 
-  Future<Map<String, dynamic>> fetchDebugGrowthOptions(
-      {int? expectedSessionVersion}) async {
-    if (!AppEnvironment.showsTrainingDebugUi) throw StateError('通常版では実行できません。');
-    await _pendingWrite;
-    final headers = await _headers(expectedSessionVersion);
-    _assertSessionVersion(expectedSessionVersion);
-    return _data(await get('game/debug/growth-options', headers: headers)) ??
-        <String, dynamic>{};
-  }
-
-  Future<Map<String, dynamic>> startDebugGrowth(Map<String, dynamic> selection,
-      {int? expectedSessionVersion}) async {
-    if (!AppEnvironment.showsTrainingDebugUi) throw StateError('通常版では実行できません。');
-    final write = _pendingWrite.then((_) async {
-      final headers = await _headers(expectedSessionVersion);
-      _assertSessionVersion(expectedSessionVersion);
-      return _data(await post('game/debug/start-growth', selection,
-              headers: headers)) ??
-          <String, dynamic>{};
-    });
-    _pendingWrite = write.then<void>((_) {}, onError: (_, __) {});
-    return write;
-  }
-
   /// デバッグ用に、ログイン会員の育成ゲームデータを初回状態へ削除します。
   Future<Map<String, dynamic>> resetDebugState(
       {int? expectedSessionVersion}) async {

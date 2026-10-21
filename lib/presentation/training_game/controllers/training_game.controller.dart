@@ -13,7 +13,6 @@ import 'package:koto_blue_sharks/utils/app_environment.dart';
 import '../mini_games/models/mini_game_result.dart';
 import '../models/training_action_gate.dart';
 import '../models/training_game_models.dart';
-import '../models/training_debug_growth.dart';
 
 enum TrainingSyncStatus {
   idle,
@@ -308,8 +307,6 @@ class TrainingGameController extends GetxController
   bool _syncActionInFlight = false;
   DateTime? _syncRetryNotBefore;
   bool _syncRequestMayHaveBeenApplied = false;
-  final isStartingDebugGrowth = false.obs;
-  Completer<void>? _debugGrowthCompletion;
   Future<void>? _debugTimeSync;
   bool _debugTimeSavePending = false;
   bool _debugDailyResetPending = false;
@@ -1442,8 +1439,7 @@ class TrainingGameController extends GetxController
   /// 指定行動のクールタイムが終了しているかを返します。
   bool canPerform(TrainingActionType type) {
     cooldownTick.value;
-    if (isStartingDebugGrowth.value ||
-        _pendingStageIndex != null ||
+    if (_pendingStageIndex != null ||
         (_debugTimeSavePending && type != TrainingActionType.work))
       return false;
     return _actionGate.canPerform(
@@ -1849,8 +1845,7 @@ class TrainingGameController extends GetxController
         Future<void>.delayed(randomTransitionLoadingDuration()),
       ]);
       if (!_ownsSession(_ownedSessionVersion)) return false;
-      complete = !isStartingDebugGrowth.value &&
-          !_debugTimeSavePending &&
+      complete = !_debugTimeSavePending &&
           _queuedActions.isEmpty &&
           !_syncRequested &&
           !_syncRunning &&
@@ -1908,7 +1903,6 @@ class TrainingGameController extends GetxController
     // 復帰イベントが短時間に複数回発生しても、取得処理を直列化します。
     _restoreChain = _restoreChain.then((_) async {
       if (!_ownsSession(_ownedSessionVersion)) return;
-      await _debugGrowthCompletion?.future;
       // 時間保存と通常同期を完了してから、サーバー状態を読み込みます。
       await _debugTimeSync;
       if (_debugTimeSavePending) return;
@@ -2434,7 +2428,6 @@ class TrainingGameController extends GetxController
     TrainingActionType? action,
     MiniGameResult? miniGameResult,
   }) async {
-    if (isStartingDebugGrowth.value) return;
     if (_debugTimeSavePending) {
       await _debugTimeSync;
       if (_debugTimeSavePending) return;
@@ -3144,10 +3137,7 @@ class TrainingGameController extends GetxController
 
   /// 指定した行動を実行し、メーターと傾向値を更新します。
   void perform(TrainingActionType type, {MiniGameResult? miniGameResult}) {
-    if (ended.value ||
-        evolutionStage.value != null ||
-        _debugTimeSavePending ||
-        isStartingDebugGrowth.value) {
+    if (ended.value || evolutionStage.value != null || _debugTimeSavePending) {
       return;
     }
     if (!_ownsSession(_ownedSessionVersion)) {
@@ -3311,7 +3301,6 @@ class TrainingGameController extends GetxController
   /// 指定した分数を進め、自然減衰と段階移行を処理します。
   void advanceTimeMinutes(int minutes) {
     if (!AppEnvironment.showsTrainingDebugUi ||
-        isStartingDebugGrowth.value ||
         minutes <= 0 ||
         _isDisposed ||
         _debugTimeSavePending ||
@@ -3427,102 +3416,6 @@ class TrainingGameController extends GetxController
             '時間変更の保存を確認できません。サーバーの状態を再取得できます。表示時計の加算は残り、保留時間操作の再送や日次履歴の解除はしません。';
         cooldownTick.value++;
         logs.insert(0, _debugTimeSyncError);
-      }
-    }
-  }
-
-  bool get canStartDebugGrowth =>
-      AppEnvironment.showsTrainingDebugUi &&
-      !isStartingDebugGrowth.value &&
-      isServerStateReady.value &&
-      _ownsSession(_ownedSessionVersion) &&
-      !_syncRunning &&
-      !_syncRequested &&
-      !_hasForeignPendingAction &&
-      !_pendingGameQueueIsClaimedByAnotherController() &&
-      pendingSyncActionCount == 0 &&
-      !_debugTimeSavePending &&
-      _debugTimeSync == null &&
-      !_waitingForServerRestore &&
-      !_isWorkPreparationPending &&
-      !isReturningHome.value &&
-      _pendingStageIndex == null &&
-      evolutionStage.value == null &&
-      syncStatus.value == TrainingSyncStatus.idle;
-
-  Future<TrainingDebugGrowthOptions> fetchDebugGrowthOptions() async {
-    if (!canStartDebugGrowth) throw StateError('育成の保存完了後に、もう一度開いてください。');
-    final data = await _serverProvider.fetchDebugGrowthOptions(
-        expectedSessionVersion: _ownedSessionVersion);
-    if (!_ownsSession(_ownedSessionVersion)) throw StateError('ログイン状態が変わりました。');
-    return TrainingDebugGrowthOptions.fromJson(data);
-  }
-
-  Future<void> debugStartGrowth(
-      TrainingDebugGrowthOptions options, String branchCode) async {
-    await _restoreChain;
-    if (!canStartDebugGrowth) throw StateError('育成の保存完了後に、選び直してください。');
-    final selection = options.request(branchCode);
-    final completion = Completer<void>();
-    _debugGrowthCompletion = completion;
-    isStartingDebugGrowth.value = true;
-    try {
-      final data = await _serverProvider.startDebugGrowth(selection,
-          expectedSessionVersion: _ownedSessionVersion);
-      if (!_ownsSession(_ownedSessionVersion)) {
-        throw StateError('ログイン状態が変わりました。');
-      }
-      if (data['id'] != options.currentGame['id'] ||
-          data['cycle_no'] != (options.currentGame['cycle_no'] as int) + 1 ||
-          data['stage_code'] != 'growth' ||
-          data['branch_code'] != branchCode ||
-          data['status'] != 'playing' ||
-          data['position_code'] != null ||
-          data['lock_version'] !=
-              (options.currentGame['lock_version'] as int) + 1 ||
-          data['parameters'] is! Map ||
-          data['work_available'] is! bool) {
-        throw StateError('開始結果を確認できません。');
-      }
-      _resetLocalProgressForNewCycle();
-      await MySharedPref.clearTrainingGameDebugElapsedSeconds();
-      if (!_ownsSession(_ownedSessionVersion)) {
-        throw StateError('ログイン状態が変わりました。');
-      }
-      await MySharedPref.clearTrainingGameLocalState();
-      if (!_ownsSession(_ownedSessionVersion)) {
-        throw StateError('ログイン状態が変わりました。');
-      }
-      if (!_initializeServerState(data, forceNewCycle: true)) {
-        throw StateError('開始状態を読み込めません。');
-      }
-      await _saveLocalGameState();
-    } catch (_) {
-      // 結果不明でも開始要求は再送しません。現在の状態だけを取得します。
-      if (_ownsSession(_ownedSessionVersion)) {
-        try {
-          final current = await _serverProvider.fetchCurrent(
-              expectedSessionVersion: _ownedSessionVersion);
-          if (_ownsSession(_ownedSessionVersion) && current != null) {
-            _pendingStageIndex = null;
-            if (!_initializeServerState(current,
-                restoreLocalStateOverride: false)) {
-              throw StateError('開始結果の状態を確認できません。');
-            }
-          } else if (_ownsSession(_ownedSessionVersion)) {
-            throw StateError('育成状態を取得できません。');
-          }
-        } catch (_) {
-          isServerStateReady.value = false;
-          serverErrorMessage.value = '開始結果を確認できません。通信状態を確認して再取得してください。';
-        }
-      }
-      throw StateError('開始結果を確認してください。同じ開始操作は繰り返さず、現在の育成を確認してください。');
-    } finally {
-      isStartingDebugGrowth.value = false;
-      completion.complete();
-      if (identical(_debugGrowthCompletion, completion)) {
-        _debugGrowthCompletion = null;
       }
     }
   }

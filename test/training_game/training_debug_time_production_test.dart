@@ -19,12 +19,6 @@ void main() {
     expect(controller.elapsedHours.value, 0);
     expect(controller.meters, meters);
     expect(controller.logs, isEmpty);
-    expect(controller.canStartDebugGrowth, false);
-    await expectLater(controller.fetchDebugGrowthOptions(), throwsStateError);
-    await expectLater(
-        TrainingGameProvider().fetchDebugGrowthOptions(), throwsStateError);
-    await expectLater(
-        TrainingGameProvider().startDebugGrowth({}), throwsStateError);
     await expectLater(
       TrainingGameProvider().syncDebugTime(
         stageCode: 'training',
