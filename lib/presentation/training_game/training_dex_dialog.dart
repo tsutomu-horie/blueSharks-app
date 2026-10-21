@@ -121,7 +121,7 @@ class TrainingDexDialog extends StatelessWidget {
                   padding: EdgeInsets.symmetric(horizontal: 6, vertical: 1),
                   decoration: BoxDecoration(
                     color: unlocked
-                        ? const Color(0xff1f6feb)
+                        ? const Color(0xff1554b0)
                         : const Color(0xff5b6672),
                     borderRadius: BorderRadius.circular(4),
                   ),
@@ -141,7 +141,7 @@ class TrainingDexDialog extends StatelessWidget {
                   unlocked ? '✅ 登録済み' : '🔒 未解放',
                   style: TextStyle(
                     color: unlocked
-                        ? const Color(0xff1f6feb)
+                        ? const Color(0xff1554b0)
                         : const Color(0xff5b6672),
                     fontSize: 11,
                     fontWeight: unlocked ? FontWeight.w700 : FontWeight.normal,
