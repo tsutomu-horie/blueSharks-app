@@ -66,7 +66,7 @@ class _GameGuideListScreenState extends State<GameGuideListScreen>
         foregroundColor: Colors.white,
         automaticallyImplyLeading: false,
         title: Text(
-          'ホームゲームの楽しみ方',
+          'ホストゲームの楽しみ方',
           style: TextStyle(
             fontSize: 18.sp,
             fontWeight: FontWeight.w700,

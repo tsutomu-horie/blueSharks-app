@@ -31,6 +31,8 @@ void main() {
     });
     provider = GameGuideProvider();
     provider.onInit();
+    expect(provider.httpClient.baseUrl,
+        'https://blue-sharks.donati.jp/wp-json/wp/v2/');
     provider.httpClient.baseUrl = 'http://127.0.0.1:${server.port}/';
   });
 

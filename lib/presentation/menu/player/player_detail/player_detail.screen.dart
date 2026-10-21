@@ -1,4 +1,3 @@
-import 'package:koto_blue_sharks/utils/app_environment.dart';
 import 'package:dotted_line/dotted_line.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -23,7 +22,7 @@ class PlayerDetailScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final controller = Get.put(PlayerDetailController());
-    if (AppEnvironment.usesProductionServices || playerData == null) {
+    if (playerData == null) {
       return _NativePlayerDetailScreen(playerData);
     }
     controller.loadDetail(playerData!);

@@ -140,7 +140,7 @@ class _GameGuideDetailScreenState extends State<GameGuideDetailScreen>
           backgroundColor: BrandColor.hover,
           foregroundColor: Colors.white,
           title: Text(
-            'ホームゲームの楽しみ方',
+            'ホストゲームの楽しみ方',
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
