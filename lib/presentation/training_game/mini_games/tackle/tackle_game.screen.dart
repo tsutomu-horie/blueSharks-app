@@ -91,6 +91,7 @@ class _TackleGameScreenState extends State<TackleGameScreen>
   Curve _opponentCurve = Curves.linear;
   TackleDirection _actualDirection = TackleDirection.up;
   TackleAttempt? _latestAttempt;
+  bool _latestWasFalseStart = false;
   bool? _attemptSucceeded;
   DateTime? _phaseStartedAt;
   Duration? _pausedDelay;
@@ -164,6 +165,7 @@ class _TackleGameScreenState extends State<TackleGameScreen>
     setState(() {
       _displayedSetNumber = nextSetNumber;
       _latestAttempt = null;
+      _latestWasFalseStart = false;
       _attemptSucceeded = null;
       _canAdvanceAfterAttempt = false;
       _phase = _TacklePhase.approach;
@@ -313,6 +315,7 @@ class _TackleGameScreenState extends State<TackleGameScreen>
     setState(() {
       _attempts.add(result);
       _latestAttempt = result;
+      _latestWasFalseStart = isFalseStart;
       _attemptSucceeded = success;
       _canAdvanceAfterAttempt = false;
       _phase = _TacklePhase.resolution;
@@ -828,9 +831,11 @@ class _TackleGameScreenState extends State<TackleGameScreen>
       );
     }
     final reaction = _latestAttempt!.reaction;
-    final reactionLabel = reaction == null
-        ? '時間切れ'
-        : '${(reaction.inMicroseconds / Duration.microsecondsPerSecond).toStringAsFixed(2)}秒';
+    final reactionLabel = _latestWasFalseStart
+        ? '早すぎた'
+        : reaction == null
+            ? '時間切れ'
+            : '${(reaction.inMicroseconds / Duration.microsecondsPerSecond).toStringAsFixed(2)}秒';
     return SizedBox(
       height: 96,
       child: InkWell(
