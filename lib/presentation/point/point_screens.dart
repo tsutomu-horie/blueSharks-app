@@ -5,6 +5,7 @@ import 'package:koto_blue_sharks/app/data/models/point/point_models.dart';
 import 'package:koto_blue_sharks/app/views/views/custom_text_view.dart';
 import 'package:koto_blue_sharks/infrastructure/navigation/routes.dart';
 import 'package:koto_blue_sharks/presentation/point/controllers/point.controller.dart';
+import 'package:koto_blue_sharks/presentation/point/widgets/point_reward_image.dart';
 import 'package:koto_blue_sharks/presentation/point/widgets/point_widgets.dart';
 import 'package:koto_blue_sharks/utils/app_color.dart';
 import 'package:qr_flutter/qr_flutter.dart';
@@ -697,8 +698,8 @@ class _PointRewardsScreenState extends State<PointRewardsScreen> {
                             color: BrandColor.surface,
                             borderRadius: BorderRadius.circular(8.r),
                           ),
-                          child:
-                              Icon(Icons.card_giftcard, color: BrandColor.main),
+                          clipBehavior: Clip.antiAlias,
+                          child: PointRewardImage(url: reward.imageUrl),
                         ),
                         SizedBox(width: 12.w),
                         Expanded(
@@ -800,10 +801,10 @@ class _PointRewardDetailScreenState extends State<PointRewardDetailScreen> {
                       color: BrandColor.surface,
                       borderRadius: BorderRadius.circular(12.r),
                     ),
-                    child: Icon(
-                      Icons.card_giftcard,
-                      size: 72.w,
-                      color: BrandColor.main,
+                    clipBehavior: Clip.antiAlias,
+                    child: PointRewardImage(
+                      url: reward.imageUrl,
+                      iconSize: 72.w,
                     ),
                   ),
                   SizedBox(height: 16.h),

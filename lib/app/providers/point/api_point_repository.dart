@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:koto_blue_sharks/app/data/models/point/point_models.dart';
 import 'package:koto_blue_sharks/app/providers/point/point_repository.dart';
@@ -118,13 +119,13 @@ class ApiPointRepository extends GetConnect implements PointRepository {
   @override
   Future<List<PointReward>> getRewards() async {
     final data = _asList(await _getData('points/rewards?per_page=100'));
-    return data.map((item) => _rewardFromJson(_asMap(item))).toList();
+    return data.map((item) => rewardFromJson(_asMap(item))).toList();
   }
 
   @override
   Future<PointReward> getReward(String id) async {
     final data = _asMap(await _getData('points/rewards/$id'));
-    return _rewardFromJson(data);
+    return rewardFromJson(data);
   }
 
   @override
@@ -250,7 +251,8 @@ class ApiPointRepository extends GetConnect implements PointRepository {
     );
   }
 
-  PointReward _rewardFromJson(Map<String, dynamic> json) {
+  @visibleForTesting
+  PointReward rewardFromJson(Map<String, dynamic> json) {
     final offers = _asList(json['offers']);
     if (offers.isEmpty) {
       throw const PointOperationException(
@@ -264,6 +266,7 @@ class ApiPointRepository extends GetConnect implements PointRepository {
       offerId: offer['id'].toString(),
       name: json['name'] as String,
       description: json['description'] as String? ?? '',
+      imageUrl: _primaryImageUrl(json['images']),
       requiredPoints: _asInt(json['required_points']),
       exchangeStartsAt: _asDateTime(offer['starts_at']),
       exchangeEndsAt: _asDateTime(offer['ends_at']),
@@ -271,6 +274,29 @@ class ApiPointRepository extends GetConnect implements PointRepository {
       notice: json['terms'] as String? ?? '',
       status: PointRewardStatus.available,
     );
+  }
+
+  String? _primaryImageUrl(dynamic value) {
+    if (value is! List) return null;
+    final images = value.whereType<Map>().toList()
+      ..sort((a, b) {
+        int number(dynamic value) => int.tryParse('$value') ?? 0;
+        final order =
+            number(a['display_order']).compareTo(number(b['display_order']));
+        return order != 0 ? order : number(a['id']).compareTo(number(b['id']));
+      });
+    for (final image in images) {
+      final url = image['image_url'];
+      if (url is! String || url.trim().isEmpty) continue;
+      final uri = Uri.tryParse(url.trim());
+      if (uri != null &&
+          (uri.scheme == 'https' || uri.scheme == 'http') &&
+          uri.host.isNotEmpty &&
+          uri.userInfo.isEmpty) {
+        return url.trim();
+      }
+    }
+    return null;
   }
 
   PointRewardExchange _exchangeFromResponse(Map<String, dynamic> data) {
