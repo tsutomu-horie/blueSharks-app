@@ -33,6 +33,7 @@ jobs:
           cp test/support/firebase_options_test_stub.dart lib/firebase_options.dart
           # Existing transitive screens use legacy casing; keep this alias CI-only.
           ln -s constant.dart lib/utils/Constant.dart
+          ln -s string+extensions.dart lib/utils/String+extensions.dart
       - name: Check affected Dart formatting
         run: >-
           dart format --output=none --set-exit-if-changed
