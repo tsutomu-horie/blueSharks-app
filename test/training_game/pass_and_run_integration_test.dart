@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:koto_blue_sharks/app/services/server_time_clock.dart';
 import 'package:koto_blue_sharks/presentation/training_game/mini_games/pass_and_run/pass_and_run_motion.dart';
 import 'package:koto_blue_sharks/presentation/training_game/mini_games/pass_and_run/pass_and_run_character_visual.dart';
 import 'package:koto_blue_sharks/presentation/training_game/mini_games/pass_and_run/pass_and_run_game.screen.dart';
@@ -304,6 +305,73 @@ void main() {
       expect(ball, findsOneWidget);
     }
     expect(visual(t, mate).holding, isTrue);
+  });
+
+  testWidgets('通常の同期済みサーバー時計でも仲間走行フレームが更新する', (t) async {
+    ServerTimeClock.instance.synchronize(DateTime.utc(2026, 10, 21));
+    await t.pumpWidget(const MaterialApp(home: PassAndRunGameScreen()));
+    await t.tap(find.text('スタート'));
+    await t.pump();
+    final initial = visual(t, mate).frame;
+    await t.runAsync(
+        () => Future<void>.delayed(const Duration(milliseconds: 270)));
+    await t.pump(const Duration(milliseconds: 270));
+    expect(visual(t, mate).frame, isNot(initial));
+    expect(visual(t, mate).assetPath, contains('pass_run_mate_'));
+  });
+
+  testWidgets('仲間の正背面・保持非保持4状態すべてが実Imageの走行A/Bへ更新される', (t) async {
+    await start(t);
+    void expectFrame(String facing, String state, String frame) {
+      final sprite = visual(t, mate);
+      expect(sprite.character, PassRunCharacter.companion);
+      expect(sprite.size, 84);
+      final image = t.widget<Image>(
+          find.descendant(of: mate, matching: find.byType(Image)));
+      final expected = 'pass_run_mate_${facing}_${state}_$frame.png';
+      expect(sprite.assetPath, endsWith(expected));
+      expect((image.image as AssetImage).assetName, endsWith(expected));
+      expect(find.text('🏃'), findsNothing);
+    }
+
+    // Back/free: elapsed gameplay rebuilds the mate Image at a gait boundary.
+    expectFrame('back', 'free', 'a');
+    await step(t, 240);
+    expectFrame('back', 'free', 'b');
+    // Front/free after the mate's independent direction reversal settles.
+    await step(t, 720);
+    expectFrame('front', 'free', 'a');
+    await step(t, 240);
+    expectFrame('front', 'free', 'b');
+    await step(t, 100);
+    await throwToMate(t, 1.3);
+    await catchAtMate(t);
+    Future<void> at(int target) async {
+      final elapsed =
+          clock.difference(DateTime.utc(2026, 10, 20)).inMilliseconds;
+      expect(elapsed, lessThanOrEqualTo(target));
+      await step(t, target - elapsed);
+    }
+
+    // The same held ball stays single while both direction-specific pairs run.
+    await at(1650);
+    expectFrame('front', 'hold', 'a');
+    await at(1850);
+    expectFrame('front', 'hold', 'b');
+    await at(1990);
+    expectFrame('back', 'hold', 'a');
+    await at(2230);
+    expectFrame('back', 'hold', 'b');
+    expect(ball, findsOneWidget);
+    await t.tap(find.byTooltip('一時停止'));
+    await t.pump();
+    await step(t, 1000);
+    expectFrame('back', 'hold', 'b');
+    await t.tap(find.text('再開'));
+    await t.pump();
+    await step(t, 170);
+    expectFrame('back', 'hold', 'a');
+    expect(ball, findsOneWidget);
   });
 
   testWidgets('承認済み保持・非保持と2脚位相を表示し、球は常に1個', (t) async {

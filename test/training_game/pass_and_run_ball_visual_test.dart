@@ -8,6 +8,52 @@ import 'package:koto_blue_sharks/presentation/training_game/mini_games/pass_and_
 import 'package:koto_blue_sharks/presentation/training_game/mini_games/pass_and_run/pass_and_run_character_visual.dart';
 
 void main() {
+  testWidgets('承認済み色違い仲間は正背面・保持有無の全組でA/Bの脚画素が変わる', (t) async {
+    final key = GlobalKey();
+    Future<List<int>> legs(
+        PassRunFacing facing, bool holding, int frame) async {
+      final visual = PassAndRunCharacterVisual(
+          character: PassRunCharacter.companion,
+          holding: holding,
+          frame: frame,
+          facing: facing,
+          size: 84);
+      await t.pumpWidget(MaterialApp(
+          home: Center(child: RepaintBoundary(key: key, child: visual))));
+      await t.runAsync(() =>
+          precacheImage(AssetImage(visual.assetPath), key.currentContext!));
+      await t.pump();
+      final boundary =
+          key.currentContext!.findRenderObject()! as RenderRepaintBoundary;
+      return (await t.runAsync(() async {
+        final image = await boundary.toImage(pixelRatio: 3);
+        final data = await image.toByteData(format: ui.ImageByteFormat.rawRgba);
+        // Below source y=250: legs and feet; movement cannot pass via UI text.
+        final pixels = data!.buffer.asUint8List();
+        final result =
+            pixels.sublist((250 * .75).floor() * image.width * 4).toList();
+        image.dispose();
+        return result;
+      }))!;
+    }
+
+    for (final facing in PassRunFacing.values) {
+      for (final holding in [false, true]) {
+        final a = await legs(facing, holding, 0);
+        final b = await legs(facing, holding, 1);
+        expect(a.length, b.length);
+        var changed = 0;
+        for (var i = 0; i < a.length; i += 4) {
+          if (a[i] != b[i] ||
+              a[i + 1] != b[i + 1] ||
+              a[i + 2] != b[i + 2] ||
+              a[i + 3] != b[i + 3]) changed++;
+        }
+        expect(changed, greaterThan(100),
+            reason: '$facing holding=$holding must animate legs');
+      }
+    }
+  });
   test('球柄の補間終点は180度反転せず、保持画と360度同値', () {
     for (final right in [true, false]) {
       final a = PassAndRunCharacterVisual.heldBallGeometry(
