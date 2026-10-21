@@ -15,6 +15,7 @@ import 'mini_games/tackle/tackle_game.screen.dart';
 import 'models/training_game_models.dart';
 import 'sametaroh_asset.dart';
 import 'training_home_background.dart';
+import 'training_home_controls.dart';
 import 'training_home_roaming_character.dart';
 import 'training_sync_indicator.dart';
 import 'training_debug_menu.dart';
@@ -498,17 +499,20 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
         children: [
           Expanded(
             child: Container(
-              padding: EdgeInsets.all(6.w),
+              padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: const Color(0xfffafafa),
-                border: Border.all(color: Colors.black, width: 2),
-                borderRadius: BorderRadius.circular(4.r),
+                color: Colors.white,
+                border: Border.all(color: TrainingHomeStyle.border),
+                borderRadius: BorderRadius.circular(12),
               ),
               child: GridView.count(
                 crossAxisCount: 2,
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
-                childAspectRatio: 2.2,
+                childAspectRatio: 2.7,
+                crossAxisSpacing: 20,
+                mainAxisSpacing: 8,
+                padding: EdgeInsets.zero,
                 children: const ['食事', '仕事', '清潔', '体調']
                     .map((name) => _buildMeterByName(name))
                     .toList(),
@@ -520,15 +524,17 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
             mainAxisSize: MainAxisSize.min,
             children: [
               SizedBox(
-                width: 52.w,
-                height: 52.w,
+                width: 44,
+                height: 44,
                 child: ElevatedButton(
+                  key: const ValueKey('training-home-exit'),
                   onPressed: controller.isReturningHome.value
                       ? null
                       : () => _returnHomeAfterSync(context),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xff5ee05e),
-                    foregroundColor: Colors.black,
+                    backgroundColor: Colors.white,
+                    foregroundColor: TrainingHomeStyle.navy,
+                    elevation: 0,
                     padding: EdgeInsets.zero,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(6.r),
@@ -541,7 +547,9 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
                           child:
                               const CircularProgressIndicator(strokeWidth: 2),
                         )
-                      : Text('🚪', style: TextStyle(fontSize: 22.sp)),
+                      : const Tooltip(
+                          message: '戻る',
+                          child: Icon(Icons.arrow_back, size: 20)),
                 ),
               ),
               if (AppEnvironment.showsTrainingDebugUi) ...[
@@ -585,80 +593,12 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
     return _buildMeter(MapEntry(name, controller.meters[name]!));
   }
 
-  /// メーター1項目を作成します。
-  Widget _buildMeter(MapEntry<String, double> entry) {
-    const normalMeterMaximum = 100.0;
-    const overageMeterMaximum = 50.0;
-    final value = entry.value;
-    // 通常メーターと超過メーターを、それぞれ左端から右へ伸ばします。
-    final normalValue = value.clamp(0, normalMeterMaximum).toDouble();
-    final overageValue =
-        (value - normalMeterMaximum).clamp(0, overageMeterMaximum).toDouble();
-    final color = value <= 19
-        ? const Color(0xffd03b3b)
-        : value < 50
-            ? const Color(0xffeda100)
-            : value < 80
-                ? const Color(0xff7ec8f0)
-                : const Color(0xff5ee05e);
-    return Row(
-      children: [
-        SizedBox(
-          width: 25.w,
-          child: Text(entry.key, style: TextStyle(fontSize: 10.sp)),
-        ),
-        Expanded(
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              // それぞれの上限を基準に、ゲージの実幅へ変換します。
-              final normalWidth =
-                  constraints.maxWidth * (normalValue / normalMeterMaximum);
-              final overageWidth =
-                  constraints.maxWidth * (overageValue / overageMeterMaximum);
-              return Container(
-                height: 12.h,
-                clipBehavior: Clip.antiAlias,
-                decoration: BoxDecoration(
-                  color: const Color(0xffedf0f2),
-                  border: Border.all(color: const Color(0xff252a2e)),
-                  borderRadius: BorderRadius.circular(6.r),
-                ),
-                child: Stack(
-                  children: [
-                    // 通常値は0〜100をゲージ左端から表示します。
-                    Positioned(
-                      left: 0,
-                      top: 0,
-                      bottom: 0,
-                      width: normalWidth,
-                      child: ColoredBox(color: color),
-                    ),
-                    if (overageWidth > 0)
-                      Positioned(
-                        // 超過値は斜線を使わず、赤色のゲージとして左端から表示します。
-                        left: 0,
-                        top: 0,
-                        bottom: 0,
-                        width: overageWidth,
-                        child: const ColoredBox(color: Color(0xffd03b3b)),
-                      ),
-                  ],
-                ),
-              );
-            },
-          ),
-        ),
-        SizedBox(
-          width: 22.w,
-          child: Text(
-            '${entry.value.round()}',
-            textAlign: TextAlign.right,
-            style: TextStyle(fontSize: 10.sp),
-          ),
-        ),
-      ],
-    );
-  }
+  /// 通常100・超過50の表示と数値をまとめます。
+  Widget _buildMeter(MapEntry<String, double> entry) => DefaultTextStyle.merge(
+        style: const TextStyle(
+            fontFamily: 'LINESeedJP', color: TrainingHomeStyle.navy),
+        child: TrainingHomeMeter(name: entry.key, value: entry.value),
+      );
 
   /// 支給屋外背景・図鑑・キャラクター・練習ボタンを配置します。
   Widget _buildRoom(BuildContext context) {
@@ -669,9 +609,12 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
         Positioned(
           left: 12.w,
           bottom: 12.h,
-          child: IconButton(
+          child: TextButton.icon(
+            key: const ValueKey('training-home-dex'),
             onPressed: () => _showDex(context),
-            icon: Text('📙', style: TextStyle(fontSize: 26.sp)),
+            style: _homeAuxiliaryStyle,
+            icon: const Icon(Icons.menu_book_outlined, size: 16),
+            label: const Text('ずかん'),
           ),
         ),
         Positioned(
@@ -849,35 +792,23 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
   }
 
   /// ⑤ミニゲーム選択画面を開く練習ボタンを作成します。
-  Widget _buildTrainingMenuButton(
-    BuildContext context,
-    bool enabled,
-  ) {
-    return ElevatedButton(
-      onPressed: enabled ? () => _showMiniGameSelection(context) : null,
-      style: ElevatedButton.styleFrom(
+  ButtonStyle get _homeAuxiliaryStyle => TextButton.styleFrom(
+        foregroundColor: TrainingHomeStyle.navy,
         backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
-        side: const BorderSide(color: Colors.black, width: 2),
-        padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 5.h),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(4.r),
-        ),
-      ),
-      child: Column(
-        children: [
-          Text(
-            '練習',
-            style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w700),
-          ),
-          Text(
-            '練習 / MG',
-            style: TextStyle(fontSize: 9.sp, color: Colors.black54),
-          ),
-        ],
-      ),
-    );
-  }
+        disabledForegroundColor: const Color(0xff888888),
+        minimumSize: const Size(48, 44),
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        textStyle: const TextStyle(fontFamily: 'LINESeedJP', fontSize: 12),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+      );
+
+  Widget _buildTrainingMenuButton(BuildContext context, bool enabled) =>
+      TextButton.icon(
+        onPressed: enabled ? () => _showMiniGameSelection(context) : null,
+        style: _homeAuxiliaryStyle,
+        icon: const Icon(Icons.sports_rugby_outlined, size: 16),
+        label: const Text('練習 / MG'),
+      );
 
   /// 2種のルールを集約した⑤ミニゲーム選択画面を表示します。
   Future<void> _showMiniGameSelection(BuildContext context) async {
@@ -994,17 +925,23 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
       TrainingActionType.work,
       TrainingActionType.rest,
     ];
-    return Container(
-      color: Colors.white,
-      padding: EdgeInsets.symmetric(vertical: 8.h, horizontal: 4.w),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: careActions
-            .where((type) =>
-                controller.stageIndex.value != 1 ||
-                SametarohAssets.childCareActions.contains(type))
-            .map((type) => _buildCareButton(context, type))
-            .toList(),
+    return SizedBox(
+      key: const ValueKey('training-home-footer'),
+      height: TrainingHomeStyle.footerHeight,
+      child: Container(
+        decoration: const BoxDecoration(
+            color: Colors.white,
+            border: Border(top: BorderSide(color: Color(0xffe0e0e0)))),
+        padding: const EdgeInsets.fromLTRB(12, 8, 12, 16),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: careActions
+              .where((type) =>
+                  controller.stageIndex.value != 1 ||
+                  SametarohAssets.childCareActions.contains(type))
+              .map((type) => Expanded(child: _buildCareButton(context, type)))
+              .toList(),
+        ),
       ),
     );
   }
@@ -1029,55 +966,16 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
         !(type == TrainingActionType.squat &&
             (controller.stageIndex.value < 1 || !squatRequirementMet)) &&
         !(type == TrainingActionType.work && controller.stageIndex.value < 2);
-    return TextButton(
+    return TrainingHomeCareButton(
+      key: ValueKey('training-home-care-${type.name}'),
+      type: type,
+      label: action.label,
+      remaining: controller.cooldownRemaining(type),
       onPressed: enabled ? () => _handleAction(context, type) : null,
-      style: TextButton.styleFrom(
-        foregroundColor: Colors.black,
-        padding: EdgeInsets.zero,
-      ),
-      child: Column(
-        children: [
-          Container(
-            width: 46.w,
-            height: 46.w,
-            alignment: Alignment.center,
-            decoration: const BoxDecoration(
-              color: Color(0xff7ec8f0),
-              shape: BoxShape.circle,
-            ),
-            child: Stack(
-              clipBehavior: Clip.none,
-              children: [
-                Text(action.icon, style: TextStyle(fontSize: 23.sp)),
-                if (type == TrainingActionType.squat &&
-                    controller.stageIndex.value == 1)
-                  Positioned(
-                    right: -8.w,
-                    bottom: -4.h,
-                    child: Container(
-                      padding:
-                          EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.h),
-                      decoration: BoxDecoration(
-                        color: const Color(0xffb26a00),
-                        borderRadius: BorderRadius.circular(8.r),
-                      ),
-                      child: Text(
-                        '${controller.trainingCount.value}/15',
-                        style: TextStyle(color: Colors.white, fontSize: 9.sp),
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-          ),
-          Text(action.label, style: TextStyle(fontSize: 10.sp)),
-          if (controller.cooldownLabel(type).isNotEmpty)
-            Text(
-              controller.cooldownLabel(type),
-              style: TextStyle(fontSize: 9.sp, color: Colors.redAccent),
-            ),
-        ],
-      ),
+      trainingCount:
+          type == TrainingActionType.squat && controller.stageIndex.value == 1
+              ? controller.trainingCount.value
+              : null,
     );
   }
 

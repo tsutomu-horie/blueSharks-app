@@ -85,3 +85,9 @@ jobs:
           flutter test --no-pub test/training_game/training_debug_ui_test.dart
           flutter test --no-pub --dart-define=APP_ENV=production test/training_game/training_debug_ui_test.dart
           python3 -m unittest tools.tests.test_app_environment
+
+      - name: Check training HOME controls
+        run: |
+          dart format --output=none --set-exit-if-changed lib/presentation/training_game/training_home_controls.dart lib/presentation/training_game/training_game.screen.dart test/training_game/training_home_controls_test.dart test/training_game/training_game_character_widget_test.dart
+          flutter analyze --no-pub --no-fatal-infos lib/presentation/training_game/training_home_controls.dart test/training_game/training_home_controls_test.dart
+          flutter test --no-pub test/training_game/training_home_controls_test.dart test/training_game/training_game_character_widget_test.dart
