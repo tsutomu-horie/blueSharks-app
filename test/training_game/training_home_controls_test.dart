@@ -45,6 +45,47 @@ Widget homeControlsHost({Key? captureKey}) => ScreenUtilInit(
 
 void main() {
   for (final size in [const Size(375, 812), const Size(320, 568)]) {
+    testWidgets('実HOMEのずかんと練習/MGの下端が有効・無効時とも揃う $size', (tester) async {
+      tester.view.physicalSize = size;
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      Get.testMode = true;
+      addTearDown(Get.reset);
+      final controller = HomeControlsFixture()..isServerStateReady.value = true;
+      Get.put<TrainingGameController>(controller);
+      await tester.pumpWidget(homeControlsHost());
+      await tester.pump();
+      final dex = find.byKey(const ValueKey('training-home-dex'));
+      final training = find.widgetWithText(TextButton, '練習 / MG');
+      Rect? baseline;
+      for (final stage in [1, 2]) {
+        controller.stageIndex.value = stage;
+        await tester.pump();
+        final dexRect = tester.getRect(dex);
+        final trainingRect = tester.getRect(training);
+        final bodyRect = tester.getRect(find.byType(TrainingHomeBackground));
+        expect(trainingRect.bottom, closeTo(dexRect.bottom, .001));
+        expect(trainingRect.height, dexRect.height);
+        expect(bodyRect.bottom - dexRect.bottom, closeTo(12.h, .001));
+        expect(trainingRect.left, greaterThan(dexRect.right));
+        expect(
+          tester.widget<TextButton>(training).onPressed != null,
+          stage >= 2,
+        );
+        expect(
+          tester
+              .getSize(find.byKey(const ValueKey('training-home-footer')))
+              .height,
+          92,
+        );
+        if (baseline != null) expect(trainingRect, baseline);
+        baseline = trainingRect;
+        expect(tester.takeException(), isNull);
+      }
+      await tester.pumpWidget(const SizedBox());
+    });
+
     testWidgets('実HOMEの待機前後でフッター・5ボタン・本文・キャラクター位置が固定 $size', (tester) async {
       tester.view.physicalSize = size;
       tester.view.devicePixelRatio = 1;
