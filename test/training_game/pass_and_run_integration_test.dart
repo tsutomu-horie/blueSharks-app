@@ -74,7 +74,7 @@ void main() {
           field.top +
               field.height *
                   PassRunMotion.yAt(seconds + travel, PassRunRunner.companion,
-                      outbound: find.text('攻撃方向 ↑').evaluate().isNotEmpty));
+                      outbound: find.text('往路').evaluate().isNotEmpty));
       travel = (target - origin).distance / speed;
     }
     return target - origin;
@@ -256,7 +256,7 @@ void main() {
     // The product retries by reopening from the training menu.
     await t.pumpWidget(const SizedBox());
     await start(t);
-    expect(find.text('攻撃方向 ↑'), findsOneWidget);
+    expect(find.byKey(const Key('pass-attack-direction')), findsNothing);
     expect(find.textContaining('残り 15.0s'), findsOneWidget);
     expect(ball, findsOneWidget);
     expect(
@@ -573,7 +573,7 @@ void main() {
     await start(t);
     await step(t, 15100);
     await step(t, 1000);
-    expect(find.text('攻撃方向 ↓'), findsOneWidget);
+    expect(find.byKey(const Key('pass-attack-direction')), findsNothing);
     await step(t, 80);
     expect(visual(t, player).facing, PassRunFacing.front);
     expect(visual(t, mate).facing, PassRunFacing.front);
@@ -631,7 +631,7 @@ void main() {
     expect(trail, findsNothing);
     await step(t, 15100);
     await step(t, 1000);
-    expect(find.text('攻撃方向 ↓'), findsOneWidget);
+    expect(find.byKey(const Key('pass-attack-direction')), findsNothing);
     expect(visual(t, player).holding, isTrue);
     expect(visual(t, mate).holding, isFalse);
     expect(ball, findsOneWidget);

@@ -1069,22 +1069,6 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
                     top: ball.dy - ballGeometry.extent / 2,
                     child: PassAndRunBallVisual(geometry: ballGeometry),
                   ),
-                Positioned(
-                  top: 8,
-                  left: 0,
-                  right: 0,
-                  child: IgnorePointer(
-                    child: Text(
-                      _isOutbound ? '攻撃方向 ↑' : '攻撃方向 ↓',
-                      key: const Key('pass-attack-direction'),
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ),
                 if (_phase == _PassGamePhase.waiting) _buildStartOverlay(),
                 if (_phase == _PassGamePhase.result) _buildResultOverlay(),
                 if (_isPaused) _buildPauseOverlay(),
