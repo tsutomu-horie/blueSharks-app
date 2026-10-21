@@ -95,12 +95,18 @@ class WebsiteStandings {
 
 class WebsiteRankingsTable {
   const WebsiteRankingsTable(
-      {required this.title, required this.headers, required this.rows});
+      {required this.title,
+      required this.headers,
+      required this.rows,
+      this.teamLogoUrls = const []});
   final String title;
   final List<String> headers;
   final List<List<String>> rows;
 
-  static WebsiteRankingsTable? parse(String source) {
+  /// Aligned with [rows]; a missing/invalid logo never removes a team's results.
+  final List<Uri?> teamLogoUrls;
+
+  static WebsiteRankingsTable? parse(String source, {Uri? pageUrl}) {
     final doc = html.parse(source);
     final section = doc.querySelector('main .rankings');
     final title = section
@@ -116,6 +122,7 @@ class WebsiteRankingsTable {
             .toList() ??
         [];
     final rows = <List<String>>[];
+    final logos = <Uri?>[];
     for (final tr
         in table?.querySelectorAll('tbody tr') ?? const <dom.Element>[]) {
       final cells = tr
@@ -128,6 +135,17 @@ class WebsiteRankingsTable {
         return null;
       }
       rows.add(List.unmodifiable(cells));
+      final src = tr.querySelector('img.rankings__logo')?.attributes['src'];
+      final relative = src == null ? null : Uri.tryParse(src.trim());
+      final logo =
+          relative == null ? null : pageUrl?.resolveUri(relative) ?? relative;
+      logos.add(logo != null &&
+              logo.scheme == 'https' &&
+              logo.host.isNotEmpty &&
+              logo.userInfo.isEmpty &&
+              logo.port == 443
+          ? logo
+          : null);
     }
     if (title.isEmpty ||
         headers.isEmpty ||
@@ -138,6 +156,7 @@ class WebsiteRankingsTable {
     return WebsiteRankingsTable(
         title: title,
         headers: List.unmodifiable(headers),
-        rows: List.unmodifiable(rows));
+        rows: List.unmodifiable(rows),
+        teamLogoUrls: List.unmodifiable(logos));
   }
 }
