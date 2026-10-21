@@ -241,7 +241,7 @@ void main() {
     expect(tester.widget<PassAndRunCharacterVisual>(player).holding, isFalse);
   });
 
-  testWidgets('復路と結果は承認済み姿を左向きに表示する', (tester) async {
+  testWidgets('復路と結果は承認済み正面姿で表示し交換1秒を確保する', (tester) async {
     await tester.pumpWidget(
       MaterialApp(home: PassAndRunGameScreen(now: () => serverTime)),
     );
@@ -252,7 +252,7 @@ void main() {
     // sub-millisecond offset from the synchronized test clock.
     await advance(tester, const Duration(milliseconds: 15100));
     expect(find.text('復路'), findsOneWidget);
-    await advance(tester, const Duration(milliseconds: 480));
+    await advance(tester, const Duration(milliseconds: 1000));
     final player = find.byKey(const Key('pass-player'));
     expect(
       tester.widget<PassAndRunCharacterVisual>(player).facing,

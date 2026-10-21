@@ -1209,7 +1209,7 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
                 : _passInFlight && !_passScoreConfirmed
                     ? 'ボール移動中…'
                     : _mateHolding
-                        ? '仲間が保持中…　横・後方から返球を受けよう'
+                        ? '仲間からの返球待ち…'
                         : _passInFlight
                             ? '仲間から返球中…'
                             : !_canPass

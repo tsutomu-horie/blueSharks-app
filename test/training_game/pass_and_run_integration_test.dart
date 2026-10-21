@@ -366,6 +366,7 @@ void main() {
     await step(t, 200);
     await throwToMate(t, .2);
     await catchAtMate(t);
+    expect(find.text('仲間からの返球待ち…'), findsOneWidget);
     final before = t.getCenter(ball);
     await t.tap(find.byTooltip('一時停止'));
     await t.pump();
