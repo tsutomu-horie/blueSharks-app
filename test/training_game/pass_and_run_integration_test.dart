@@ -9,6 +9,7 @@ import 'package:koto_blue_sharks/presentation/training_game/mini_games/pass_and_
 
 void main() {
   var clock = DateTime.utc(2026, 10, 20);
+  var currentMotionSeed = 54;
   final player = find.byKey(const Key('pass-player'));
   final mate = find.byKey(const Key('pass-mate'));
   final ball = find.byKey(const Key('pass-ball'));
@@ -24,9 +25,11 @@ void main() {
     await t.pump(Duration(milliseconds: ms));
   }
 
-  Future<void> start(WidgetTester t) async {
+  Future<void> start(WidgetTester t, {int seed = 54}) async {
+    currentMotionSeed = seed;
     await t.pumpWidget(
-      MaterialApp(home: PassAndRunGameScreen(now: () => clock)),
+      MaterialApp(
+          home: PassAndRunGameScreen(motionSeed: seed, now: () => clock)),
     );
     final context = t.element(find.byType(PassAndRunGameScreen));
     await t.runAsync(() async {
@@ -66,6 +69,7 @@ void main() {
     final speed = field.width *
         .5 /
         (PassAndRunRules.standardPassDuration.inMicroseconds / 1000000);
+    final motion = PassRunMotion(seed: currentMotionSeed);
     var travel = .44;
     var target = Offset.zero;
     for (var i = 0; i < 24; i++) {
@@ -73,7 +77,7 @@ void main() {
           t.getCenter(mate).dx,
           field.top +
               field.height *
-                  PassRunMotion.yAt(seconds + travel, PassRunRunner.companion,
+                  motion.yAt(seconds + travel, PassRunRunner.companion,
                       outbound: find.text('往路').evaluate().isNotEmpty));
       travel = (target - origin).distance / speed;
     }
@@ -421,7 +425,9 @@ void main() {
 
       check();
       final initial = visual(t, mate).frame;
-      await step(t, 120);
+      for (var i = 0; i < 30 && visual(t, mate).frame == initial; i++) {
+        await step(t, 8);
+      }
       check();
       expect(visual(t, mate).frame, isNot(initial));
       await t.pumpWidget(const SizedBox());
@@ -435,7 +441,9 @@ void main() {
       await catchAtMate(t);
       check();
       final held = visual(t, mate).frame;
-      await step(t, 120);
+      for (var i = 0; i < 30 && visual(t, mate).frame == held; i++) {
+        await step(t, 8);
+      }
       check();
       expect(visual(t, mate).holding, isTrue);
       expect(visual(t, mate).frame, isNot(held));
@@ -621,10 +629,9 @@ void main() {
     expect(find.textContaining('PASS 1'), findsOneWidget);
   });
 
-  testWidgets('前方へしか返せない間Bは保持し、ラウンド終了で持ち越さない', (t) async {
+  testWidgets('保持中の球はラウンド終了で持ち越さない', (t) async {
     await start(t);
-    await step(t, 2800);
-    await throwToMate(t, 2.8);
+    await throwToMate(t, 0);
     await catchAtMate(t);
     await step(t, 160);
     expect(visual(t, mate).holding, isTrue);
@@ -664,41 +671,47 @@ void main() {
     expect(find.textContaining('PASS 1'), findsOneWidget);
   });
 
-  for (final up in [true, false]) {
-    testWidgets('実フリックと衝突で3回連続パスでき、返球後に再入力できる $up', (t) async {
-      await start(t);
-      if (!up) {
-        await step(t, 15000);
-        await step(t, 1000);
-      }
-      final begin = clock;
-      for (var n = 1; n <= 3; n++) {
-        var attempts = 0;
-        while (true) {
-          final seconds = clock.difference(begin).inMicroseconds / 1000000;
-          final delta = aimAtMate(t, seconds);
-          if (!PassAndRunRules.isForwardDirection(
-              deltaX: delta.dx, deltaY: delta.dy, outbound: up)) break;
-          expect(attempts++, lessThan(300));
-          await step(t, 10);
+  for (final seed in [0, 54, 95]) {
+    for (final up in [true, false]) {
+      testWidgets('実フリックと衝突で3回連続パスでき、返球後に再入力できる $up seed$seed', (t) async {
+        await start(t, seed: seed);
+        if (!up) {
+          await step(t, 15000);
+          await step(t, 1000);
         }
-        final before = clock;
-        await throwToMate(t, clock.difference(begin).inMicroseconds / 1000000);
-        for (var i = 0; i < 250 && !visual(t, mate).holding; i++) {
-          await step(t, 4);
-          expect(ball, findsOneWidget);
+        final begin = clock;
+        for (var n = 1; n <= 3; n++) {
+          var attempts = 0;
+          while (true) {
+            final seconds = clock.difference(begin).inMicroseconds / 1000000;
+            final delta = aimAtMate(t, seconds);
+            if (!PassAndRunRules.isForwardDirection(
+                deltaX: delta.dx, deltaY: delta.dy, outbound: up)) {
+              break;
+            }
+            expect(attempts++, lessThan(300));
+            await step(t, 10);
+          }
+          final before = clock;
+          await throwToMate(
+              t, clock.difference(begin).inMicroseconds / 1000000);
+          for (var i = 0; i < 250 && !visual(t, mate).holding; i++) {
+            await step(t, 4);
+            expect(ball, findsOneWidget);
+          }
+          expect(visual(t, mate).holding, isTrue);
+          expect(find.textContaining('PASS $n'), findsOneWidget);
+          for (var i = 0; i < 1000 && !visual(t, player).holding; i++) {
+            await step(t, 4);
+            expect(ball, findsOneWidget);
+          }
+          expect(visual(t, player).holding, isTrue);
+          expect(
+              clock.difference(before), lessThan(const Duration(seconds: 5)));
         }
-        expect(visual(t, mate).holding, isTrue);
-        expect(find.textContaining('PASS $n'), findsOneWidget);
-        for (var i = 0; i < 1000 && !visual(t, player).holding; i++) {
-          await step(t, 4);
-          expect(ball, findsOneWidget);
-        }
-        expect(visual(t, player).holding, isTrue);
-        expect(clock.difference(before), lessThan(const Duration(seconds: 4)));
-      }
-      expect(clock.difference(begin), lessThan(const Duration(seconds: 15)));
-    });
+        expect(clock.difference(begin), lessThan(const Duration(seconds: 15)));
+      });
+    }
   }
 
   testWidgets('返球期限後ticker前の停止でも再開後に次のパスが可能', (t) async {

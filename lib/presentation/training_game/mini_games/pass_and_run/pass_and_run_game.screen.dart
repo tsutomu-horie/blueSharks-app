@@ -16,7 +16,10 @@ enum _PassGamePhase { waiting, playing, result }
 /// 仲間の方向へフリックして成功回数を競うパス＆ランです。
 class PassAndRunGameScreen extends StatefulWidget {
   /// パス＆ラン画面を作成します。
-  const PassAndRunGameScreen({super.key, this.now});
+  const PassAndRunGameScreen({super.key, this.now, this.motionSeed});
+
+  @visibleForTesting
+  final int? motionSeed;
 
   /// 入力・ticker・停止復帰を同じ瞬間で検証するための時計注入点です。
   /// 通常画面は育成ゲームの共通サーバー時計を使います。
@@ -41,6 +44,7 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
   final _roundScores = <int>[0, 0];
   final _fieldTick = ValueNotifier<int>(0);
   late final Ticker _fieldTicker;
+  late final PassRunMotion _motion;
   Timer? _clockTimer;
   DateTime? _roundStartedAt;
   DateTime? _penaltyUntil;
@@ -110,6 +114,9 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
   @override
   void initState() {
     super.initState();
+    _motion = PassRunMotion(
+        seed: widget.motionSeed ?? math.Random().nextInt(1 << 31),
+        roundSeconds: PassAndRunRules.roundDuration.inMicroseconds / 1000000);
     WidgetsBinding.instance.addObserver(this);
     _fieldTicker = Ticker((_) {
       if (!mounted) return;
@@ -477,10 +484,10 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
   Offset _actorOffsetAt(double seconds, {required bool player}) {
     final runner = player ? PassRunRunner.player : PassRunRunner.companion;
     if (_turnProgress < 1) {
-      return PassRunMotion.turnOffset(_turnProgress, runner,
+      return _motion.turnOffset(_turnProgress, runner,
           field: _fieldSize, actorSize: _characterSize);
     }
-    final y = PassRunMotion.yAt(seconds, runner, outbound: _isOutbound);
+    final y = _motion.yAt(seconds, runner, outbound: _isOutbound);
     final lane = player == _isOutbound ? .25 : .75;
     return Offset(_fieldSize.width * lane, _fieldSize.height * y);
   }
@@ -507,23 +514,26 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
       _fieldSize.height *
       (_isOutbound ? _motionSeconds : 15 - _motionSeconds);
 
-  // Display gait continues through the turn; authoritative play/collision time does not.
-  int _frameAt(double seconds) =>
-      ((seconds +
-              (_isOutbound
-                  ? 0
-                  : 15 +
-                      _turnProgress * _turnDuration.inMicroseconds / 1000000)) *
-          1000 ~/
-          120) %
-      2;
+  // 脚は各本人の走行距離に追従。衝突半径は従来の240ms時計を維持します。
+  int _frameAt(double seconds, PassRunCharacter kind) {
+    final runner = _runner(kind);
+    final outboundDistance = _motion.distanceAt(
+        PassAndRunRules.roundDuration.inMicroseconds / 1000000, runner);
+    final distance = _isOutbound
+        ? _motion.distanceAt(seconds, runner)
+        : outboundDistance +
+            PassRunMotion.forwardRate *
+                (_turnProgress * _turnDuration.inMicroseconds / 1000000) +
+            _motion.distanceAt(seconds, runner, outbound: false);
+    return (distance * 45).floor() % 2;
+  }
 
   PassRunBallGeometry _geometryAt(PassRunCharacter kind, double seconds) {
     final facing = _facingAt(kind, seconds);
     PassRunBallGeometry geometry(PassRunFacing direction) =>
         PassAndRunCharacterVisual.heldBallGeometry(
           character: kind,
-          frame: _frameAt(seconds),
+          frame: _frameAt(seconds, kind),
           facing: direction,
           size: _characterSize,
         );
@@ -940,7 +950,6 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
         final actorSize = _characterSize;
         final labelScale = math.min(1.0,
             math.max(0.0, _fieldSize.height * .22 - actorSize / 2 - 2) / 16);
-        final frame = _frameAt(_motionSeconds);
         final ballGeometry = _ballGeometry;
         return GestureDetector(
           key: const Key('pass-field'),
@@ -1014,7 +1023,7 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
                     key: const Key('pass-player'),
                     character: PassRunCharacter.normal,
                     holding: _playerHoldingVisual,
-                    frame: frame,
+                    frame: _frameAt(_motionSeconds, PassRunCharacter.normal),
                     facing: _spriteFacing(PassRunCharacter.normal),
                     size: actorSize,
                     ballKey: const Key('pass-ball'),
@@ -1056,7 +1065,7 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
                     key: const Key('pass-mate'),
                     character: PassRunCharacter.companion,
                     holding: _mateHoldingVisual,
-                    frame: frame,
+                    frame: _frameAt(_motionSeconds, PassRunCharacter.companion),
                     facing: _spriteFacing(PassRunCharacter.companion),
                     size: actorSize,
                     ballKey: const Key('pass-ball'),
