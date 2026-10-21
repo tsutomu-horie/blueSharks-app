@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:koto_blue_sharks/presentation/training_game/mini_games/pass_and_run/pass_and_run_direction_guide.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:koto_blue_sharks/app/services/server_time_clock.dart';
 import 'package:koto_blue_sharks/presentation/training_game/mini_games/pass_and_run/pass_and_run_motion.dart';
@@ -94,6 +95,63 @@ void main() {
     clock = DateTime.utc(2026, 10, 20);
   });
 
+  test('ガイド全体は3.2秒の滑らかな透明往復を共有する', () {
+    double opacity(double seconds) => PassRunDirectionGuidePainter(
+            center: Offset.zero, attackUp: true, seconds: seconds)
+        .opacity;
+    expect(opacity(0), 0);
+    expect(opacity(.8), closeTo(.5, 1e-9));
+    expect(opacity(1.6), 1);
+    expect(opacity(2.4), closeTo(.5, 1e-9));
+    expect(opacity(3.2), 0);
+  });
+
+  for (final up in [true, false]) {
+    testWidgets('方向ガイドは本人中心を保ち、所持と投球に追従する $up', (t) async {
+      await start(t);
+      final guide = find.byKey(const Key('pass-direction-guide'));
+      if (!up) await step(t, 16000);
+      for (var i = 0; i < 8; i++) {
+        await step(t, 100);
+        if (visual(t, player).holding) {
+          expect(guide, findsOneWidget);
+          final paint = t.widget<CustomPaint>(guide).painter!
+              as PassRunDirectionGuidePainter;
+          final field = t.getTopLeft(find.byKey(const Key('pass-field')));
+          expect((paint.center - (t.getCenter(player) - field)).distance,
+              lessThan(1e-6));
+          expect(paint.attackUp, up);
+          expect(
+              find.ancestor(
+                  of: guide,
+                  matching: find.byWidgetPredicate(
+                      (w) => w is IgnorePointer && w.ignoring)),
+              findsOneWidget);
+        } else {
+          expect(guide, findsNothing);
+        }
+        expect(ball, findsOneWidget);
+      }
+      await t.flingFrom(
+          t.getCenter(player), Offset(up ? 100 : -100, up ? 40 : -40), 2000);
+      await t.pump();
+      expect(visual(t, player).holding, isFalse);
+      expect(guide, findsNothing);
+      expect(ball, findsOneWidget);
+    });
+  }
+
+  testWidgets('保持したままの正背面反転でも方向ガイドは消えない', (t) async {
+    await start(t);
+    await step(t, 1320);
+    expect(visual(t, player).holding, isFalse);
+    expect(find.byKey(const Key('pass-direction-guide')), findsOneWidget);
+    expect(ball, findsOneWidget);
+    await step(t, 80);
+    expect(visual(t, player).holding, isTrue);
+    expect(find.byKey(const Key('pass-direction-guide')), findsOneWidget);
+  });
+
   testWidgets('鮫太郎だけの小さなラベルが操作を遮らず本人に追従する', (t) async {
     await start(t);
     final label = find.byKey(const Key('pass-player-label'));
@@ -102,7 +160,10 @@ void main() {
     expect(
         t
             .widget<IgnorePointer>(find
-                .ancestor(of: label, matching: find.byType(IgnorePointer))
+                .ancestor(
+                    of: label,
+                    matching: find.byWidgetPredicate(
+                        (w) => w is IgnorePointer && w.ignoring))
                 .first)
             .ignoring,
         isTrue);

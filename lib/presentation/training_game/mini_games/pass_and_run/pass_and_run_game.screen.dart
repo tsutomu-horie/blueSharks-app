@@ -6,6 +6,7 @@ import 'package:flutter/scheduler.dart';
 
 import '../models/mini_game_result.dart';
 import 'pass_and_run_character_visual.dart';
+import 'pass_and_run_direction_guide.dart';
 import '../../models/training_game_clock.dart';
 import 'pass_and_run_logic.dart';
 import 'pass_and_run_motion.dart';
@@ -961,6 +962,21 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
                   bottom: 16,
                   child: const _LaneLine(),
                 ),
+                if (_phase == _PassGamePhase.playing &&
+                    !_isPaused &&
+                    _playerHolding)
+                  Positioned.fill(
+                    child: IgnorePointer(
+                      child: CustomPaint(
+                        key: const Key('pass-direction-guide'),
+                        painter: PassRunDirectionGuidePainter(
+                          center: player,
+                          attackUp: _isOutbound,
+                          seconds: _motionSeconds,
+                        ),
+                      ),
+                    ),
+                  ),
                 if (_dragStart != null && _dragCurrent != null)
                   CustomPaint(
                     key: const Key('pass-flick-guide'),
