@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:koto_blue_sharks/app/services/auth_token.dart';
 import 'package:koto_blue_sharks/app/services/server_time_clock.dart';
 import 'package:koto_blue_sharks/utils/constant.dart';
+import 'package:koto_blue_sharks/utils/app_environment.dart';
 
 /// 育成ゲームのサーバー同期APIを担当します。
 class TrainingGameProvider extends GetConnect {
@@ -109,6 +110,9 @@ class TrainingGameProvider extends GetConnect {
     required int lockVersion,
     int? expectedSessionVersion,
   }) async {
+    if (!AppEnvironment.showsTrainingDebugUi) {
+      throw StateError('通常版ではデバッグ時間操作を実行できません。');
+    }
     final write = _pendingWrite.then((_) async {
       final headers = await _headers(expectedSessionVersion);
       _assertSessionVersion(expectedSessionVersion);

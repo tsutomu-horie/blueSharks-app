@@ -155,6 +155,11 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
             controller.syncStatusMessage.value,
             style: TextStyle(fontSize: 12.sp),
           ),
+          if (controller.canResolveDebugTimeSave)
+            TextButton(
+              onPressed: controller.retryRestoreServerState,
+              child: const Text('サーバーの状態を再取得'),
+            ),
           if (status == TrainingSyncStatus.stopped ||
               status == TrainingSyncStatus.rateLimited ||
               status == TrainingSyncStatus.rejected ||
