@@ -28,6 +28,9 @@ void main() {
     expect(t.rows, hasLength(8));
     expect(t.rows.every((r) => r.length == 15), isTrue);
     expect(t.rows.any((r) => r[1] == '清水建設江東ブルーシャークス'), isTrue);
+    expect(t.teamLogoUrls, hasLength(8));
+    expect(t.teamLogoUrls.every((logo) => logo?.scheme == 'https'), isTrue);
+    expect(t.teamLogoUrls[1].toString(), contains('%E4%B9%9D%E5%B7%9E.png'));
     expect(
         t.rows.every((r) => r.first == '-' && r.skip(2).every((v) => v == '0')),
         isTrue);
@@ -107,7 +110,8 @@ void main() {
     expect(find.text('順位表を取得できませんでした。'), findsOneWidget);
     await tester.tap(find.text('再試行'));
     await tester.pumpAndSettle();
-    expect(find.byType(DataTable), findsOneWidget);
+    expect(
+        find.byKey(const ValueKey('website-ranking-team-0')), findsOneWidget);
     expect(calls, 2);
     expect(tester.takeException(), isNull);
   });
@@ -164,8 +168,114 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('website-rank-link')));
     await tester.pumpAndSettle();
     expect(find.text('順位表を取得できませんでした。'), findsOneWidget);
-    expect(find.byType(DataTable), findsNothing);
+    expect(find.byKey(const ValueKey('website-ranking-team-0')), findsNothing);
     expect(tester.takeException(), isNull);
+  });
+
+  test('ロゴは行順を保持し相対URLを解決、欠損・非HTTPSは成績を残して代替表示する', () {
+    final logos = RegExp(r'<img class="rankings__logo"[^>]*>');
+    var i = 0;
+    final modified = full.replaceAllMapped(
+        logos,
+        (match) => switch (i++) {
+              0 => '',
+              1 => '<img class="rankings__logo" src="/logos/kyushu.png">',
+              2 =>
+                '<img class="rankings__logo" src="http://example.com/logo.png">',
+              _ => match.group(0)!,
+            });
+    final table = WebsiteRankingsTable.parse(modified, pageUrl: home)!;
+    expect(table.rows, hasLength(8));
+    expect(table.teamLogoUrls[0], isNull);
+    expect(table.teamLogoUrls[1], home.resolve('/logos/kyushu.png'));
+    expect(table.teamLogoUrls[2], isNull);
+    expect(table.teamLogoUrls[3], isNotNull);
+  });
+
+  testWidgets('全チームの実数値・ロゴを表示し、詳細成績・更新・戻るが動作する', (tester) async {
+    // Distinct, nonzero values expose swapped win/draw/loss or detail columns.
+    final parsed = WebsiteRankingsTable.parse(full)!;
+    final table = WebsiteRankingsTable(
+        title: parsed.title,
+        headers: parsed.headers,
+        rows: [
+          for (final row in parsed.rows)
+            [for (var i = 0; i < row.length; i++) i < 2 ? row[i] : '${100 + i}']
+        ],
+        teamLogoUrls: parsed.teamLogoUrls);
+    var calls = 0;
+    await tester.pumpWidget(MaterialApp(home: Builder(builder: (context) {
+      return TextButton(
+          onPressed: () => Navigator.of(context).push(MaterialPageRoute<void>(
+              builder: (_) => WebsiteRankingsScreen(
+                  url: home.resolve('/rankings/'),
+                  loadTable: (_) async {
+                    calls++;
+                    return table;
+                  }))),
+          child: const Text('開く'));
+    })));
+    await tester.tap(find.text('開く'));
+    await tester.pumpAndSettle();
+    final first = find.byKey(const ValueKey('website-ranking-team-0'));
+    expect(
+        find.descendant(of: first, matching: find.text('102')), findsOneWidget);
+    expect(
+        find.descendant(of: first, matching: find.text('103')), findsOneWidget);
+    expect(
+        find.descendant(of: first, matching: find.text('104')), findsOneWidget);
+    expect(
+        find.descendant(of: first, matching: find.text('105')), findsOneWidget);
+    expect(
+        find.descendant(of: first, matching: find.text('106')), findsOneWidget);
+    expect(find.descendant(of: first, matching: find.byType(Image)),
+        findsOneWidget);
+    expect(find.byIcon(Icons.shield_outlined), findsNWidgets(8));
+    expect(
+        find.byKey(const ValueKey('website-ranking-team-7')), findsOneWidget);
+    await tester.tap(find.text('詳細成績'));
+    await tester.pumpAndSettle();
+    for (var i = 2; i < 15; i++) {
+      expect(find.descendant(of: first, matching: find.text('${100 + i}')),
+          findsOneWidget);
+    }
+    await tester.tap(find.byTooltip('更新'));
+    await tester.pumpAndSettle();
+    expect(calls, 2);
+    await tester.tap(find.byTooltip('Back'));
+    await tester.pumpAndSettle();
+    expect(find.text('開く'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('順位画面は幅320/375/430・文字1/2倍でも基本・詳細とも欠けずに表示する', (tester) async {
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final table = WebsiteRankingsTable.parse(full)!;
+    for (final scale in [1.0, 2.0]) {
+      for (final width in [320.0, 375.0, 430.0]) {
+        tester.view.physicalSize = Size(width, 812);
+        await tester.pumpWidget(MaterialApp(
+            key: ValueKey('$width-$scale'),
+            builder: (context, child) => MediaQuery(
+                data: MediaQuery.of(context)
+                    .copyWith(textScaler: TextScaler.linear(scale)),
+                child: child!),
+            home: WebsiteRankingsScreen(
+                url: home.resolve('/rankings/'),
+                loadTable: (_) async => table)));
+        await tester.pumpAndSettle();
+        expect(tester.takeException(), isNull);
+        await tester.tap(find.text('詳細成績'));
+        await tester.pumpAndSettle();
+        expect(tester.takeException(), isNull);
+        await tester.scrollUntilVisible(find.text('レッドハリケーンズ大阪'), 500,
+            scrollable: find.byType(Scrollable).first);
+        expect(find.text('レッドハリケーンズ大阪').hitTestable(), findsOneWidget);
+        expect(tester.takeException(), isNull);
+      }
+    }
   });
 }
 

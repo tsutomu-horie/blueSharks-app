@@ -1,7 +1,9 @@
 import 'package:koto_blue_sharks/presentation/home/widgets/renewal_home_design.dart';
 import 'package:flutter/material.dart';
 import 'package:koto_blue_sharks/app/data/models/home/website_standings.dart';
-import 'package:koto_blue_sharks/app/providers/home/website_video_provider.dart';
+import 'package:koto_blue_sharks/presentation/home/website_rankings.screen.dart';
+
+export 'package:koto_blue_sharks/presentation/home/website_rankings.screen.dart';
 
 class WebsiteStandingsSection extends StatelessWidget {
   const WebsiteStandingsSection(
@@ -84,96 +86,4 @@ class WebsiteStandingsSection extends StatelessWidget {
                                       overflow: TextOverflow.ellipsis)))))),
         ]));
   }
-}
-
-class WebsiteRankingsScreen extends StatefulWidget {
-  const WebsiteRankingsScreen(
-      {super.key, required this.url, this.expectedSeasonTitle, this.loadTable});
-  final Uri url;
-  final String? expectedSeasonTitle;
-  final Future<WebsiteRankingsTable> Function(Uri)? loadTable;
-  @override
-  State<WebsiteRankingsScreen> createState() => _WebsiteRankingsScreenState();
-}
-
-class _WebsiteRankingsScreenState extends State<WebsiteRankingsScreen> {
-  WebsiteVideoProvider? _provider;
-  late Future<WebsiteRankingsTable> _table;
-  @override
-  void initState() {
-    super.initState();
-    if (widget.loadTable == null) _provider = WebsiteVideoProvider();
-    _table = _load();
-  }
-
-  Future<WebsiteRankingsTable> _load() async {
-    final table =
-        await (widget.loadTable ?? _provider!.fetchRankings)(widget.url);
-    final expected =
-        WebsiteStandings.seasonKey(widget.expectedSeasonTitle ?? '');
-    if (expected != null &&
-        WebsiteStandings.seasonKey(table.title) != expected) {
-      throw const FormatException('TOP and rankings seasons differ.');
-    }
-    return table;
-  }
-
-  void _reload() {
-    final next = _load();
-    setState(() {
-      _table = next;
-    });
-  }
-
-  @override
-  void dispose() {
-    _provider?.httpClient.close();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) => Scaffold(
-      appBar: AppBar(title: const Text('順位表'), actions: [
-        IconButton(
-            tooltip: '更新', onPressed: _reload, icon: const Icon(Icons.refresh))
-      ]),
-      body: FutureBuilder<WebsiteRankingsTable>(
-          future: _table,
-          builder: (context, snapshot) {
-            if (snapshot.connectionState != ConnectionState.done) {
-              return const Center(child: CircularProgressIndicator());
-            }
-            final data = snapshot.data;
-            if (snapshot.hasError || data == null) {
-              return Center(
-                  child: Column(mainAxisSize: MainAxisSize.min, children: [
-                const Text('順位表を取得できませんでした。'),
-                TextButton(onPressed: _reload, child: const Text('再試行'))
-              ]));
-            }
-            return SingleChildScrollView(
-                child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                  Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Text(data.title,
-                          style: const TextStyle(fontSize: 18))),
-                  SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: DataTable(
-                          headingRowHeight: 64,
-                          dataRowMinHeight: 56,
-                          dataRowMaxHeight: 96,
-                          columns: data.headers
-                              .map((text) => DataColumn(label: Text(text)))
-                              .toList(),
-                          rows: data.rows
-                              .map((row) => DataRow(
-                                  cells: row
-                                      .map((text) => DataCell(Text(text)))
-                                      .toList()))
-                              .toList()))
-                ]));
-          }));
 }

@@ -341,7 +341,8 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('website-rank-link')));
     await tester.pumpAndSettle();
     expect(requested, rank.rankingsUrl);
-    expect(find.byType(DataTable), findsOneWidget);
+    expect(
+        find.byKey(const ValueKey('website-ranking-team-0')), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 }
