@@ -52,7 +52,8 @@ class WebsiteVideoProvider extends GetConnect {
     if (!WebsiteStandings.isRankingsUrl(url, homepage)) {
       throw const WebsiteVideoRequestException();
     }
-    final table = WebsiteRankingsTable.parse(await _fetchHtml(url));
+    final table =
+        WebsiteRankingsTable.parse(await _fetchHtml(url), pageUrl: url);
     if (table == null) throw const WebsiteVideoRequestException();
     return table;
   }
