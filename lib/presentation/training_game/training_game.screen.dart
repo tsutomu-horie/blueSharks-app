@@ -17,6 +17,7 @@ import 'sametaroh_asset.dart';
 import 'training_home_background.dart';
 import 'training_home_roaming_character.dart';
 import 'training_sync_indicator.dart';
+import 'training_debug_menu.dart';
 
 /// 参照HTMLのスマートフォン画面部分だけをアプリ用に再現します。
 class TrainingGameScreen extends GetView<TrainingGameController> {
@@ -1142,187 +1143,12 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
-      builder: (sheetContext) => SafeArea(
-        child: ConstrainedBox(
-          constraints: BoxConstraints(
-            maxHeight: MediaQuery.of(sheetContext).size.height * .85,
-          ),
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Padding(
-                  padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 4.h),
-                  child: Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      '現在：${controller.day.value}日目　／　${controller.currentStage.name} ${controller.daysInStage.value}/${controller.currentStage.days ?? '-'}日',
-                      style: TextStyle(
-                          fontSize: 13.sp, fontWeight: FontWeight.w700),
-                    ),
-                  ),
-                ),
-                if (controller.stageIndex.value < 2) ...[
-                  ListTile(
-                    leading: const Icon(Icons.pause),
-                    title: const Text('⏸ 停止'),
-                    onTap: () {
-                      controller.setTimeSpeed(0);
-                      Navigator.pop(context);
-                    },
-                  ),
-                  ListTile(
-                    leading: const Icon(Icons.play_arrow),
-                    title: const Text('▶ ×1'),
-                    onTap: () {
-                      controller.setTimeSpeed(1);
-                      Navigator.pop(context);
-                    },
-                  ),
-                  ListTile(
-                    leading: const Icon(Icons.fast_forward),
-                    title: const Text('×4'),
-                    onTap: () {
-                      controller.setTimeSpeed(4);
-                      Navigator.pop(context);
-                    },
-                  ),
-                  ListTile(
-                    leading: const Icon(Icons.double_arrow),
-                    title: const Text('×16'),
-                    onTap: () {
-                      controller.setTimeSpeed(16);
-                      Navigator.pop(context);
-                    },
-                  ),
-                ] else ...[
-                  ListTile(
-                    leading: const Icon(Icons.pause),
-                    title: const Text('⏸ 停止'),
-                    onTap: () {
-                      controller.setTimeSpeed(0);
-                      Navigator.pop(context);
-                    },
-                  ),
-                  ListTile(
-                    leading: const Icon(Icons.play_arrow),
-                    title: const Text('▶ ×1'),
-                    onTap: () {
-                      controller.setTimeSpeed(1);
-                      Navigator.pop(context);
-                    },
-                  ),
-                  ListTile(
-                    leading: const Icon(Icons.fast_forward),
-                    title: const Text('×4'),
-                    onTap: () {
-                      controller.setTimeSpeed(4);
-                      Navigator.pop(context);
-                    },
-                  ),
-                  ListTile(
-                    leading: const Icon(Icons.double_arrow),
-                    title: const Text('×16'),
-                    onTap: () {
-                      controller.setTimeSpeed(16);
-                      Navigator.pop(context);
-                    },
-                  ),
-                  ListTile(
-                    leading: const Icon(Icons.edit_calendar),
-                    title: const Text('経過時間を指定'),
-                    onTap: () {
-                      Navigator.pop(context);
-                      unawaited(_showAdvanceTimeDialog(context));
-                    },
-                  ),
-                  ListTile(
-                    leading: const Icon(Icons.schedule),
-                    title: const Text('＋1時間'),
-                    onTap: () {
-                      Navigator.pop(context);
-                      controller.advanceTime(1);
-                    },
-                  ),
-                  ListTile(
-                    leading: const Icon(Icons.calendar_today),
-                    title: const Text('＋6時間'),
-                    onTap: () {
-                      Navigator.pop(context);
-                      controller.advanceTime(6);
-                    },
-                  ),
-                  ListTile(
-                    leading: const Icon(Icons.nights_stay),
-                    title: const Text('＋1日'),
-                    onTap: () {
-                      Navigator.pop(context);
-                      controller.advanceTime(24);
-                    },
-                  ),
-                ],
-                // デバッグ時だけ、行動ごとのクールタイム適用状態を切り替えます。
-                Obx(
-                  () => Column(
-                    children: [
-                      const ListTile(
-                        leading: Icon(Icons.timer),
-                        title: Text('行動別クールタイム'),
-                        subtitle: Text('開発環境では端末・サーバーのクールタイムを解除できます。'),
-                      ),
-                      ...TrainingGameController.actions.map(
-                        (action) => SwitchListTile(
-                          dense: true,
-                          title: Text(action.label),
-                          subtitle: Text(
-                            TrainingGameController.isCooldownAction(action.type)
-                                ? '${TrainingGameController.careCooldown.inSeconds}秒'
-                                : '通常は無効（デバッグで変更可能）',
-                          ),
-                          value: controller.isCooldownEnabled(action.type),
-                          onChanged: (enabled) => controller.setCooldownEnabled(
-                            action.type,
-                            enabled,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                ListTile(
-                  leading: const Icon(Icons.refresh),
-                  title: const Text('🥚 段階1（卵）から開始'),
-                  onTap: () {
-                    Navigator.pop(context);
-                    _openDebugEgg();
-                  },
-                ),
-                ListTile(
-                  leading: const Icon(Icons.delete_forever),
-                  title: const Text('初回プレイ状態へ初期化'),
-                  subtitle: const Text('サーバー・端末の履歴を削除して、初期パラメータで開始します'),
-                  onTap: () {
-                    Navigator.pop(context);
-                    unawaited(_resetDebugGame(context));
-                  },
-                ),
-                ListTile(
-                  leading: const Icon(Icons.skip_next),
-                  title: const Text('段階3（育成期）から開始'),
-                  onTap: () {
-                    Navigator.pop(context);
-                    controller.debugStartAtTraining();
-                  },
-                ),
-                ListTile(
-                  leading: const Icon(Icons.close),
-                  title: const Text('閉じる'),
-                  onTap: () => Navigator.pop(context),
-                ),
-              ],
-            ),
-          ),
-        ),
+      builder: (_) => TrainingDebugMenu(
+        controller: controller,
+        onAdvanceTime: () => unawaited(_showAdvanceTimeDialog(context)),
+        onStartEgg: _openDebugEgg,
+        onReset: () => unawaited(_resetDebugGame(context)),
+        onStartTraining: () => unawaited(controller.debugStartAtTraining()),
       ),
     );
   }
@@ -1330,6 +1156,7 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
   /// デバッグ対象を初期パラメータで再作成し、現在の育成画面へ反映します。
   Future<void> _resetDebugGame(BuildContext context) async {
     final initialState = await controller.resetDebugGame();
+    if (!context.mounted) return;
     if (initialState == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('初期化に失敗しました。通信状態を確認してください。')),
