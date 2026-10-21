@@ -1,9 +1,7 @@
-import 'package:flutter/cupertino.dart';
 import 'package:get/get.dart';
 import 'package:koto_blue_sharks/app/data/models/match/match_result.dart';
 import 'package:koto_blue_sharks/app/data/models/member/member.dart';
 import 'package:koto_blue_sharks/utils/constant.dart';
-import 'package:koto_blue_sharks/utils/app_environment.dart';
 import 'package:koto_blue_sharks/app/providers/website/renewal_website_provider.dart';
 
 class MemberProvider extends GetConnect {
@@ -16,67 +14,12 @@ class MemberProvider extends GetConnect {
     httpClient.baseUrl = Constants.baseUrl;
   }
 
-  Future<List<Category>> fetchSinglePage({int page = 1}) async {
-    if (!AppEnvironment.usesProductionServices) {
-      return renewal.memberCategories(page: page);
-    }
-    final url = Uri.parse('categories?parent=2&page=$page&per_page=100');
-    print("Fetching data from ${httpClient.baseUrl}${url.toString()}");
+  Future<List<Category>> fetchSinglePage({int page = 1}) =>
+      renewal.memberCategories(page: page);
 
-    final response = await get(url.toString());
-    if (response.hasError) {
-      throw Exception('Failed to load data. Error: ${response.statusText}');
-    }
+  Future<List<Category>> getCategories({int page = 1}) =>
+      renewal.memberCategories(page: page);
 
-    // Parse the response body
-    final List data = response.body;
-    print("Data fetched for page $page: $data");
-
-    return data.map((e) => Category.fromJson(e)).toList();
-  }
-
-  // Fetch categories
-  Future<List<Category>> getCategories({int page = 1}) async {
-    if (!AppEnvironment.usesProductionServices) {
-      return renewal.memberCategories(page: page);
-    }
-    httpClient.baseUrl = Constants.baseUrl;
-    print("getaaa \n ${httpClient.baseUrl}categories?parent=2&page=$page");
-
-    final response = await get('categories?parent=2&page=$page&per_page=100');
-
-    if (response.hasError)
-      throw RenewalWebsiteRequestException(response.statusCode);
-    if (response.body is! List)
-      throw const FormatException('Expected member categories.');
-
-    return (response.body as List).map((categoryJson) {
-      return Category.fromJson(categoryJson);
-    }).toList();
-  }
-
-  // Fetch players by category
-  Future<List<Member>> getPlayersByCategory(int categoryId,
-      {int page = 1}) async {
-    if (!AppEnvironment.usesProductionServices) {
-      return renewal.members(categoryId, page: page);
-    }
-    httpClient.baseUrl = Constants.baseUrl;
-    final response = await get(
-        'posts?categories=$categoryId&page=$page&per_page=100&order=asc&orderby=modified');
-    debugPrint(
-        "${baseUrl}posts?categories=$categoryId&page=$page&per_page=100&order=asc&orderby=modified");
-    if (page > 1 &&
-        response.statusCode == 400 &&
-        response.body is Map &&
-        response.body['code'] == 'rest_post_invalid_page') return [];
-    if (response.hasError)
-      throw RenewalWebsiteRequestException(response.statusCode);
-    if (response.body is! List)
-      throw const FormatException('Expected member posts.');
-
-    return (response.body as List).map((playerJson) {
-      return Member.fromJson(playerJson);
-    }).toList();
-  }
+  Future<List<Member>> getPlayersByCategory(int categoryId, {int page = 1}) =>
+      renewal.members(categoryId, page: page);
 }

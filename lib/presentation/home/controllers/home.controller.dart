@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
@@ -10,7 +9,6 @@ import 'package:koto_blue_sharks/app/data/models/home/website_player.dart';
 import 'package:koto_blue_sharks/app/data/models/home/website_goods.dart';
 import 'package:koto_blue_sharks/app/data/models/home/website_standings.dart';
 import 'package:koto_blue_sharks/app/providers/home/website_video_provider.dart';
-import 'package:koto_blue_sharks/utils/app_environment.dart';
 import 'package:koto_blue_sharks/app/data/models/match/match_result.dart';
 import 'package:koto_blue_sharks/app/data/models/media/media.dart';
 import 'package:koto_blue_sharks/app/providers/info/info_provider.dart';
@@ -20,7 +18,9 @@ import 'package:koto_blue_sharks/utils/my_shared_pref.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class HomeController extends GetxController {
-  HomeController({WebsiteVideoProvider? websiteVideoProvider, DateTime Function()? websiteClock})
+  HomeController(
+      {WebsiteVideoProvider? websiteVideoProvider,
+      DateTime Function()? websiteClock})
       : websiteVideoProvider = websiteVideoProvider ?? WebsiteVideoProvider(),
         websiteClock = websiteClock ?? DateTime.now;
 
@@ -39,10 +39,7 @@ class HomeController extends GetxController {
   bool _websiteContentLoading = false;
 
   Future<void> fetchWebsiteContent({bool force = false}) async {
-    // The renewed website is currently a Debug/OTA verification source.
-    if (AppEnvironment.usesProductionServices ||
-        _websiteContentLoading ||
-        (_websiteContentRequested && !force)) {
+    if (_websiteContentLoading || (_websiteContentRequested && !force)) {
       return;
     }
     _websiteContentRequested = true;
@@ -66,8 +63,9 @@ class HomeController extends GetxController {
 
   /// Screen orchestration keeps the existing four-section fetch independent.
   Future<void> fetchWebsiteNextMatches({bool force = false}) async {
-    if (AppEnvironment.usesProductionServices || isClosed ||
-        _websiteNextMatchesLoading || _websiteContentLoading ||
+    if (isClosed ||
+        _websiteNextMatchesLoading ||
+        _websiteContentLoading ||
         (_websiteNextMatchesRequested && !force)) {
       return;
     }
@@ -110,7 +108,6 @@ class HomeController extends GetxController {
   final selectedWallpaperName = "".obs;
   final isLoading = false.obs;
 
-
   @override
   void onInit() async {
     super.onInit();
@@ -120,26 +117,18 @@ class HomeController extends GetxController {
   }
 
   void screenInit({bool refreshWebsiteContent = false}) {
-    if (AppEnvironment.usesProductionServices) {
-      fetchMatchResult();
-    } else {
-      fetchWebsiteNextMatches(force: refreshWebsiteContent);
-    }
+    fetchWebsiteNextMatches(force: refreshWebsiteContent);
     getTopics();
-    if (AppEnvironment.usesProductionServices) {
-      getBanner();
-    }
 
     // isLoading.value = false;
   }
 
-
   void setBannerData(List<CustomBanner> data) {
     bannerData = data.reversed.toList();
     // Use update instead of .value assignment
-    update(['banner_slider']);  // Update only the banner slider
+    update(['banner_slider']); // Update only the banner slider
   }
-  
+
   void getBanner() async {
     final response = await mediaProvider.fetchBanner();
 
@@ -149,8 +138,6 @@ class HomeController extends GetxController {
 
   void getWallpaper() async {
     mediaProvider.onInit();
-
-
 
     final wallpaperLink = MySharedPref.getWallpaper();
     final wallpaperName = MySharedPref.getWallpaperName();
@@ -176,12 +163,14 @@ class HomeController extends GetxController {
     debugPrint("get season is $data");
     if (data != null) {
       final List<MatchResultBySeason> latestMatches =
-      await getLatestPosts(data['id'], data['count']);
+          await getLatestPosts(data['id'], data['count']);
 
       // Sort latestMatches by custom_field.gameDate
       latestMatches.sort((a, b) {
-        DateTime? dateA = parseGameDateTime(a.custom_field.gameDate?.first ?? "");
-        DateTime? dateB = parseGameDateTime(b.custom_field.gameDate?.first ?? "");
+        DateTime? dateA =
+            parseGameDateTime(a.custom_field.gameDate?.first ?? "");
+        DateTime? dateB =
+            parseGameDateTime(b.custom_field.gameDate?.first ?? "");
 
         // Handle null cases
         if (dateA == null && dateB == null) return 0; // Both are null
@@ -232,7 +221,7 @@ class HomeController extends GetxController {
 
     // If not found, try previous season
     if (result == null) {
-      String previousSeasonSlug = 'season_${currentYear-1}_${currentYear}';
+      String previousSeasonSlug = 'season_${currentYear - 1}_${currentYear}';
       result = await tryFindSeason(previousSeasonSlug);
     }
 
@@ -311,7 +300,8 @@ class HomeController extends GetxController {
 
       // Parse the date and set time to midnight (00:00)
       DateTime date = DateFormat('yyyy-MM-dd').parse(formattedDate);
-      return DateTime(date.year, date.month, date.day, 0, 0); // Set time to 00:00
+      return DateTime(
+          date.year, date.month, date.day, 0, 0); // Set time to 00:00
     } catch (e) {
       debugPrint("Error parsing game date: $e");
       return null;
@@ -338,7 +328,7 @@ class HomeController extends GetxController {
     if (match != null && match.namedGroup('src') != null) {
       return match.namedGroup('src')!;
     } else {
-      return "https://blue-sharks.jp/wp-content/themes/blue-sharks/images/common/noimage.webp";
+      return '';
     }
 
     // If no match is found, fallback to fetching via mediaProvider
@@ -348,12 +338,10 @@ class HomeController extends GetxController {
   }
 
   Future<String> getFeaturedImage(String mediaId) async {
-
     final imageData = await mediaProvider.fetchMedia(mediaId);
     print("GET NEWS IMAGE ${imageData}");
     final image = imageData.media_details.sizes.thumbnail.source_url;
     print("GET NEWS IMAGE ${mediaId}, ${image}");
     return image ?? "";
   }
-
 }

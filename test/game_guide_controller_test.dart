@@ -59,6 +59,38 @@ void main() {
     await MySharedPref.init();
   });
 
+  test('旧サイトの保存記事を更新待ち・通信失敗中も表示せず、保存ON設定は維持する', () async {
+    final legacy = GameGuidePost(
+      id: 999,
+      title: '旧サイトの記事',
+      publishedAt: null,
+      detailUrl: 'https://blue-sharks.jp/game-guide/999/',
+    );
+    SharedPreferences.setMockInitialValues({
+      'saveGameGuideArticles': true,
+      'gameGuideArticlesCache': jsonEncode([legacy.toJson()]),
+      'gameGuideArticlesCachedAt': DateTime(2026, 10, 20).toIso8601String(),
+    });
+    await MySharedPref.init();
+    expect(MySharedPref.getSaveGameGuideArticles(), isTrue);
+    expect(MySharedPref.getGameGuideArticlesCache(), isNull);
+    expect(MySharedPref.getGameGuideArticlesCachedAt(), isNull);
+    final pending = Completer<List<GameGuidePost>>();
+    final provider = _FakeGameGuideProvider([])
+      ..handler = (_) => pending.future;
+    final controller = _controller(provider);
+    final load = controller.loadInitial();
+    expect(controller.guides, isEmpty);
+    expect(controller.visibleGuides, isEmpty);
+    provider.shouldFail = true;
+    pending.completeError(const GameGuideRequestException());
+    await load;
+    expect(controller.guides, isEmpty);
+    expect(controller.visibleGuides, isEmpty);
+    expect(controller.syncState.value, GameGuideSyncState.failed);
+    expect(MySharedPref.getSaveGameGuideArticles(), isTrue);
+  });
+
   test('WordPress記事の同期成功と復帰時失敗を状態へ反映する', () async {
     final provider = _FakeGameGuideProvider([
       GameGuidePost(

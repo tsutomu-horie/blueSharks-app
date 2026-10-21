@@ -48,15 +48,15 @@ void main() {
   final expected = production
       ? <String, String>{
           'auth': 'https://app.blue-sharks.jp/api/mobile/v1/',
-          'wordpress': 'https://blue-sharks.jp/wp-json/wp/v2/',
+          'wordpress': 'https://blue-sharks.donati.jp/wp-json/wp/v2/',
           'web': 'https://app.blue-sharks.jp/api/',
           'topic': 'news_prod',
           'remoteConfig': 'production',
-          'tickets': 'https://blue-sharks.jp/tickets/',
-          'fanClub': 'https://blue-sharks.jp/fanclub/',
-          'partner': 'https://blue-sharks.jp/partner/',
-          'team': 'https://blue-sharks.jp/team/',
-          'wordpressAdmin': 'https://blue-sharks.jp/wp-admin/',
+          'tickets': 'https://blue-sharks.donati.jp/tickets/',
+          'fanClub': 'https://blue-sharks.donati.jp/fanclub/',
+          'partner': 'https://blue-sharks.donati.jp/partner/',
+          'team': 'https://blue-sharks.donati.jp/team/',
+          'wordpressAdmin': 'https://blue-sharks.donati.jp/wp-admin/',
         }
       : <String, String>{
           'auth': AppEnvironment.usesLocalServices
