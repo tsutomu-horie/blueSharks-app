@@ -34,7 +34,7 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
   static const _collisionBlendDuration = Duration(milliseconds: 220);
   static const _catchSettleDuration = Duration(milliseconds: 80);
   static const _displayScale = .75;
-  static const _turnDuration = Duration(milliseconds: 480);
+  static const _turnDuration = PassRunMotion.turnDuration;
   static const _passReturnDelay = Duration(milliseconds: 120);
 
   _PassGamePhase _phase = _PassGamePhase.waiting;
@@ -447,28 +447,21 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
           ? PassRunRunner.player
           : PassRunRunner.companion;
 
-  PassRunFacing _laneTurnFacing(PassRunRunner runner) =>
-      PassRunMotion.facingForVelocity(
-        PassRunMotion.yAt(0, runner) - PassRunMotion.yAt(15, runner),
-        previous: PassRunFacing.front,
-      );
-
   ({PassRunFacing from, PassRunFacing to, double progress}) _facingAt(
       PassRunCharacter kind, double seconds) {
-    final runner = _runner(kind);
-    if (_turnProgress < 1) {
-      final facing = _laneTurnFacing(runner);
-      return (from: facing, to: facing, progress: 1);
+    if (!_isOutbound && _turnProgress < 1) {
+      final elapsed =
+          (_turnProgress * _turnDuration.inMicroseconds).round() / 1000000;
+      if (elapsed < PassRunMotion.facingSettleSeconds) {
+        return (
+          from: PassRunFacing.back,
+          to: PassRunFacing.front,
+          progress: (elapsed / PassRunMotion.facingSettleSeconds).clamp(0, 1)
+        );
+      }
     }
-    if (!_isOutbound && seconds < PassRunMotion.facingSettleSeconds) {
-      return (
-        from: _laneTurnFacing(runner),
-        to: PassRunMotion.facingAt(0, runner).to,
-        progress:
-            (seconds / PassRunMotion.facingSettleSeconds).clamp(0, 1).toDouble()
-      );
-    }
-    return PassRunMotion.facingAt(seconds, runner);
+    return PassRunMotion.facingAt(seconds, _runner(kind),
+        outbound: _isOutbound);
   }
 
   PassRunFacing _spriteFacing(PassRunCharacter kind) {
@@ -483,15 +476,13 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
 
   Offset _actorOffsetAt(double seconds, {required bool player}) {
     final runner = player ? PassRunRunner.player : PassRunRunner.companion;
-    final y = PassRunMotion.yAt(seconds, runner);
+    if (_turnProgress < 1) {
+      return PassRunMotion.turnOffset(_turnProgress, runner,
+          field: _fieldSize, actorSize: _characterSize);
+    }
+    final y = PassRunMotion.yAt(seconds, runner, outbound: _isOutbound);
     final lane = player == _isOutbound ? .25 : .75;
-    final target = Offset(_fieldSize.width * lane, _fieldSize.height * y);
-    final progress = _turnProgress;
-    if (progress >= 1) return target;
-    final oldY = PassRunMotion.yAt(15, runner);
-    final origin =
-        Offset(_fieldSize.width * (1 - lane), _fieldSize.height * oldY);
-    return Offset.lerp(origin, target, Curves.easeInOut.transform(progress))!;
+    return Offset(_fieldSize.width * lane, _fieldSize.height * y);
   }
 
   Offset _playerOffsetAt(double seconds) =>
@@ -511,7 +502,21 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
         math.min(_fieldSize.height * .4, _fieldSize.width * .5),
       );
 
-  int _frameAt(double seconds) => (seconds * 1000 ~/ 240) % 2;
+  double get _floorOffset =>
+      PassRunMotion.forwardRate *
+      _fieldSize.height *
+      (_isOutbound ? _motionSeconds : 15 - _motionSeconds);
+
+  // Display gait continues through the turn; authoritative play/collision time does not.
+  int _frameAt(double seconds) =>
+      ((seconds +
+              (_isOutbound
+                  ? 0
+                  : 15 +
+                      _turnProgress * _turnDuration.inMicroseconds / 1000000)) *
+          1000 ~/
+          120) %
+      2;
 
   PassRunBallGeometry _geometryAt(PassRunCharacter kind, double seconds) {
     final facing = _facingAt(kind, seconds);
@@ -620,7 +625,7 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
   // Keep the validated pre-art-update collision envelope. Re-measuring the
   // new art must not silently enlarge/shrink the successful receiving window.
   double _collisionRadiusAt(PassRunCharacter kind, double seconds) {
-    final even = _frameAt(seconds).isEven;
+    final even = (seconds * 1000 ~/ 240).isEven;
     final diameter = kind == PassRunCharacter.normal
         ? (even ? 27.549925049569 : 27.600348580376)
         : (even ? 30.956565121244 : 31.061003284964);
@@ -954,13 +959,13 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
                   left: constraints.maxWidth * .25 - 2,
                   top: 16,
                   bottom: 16,
-                  child: const _LaneLine(),
+                  child: _LaneLine(offset: _floorOffset),
                 ),
                 Positioned(
                   left: constraints.maxWidth * .75 - 2,
                   top: 16,
                   bottom: 16,
-                  child: const _LaneLine(),
+                  child: _LaneLine(offset: _floorOffset),
                 ),
                 if (_phase == _PassGamePhase.playing &&
                     !_isPaused &&
@@ -1231,30 +1236,34 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
 
 /// 縦方向の移動レーンを破線で描画します。
 class _LaneLine extends StatelessWidget {
-  const _LaneLine();
+  const _LaneLine({required this.offset});
+  final double offset;
 
   @override
   Widget build(BuildContext context) {
     return SizedBox(
       width: 4,
-      child: CustomPaint(painter: _DashedLinePainter()),
+      child: CustomPaint(painter: _DashedLinePainter(offset)),
     );
   }
 }
 
 class _DashedLinePainter extends CustomPainter {
+  const _DashedLinePainter(this.offset);
+  final double offset;
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
       ..color = Colors.white70
       ..strokeWidth = 3;
-    for (var y = 0.0; y < size.height; y += 18) {
+    for (var y = offset % 20 - 20; y < size.height; y += 20) {
       canvas.drawLine(Offset(2, y), Offset(2, y + 10), paint);
     }
   }
 
   @override
-  bool shouldRepaint(covariant _DashedLinePainter oldDelegate) => false;
+  bool shouldRepaint(covariant _DashedLinePainter oldDelegate) =>
+      offset != oldDelegate.offset;
 }
 
 /// フリックの開始位置と現在の入力方向を、操作中だけ重ねて表示します。

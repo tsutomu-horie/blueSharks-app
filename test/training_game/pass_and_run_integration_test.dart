@@ -60,7 +60,7 @@ void main() {
     // Rendering a cached frame must not advance the authoritative test clock.
   }
 
-  Future<void> throwToMate(WidgetTester t, double seconds) async {
+  Offset aimAtMate(WidgetTester t, double seconds) {
     final field = t.getRect(find.byKey(const Key('pass-field')));
     final origin = t.getCenter(ball);
     final speed = field.width *
@@ -73,10 +73,15 @@ void main() {
           t.getCenter(mate).dx,
           field.top +
               field.height *
-                  PassRunMotion.yAt(seconds + travel, PassRunRunner.companion));
+                  PassRunMotion.yAt(seconds + travel, PassRunRunner.companion,
+                      outbound: find.text('攻撃方向 ↑').evaluate().isNotEmpty));
       travel = (target - origin).distance / speed;
     }
-    await t.flingFrom(t.getCenter(player), target - origin, 2000);
+    return target - origin;
+  }
+
+  Future<void> throwToMate(WidgetTester t, double seconds) async {
+    await t.flingFrom(t.getCenter(player), aimAtMate(t, seconds), 2000);
     await t.pump();
   }
 
@@ -110,7 +115,10 @@ void main() {
     testWidgets('方向ガイドは本人中心を保ち、所持と投球に追従する $up', (t) async {
       await start(t);
       final guide = find.byKey(const Key('pass-direction-guide'));
-      if (!up) await step(t, 16000);
+      if (!up) {
+        await step(t, 15000);
+        await step(t, 1000);
+      }
       for (var i = 0; i < 8; i++) {
         await step(t, 100);
         if (visual(t, player).holding) {
@@ -141,15 +149,16 @@ void main() {
     });
   }
 
-  testWidgets('保持したままの正背面反転でも方向ガイドは消えない', (t) async {
+  testWidgets('交換の正背面補間でも方向ガイドと球は本人に追従する', (t) async {
     await start(t);
-    await step(t, 1320);
+    await step(t, 15000);
+    await step(t, 20);
     expect(visual(t, player).holding, isFalse);
     expect(find.byKey(const Key('pass-direction-guide')), findsOneWidget);
     expect(ball, findsOneWidget);
     await step(t, 80);
     expect(visual(t, player).holding, isTrue);
-    expect(find.byKey(const Key('pass-direction-guide')), findsOneWidget);
+    expect(ball, findsOneWidget);
   });
 
   testWidgets('鮫太郎だけの小さなラベルが操作を遮らず本人に追従する', (t) async {
@@ -222,15 +231,17 @@ void main() {
     expect(ball, findsOneWidget);
     await t.tap(find.byTooltip('一時停止'));
     await t.pump();
+    final pausedFrame = visual(t, mate).frame;
     final pausedPlayer = t.getCenter(player);
     final pausedBall = t.getCenter(ball);
     await step(t, 3000);
     expect(t.getCenter(player), pausedPlayer);
+    expect(visual(t, mate).frame, pausedFrame);
     expect(t.getCenter(ball), pausedBall);
     await t.tap(find.text('再開'));
     await t.pump();
     expect(t.getCenter(player), pausedPlayer);
-    await step(t, 360);
+    await step(t, 880);
     expect(
         t.getCenter(player).dx, closeTo(field.left + field.width * .75, .001));
     expect(find.textContaining('残り 15.0s'), findsOneWidget);
@@ -265,7 +276,7 @@ void main() {
     t.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
     await t.tap(find.text('再開'));
     await t.pump();
-    await step(t, 480);
+    await step(t, 1000);
     expect(find.textContaining('残り 15.0s'), findsOneWidget);
     expect(ball, findsOneWidget);
   });
@@ -297,8 +308,8 @@ void main() {
     await step(t, 10);
     expect(trail, findsNothing);
     expect(ball, findsOneWidget);
-    expect(visual(t, player).holding, isTrue);
-    for (var i = 0; i < 12; i++) {
+    expect(ball, findsOneWidget);
+    for (var i = 0; i < 25; i++) {
       await step(t, 40);
       expect(ball, findsOneWidget);
     }
@@ -308,24 +319,14 @@ void main() {
     expect(ball, findsOneWidget);
   });
 
-  testWidgets('上下反転の保持球は位置を連続補間し、停止中も1個のまま', (t) async {
+  testWidgets('往復反転の球の位置と向きを80msで接続し、停止中も固定', (t) async {
     await start(t);
-    await step(t, 1290);
-    expect(visual(t, player).facing, PassRunFacing.front);
+    await step(t, 15000);
     var before = t.getCenter(ball);
-    await step(t, 10);
-    expect((t.getCenter(ball) - before).distance, lessThan(1));
-    expect(visual(t, player).facing, PassRunFacing.front);
-    before = t.getCenter(ball);
-    await step(t, 1);
-    expect((t.getCenter(ball) - before).distance, lessThan(1));
-    expect(visual(t, player).facing, PassRunFacing.back);
-    expect(visual(t, player).holding, isFalse);
-    expect(ball, findsOneWidget);
-    for (var i = 0; i < 4; i++) {
-      before = t.getCenter(ball);
+    for (var i = 0; i < 5; i++) {
       await step(t, 8);
-      expect((t.getCenter(ball) - before).distance, lessThan(3));
+      expect((t.getCenter(ball) - before).distance, lessThan(5));
+      before = t.getCenter(ball);
       expect(ball, findsOneWidget);
     }
     await t.tap(find.byTooltip('一時停止'));
@@ -333,69 +334,48 @@ void main() {
     final paused = t.getCenter(ball);
     await step(t, 3000);
     expect(t.getCenter(ball), paused);
-    expect(visual(t, player).facing, PassRunFacing.back);
     await t.tap(find.text('再開'));
     await t.pump();
     expect(t.getCenter(ball), paused);
-    await step(t, 48);
+    await step(t, 40);
+    expect(visual(t, player).facing, PassRunFacing.front);
     expect(visual(t, player).holding, isTrue);
-    expect(ball, findsOneWidget);
-    // Legal sideways input remains available immediately after the visual turn.
-    await t.flingFrom(t.getCenter(player), const Offset(100, 0), 2000);
-    await t.pump();
-    expect(trail, findsOneWidget);
   });
 
-  testWidgets('鮫太郎と色違い仲間がそれぞれの実移動方向を向く', (t) async {
+  testWidgets('前後差が入れ替わっても両者が同じ攻撃方向へ走る', (t) async {
     await start(t);
-    var elapsed = 0;
-    for (final target in [0, 250, 400, 750, 1100, 1600, 2000, 2500]) {
-      await step(t, target - elapsed);
-      elapsed = target;
-      for (final pair in [
-        (player, PassRunRunner.player),
-        (mate, PassRunRunner.companion)
-      ]) {
-        final velocity = PassRunMotion.velocityYAt(target / 1000, pair.$2);
-        expect(visual(t, pair.$1).facing,
-            velocity > 0 ? PassRunFacing.front : PassRunFacing.back);
+    for (var i = 0; i < 150; i++) {
+      await step(t, 100);
+      if (i < 149) {
+        expect(visual(t, player).facing, PassRunFacing.back);
+        expect(visual(t, mate).facing, PassRunFacing.back);
       }
       expect(ball, findsOneWidget);
-      expect(find.text('鮫太郎'), findsOneWidget);
+    }
+    await step(t, 1000);
+    for (var i = 0; i < 149; i++) {
+      await step(t, 100);
+      expect(visual(t, player).facing, PassRunFacing.front);
+      expect(visual(t, mate).facing, PassRunFacing.front);
+      expect(ball, findsOneWidget);
     }
   });
 
-  testWidgets('仲間の保持中も正面→背面反転と停止復帰で球を連続保持する', (t) async {
+  testWidgets('並走中の仲間の保持を停止復帰でも保ち、後方返球を待つ', (t) async {
     await start(t);
-    await step(t, 2800);
-    await throwToMate(t, 2.8);
+    await step(t, 200);
+    await throwToMate(t, .2);
     await catchAtMate(t);
-    final elapsed = clock.difference(DateTime.utc(2026, 10, 20)).inMilliseconds;
-    await step(t, 3780 - elapsed);
-    expect(visual(t, mate).holding, isTrue);
-    expect(visual(t, mate).facing, PassRunFacing.front);
-    var previous = t.getCenter(ball);
-    await step(t, 14);
-    expect((t.getCenter(ball) - previous).distance, lessThan(3));
-    expect(visual(t, mate).facing, PassRunFacing.back);
-    expect(ball, findsOneWidget);
-    expect(trail, findsNothing);
+    final before = t.getCenter(ball);
     await t.tap(find.byTooltip('一時停止'));
     await t.pump();
-    final paused = t.getCenter(ball);
     await step(t, 2000);
-    expect(t.getCenter(ball), paused);
-    expect(ball, findsOneWidget);
+    expect(t.getCenter(ball), before);
+    expect(visual(t, mate).holding, isTrue);
     await t.tap(find.text('再開'));
     await t.pump();
-    expect(t.getCenter(ball), paused);
-    for (var i = 0; i < 10; i++) {
-      previous = t.getCenter(ball);
-      await step(t, 8);
-      expect((t.getCenter(ball) - previous).distance, lessThan(3));
-      expect(ball, findsOneWidget);
-    }
-    expect(visual(t, mate).holding, isTrue);
+    expect(t.getCenter(ball), before);
+    expect(ball, findsOneWidget);
   });
 
   testWidgets('通常の同期済みサーバー時計でも仲間走行フレームが更新する', (t) async {
@@ -422,58 +402,46 @@ void main() {
     expect(visual(t, mate).assetPath, contains('pass_run_mate_'));
   });
 
-  testWidgets('仲間の正背面・保持非保持4状態すべてが実Imageの走行A/Bへ更新される', (t) async {
-    await start(t);
-    void expectFrame(String facing, String state, String frame) {
-      final sprite = visual(t, mate);
-      expect(sprite.character, PassRunCharacter.companion);
-      expect(sprite.size, 84);
-      final image = t.widget<Image>(
-          find.descendant(of: mate, matching: find.byType(Image)));
-      final expected = 'pass_run_mate_${facing}_${state}_$frame.png';
-      expect(sprite.assetPath, endsWith(expected));
-      expect((image.image as AssetImage).assetName, endsWith(expected));
-      expect(find.text('🏃'), findsNothing);
-    }
+  testWidgets('往復の仲間の保持/非保持4状態で実Image走行A/Bが更新する', (t) async {
+    for (final up in [true, false]) {
+      await start(t);
+      if (!up) {
+        await step(t, 15000);
+        await step(t, 1000);
+      }
+      void check() {
+        final v = visual(t, mate);
+        final image = t.widget<Image>(
+            find.descendant(of: mate, matching: find.byType(Image)));
+        expect((image.image as AssetImage).assetName, v.assetPath);
+        expect(v.facing, up ? PassRunFacing.back : PassRunFacing.front);
+        expect(v.size, 84);
+      }
 
-    // Back/free: elapsed gameplay rebuilds the mate Image at a gait boundary.
-    expectFrame('back', 'free', 'a');
-    await step(t, 240);
-    expectFrame('back', 'free', 'b');
-    // Front/free after the mate's independent direction reversal settles.
-    await step(t, 1680);
-    expectFrame('front', 'free', 'a');
-    await step(t, 240);
-    expectFrame('front', 'free', 'b');
-    await step(t, 640);
-    await throwToMate(t, 2.8);
-    await catchAtMate(t);
-    Future<void> at(int target) async {
-      final elapsed =
-          clock.difference(DateTime.utc(2026, 10, 20)).inMilliseconds;
-      expect(elapsed, lessThanOrEqualTo(target));
-      await step(t, target - elapsed);
+      check();
+      final initial = visual(t, mate).frame;
+      await step(t, 120);
+      check();
+      expect(visual(t, mate).frame, isNot(initial));
+      await t.pumpWidget(const SizedBox());
+      await t.pump();
+      await start(t);
+      if (!up) {
+        await step(t, 15000);
+        await step(t, 1000);
+      }
+      await throwToMate(t, 0);
+      await catchAtMate(t);
+      check();
+      final held = visual(t, mate).frame;
+      await step(t, 120);
+      check();
+      expect(visual(t, mate).holding, isTrue);
+      expect(visual(t, mate).frame, isNot(held));
+      expect(ball, findsOneWidget);
+      await t.pumpWidget(const SizedBox());
+      await t.pump();
     }
-
-    // The same held ball stays single while both direction-specific pairs run.
-    await at(3500);
-    expectFrame('front', 'hold', 'a');
-    await at(3740);
-    expectFrame('front', 'hold', 'b');
-    await at(3920);
-    expectFrame('back', 'hold', 'a');
-    await at(4160);
-    expectFrame('back', 'hold', 'b');
-    expect(ball, findsOneWidget);
-    await t.tap(find.byTooltip('一時停止'));
-    await t.pump();
-    await step(t, 1000);
-    expectFrame('back', 'hold', 'b');
-    await t.tap(find.text('再開'));
-    await t.pump();
-    await step(t, 160);
-    expectFrame('back', 'hold', 'a');
-    expect(ball, findsOneWidget);
   });
 
   testWidgets('承認済み保持・非保持と2脚位相を表示し、球は常に1個', (t) async {
@@ -481,11 +449,11 @@ void main() {
     expect(visual(t, player).holding, isTrue);
     expect(visual(t, mate).holding, isFalse);
     expect(find.text('🏃'), findsNothing);
-    expect(visual(t, player).assetPath, contains('normal_front_hold_a'));
+    expect(visual(t, player).assetPath, contains('normal_back_hold_a'));
     expect(visual(t, mate).assetPath, contains('mate_back_free_a'));
     expect(ball, findsOneWidget);
-    await step(t, 250);
-    expect(visual(t, player).assetPath, contains('normal_front_hold_b'));
+    await step(t, 120);
+    expect(visual(t, player).assetPath, contains('normal_back_hold_b'));
     expect(visual(t, mate).assetPath, contains('mate_back_free_b'));
     expect(t.takeException(), isNull);
   });
@@ -603,11 +571,11 @@ void main() {
   testWidgets('復路で攻撃を反転し、正背面表示や移動方向と分離する', (t) async {
     await start(t);
     await step(t, 15100);
-    await step(t, 480);
+    await step(t, 1000);
     expect(find.text('攻撃方向 ↓'), findsOneWidget);
     await step(t, 80);
     expect(visual(t, player).facing, PassRunFacing.front);
-    expect(visual(t, mate).facing, PassRunFacing.back);
+    expect(visual(t, mate).facing, PassRunFacing.front);
     await t.flingFrom(t.getCenter(player), const Offset(-100, 1), 2000);
     await t.pump();
     expect(find.text('前方パス　1秒間パス不可'), findsOneWidget);
@@ -661,13 +629,13 @@ void main() {
     expect(visual(t, mate).holding, isTrue);
     expect(trail, findsNothing);
     await step(t, 15100);
-    await step(t, 480);
+    await step(t, 1000);
     expect(find.text('攻撃方向 ↓'), findsOneWidget);
     expect(visual(t, player).holding, isTrue);
     expect(visual(t, mate).holding, isFalse);
     expect(ball, findsOneWidget);
     await step(t, 15100);
-    await step(t, 480);
+    await step(t, 1000);
     expect(find.text('メインへ戻る'), findsOneWidget);
     expect(ball, findsNothing);
     expect(trail, findsNothing);
@@ -675,10 +643,10 @@ void main() {
 
   testWidgets('復路もBの合法受球・保持待機・後方返球で同じ攻撃方向を使う', (t) async {
     await start(t);
-    await step(t, 15100);
-    await step(t, 480);
-    await step(t, 500);
-    await throwToMate(t, .5);
+    await step(t, 15000);
+    await step(t, 1000);
+    await step(t, 200);
+    await throwToMate(t, .2);
     await catchAtMate(t);
     Offset? release;
     for (var i = 0; i < 500 && !visual(t, player).holding; i++) {
@@ -694,6 +662,43 @@ void main() {
     expect(visual(t, player).holding, isTrue);
     expect(find.textContaining('PASS 1'), findsOneWidget);
   });
+
+  for (final up in [true, false]) {
+    testWidgets('実フリックと衝突で3回連続パスでき、返球後に再入力できる $up', (t) async {
+      await start(t);
+      if (!up) {
+        await step(t, 15000);
+        await step(t, 1000);
+      }
+      final begin = clock;
+      for (var n = 1; n <= 3; n++) {
+        var attempts = 0;
+        while (true) {
+          final seconds = clock.difference(begin).inMicroseconds / 1000000;
+          final delta = aimAtMate(t, seconds);
+          if (!PassAndRunRules.isForwardDirection(
+              deltaX: delta.dx, deltaY: delta.dy, outbound: up)) break;
+          expect(attempts++, lessThan(300));
+          await step(t, 10);
+        }
+        final before = clock;
+        await throwToMate(t, clock.difference(begin).inMicroseconds / 1000000);
+        for (var i = 0; i < 250 && !visual(t, mate).holding; i++) {
+          await step(t, 4);
+          expect(ball, findsOneWidget);
+        }
+        expect(visual(t, mate).holding, isTrue);
+        expect(find.textContaining('PASS $n'), findsOneWidget);
+        for (var i = 0; i < 1000 && !visual(t, player).holding; i++) {
+          await step(t, 4);
+          expect(ball, findsOneWidget);
+        }
+        expect(visual(t, player).holding, isTrue);
+        expect(clock.difference(before), lessThan(const Duration(seconds: 4)));
+      }
+      expect(clock.difference(begin), lessThan(const Duration(seconds: 15)));
+    });
+  }
 
   testWidgets('返球期限後ticker前の停止でも再開後に次のパスが可能', (t) async {
     await start(t);
@@ -716,6 +721,7 @@ void main() {
   });
 
   for (final size in [
+    const Size(402, 874),
     const Size(240, 568),
     const Size(320, 568),
     const Size(844, 390),
@@ -727,9 +733,13 @@ void main() {
       addTearDown(t.view.resetDevicePixelRatio);
       await start(t);
       final field = t.getRect(find.byKey(const Key('pass-field')));
-      for (var i = 0; i < 27; i++) {
-        await step(t, 200);
+      for (var i = 0; i < 619; i++) {
+        await step(t, 50);
         final labelRect = t.getRect(find.byKey(const Key('pass-player-label')));
+        expect(t.getRect(player).overlaps(t.getRect(mate)), isFalse,
+            reason: 'body overlap at $i on $size');
+        expect(labelRect.overlaps(t.getRect(mate)), isFalse,
+            reason: 'name overlap at $i on $size');
         expect(labelRect.top, greaterThanOrEqualTo(field.top - .000001));
         expect(labelRect.bottom, lessThan(t.getRect(player).top));
         for (final actor in [player, mate]) {

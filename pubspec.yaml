@@ -283,6 +283,7 @@ flutter:
     - "assets/images/training_game/scenes/rest_room_day.png"
     - "assets/images/training_game/scenes/rest_room_night.png"
     - "assets/images/training_game/scenes/work_office.png"
+    - "assets/images/training_game/selection/pass_run_ball.png"
     - "assets/images/ui_icons/calendar_icon_off.png"
     - "assets/images/ui_icons/calendar_icon_on.png"
     - "assets/images/ui_icons/fanclub_icon.png"
