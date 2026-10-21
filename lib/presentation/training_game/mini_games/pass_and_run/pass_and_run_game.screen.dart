@@ -8,6 +8,7 @@ import '../models/mini_game_result.dart';
 import 'pass_and_run_character_visual.dart';
 import '../../models/training_game_clock.dart';
 import 'pass_and_run_logic.dart';
+import 'pass_and_run_motion.dart';
 
 enum _PassGamePhase { waiting, playing, result }
 
@@ -55,6 +56,7 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
   Offset? _catchBallDisplacement;
   PassRunBallGeometry? _catchBallGeometry;
   PassRunBallGeometry? _releaseBallGeometry;
+  double? _releaseCollisionRadius;
   PassRunBallGeometry? _returnReleaseGeometry;
   Offset? _dragStart;
   Offset? _dragCurrent;
@@ -313,6 +315,8 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
     _passStartedAt = now;
     _passStartOffset = playerBall;
     _releaseBallGeometry = releaseGeometry;
+    _releaseCollisionRadius =
+        _collisionRadiusAt(PassRunCharacter.normal, _motionSeconds);
     _passTargetOffset = _flickExitOffset(start: start, current: current);
     _passReturnStartOffset = null;
     _passReturnTargetOffset = null;
@@ -381,17 +385,53 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
         .toDouble();
   }
 
-  bool get _playerFacingRight => _isOutbound || _turnProgress < .5;
+  PassRunRunner _runner(PassRunCharacter kind) =>
+      kind == PassRunCharacter.normal
+          ? PassRunRunner.player
+          : PassRunRunner.companion;
+
+  PassRunFacing _laneTurnFacing(PassRunRunner runner) =>
+      PassRunMotion.facingForVelocity(
+        PassRunMotion.yAt(0, runner) - PassRunMotion.yAt(15, runner),
+        previous: PassRunFacing.front,
+      );
+
+  ({PassRunFacing from, PassRunFacing to, double progress}) _facingAt(
+      PassRunCharacter kind, double seconds) {
+    final runner = _runner(kind);
+    if (_turnProgress < 1) {
+      final facing = _laneTurnFacing(runner);
+      return (from: facing, to: facing, progress: 1);
+    }
+    if (!_isOutbound && seconds < PassRunMotion.facingSettleSeconds) {
+      return (
+        from: _laneTurnFacing(runner),
+        to: PassRunMotion.facingAt(0, runner).to,
+        progress:
+            (seconds / PassRunMotion.facingSettleSeconds).clamp(0, 1).toDouble()
+      );
+    }
+    return PassRunMotion.facingAt(seconds, runner);
+  }
+
+  PassRunFacing _spriteFacing(PassRunCharacter kind) {
+    final transition = _facingAt(kind, _motionSeconds);
+    return transition.progress == 0 ? transition.from : transition.to;
+  }
+
+  bool _directionChanging(PassRunCharacter kind) {
+    final facing = _facingAt(kind, _motionSeconds);
+    return facing.from != facing.to && facing.progress < 1;
+  }
 
   Offset _actorOffsetAt(double seconds, {required bool player}) {
-    final period = player ? 2.6 : 2.05;
-    final phase = player ? 0.0 : math.pi * .65;
-    final y = .5 + .28 * math.sin(seconds * math.pi * 2 / period + phase);
+    final runner = player ? PassRunRunner.player : PassRunRunner.companion;
+    final y = PassRunMotion.yAt(seconds, runner);
     final lane = player == _isOutbound ? .25 : .75;
     final target = Offset(_fieldSize.width * lane, _fieldSize.height * y);
     final progress = _turnProgress;
     if (progress >= 1) return target;
-    final oldY = .5 + .28 * math.sin(15 * math.pi * 2 / period + phase);
+    final oldY = PassRunMotion.yAt(15, runner);
     final origin =
         Offset(_fieldSize.width * (1 - lane), _fieldSize.height * oldY);
     return Offset.lerp(origin, target, Curves.easeInOut.transform(progress))!;
@@ -416,15 +456,18 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
 
   int _frameAt(double seconds) => (seconds * 1000 ~/ 240) % 2;
 
-  PassRunBallGeometry _geometryAt(PassRunCharacter kind, double seconds) =>
-      PassAndRunCharacterVisual.heldBallGeometry(
-        character: kind,
-        frame: _frameAt(seconds),
-        facingRight: kind == PassRunCharacter.normal
-            ? _playerFacingRight
-            : !_playerFacingRight,
-        size: _characterSize,
-      );
+  PassRunBallGeometry _geometryAt(PassRunCharacter kind, double seconds) {
+    final facing = _facingAt(kind, seconds);
+    PassRunBallGeometry geometry(PassRunFacing direction) =>
+        PassAndRunCharacterVisual.heldBallGeometry(
+          character: kind,
+          frame: _frameAt(seconds),
+          facing: direction,
+          size: _characterSize,
+        );
+    return PassRunBallGeometry.lerp(
+        geometry(facing.from), geometry(facing.to), facing.progress);
+  }
 
   Offset _heldBallOffsetAt(
     Offset actor,
@@ -459,10 +502,38 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
           .clamp(0, 1)
           .toDouble();
   bool get _catchSettling => _mateHolding && _catchProgress < 1;
-  bool get _mateHoldingVisual => _mateHolding && !_catchSettling;
+  bool get _mateHoldingVisual =>
+      _mateHolding &&
+      !_catchSettling &&
+      !_directionChanging(PassRunCharacter.companion);
+  bool get _playerHoldingVisual =>
+      _playerHolding && !_directionChanging(PassRunCharacter.normal);
   bool get _showFlightBall =>
-      _passInFlight && (!_mateHolding || _catchSettling);
+      (_passInFlight && (!_mateHolding || _catchSettling)) ||
+      (_playerHolding && !_playerHoldingVisual) ||
+      (_mateHolding && !_mateHoldingVisual);
   bool get _showFlightTrail => _passInFlight && !_mateHolding;
+
+  bool get _ballBehindActor {
+    if (_playerHolding) {
+      return _spriteFacing(PassRunCharacter.normal) == PassRunFacing.back;
+    }
+    if (_mateHolding) {
+      return _spriteFacing(PassRunCharacter.companion) == PassRunFacing.back;
+    }
+    // Switch draw order only once the full ball clears a rear-facing actor's
+    // canvas. This avoids revealing an overlapping ball at an arbitrary time.
+    final ballBounds = Rect.fromCenter(
+        center: _ballOffset,
+        width: _ballGeometry.extent,
+        height: _ballGeometry.extent);
+    bool overlapsRear(PassRunCharacter kind, Offset actor) =>
+        _spriteFacing(kind) == PassRunFacing.back &&
+        ballBounds.overlaps(Rect.fromCenter(
+            center: actor, width: _characterSize, height: _characterSize));
+    return overlapsRear(PassRunCharacter.normal, _playerOffset) ||
+        overlapsRear(PassRunCharacter.companion, _mateOffset);
+  }
 
   PassRunBallGeometry get _ballGeometry {
     final normal = _geometryAt(PassRunCharacter.normal, _motionSeconds);
@@ -489,13 +560,35 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
     );
   }
 
+  // Keep the validated pre-art-update collision envelope. Re-measuring the
+  // new art must not silently enlarge/shrink the successful receiving window.
+  double _collisionRadiusAt(PassRunCharacter kind, double seconds) {
+    final even = _frameAt(seconds).isEven;
+    final diameter = kind == PassRunCharacter.normal
+        ? (even ? 27.549925049569 : 27.600348580376)
+        : (even ? 30.956565121244 : 31.061003284964);
+    return diameter /
+        2 *
+        (_characterSize / PassAndRunCharacterVisual.canvasSize);
+  }
+
+  double get _collisionBallRadius {
+    final from = _releaseCollisionRadius ??
+        _collisionRadiusAt(PassRunCharacter.normal, _motionSeconds);
+    final to = _collisionRadiusAt(PassRunCharacter.companion, _motionSeconds);
+    final progress =
+        (_passElapsed.inMicroseconds / _passArrivalDuration.inMicroseconds)
+            .clamp(0, 1);
+    return from + (to - from) * progress;
+  }
+
   /// 表示中のボールが、現在位置の仲間に衝突しているかを返します。
   bool _hasCollidedWithMate(Offset ball) {
     final mate = _mateOffset;
     return PassAndRunRules.hasCollided(
       ballDeltaX: ball.dx - mate.dx,
       ballDeltaY: ball.dy - mate.dy,
-      ballRadius: _ballGeometry.collisionRadius,
+      ballRadius: _collisionBallRadius,
       mateRadius: PassAndRunRules.mateCollisionRadius *
           (_characterSize / PassAndRunCharacterVisual.canvasSize),
     );
@@ -828,15 +921,22 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
                       current: ball,
                     ),
                   ),
+                if (_showFlightBall && _ballBehindActor)
+                  Positioned(
+                    key: const Key('pass-ball'),
+                    left: ball.dx - ballGeometry.extent / 2,
+                    top: ball.dy - ballGeometry.extent / 2,
+                    child: PassAndRunBallVisual(geometry: ballGeometry),
+                  ),
                 Positioned(
                   left: player.dx - actorSize / 2,
                   top: player.dy - actorSize / 2,
                   child: PassAndRunCharacterVisual(
                     key: const Key('pass-player'),
                     character: PassRunCharacter.normal,
-                    holding: _playerHolding,
+                    holding: _playerHoldingVisual,
                     frame: frame,
-                    facingRight: _playerFacingRight,
+                    facing: _spriteFacing(PassRunCharacter.normal),
                     size: actorSize,
                     ballKey: const Key('pass-ball'),
                   ),
@@ -867,12 +967,12 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
                     character: PassRunCharacter.companion,
                     holding: _mateHoldingVisual,
                     frame: frame,
-                    facingRight: !_playerFacingRight,
+                    facing: _spriteFacing(PassRunCharacter.companion),
                     size: actorSize,
                     ballKey: const Key('pass-ball'),
                   ),
                 ),
-                if (_showFlightBall)
+                if (_showFlightBall && !_ballBehindActor)
                   Positioned(
                     key: const Key('pass-ball'),
                     left: ball.dx - ballGeometry.extent / 2,

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:koto_blue_sharks/presentation/training_game/mini_games/pass_and_run/pass_and_run_motion.dart';
 import 'package:koto_blue_sharks/app/services/server_time_clock.dart';
 import 'package:koto_blue_sharks/presentation/training_game/mini_games/pass_and_run/pass_and_run_character_visual.dart';
 import 'package:koto_blue_sharks/presentation/training_game/mini_games/mini_game_selection_thumbnail.dart';
@@ -233,14 +234,14 @@ void main() {
     await advance(tester, const Duration(milliseconds: 480));
     final player = find.byKey(const Key('pass-player'));
     expect(
-      tester.widget<PassAndRunCharacterVisual>(player).facingRight,
-      isFalse,
+      tester.widget<PassAndRunCharacterVisual>(player).facing,
+      PassRunFacing.front,
     );
     await advance(tester, const Duration(milliseconds: 15100));
     expect(find.text('メインへ戻る'), findsOneWidget);
     expect(
-      tester.widget<PassAndRunCharacterVisual>(player).facingRight,
-      isFalse,
+      tester.widget<PassAndRunCharacterVisual>(player).facing,
+      PassRunFacing.front,
     );
   });
 }

@@ -4,6 +4,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:koto_blue_sharks/presentation/training_game/mini_games/pass_and_run/pass_and_run_motion.dart';
 import 'package:koto_blue_sharks/presentation/training_game/mini_games/pass_and_run/pass_and_run_character_visual.dart';
 
 void main() {
@@ -12,12 +13,12 @@ void main() {
       final a = PassAndRunCharacterVisual.heldBallGeometry(
           character: PassRunCharacter.normal,
           frame: 0,
-          facingRight: right,
+          facing: right ? PassRunFacing.front : PassRunFacing.back,
           size: 84);
       final b = PassAndRunCharacterVisual.heldBallGeometry(
           character: PassRunCharacter.companion,
           frame: 0,
-          facingRight: !right,
+          facing: right ? PassRunFacing.back : PassRunFacing.front,
           size: 84);
       for (final pair in [(a, b), (b, a)]) {
         final end = PassRunBallGeometry.lerp(pair.$1, pair.$2, 1);
@@ -46,10 +47,10 @@ void main() {
         final context = t.element(find.byKey(key));
         for (final asset in [
           'pass_run_ball',
-          'pass_run_normal_hold_a',
-          'pass_run_normal_hold_b',
-          'pass_run_mate_hold_a',
-          'pass_run_mate_hold_b',
+          for (final kind in ['normal', 'mate'])
+            for (final facing in ['front', 'back'])
+              for (final phase in ['a', 'b'])
+                'pass_run_${kind}_${facing}_hold_$phase',
         ]) {
           await precacheImage(
             AssetImage('assets/images/training_game/minigames/$asset.png'),
@@ -90,7 +91,7 @@ void main() {
           final geometry = PassAndRunCharacterVisual.heldBallGeometry(
             character: kind,
             frame: frame,
-            facingRight: right,
+            facing: right ? PassRunFacing.front : PassRunFacing.back,
             size: 84,
           );
           final held = await measure(
@@ -99,7 +100,7 @@ void main() {
                 character: kind,
                 holding: true,
                 frame: frame,
-                facingRight: right,
+                facing: right ? PassRunFacing.front : PassRunFacing.back,
                 size: 84,
               ),
             ),
@@ -115,6 +116,13 @@ void main() {
               ],
             ),
           );
+          if (!right) {
+            // Rear ball is deliberately occluded by the torso, not a full ellipse.
+            expect(held.width, lessThan(flight.width));
+            expect(held.height, lessThanOrEqualTo(flight.height + 1.5));
+            expect(held.left, closeTo(flight.left, 2));
+            continue;
+          }
           // Compare rendered pixels, not merely the same metadata twice.
           expect(
             flight.width,

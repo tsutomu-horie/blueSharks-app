@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:koto_blue_sharks/presentation/training_game/mini_games/pass_and_run/pass_and_run_motion.dart';
 import 'package:koto_blue_sharks/presentation/training_game/mini_games/pass_and_run/pass_and_run_character_visual.dart';
 import 'package:koto_blue_sharks/presentation/training_game/mini_games/pass_and_run/pass_and_run_game.screen.dart';
 
@@ -29,7 +30,12 @@ void main() {
     final context = t.element(find.byType(PassAndRunGameScreen));
     await t.runAsync(() async {
       for (final kind in ['normal', 'mate']) {
-        for (final state in ['hold', 'free']) {
+        for (final state in [
+          'front_hold',
+          'front_free',
+          'back_hold',
+          'back_free'
+        ]) {
           for (final frame in ['a', 'b']) {
             await precacheImage(
               AssetImage(
@@ -137,7 +143,7 @@ void main() {
         t.getCenter(player).dx, closeTo(field.left + field.width * .75, .001));
     expect(find.textContaining('残り 15.0s'), findsOneWidget);
     expect(ball, findsOneWidget);
-    expect(visual(t, player).facingRight, isFalse);
+    expect(visual(t, player).facing, PassRunFacing.front);
     await t.flingFrom(t.getCenter(player), const Offset(-100, 0), 2000);
     await t.pump();
     expect(trail, findsOneWidget);
@@ -210,17 +216,107 @@ void main() {
     expect(ball, findsOneWidget);
   });
 
+  testWidgets('上下反転の保持球は位置を連続補間し、停止中も1個のまま', (t) async {
+    await start(t);
+    await step(t, 640);
+    expect(visual(t, player).facing, PassRunFacing.front);
+    var before = t.getCenter(ball);
+    await step(t, 10);
+    expect((t.getCenter(ball) - before).distance, lessThan(1));
+    expect(visual(t, player).facing, PassRunFacing.front);
+    before = t.getCenter(ball);
+    await step(t, 1);
+    expect((t.getCenter(ball) - before).distance, lessThan(1));
+    expect(visual(t, player).facing, PassRunFacing.back);
+    expect(visual(t, player).holding, isFalse);
+    expect(ball, findsOneWidget);
+    for (var i = 0; i < 4; i++) {
+      before = t.getCenter(ball);
+      await step(t, 8);
+      expect((t.getCenter(ball) - before).distance, lessThan(3));
+      expect(ball, findsOneWidget);
+    }
+    await t.tap(find.byTooltip('一時停止'));
+    await t.pump();
+    final paused = t.getCenter(ball);
+    await step(t, 3000);
+    expect(t.getCenter(ball), paused);
+    expect(visual(t, player).facing, PassRunFacing.back);
+    await t.tap(find.text('再開'));
+    await t.pump();
+    expect(t.getCenter(ball), paused);
+    await step(t, 48);
+    expect(visual(t, player).holding, isTrue);
+    expect(ball, findsOneWidget);
+    // Legal sideways input remains available immediately after the visual turn.
+    await t.flingFrom(t.getCenter(player), const Offset(100, 0), 2000);
+    await t.pump();
+    expect(trail, findsOneWidget);
+  });
+
+  testWidgets('鮫太郎と色違い仲間がそれぞれの実移動方向を向く', (t) async {
+    await start(t);
+    var elapsed = 0;
+    for (final target in [0, 250, 400, 750, 1100, 1600, 2000, 2500]) {
+      await step(t, target - elapsed);
+      elapsed = target;
+      for (final pair in [
+        (player, PassRunRunner.player),
+        (mate, PassRunRunner.companion)
+      ]) {
+        final velocity = PassRunMotion.velocityYAt(target / 1000, pair.$2);
+        expect(visual(t, pair.$1).facing,
+            velocity > 0 ? PassRunFacing.front : PassRunFacing.back);
+      }
+      expect(ball, findsOneWidget);
+      expect(find.text('鮫太郎'), findsOneWidget);
+    }
+  });
+
+  testWidgets('仲間の保持中も正面→背面反転と停止復帰で球を連続保持する', (t) async {
+    await start(t);
+    await step(t, 1400);
+    await throwToMate(t, 1.4);
+    await catchAtMate(t);
+    final elapsed = clock.difference(DateTime.utc(2026, 10, 20)).inMilliseconds;
+    await step(t, 1890 - elapsed);
+    expect(visual(t, mate).holding, isTrue);
+    expect(visual(t, mate).facing, PassRunFacing.front);
+    var previous = t.getCenter(ball);
+    await step(t, 14);
+    expect((t.getCenter(ball) - previous).distance, lessThan(3));
+    expect(visual(t, mate).facing, PassRunFacing.back);
+    expect(ball, findsOneWidget);
+    expect(trail, findsNothing);
+    await t.tap(find.byTooltip('一時停止'));
+    await t.pump();
+    final paused = t.getCenter(ball);
+    await step(t, 2000);
+    expect(t.getCenter(ball), paused);
+    expect(ball, findsOneWidget);
+    await t.tap(find.text('再開'));
+    await t.pump();
+    expect(t.getCenter(ball), paused);
+    for (var i = 0; i < 10; i++) {
+      previous = t.getCenter(ball);
+      await step(t, 8);
+      expect((t.getCenter(ball) - previous).distance, lessThan(3));
+      expect(ball, findsOneWidget);
+    }
+    expect(visual(t, mate).holding, isTrue);
+  });
+
   testWidgets('承認済み保持・非保持と2脚位相を表示し、球は常に1個', (t) async {
     await start(t);
     expect(visual(t, player).holding, isTrue);
     expect(visual(t, mate).holding, isFalse);
     expect(find.text('🏃'), findsNothing);
-    expect(visual(t, player).assetPath, contains('normal_hold_a'));
-    expect(visual(t, mate).assetPath, contains('mate_free_a'));
+    expect(visual(t, player).assetPath, contains('normal_front_hold_a'));
+    expect(visual(t, mate).assetPath, contains('mate_back_free_a'));
     expect(ball, findsOneWidget);
     await step(t, 250);
-    expect(visual(t, player).assetPath, contains('normal_hold_b'));
-    expect(visual(t, mate).assetPath, contains('mate_free_b'));
+    expect(visual(t, player).assetPath, contains('normal_front_hold_b'));
+    expect(visual(t, mate).assetPath, contains('mate_back_free_b'));
     expect(t.takeException(), isNull);
   });
 
@@ -232,7 +328,7 @@ void main() {
     final heldGeometry = PassAndRunCharacterVisual.heldBallGeometry(
       character: PassRunCharacter.normal,
       frame: visual(t, player).frame,
-      facingRight: true,
+      facing: PassRunFacing.front,
       size: 84,
     );
     await throwToMate(t, 0);
@@ -317,13 +413,14 @@ void main() {
     expect(visual(t, player).holding, isFalse);
   });
 
-  testWidgets('復路で攻撃を反転し、横向き表示や移動方向と分離する', (t) async {
+  testWidgets('復路で攻撃を反転し、正背面表示や移動方向と分離する', (t) async {
     await start(t);
     await step(t, 15100);
     await step(t, 480);
     expect(find.text('攻撃方向 ↓'), findsOneWidget);
-    expect(visual(t, player).facingRight, isFalse);
-    expect(visual(t, mate).facingRight, isTrue);
+    await step(t, 80);
+    expect(visual(t, player).facing, PassRunFacing.front);
+    expect(visual(t, mate).facing, PassRunFacing.back);
     await t.flingFrom(t.getCenter(player), const Offset(-100, 1), 2000);
     await t.pump();
     expect(find.text('前方パス　2秒間パス不可'), findsOneWidget);

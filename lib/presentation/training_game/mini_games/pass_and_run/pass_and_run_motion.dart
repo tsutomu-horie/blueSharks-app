@@ -26,6 +26,34 @@ abstract final class PassRunMotion {
       _period(runner) *
       math.cos(seconds * math.pi * 2 / _period(runner) + _phase(runner));
 
+  static const facingSettleSeconds = .08;
+
+  /// 反転点の直後だけ保持球の投影位置を80msでつなぎます。
+  static ({PassRunFacing from, PassRunFacing to, double progress}) facingAt(
+    double seconds,
+    PassRunRunner runner,
+  ) {
+    final omega = math.pi * 2 / _period(runner);
+    final phase = _phase(runner);
+    final k = ((omega * seconds + phase - math.pi / 2) / math.pi).floor();
+    final changedAt = (math.pi / 2 + k * math.pi - phase) / omega;
+    final current = facingForVelocity(velocityYAt(seconds, runner),
+        previous: facingForVelocity(velocityYAt(seconds - .00001, runner),
+            previous: PassRunFacing.front));
+    if (changedAt < 0 || seconds - changedAt >= facingSettleSeconds) {
+      return (from: current, to: current, progress: 1);
+    }
+    final to = k.isEven ? PassRunFacing.back : PassRunFacing.front;
+    final from =
+        to == PassRunFacing.front ? PassRunFacing.back : PassRunFacing.front;
+    return (
+      from: from,
+      to: to,
+      progress:
+          ((seconds - changedAt) / facingSettleSeconds).clamp(0, 1).toDouble()
+    );
+  }
+
   /// 静止・上下反転の厳密な頂点では直前の向きを維持します。
   /// 停止中は停止時の速度または保持済み向きを使い、実時計で更新しません。
   static PassRunFacing facingForVelocity(

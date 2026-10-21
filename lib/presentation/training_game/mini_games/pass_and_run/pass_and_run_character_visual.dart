@@ -2,6 +2,8 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import 'pass_and_run_motion.dart';
+
 enum PassRunCharacter { normal, companion }
 
 /// 承認済みの保持／非保持だけを使う、2コマのパス＆ラン表示です。
@@ -11,7 +13,7 @@ class PassAndRunCharacterVisual extends StatelessWidget {
     required this.character,
     required this.holding,
     required this.frame,
-    required this.facingRight,
+    required this.facing,
     required this.size,
     this.ballKey,
     super.key,
@@ -21,17 +23,15 @@ class PassAndRunCharacterVisual extends StatelessWidget {
   final PassRunCharacter character;
   final bool holding;
   final int frame;
-  final bool facingRight;
+  final PassRunFacing facing;
   final double size;
   final Key? ballKey;
-
-  bool get mirrored => (character == PassRunCharacter.normal) != facingRight;
 
   String get assetPath {
     final name = character == PassRunCharacter.normal ? 'normal' : 'mate';
     final state = holding ? 'hold' : 'free';
     final phase = frame.isEven ? 'a' : 'b';
-    return 'assets/images/training_game/minigames/pass_run_${name}_${state}_$phase.png';
+    return 'assets/images/training_game/minigames/pass_run_${name}_${facing.name}_${state}_$phase.png';
   }
 
   /// 承認済み3x保持画像の赤い球縁を測定した楕円です。
@@ -39,50 +39,31 @@ class PassAndRunCharacterVisual extends StatelessWidget {
   static PassRunBallGeometry heldBallGeometry({
     required PassRunCharacter character,
     required int frame,
-    required bool facingRight,
+    required PassRunFacing facing,
     required double size,
   }) {
-    final raw = character == PassRunCharacter.normal
-        ? (frame.isEven
-            ? const PassRunBallGeometry(
-                offset: Offset(14.345022810704, 0.071112541129),
-                longAxis: 27.549925049569,
-                shortAxis: 14.498538799213,
-                angle: -1.072365898838,
-              )
-            : const PassRunBallGeometry(
-                offset: Offset(13.957720284193, 0.020506142250),
-                longAxis: 27.600348580376,
-                shortAxis: 14.534520222221,
-                angle: -1.074984357778,
-              ))
-        : (frame.isEven
-            ? const PassRunBallGeometry(
-                offset: Offset(-10.058841154990, 2.930065106376),
-                longAxis: 30.956565121244,
-                shortAxis: 15.462283262435,
-                angle: -2.645518492636,
-              )
-            : const PassRunBallGeometry(
-                offset: Offset(-10.044108827090, 1.936151523281),
-                longAxis: 31.061003284964,
-                shortAxis: 15.421599426919,
-                angle: -2.646066911807,
-              ));
-    final flip = (character == PassRunCharacter.normal) != facingRight;
-    return raw.scaled(size / canvasSize, mirrored: flip);
+    // Front ball ellipse measured from the approved master. Rear is the
+    // anatomical projection behind the body; only its exposed crescent is visible.
+    final back = facing == PassRunFacing.back;
+    final raw = PassRunBallGeometry(
+      offset: Offset(back ? -13.51197411 : 13.51197411, 8.919093226667),
+      longAxis: 29.62079706,
+      shortAxis: 14.836856553333,
+      angle: back ? -1.219072525474 : 1.219072525474,
+    );
+    return raw.scaled(size / canvasSize);
   }
 
   static Offset heldBallOffset({
     required PassRunCharacter character,
     required int frame,
-    required bool facingRight,
+    required PassRunFacing facing,
     required double size,
   }) =>
       heldBallGeometry(
         character: character,
         frame: frame,
-        facingRight: facingRight,
+        facing: facing,
         size: size,
       ).offset;
 
@@ -91,7 +72,7 @@ class PassAndRunCharacterVisual extends StatelessWidget {
     final geometry = heldBallGeometry(
       character: character,
       frame: frame,
-      facingRight: facingRight,
+      facing: facing,
       size: size,
     );
     return IgnorePointer(
@@ -100,16 +81,13 @@ class PassAndRunCharacterVisual extends StatelessWidget {
         height: size,
         child: Stack(
           children: [
-            Transform.flip(
-              flipX: mirrored,
-              child: Image.asset(
-                assetPath,
-                width: size,
-                height: size,
-                fit: BoxFit.contain,
-                filterQuality: FilterQuality.medium,
-                excludeFromSemantics: true,
-              ),
+            Image.asset(
+              assetPath,
+              width: size,
+              height: size,
+              fit: BoxFit.contain,
+              filterQuality: FilterQuality.medium,
+              excludeFromSemantics: true,
             ),
             // 球そのものは保持画像内にあり、ここでは位置と状態だけを表す。
             if (holding)
