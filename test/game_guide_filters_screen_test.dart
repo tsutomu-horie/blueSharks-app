@@ -122,4 +122,37 @@ void main() {
     expect(tester.takeException(), isNull);
     expect(Get.find<GameGuideController>().visibleGuides, hasLength(10));
   });
+  testWidgets('全記事が終了済みでも開催予定を選択でき、0件の案内から条件解除で戻れる', (tester) async {
+    tester.view.physicalSize = const Size(375, 812);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    SharedPreferences.setMockInitialValues({});
+    await MySharedPref.init();
+    final c = Get.put(GameGuideController(provider: Articles()));
+    addTearDown(Get.reset);
+    await tester.pumpWidget(ScreenUtilInit(
+        designSize: const Size(375, 812),
+        builder: (_, __) => const GetMaterialApp(home: GameGuideListScreen())));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('絞り込み'));
+    await tester.pumpAndSettle();
+    expect(c.guides.every((p) => p.status == '試合終了'), isTrue);
+    await tester.tap(find.byType(DropdownButtonFormField<String?>).last);
+    await tester.pumpAndSettle();
+    expect(find.text('開催予定'), findsOneWidget);
+    expect(find.text('試合終了'), findsOneWidget);
+    await tester.tap(find.text('開催予定'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('この条件で表示'));
+    await tester.pumpAndSettle();
+    expect(c.selectedStatus.value, '開催予定');
+    expect(c.visibleGuides, isEmpty);
+    expect(find.text('条件に一致する記事がありません'), findsOneWidget);
+    await tester.tap(find.text('条件をクリア'));
+    await tester.pumpAndSettle();
+    expect(c.visibleGuides, hasLength(14));
+    expect(c.selectedStatus.value, isNull);
+    expect(tester.takeException(), isNull);
+  });
 }
