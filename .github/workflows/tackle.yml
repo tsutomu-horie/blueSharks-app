@@ -38,9 +38,12 @@ jobs:
           dart format --output=none --set-exit-if-changed
           lib/presentation/training_game/mini_games/tackle
           lib/presentation/training_game/mini_games/models/mini_game_result.dart
+          lib/presentation/training_game/models/mini_game_settings.dart
           lib/app/providers/training_game/training_game_provider.dart
           test/training_game/tackle*.dart
           test/training_game/mini_game_result_test.dart
+          test/training_game/mini_game_settings_contract_test.dart
+          test/training_game/mini_game_start_settings_test.dart
           test/training_game/training_game_sync_queue_test.dart
           test/training_game/training_work_debug_day_test.dart
       - name: Analyze affected code
@@ -48,6 +51,7 @@ jobs:
           flutter analyze --no-pub --no-fatal-infos
           lib/presentation/training_game/mini_games/tackle
           lib/presentation/training_game/mini_games/models/mini_game_result.dart
+          lib/presentation/training_game/models/mini_game_settings.dart
           lib/app/providers/training_game/training_game_provider.dart
           lib/presentation/training_game/controllers/training_game.controller.dart
           test/training_game/tackle_game_logic_test.dart
@@ -59,8 +63,12 @@ jobs:
           test/training_game/tackle_result_transport_test.dart
           test/training_game/tackle_trial_plan_test.dart
           test/training_game/tackle_variety_widget_test.dart
+          test/training_game/tackle_settings_test.dart
+          test/training_game/tackle_settings_widget_test.dart
           test/training_game/tackle_test_driver.dart
           test/training_game/mini_game_result_test.dart
+          test/training_game/mini_game_settings_contract_test.dart
+          test/training_game/mini_game_start_settings_test.dart
           test/training_game/training_game_sync_queue_test.dart
           test/training_game/training_work_debug_day_test.dart
       - name: Test tackle and sync compatibility
@@ -75,7 +83,11 @@ jobs:
           test/training_game/tackle_result_transport_test.dart
           test/training_game/tackle_trial_plan_test.dart
           test/training_game/tackle_variety_widget_test.dart
+          test/training_game/tackle_settings_test.dart
+          test/training_game/tackle_settings_widget_test.dart
           test/training_game/mini_game_result_test.dart
+          test/training_game/mini_game_settings_contract_test.dart
+          test/training_game/mini_game_start_settings_test.dart
           test/training_game/training_game_sync_queue_test.dart
           test/training_game/training_work_debug_day_test.dart
           test/training_game/mini_game_widget_test.dart

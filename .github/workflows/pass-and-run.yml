@@ -41,6 +41,8 @@ jobs:
           lib/presentation/training_game/mini_games/pass_and_run
           test/training_game/pass_and_run_loading_test.dart
           test/training_game/pass_and_run_motion_test.dart
+          test/training_game/pass_and_run_settings_motion_test.dart
+          test/training_game/pass_and_run_settings_screen_test.dart
           test/training_game/pass_and_run_logic_test.dart
           test/training_game/pass_and_run_ball_visual_test.dart
           test/training_game/pass_and_run_integration_test.dart
@@ -49,6 +51,8 @@ jobs:
           flutter test --no-pub --reporter expanded
           test/training_game/pass_and_run_loading_test.dart
           test/training_game/pass_and_run_motion_test.dart
+          test/training_game/pass_and_run_settings_motion_test.dart
+          test/training_game/pass_and_run_settings_screen_test.dart
           test/training_game/pass_and_run_logic_test.dart
           test/training_game/pass_and_run_ball_visual_test.dart
           test/training_game/pass_and_run_integration_test.dart

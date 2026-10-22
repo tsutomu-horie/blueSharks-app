@@ -1,3 +1,4 @@
+import 'package:koto_blue_sharks/presentation/training_game/models/mini_game_settings.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -457,6 +458,7 @@ class DebugDayProvider extends TrainingGameProvider {
     int? actionAttemptCount,
     int? actionSuccessCount,
     int? actionSuccessfulReactionTotalUs,
+    TackleSettings? actionTackleSettings,
     double? actionScore,
     double? actionEffectMultiplier,
     bool debugBypassCooldown = false,
