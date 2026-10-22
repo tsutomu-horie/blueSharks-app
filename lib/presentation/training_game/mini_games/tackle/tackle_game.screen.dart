@@ -112,6 +112,13 @@ class _TackleGameScreenState extends State<TackleGameScreen>
 
   int get _setNumber => _displayedSetNumber;
 
+  bool get _opponentIsRunning =>
+      !_isPaused &&
+      (_phase == _TacklePhase.approach ||
+          _phase == _TacklePhase.feint ||
+          _phase == _TacklePhase.input ||
+          _phase == _TacklePhase.resolution);
+
   @override
   void initState() {
     super.initState();
@@ -669,7 +676,10 @@ class _TackleGameScreenState extends State<TackleGameScreen>
                                 ? 'tackle-running-up'
                                 : 'tackle-running-down'),
                       ),
-                child: const TackleOpponentVisual(key: Key('tackle-opponent')),
+                child: TackleOpponentVisual(
+                  key: const Key('tackle-opponent'),
+                  running: _opponentIsRunning,
+                ),
               ),
             ),
           ),
