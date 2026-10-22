@@ -20,9 +20,9 @@ class MySharedPref {
   static const String _saveGameGuideArticles = 'saveGameGuideArticles';
   // Keep saved articles separate when the website source changes.
   static const String _gameGuideArticlesCache =
-      'gameGuideArticlesCache:${AppEnvironment.websiteBaseUrl}';
+      'gameGuideArticlesCache:${AppEnvironment.websiteBaseUrl}:match-filters-v1';
   static const String _gameGuideArticlesCachedAt =
-      'gameGuideArticlesCachedAt:${AppEnvironment.websiteBaseUrl}';
+      'gameGuideArticlesCachedAt:${AppEnvironment.websiteBaseUrl}:match-filters-v1';
   static const String _trainingGameStartedAt = 'trainingGameStartedAt';
   static const String _trainingGameDebugElapsedSeconds =
       'trainingGameDebugElapsedSeconds';

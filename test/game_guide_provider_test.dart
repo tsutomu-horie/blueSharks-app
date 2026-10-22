@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:koto_blue_sharks/presentation/game_guide/controllers/game_guide.controller.dart';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:koto_blue_sharks/app/providers/game_guide/game_guide_provider.dart';
@@ -49,6 +50,41 @@ void main() {
       await request.response.close();
     };
   }
+
+  test('先頭ページの欠損記事だけを除外し、元件数を使って後続記事まで絞り込み対象にする', () async {
+    respond = (request) async {
+      request.response.headers.contentType = ContentType.json;
+      final page = request.uri.queryParameters['page'];
+      request.response.write(jsonEncode(page == '1'
+          ? [
+              ...List.generate(9, (i) => _post(i + 1)),
+              {
+                'id': 99,
+                'title': {'rendered': 'URLなし'}
+              }
+            ]
+          : [_post(11)]));
+      await request.response.close();
+    };
+    final c = GameGuideController(provider: provider);
+    await c.loadInitial();
+    expect(c.guides, hasLength(9));
+    expect(c.hasMore.value, isTrue);
+    expect(await c.loadAllForFilters(), isTrue);
+    expect(c.guides.map((p) => p.id), [...List.generate(9, (i) => i + 1), 11]);
+    expect(c.hasMore.value, isFalse);
+    expect(requests.map((r) => r.queryParameters['page']), ['1', '2']);
+  });
+
+  test('最終ページのWordPress終端400だけを空として扱う', () async {
+    body('{"code":"rest_post_invalid_page"}', status: 400);
+    expect(await provider.fetchGuides(page: 2), isEmpty);
+    await expectLater(provider.fetchGuides(page: 1),
+        throwsA(isA<GameGuideRequestException>()));
+    body('{"code":"rest_invalid_param"}', status: 400);
+    await expectLater(provider.fetchGuides(page: 2),
+        throwsA(isA<GameGuideRequestException>()));
+  });
 
   test('実HTTPの正常raw[]だけを空成功にしpage/perPage契約を保つ', () async {
     expect(await provider.fetchGuides(page: 2, perPage: 7), isEmpty);

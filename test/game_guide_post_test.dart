@@ -30,9 +30,16 @@ void main() {
       expect(post.title, '夢の島&観戦ガイド');
       expect(post.publishedAt, DateTime(2026, 7, 27, 14, 30));
       expect(post.thumbnailUrl, 'https://blue-sharks.jp/image.jpg');
-      expect(post.season, '2026-27');
-      expect(post.location, '夢の島競技場');
-      expect(post.status, '予定');
+      expect(post.season, isNull);
+      expect(post.location, isNull);
+      expect(post.status, isNull);
+      final published = GameGuidePost.fromJson({
+        'id': 11,
+        'title': {'rendered': '公開記事'},
+        'link': 'https://blue-sharks.donati.jp/game-guide/published/',
+        'status': 'publish',
+      });
+      expect(published.status, isNull);
     });
 
     test('必須項目が欠損した記事はFormatExceptionになる', () {
@@ -53,6 +60,9 @@ void main() {
         publishedAt: DateTime(2026, 7, 27),
         detailUrl: 'https://blue-sharks.jp/game-guide/1/',
         thumbnailUrl: 'https://blue-sharks.jp/image.jpg',
+        season: '2025 – 2026 シーズン',
+        location: '夢の島競技場',
+        status: '試合終了',
       );
 
       final restored = GameGuidePost.fromCacheJson(original.toJson());
@@ -62,6 +72,9 @@ void main() {
       expect(restored.publishedAt, original.publishedAt);
       expect(restored.detailUrl, original.detailUrl);
       expect(restored.thumbnailUrl, original.thumbnailUrl);
+      expect(restored.season, original.season);
+      expect(restored.location, original.location);
+      expect(restored.status, original.status);
     });
   });
 
