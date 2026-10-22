@@ -1,3 +1,5 @@
+import 'package:koto_blue_sharks/presentation/training_game/mini_games/models/mini_game_result.dart';
+import 'package:koto_blue_sharks/presentation/training_game/models/mini_game_settings.dart';
 import 'dart:async';
 import 'dart:convert';
 
@@ -34,6 +36,93 @@ void main() {
     return controller;
   }
 
+  test(
+      'v3 saved snapshot survives restart and newer settings with the same operation ID',
+      () async {
+    final provider =
+        _RateLimitedTrainingGameProvider(rateLimitFirstAction: false);
+    const settings = TackleSettings(
+        setCount: 2,
+        inputLimitMs: 1000,
+        snapshotToken: 'original-start-snapshot');
+    final metadata = TackleResultMetadata(
+        successCount: 1, successfulReactionTotalUs: 200000, settings: settings);
+    await MySharedPref.setTrainingGamePendingActions(jsonEncode([
+      {
+        'action_code': 'tackle',
+        'revision': 1,
+        'idempotency_key': 'v3-restart-same-id',
+        'player_id': 7,
+        'cycle_no': 1,
+        'game_started_at': provider._startedAt.toIso8601String(),
+        'may_have_been_applied': true,
+        'result': {
+          'type': 'tackle',
+          'summary': 'snapshot result',
+          'score': metadata.penaltyMeanSeconds,
+          'effect_multiplier': metadata.effectMultiplier,
+          'result_code': metadata.rank,
+          ...metadata.toJson()
+        },
+      }
+    ]));
+    final controller = await openWithInitialState(provider);
+    expect(controller.pendingSyncActionCount, 1);
+    await controller.retryPendingSync();
+    expect(provider.idempotencyKeys, ['v3-restart-same-id']);
+    expect(provider.tackleMetadata.single, {
+      'result_policy': TackleResultMetadata.snapshotPolicy,
+      'attempt_count': 2,
+      'success_count': 1,
+      'successful_reaction_total_us': 200000,
+      'rule_snapshot_token': 'original-start-snapshot',
+    });
+    expect(MySharedPref.getTrainingGamePendingActions(), isNull);
+  });
+  for (final missing in [
+    'rule_snapshot_token',
+    'rule_snapshot',
+    'successful_reaction_total_us'
+  ]) {
+    test('v3 missing $missing is preserved without legacy downgrade', () async {
+      final provider =
+          _RateLimitedTrainingGameProvider(rateLimitFirstAction: false);
+      final metadata = TackleResultMetadata(
+          successCount: 1,
+          successfulReactionTotalUs: 200000,
+          settings: const TackleSettings(
+              setCount: 2, inputLimitMs: 1000, snapshotToken: 'snapshot'));
+      final result = <String, dynamic>{
+        'type': 'tackle',
+        'summary': 'snapshot result',
+        'score': metadata.penaltyMeanSeconds,
+        'effect_multiplier': metadata.effectMultiplier,
+        'result_code': metadata.rank,
+        ...metadata.toJson()
+      }..remove(missing);
+      final raw = jsonEncode([
+        {
+          'action_code': 'tackle',
+          'revision': 1,
+          'idempotency_key': 'v3-corrupt-$missing',
+          'player_id': 7,
+          'cycle_no': 1,
+          'game_started_at': provider._startedAt.toIso8601String(),
+          'may_have_been_applied': true,
+          'result': result
+        }
+      ]);
+      await MySharedPref.setTrainingGamePendingActions(raw);
+      final controller = await openWithInitialState(provider);
+      expect(controller.syncStatus.value, TrainingSyncStatus.outcomeUnknown);
+      expect(provider.actionCodes, isEmpty);
+      expect(MySharedPref.getTrainingGamePendingActions(), raw);
+      await controller.retryPendingSync();
+      expect(provider.actionCodes, isEmpty);
+      expect(jsonDecode(MySharedPref.getTrainingGamePendingActionsArchive()!),
+          contains(raw));
+    });
+  }
   for (final v2 in [false, true]) {
     test(
         'tackle metadata survives queue restart v2=$v2 and retains operation ID',
@@ -1118,6 +1207,7 @@ class _RateLimitedTrainingGameProvider extends TrainingGameProvider {
     int? actionAttemptCount,
     int? actionSuccessCount,
     int? actionSuccessfulReactionTotalUs,
+    TackleSettings? actionTackleSettings,
     bool debugBypassCooldown = false,
     String status = 'playing',
   }) async {
@@ -1127,6 +1217,8 @@ class _RateLimitedTrainingGameProvider extends TrainingGameProvider {
       if (actionSuccessCount != null) 'success_count': actionSuccessCount,
       if (actionSuccessfulReactionTotalUs != null)
         'successful_reaction_total_us': actionSuccessfulReactionTotalUs,
+      if (actionTackleSettings?.snapshotToken != null)
+        'rule_snapshot_token': actionTackleSettings!.snapshotToken,
     });
     actionCodes.add(actionCode!);
     idempotencyKeys.add(actionIdempotencyKey);

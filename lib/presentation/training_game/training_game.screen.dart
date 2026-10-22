@@ -891,14 +891,22 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
     }
     if (type == TrainingActionType.tackle ||
         type == TrainingActionType.passAndRun) {
-      final screen = type == TrainingActionType.tackle
-          ? const TackleGameScreen()
-          : const PassAndRunGameScreen();
-      final result = await Navigator.of(context).push<MiniGameResult>(
-        MaterialPageRoute(builder: (_) => screen),
-      );
-      if (result != null) {
-        controller.completeMiniGame(type, result);
+      final settings = await controller.prepareMiniGame(type);
+      if (settings == null) return;
+      if (!context.mounted) {
+        controller.finishMiniGamePreparation();
+        return;
+      }
+      try {
+        final screen = type == TrainingActionType.tackle
+            ? TackleGameScreen(settings: settings.tackle)
+            : PassAndRunGameScreen(settings: settings.passRun);
+        final result = await Navigator.of(context).push<MiniGameResult>(
+          MaterialPageRoute(builder: (_) => screen),
+        );
+        if (result != null) controller.completeMiniGame(type, result);
+      } finally {
+        controller.finishMiniGamePreparation();
       }
       return;
     }

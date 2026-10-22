@@ -1,8 +1,7 @@
+import '../../models/mini_game_settings.dart';
+
 /// タックルで相手が実際に移動する方向です。
-enum TackleDirection {
-  up,
-  down,
-}
+enum TackleDirection { up, down }
 
 /// タックル1セットの判定結果です。
 class TackleAttempt {
@@ -10,6 +9,7 @@ class TackleAttempt {
   const TackleAttempt({
     required this.isCorrect,
     this.reaction,
+    this.settings = const TackleSettings(),
   });
 
   /// 正しい方向を制限時間内にタップできたかを示します。
@@ -18,12 +18,14 @@ class TackleAttempt {
   /// 踏み込み開始からタップまでの時間です。
   final Duration? reaction;
 
-  /// 正しい方向を0〜750msで入力した場合だけ成功です。
+  final TackleSettings settings;
+
+  /// 正しい方向を設定された制限時間内に入力した場合だけ成功です。
   bool get isSuccess =>
       isCorrect &&
       reaction != null &&
       !reaction!.isNegative &&
-      reaction! <= TackleRules.inputLimit;
+      reaction! <= settings.inputLimit;
 
   /// セット単位のランクです。
   String get rank {
@@ -31,9 +33,9 @@ class TackleAttempt {
       return 'MISS';
     }
     final milliseconds = reaction!.inMilliseconds;
-    if (milliseconds <= 150) return 'PERFECT';
-    if (milliseconds <= 250) return 'GREAT';
-    if (milliseconds <= 350) return 'GOOD';
+    if (milliseconds <= settings.perfectMaxMs) return 'PERFECT';
+    if (milliseconds <= settings.greatMaxMs) return 'GREAT';
+    if (milliseconds <= settings.goodMaxMs) return 'GOOD';
     return 'OK';
   }
 }
@@ -46,36 +48,61 @@ abstract final class TackleRules {
   /// 踏み込み後に入力を受け付ける時間です。
   static const inputLimit = Duration(milliseconds: 750);
 
-  /// 3セットの総合ランクです。MISSは750ms、全MISSだけDです。
-  static String overallRank(List<TackleAttempt> attempts) {
-    if (attempts.length != setCount || successCount(attempts) == 0) return 'D';
-    final total = _judgedTotalMicroseconds(attempts);
+  /// MISSを入力制限時間として含め、全MISSだけDとする総合ランクです。
+  static String overallRank(
+    List<TackleAttempt> attempts, {
+    TackleSettings settings = const TackleSettings(),
+  }) {
+    if (attempts.length != settings.setCount ||
+        successCount(attempts, settings: settings) == 0) {
+      return 'D';
+    }
+    final total = _judgedTotalMicroseconds(attempts, settings);
     // 平均の丸めで境界をまたがないよう、整数の合計で比較します。
-    if (total <= 300000 * setCount) return 'S';
-    if (total <= 450000 * setCount) return 'A';
-    if (total <= 600000 * setCount) return 'B';
+    if (total <= settings.overallSMaxMs * 1000 * settings.setCount) return 'S';
+    if (total <= settings.overallAMaxMs * 1000 * settings.setCount) return 'A';
+    if (total <= settings.overallBMaxMs * 1000 * settings.setCount) return 'B';
     return 'C';
   }
 
+  static bool _isSuccess(TackleAttempt attempt, TackleSettings settings) =>
+      attempt.isCorrect &&
+      attempt.reaction != null &&
+      !attempt.reaction!.isNegative &&
+      attempt.reaction! <= settings.inputLimit;
+
   /// 制限時間内に正しい方向を入力した回数です。
-  static int successCount(List<TackleAttempt> attempts) =>
-      attempts.where((attempt) => attempt.isSuccess).length;
+  static int successCount(
+    List<TackleAttempt> attempts, {
+    TackleSettings settings = const TackleSettings(),
+  }) =>
+      attempts.where((attempt) => _isSuccess(attempt, settings)).length;
 
   /// APIでの再計算にも使う、成功した反応時間だけの整数合計です。
-  static int successfulReactionTotalUs(List<TackleAttempt> attempts) =>
-      attempts.where((attempt) => attempt.isSuccess).fold<int>(
-            0,
-            (sum, attempt) => sum + attempt.reaction!.inMicroseconds,
-          );
+  static int successfulReactionTotalUs(
+    List<TackleAttempt> attempts, {
+    TackleSettings settings = const TackleSettings(),
+  }) =>
+      attempts.where((attempt) => _isSuccess(attempt, settings)).fold<int>(
+          0, (sum, attempt) => sum + attempt.reaction!.inMicroseconds);
 
-  static int _judgedTotalMicroseconds(List<TackleAttempt> attempts) =>
-      successfulReactionTotalUs(attempts) +
-      (setCount - successCount(attempts)) * inputLimit.inMicroseconds;
+  static int _judgedTotalMicroseconds(
+    List<TackleAttempt> attempts,
+    TackleSettings settings,
+  ) =>
+      successfulReactionTotalUs(attempts, settings: settings) +
+      (settings.setCount - successCount(attempts, settings: settings)) *
+          settings.inputLimit.inMicroseconds;
 
-  /// MISSを750msとして全3回に含めた判定平均です。
-  static Duration? averageReaction(List<TackleAttempt> attempts) {
-    if (attempts.length != setCount) return null;
+  /// MISSを入力制限時間として全セットに含めた判定平均です。
+  static Duration? averageReaction(
+    List<TackleAttempt> attempts, {
+    TackleSettings settings = const TackleSettings(),
+  }) {
+    if (attempts.length != settings.setCount) return null;
     return Duration(
-        microseconds: _judgedTotalMicroseconds(attempts) ~/ setCount);
+      microseconds:
+          _judgedTotalMicroseconds(attempts, settings) ~/ settings.setCount,
+    );
   }
 }

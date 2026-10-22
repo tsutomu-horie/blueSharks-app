@@ -12,6 +12,7 @@ import 'package:koto_blue_sharks/utils/app_environment.dart';
 
 import '../mini_games/models/mini_game_result.dart';
 import '../models/training_action_gate.dart';
+import '../models/mini_game_settings.dart';
 import '../models/training_game_models.dart';
 
 enum TrainingSyncStatus {
@@ -1433,11 +1434,90 @@ class TrainingGameController extends GetxController
     }
   }
 
+  bool _isMiniGamePreparationPending = false;
+  bool _isMiniGameOpen = false;
+  int? _miniGamePlayerId;
+  int? _miniGameCycleNo;
+  DateTime? _miniGameStartedAt;
+
+  /// Each play fetches fresh settings. Network failure must not launch with
+  /// stale cached admin values; an old server response uses the fixed defaults.
+  Future<MiniGameSettings?> prepareMiniGame(TrainingActionType type) async {
+    if (_isMiniGamePreparationPending ||
+        _isMiniGameOpen ||
+        (type != TrainingActionType.tackle &&
+            type != TrainingActionType.passAndRun)) {
+      return null;
+    }
+    _isMiniGamePreparationPending = true;
+    cooldownTick.value++;
+    try {
+      if (!_ownsSession(_ownedSessionVersion) ||
+          !isServerStateReady.value ||
+          pendingSyncActionCount > 0 ||
+          _syncRunning ||
+          _syncRequested ||
+          _debugTimeSavePending ||
+          _pendingStageIndex != null ||
+          _hasUnknownSyncOutcome ||
+          syncStatus.value != TrainingSyncStatus.idle ||
+          !_canPerformAction(type)) {
+        logs.insert(0, '育成状態の同期が完了してからミニゲームを開始してください。');
+        return null;
+      }
+      final playerId = _serverPlayerId;
+      final cycleNo = _serverCycleNo;
+      final startedAt = _serverGameStartedAt;
+      final data = await _serverProvider.fetchCurrent(
+          expectedSessionVersion: _ownedSessionVersion);
+      if (!_ownsSession(_ownedSessionVersion)) return null;
+      if (data == null) {
+        logs.insert(0, '育成状態を確認できませんでした。育成画面を開き直してください。');
+        return null;
+      }
+      if (!_initializeServerState(data) ||
+          _serverPlayerId != playerId ||
+          _serverCycleNo != cycleNo ||
+          !_sameGameInstance(_serverGameStartedAt, startedAt) ||
+          stageIndex.value < 2 ||
+          ended.value ||
+          !_canPerformAction(type)) {
+        logs.insert(0, '育成状態が変わりました。状態を確認してから開始してください。');
+        return null;
+      }
+      _miniGamePlayerId = playerId;
+      _miniGameCycleNo = cycleNo;
+      _miniGameStartedAt = startedAt;
+      _isMiniGameOpen = true;
+      return MiniGameSettings.fromJson(data['mini_game_settings']);
+    } catch (_) {
+      if (_ownsSession(_ownedSessionVersion)) {
+        logs.insert(0, 'ミニゲームの設定を取得できませんでした。通信状態を確認して再試行してください。');
+      }
+      return null;
+    } finally {
+      _isMiniGamePreparationPending = false;
+      cooldownTick.value++;
+    }
+  }
+
+  void finishMiniGamePreparation() {
+    _isMiniGameOpen = false;
+    _miniGamePlayerId = null;
+    _miniGameCycleNo = null;
+    _miniGameStartedAt = null;
+  }
+
   /// 仕事の専用画面を閉じた後、次の仕事開始を可能にします。
   void finishWorkPreparation() => _isWorkPreparationPending = false;
 
   /// 指定行動のクールタイムが終了しているかを返します。
   bool canPerform(TrainingActionType type) {
+    cooldownTick.value;
+    return !_isMiniGamePreparationPending && _canPerformAction(type);
+  }
+
+  bool _canPerformAction(TrainingActionType type) {
     cooldownTick.value;
     if (_pendingStageIndex != null ||
         (_debugTimeSavePending && type != TrainingActionType.work))
@@ -2810,6 +2890,7 @@ class TrainingGameController extends GetxController
         actionSuccessCount: miniGameResult?.tackleResult?.successCount,
         actionSuccessfulReactionTotalUs:
             miniGameResult?.tackleResult?.successfulReactionTotalUs,
+        actionTackleSettings: miniGameResult?.tackleResult?.settings,
         debugBypassCooldown: bypassCooldown,
         status: isPositiveEnd
             ? 'positive_end'
@@ -3126,6 +3207,13 @@ class TrainingGameController extends GetxController
 
   /// 完了したミニゲームの結果を、育成アクション1回分として反映します。
   void completeMiniGame(TrainingActionType type, MiniGameResult result) {
+    if (_isMiniGameOpen &&
+        (_miniGamePlayerId != _serverPlayerId ||
+            _miniGameCycleNo != _serverCycleNo ||
+            !_sameGameInstance(_miniGameStartedAt, _serverGameStartedAt))) {
+      logs.insert(0, '育成状態が変わったため、この結果を別の育成へ反映できません。');
+      return;
+    }
     if (type != TrainingActionType.tackle &&
         type != TrainingActionType.passAndRun) return;
     final expectedType = type == TrainingActionType.tackle
@@ -3137,7 +3225,10 @@ class TrainingGameController extends GetxController
 
   /// 指定した行動を実行し、メーターと傾向値を更新します。
   void perform(TrainingActionType type, {MiniGameResult? miniGameResult}) {
-    if (ended.value || evolutionStage.value != null || _debugTimeSavePending) {
+    if (_isMiniGamePreparationPending ||
+        ended.value ||
+        evolutionStage.value != null ||
+        _debugTimeSavePending) {
       return;
     }
     if (!_ownsSession(_ownedSessionVersion)) {

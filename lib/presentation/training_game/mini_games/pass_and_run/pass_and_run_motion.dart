@@ -1,81 +1,108 @@
 import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
 enum PassRunFacing { front, back }
 
 enum PassRunRunner { player, companion }
 
-/// 1プレイ中は固定する走行プロファイル。未配備の管理設定には依存しません。
+/// 1プレイ中は固定する走行プロファイル。
 /// 次のプレイは別seed、復路は別乱数列。表示の脚位相と衝突時計は分離します。
 class PassRunMotion {
-  PassRunMotion({required int seed, this.roundSeconds = 15})
-      : _outgoing = _PassRunTrajectory(seed, roundSeconds),
-        _incoming = _PassRunTrajectory(seed ^ 0x54a1, roundSeconds);
+  PassRunMotion({
+    required int seed,
+    this.roundSeconds = 15,
+    double speedScale = PassRunMotion.speedScale,
+  })  : runningSpeedScale = speedScale,
+        _outgoing = _PassRunTrajectory(seed, roundSeconds, speedScale),
+        _incoming = _PassRunTrajectory(seed ^ 0x54a1, roundSeconds, speedScale);
   static const speedScale = 1.15;
   static const forwardRate = .18 * speedScale;
   static const facingSettleSeconds = .08;
   static const turnDuration = Duration(milliseconds: 1000);
   final double roundSeconds;
+  final double runningSpeedScale;
+  double get runningForwardRate => .18 * runningSpeedScale;
   final _PassRunTrajectory _outgoing, _incoming;
   _PassRunTrajectory _trajectory(bool outbound) =>
       outbound ? _outgoing : _incoming;
   double yAt(double seconds, PassRunRunner runner, {bool outbound = true}) =>
       _trajectory(outbound)
           .y(seconds, runner == PassRunRunner.companion, outbound);
-  double worldVelocityYAt(double seconds, PassRunRunner runner,
-          {bool outbound = true}) =>
+  double worldVelocityYAt(
+    double seconds,
+    PassRunRunner runner, {
+    bool outbound = true,
+  }) =>
       _trajectory(outbound)
           .speed(seconds, runner == PassRunRunner.companion, outbound);
-  double distanceAt(double seconds, PassRunRunner runner,
-          {bool outbound = true}) =>
+  double distanceAt(
+    double seconds,
+    PassRunRunner runner, {
+    bool outbound = true,
+  }) =>
       _trajectory(outbound)
           .distance(seconds, runner == PassRunRunner.companion, outbound);
   static ({PassRunFacing from, PassRunFacing to, double progress}) facingAt(
-      double seconds, PassRunRunner runner,
-      {bool outbound = true}) {
+    double seconds,
+    PassRunRunner runner, {
+    bool outbound = true,
+  }) {
     final facing = outbound ? PassRunFacing.back : PassRunFacing.front;
     return (from: facing, to: facing, progress: 1);
   }
 
   /// 交換中央で前後順が逆でも本人と仲間・名前が重ならない回避経路。
   /// 小さい画面ではキャラ寸法に比例して回避幅も縮めます。
-  Offset turnOffset(double progress, PassRunRunner runner,
-      {required Size field, required double actorSize}) {
+  Offset turnOffset(
+    double progress,
+    PassRunRunner runner, {
+    required Size field,
+    required double actorSize,
+  }) {
     final mate = runner == PassRunRunner.companion;
     final p = Curves.easeInOut.transform(progress.clamp(0, 1).toDouble());
-    final start = Offset(field.width * (mate ? .75 : .25),
-        field.height * yAt(roundSeconds, runner));
-    final end = Offset(field.width * (mate ? .25 : .75),
-        field.height * yAt(0, runner, outbound: false));
+    final start = Offset(
+      field.width * (mate ? .75 : .25),
+      field.height * yAt(roundSeconds, runner),
+    );
+    final end = Offset(
+      field.width * (mate ? .25 : .75),
+      field.height * yAt(0, runner, outbound: false),
+    );
     final minGap = field.height *
         math.min(
-            yAt(roundSeconds, PassRunRunner.player) -
-                yAt(roundSeconds, PassRunRunner.companion),
-            yAt(0, PassRunRunner.player, outbound: false) -
-                yAt(0, PassRunRunner.companion, outbound: false));
+          yAt(roundSeconds, PassRunRunner.player) -
+              yAt(roundSeconds, PassRunRunner.companion),
+          yAt(0, PassRunRunner.player, outbound: false) -
+              yAt(0, PassRunRunner.companion, outbound: false),
+        );
     final scale = actorSize / 84;
     final bend = math.max(24 * scale, (150 * scale - minGap) / 2);
     // A narrow lane needs vertical clearance before the bodies cross horizontally.
     final lead = (actorSize / (field.width * .5) - .45).clamp(0.0, .3);
     final horizontal = lead == 0
         ? p
-        : Curves.easeInOut
-            .transform(((progress - lead) / (1 - 2 * lead)).clamp(0.0, 1.0));
+        : Curves.easeInOut.transform(
+            ((progress - lead) / (1 - 2 * lead)).clamp(0.0, 1.0),
+          );
     final middle = Offset.lerp(start, end, p)!;
     return Offset(start.dx + (end.dx - start.dx) * horizontal, middle.dy) +
         Offset(0, (mate ? -1 : 1) * bend * math.sin(math.pi * p));
   }
 
-  static PassRunFacing facingForVelocity(double velocityY,
-      {required PassRunFacing previous}) {
+  static PassRunFacing facingForVelocity(
+    double velocityY, {
+    required PassRunFacing previous,
+  }) {
     if (!velocityY.isFinite || velocityY.abs() <= 1e-9) return previous;
     return velocityY > 0 ? PassRunFacing.front : PassRunFacing.back;
   }
 }
 
 class _PassRunTrajectory {
-  static const speedFactor = PassRunMotion.speedScale;
-  _PassRunTrajectory(int seed, double roundSeconds) {
+  final double speedFactor;
+  _PassRunTrajectory(int seed, double roundSeconds, this.speedFactor) {
     final r = math.Random(seed);
     var time = 0.0;
     for (var i = 0;; i++) {
@@ -86,7 +113,7 @@ class _PassRunTrajectory {
         player: center + (i.isEven ? -gap : gap),
         mate: center + (i.isEven ? gap : -gap),
         playerWarp: (r.nextDouble() - .5) * .44,
-        mateWarp: (r.nextDouble() - .5) * .44
+        mateWarp: (r.nextDouble() - .5) * .44,
       ));
       if (time > (roundSeconds + 2) * speedFactor) break;
       time += 2.6 + r.nextDouble() * 1.2;
@@ -104,8 +131,10 @@ class _PassRunTrajectory {
           final fraction = .5 + warp * .4;
           // Pass-through waypoint: nonzero tangent, independent timing per runner.
           xs.add(a.time + (b.time - a.time) * fraction);
-          ys.add(value +
-              ((mate ? b.mate : b.player) - value) * (fraction + warp * .08));
+          ys.add(
+            value +
+                ((mate ? b.mate : b.player) - value) * (fraction + warp * .08),
+          );
         }
       }
       final slopes = List<double>.filled(xs.length, 0);
@@ -125,7 +154,7 @@ class _PassRunTrajectory {
     double player,
     double mate,
     double playerWarp,
-    double mateWarp
+    double mateWarp,
   })>[];
   final _tracks = <({List<double> x, List<double> y, List<double> m})>[];
   double y(double seconds, bool mate, bool up) {
