@@ -291,6 +291,32 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('育成期の進化本文だけを差し替え、他段階の本文と次へ操作を保つ', (tester) async {
+    configurePhone(tester);
+    Get.testMode = true;
+    addTearDown(() => Get.reset());
+    final controller = _DisplayFixtureController();
+    controller.isServerStateReady.value = true;
+    Get.put<TrainingGameController>(controller);
+    const message = '成長した鮫太郎と、いろんなことに挑戦してみましょう！！';
+
+    for (final stage in [1, 2, 3]) {
+      controller.stageIndex.value = stage;
+      controller.evolutionStage.value = stage;
+      await tester.pumpWidget(host(const TrainingGameScreen()));
+      await tester.pump();
+
+      expect(find.text('進化'), findsOneWidget);
+      expect(find.text(message), stage == 2 ? findsOneWidget : findsNothing);
+      expect(find.text('段階「${controller.currentStage.name}」へ進みました。'),
+          stage == 2 ? findsNothing : findsOneWidget);
+      await tester.tap(find.text('次へ'));
+      expect(controller.evolutionStage.value, isNull);
+      expect(controller.stageIndex.value, stage);
+      expect(tester.takeException(), isNull);
+    }
+  });
+
   testWidgets('卵を保持し、幼少の部屋と進化には支給newbornを表示する', (tester) async {
     configurePhone(tester);
     Get.testMode = true;
