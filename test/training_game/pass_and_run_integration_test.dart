@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:koto_blue_sharks/presentation/training_game/models/mini_game_settings.dart';
 import 'package:koto_blue_sharks/presentation/training_game/mini_games/pass_and_run/pass_and_run_direction_guide.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:koto_blue_sharks/app/services/server_time_clock.dart';
@@ -10,6 +11,7 @@ import 'package:koto_blue_sharks/presentation/training_game/mini_games/pass_and_
 void main() {
   var clock = DateTime.utc(2026, 10, 20);
   var currentMotionSeed = 54;
+  var currentSettings = const PassRunSettings();
   final player = find.byKey(const Key('pass-player'));
   final mate = find.byKey(const Key('pass-mate'));
   final ball = find.byKey(const Key('pass-ball'));
@@ -25,11 +27,15 @@ void main() {
     await t.pump(Duration(milliseconds: ms));
   }
 
-  Future<void> start(WidgetTester t, {int seed = 54}) async {
+  Future<void> start(WidgetTester t,
+      {int seed = 54,
+      PassRunSettings settings = const PassRunSettings()}) async {
     currentMotionSeed = seed;
+    currentSettings = settings;
     await t.pumpWidget(
       MaterialApp(
-          home: PassAndRunGameScreen(motionSeed: seed, now: () => clock)),
+          home: PassAndRunGameScreen(
+              motionSeed: seed, settings: settings, now: () => clock)),
     );
     final context = t.element(find.byType(PassAndRunGameScreen));
     await t.runAsync(() async {
@@ -66,10 +72,10 @@ void main() {
   Offset aimAtMate(WidgetTester t, double seconds) {
     final field = t.getRect(find.byKey(const Key('pass-field')));
     final origin = t.getCenter(ball);
-    final speed = field.width *
-        .5 /
-        (PassAndRunRules.standardPassDuration.inMicroseconds / 1000000);
-    final motion = PassRunMotion(seed: currentMotionSeed);
+    final speed =
+        field.width * .5 / (currentSettings.ballHalfFieldTravelMs / 1000);
+    final motion = PassRunMotion(
+        seed: currentMotionSeed, speedScale: currentSettings.runSpeedScale);
     var travel = .44;
     var target = Offset.zero;
     for (var i = 0; i < 24; i++) {
@@ -85,7 +91,19 @@ void main() {
   }
 
   Future<void> throwToMate(WidgetTester t, double seconds) async {
-    await t.flingFrom(t.getCenter(player), aimAtMate(t, seconds), 2000);
+    var elapsed = seconds;
+    var aim = aimAtMate(t, elapsed);
+    final outbound = find.text('往路').evaluate().isNotEmpty;
+    for (var i = 0;
+        i < 500 &&
+            PassAndRunRules.isForwardDirection(
+                deltaX: aim.dx, deltaY: aim.dy, outbound: outbound);
+        i++) {
+      await step(t, 8);
+      elapsed += .008;
+      aim = aimAtMate(t, elapsed);
+    }
+    await t.flingFrom(t.getCenter(player), aim, 2000);
     await t.pump();
   }
 
@@ -543,7 +561,7 @@ void main() {
     await start(t);
     for (final wait in [0, 3500]) {
       if (wait > 0) await step(t, wait);
-      await t.flingFrom(t.getCenter(player), const Offset(100, -1), 2000);
+      await t.flingFrom(t.getCenter(player), const Offset(100, -10), 2000);
       await t.pump();
       expect(find.text('前方パス　1秒間パス不可'), findsOneWidget);
       expect(trail, findsNothing);
@@ -585,7 +603,7 @@ void main() {
     await step(t, 80);
     expect(visual(t, player).facing, PassRunFacing.front);
     expect(visual(t, mate).facing, PassRunFacing.front);
-    await t.flingFrom(t.getCenter(player), const Offset(-100, 1), 2000);
+    await t.flingFrom(t.getCenter(player), const Offset(-100, 10), 2000);
     await t.pump();
     expect(find.text('前方パス　1秒間パス不可'), findsOneWidget);
     expect(trail, findsNothing);
@@ -633,7 +651,6 @@ void main() {
     await start(t);
     await throwToMate(t, 0);
     await catchAtMate(t);
-    await step(t, 160);
     expect(visual(t, mate).holding, isTrue);
     expect(trail, findsNothing);
     await step(t, 15100);
@@ -712,6 +729,92 @@ void main() {
         expect(clock.difference(begin), lessThan(const Duration(seconds: 15)));
       });
     }
+  }
+
+  for (final ballMs in [350, 650]) {
+    for (final field in [const Size(240, 568), const Size(402, 874)]) {
+      for (final frames in [
+        [8],
+        [100],
+        [17, 83, 41, 129]
+      ]) {
+        for (final outbound in [true, false]) {
+          testWidgets(
+              'sweep受球は球速端・狭幅・可変frameで一致 $ballMs $field $frames $outbound',
+              (t) async {
+            await t.binding.setSurfaceSize(field);
+            await start(t,
+                settings: PassRunSettings(ballHalfFieldTravelMs: ballMs));
+            if (!outbound) {
+              await step(t, 15000);
+              await step(t, 1000);
+            }
+            await throwToMate(t, 0);
+            var elapsed = 0;
+            for (var i = 0; elapsed < 5000; i++) {
+              final frame = frames[i % frames.length];
+              elapsed += frame;
+              await step(t, frame);
+              expect(ball, findsOneWidget);
+              if (find.textContaining('PASS 1').evaluate().isNotEmpty &&
+                  visual(t, player).holding) {
+                break;
+              }
+            }
+            expect(find.textContaining('PASS 1'), findsOneWidget);
+            expect(visual(t, player).holding, isTrue);
+            await t.flingFrom(
+                t.getCenter(player), Offset(outbound ? -120 : 120, 0), 2000);
+            await t.pump();
+            for (var i = 0;
+                i < 200 && find.textContaining('MISS').evaluate().isEmpty;
+                i++) {
+              await step(t, frames[i % frames.length]);
+            }
+            // 遠ざかる球はsweepでも誤って捕球しない。
+            expect(find.textContaining('PASS 1'), findsOneWidget);
+            expect(find.textContaining('MISS'), findsOneWidget);
+            await t.pumpWidget(const SizedBox());
+            await t.binding.setSurfaceSize(null);
+          });
+        }
+      }
+    }
+  }
+
+  for (final deadlineMs in [300, 700]) {
+    testWidgets('期限越えtickは期限内のsweepだけ得点する $deadlineMs', (t) async {
+      await start(t, settings: PassRunSettings(roundDurationMs: deadlineMs));
+      await t.flingFrom(t.getCenter(player), aimAtMate(t, 0), 2000);
+      await t.pump();
+      await step(t, 800);
+      expect(find.textContaining(deadlineMs == 700 ? 'PASS 1' : 'PASS 0'),
+          findsOneWidget);
+      expect(ball, findsOneWidget);
+    });
+  }
+
+  for (final frameMs in [33, 50, 100]) {
+    testWidgets('捕球後は低fpsでも球1個で返球し再入力できる $frameMs', (t) async {
+      await start(t);
+      await throwToMate(t, 0);
+      for (var i = 0;
+          i < 250 && find.textContaining('PASS 1').evaluate().isEmpty;
+          i++) {
+        await step(t, 4);
+      }
+      expect(find.textContaining('PASS 1'), findsOneWidget);
+      for (var i = 0; i < 5000 ~/ frameMs; i++) {
+        await step(t, frameMs);
+        expect(ball, findsOneWidget);
+        if (find.textContaining('PASS 1').evaluate().isNotEmpty &&
+            visual(t, player).holding) {
+          break;
+        }
+      }
+      expect(find.textContaining('PASS 1'), findsOneWidget);
+      expect(visual(t, player).holding, isTrue);
+    });
   }
 
   testWidgets('返球期限後ticker前の停止でも再開後に次のパスが可能', (t) async {
