@@ -52,7 +52,8 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
   static const _displayScale = .75;
   Duration get _turnDuration =>
       Duration(milliseconds: _settings.laneSwapDurationMs);
-  static const _passReturnDelay = Duration(milliseconds: 120);
+  // 80msの捕球接続に短い余裕を加える最短待機。描画frame数は保証しない。
+  static const _passReturnDelay = Duration(milliseconds: 96);
 
   _PassGamePhase _phase = _PassGamePhase.waiting;
   final _roundScores = <int>[0, 0];
@@ -63,6 +64,7 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
   DateTime? _roundStartedAt;
   DateTime? _penaltyUntil;
   DateTime? _passStartedAt;
+  Duration _collisionCheckedElapsed = Duration.zero;
   DateTime? _passArrivalAt;
   DateTime? _passReadyAt;
   Offset? _passStartOffset;
@@ -243,6 +245,7 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
         : null;
     _passReadyAt = null;
     _passStartedAt = null;
+    _collisionCheckedElapsed = Duration.zero;
     _passArrivalAt = null;
     _passStartOffset = null;
     _passTargetOffset = null;
@@ -303,6 +306,7 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
     _isBallLost = false;
     _pendingPassRoundIndex = null;
     _passStartedAt = null;
+    _collisionCheckedElapsed = Duration.zero;
     _passArrivalAt = null;
     _passReadyAt = null;
     _passStartOffset = null;
@@ -374,10 +378,11 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
       setState(() {});
       return;
     }
-    // 慣性なしの投球方向を、そのラウンドの攻撃方向と比較します。
+    final direction = PassAndRunRules.userPassDirection(flick);
+    // 補正後の投球方向を判定し、実際の球筋も同じ方向へ揃えます。
     if (PassAndRunRules.isForwardDirection(
-      deltaX: flick.deltaX,
-      deltaY: flick.deltaY,
+      deltaX: direction.deltaX,
+      deltaY: direction.deltaY,
       outbound: _isOutbound,
     )) {
       setState(() {
@@ -409,13 +414,17 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
     _isBallLost = false;
     _pendingPassRoundIndex = _roundIndex;
     _passStartedAt = now;
+    _collisionCheckedElapsed = Duration.zero;
     _passStartOffset = playerBall;
     _releaseBallGeometry = releaseGeometry;
     _releaseCollisionRadius = _collisionRadiusAt(
       PassRunCharacter.normal,
       _motionSeconds,
     );
-    _passTargetOffset = _flickExitOffset(start: start, current: current);
+    _passTargetOffset = _flickExitOffset(
+      start: start,
+      current: start + Offset(direction.deltaX, direction.deltaY),
+    );
     _passReturnStartOffset = null;
     _passReturnTargetOffset = null;
     // 基準速度を保つため、フリック先までの距離に応じて移動時間を延長します。
@@ -696,26 +705,79 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
         (_characterSize / PassAndRunCharacterVisual.canvasSize);
   }
 
-  double get _collisionBallRadius {
-    final from = _releaseCollisionRadius ??
-        _collisionRadiusAt(PassRunCharacter.normal, _motionSeconds);
-    final to = _collisionRadiusAt(PassRunCharacter.companion, _motionSeconds);
-    final progress =
-        (_passElapsed.inMicroseconds / _collisionBlendDuration.inMicroseconds)
-            .clamp(0, 1);
-    return from + (to - from) * progress;
-  }
+  /// 前回検査から期限内の終点まで、球と仲間の相対移動をsweepする。
+  /// pause中の壁時計を使わず、投球経過時間で保持する。
+  Offset? _sweptCatch(DateTime now, DateTime deadline) {
+    final started = _passStartedAt;
+    if (started == null ||
+        _passStartOffset == null ||
+        _passTargetOffset == null) {
+      return null;
+    }
+    final endUs = math.min(
+        _passTravelDuration.inMicroseconds,
+        math.min(now.difference(started).inMicroseconds,
+            deadline.difference(started).inMicroseconds));
+    var fromUs = _collisionCheckedElapsed.inMicroseconds;
+    if (endUs < fromUs) return null;
+    final startSeconds =
+        started.difference(_roundStartedAt!).inMicroseconds / 1000000;
+    Offset ballAt(int us) => Offset.lerp(_passStartOffset, _passTargetOffset,
+        (us / _passTravelDuration.inMicroseconds).clamp(0, 1))!;
+    double radiusAt(int us) {
+      final seconds = startSeconds + us / 1000000;
+      final from = _releaseCollisionRadius ??
+          _collisionRadiusAt(PassRunCharacter.normal, startSeconds);
+      final to = _collisionRadiusAt(PassRunCharacter.companion, seconds);
+      final blend = (us / _collisionBlendDuration.inMicroseconds).clamp(0, 1);
+      return from +
+          (to - from) * blend +
+          PassAndRunRules.mateCollisionRadius *
+              (_characterSize / PassAndRunCharacterVisual.canvasSize);
+    }
 
-  /// 表示中のボールが、現在位置の仲間に衝突しているかを返します。
-  bool _hasCollidedWithMate(Offset ball) {
-    final mate = _mateOffset;
-    return PassAndRunRules.hasCollided(
-      ballDeltaX: ball.dx - mate.dx,
-      ballDeltaY: ball.dy - mate.dy,
-      ballRadius: _collisionBallRadius,
-      mateRadius: PassAndRunRules.mateCollisionRadius *
-          (_characterSize / PassAndRunCharacterVisual.canvasSize),
-    );
+    // 半径が変わる240ms境界と220ms blend終端だけで区切る。
+    // 描画時間を固定刻みに細分化するループではない。
+    do {
+      final seconds = startSeconds + fromUs / 1000000;
+      final nextRadiusUs =
+          (((seconds * 1000000 / 240000).floor() + 1) * 240000 -
+              (startSeconds * 1000000).round());
+      var toUs = math.min(endUs, math.max(fromUs + 1, nextRadiusUs));
+      if (fromUs < _collisionBlendDuration.inMicroseconds) {
+        toUs = math.min(toUs, _collisionBlendDuration.inMicroseconds);
+      }
+      final startDelta =
+          ballAt(fromUs) - _mateOffsetAt(startSeconds + fromUs / 1000000);
+      final endDelta =
+          ballAt(toUs) - _mateOffsetAt(startSeconds + toUs / 1000000);
+      // 境界直前の半径で区間を解き、境界後の値は次区間で扱う。
+      final hit = PassAndRunRules.sweptCollision(
+        startX: startDelta.dx,
+        startY: startDelta.dy,
+        endX: endDelta.dx,
+        endY: endDelta.dy,
+        startRadius: radiusAt(fromUs),
+        endRadius: radiusAt(toUs > fromUs ? toUs - 1 : toUs),
+      );
+      if (hit != null) {
+        _collisionCheckedElapsed = Duration(microseconds: endUs);
+        return ballAt(fromUs + ((toUs - fromUs) * hit).round());
+      }
+      // 半径が不連続に増える境界が検査終端でも、境界後の円を検査する。
+      if (PassAndRunRules.hasCollided(
+        ballDeltaX: endDelta.dx,
+        ballDeltaY: endDelta.dy,
+        ballRadius: radiusAt(toUs),
+        mateRadius: 0,
+      )) {
+        _collisionCheckedElapsed = Duration(microseconds: endUs);
+        return ballAt(toUs);
+      }
+      fromUs = toUs;
+    } while (fromUs < endUs);
+    _collisionCheckedElapsed = Duration(microseconds: endUs);
+    return null;
   }
 
   /// 一時停止を考慮した現在のパス経過時間を返します。
@@ -759,6 +821,7 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
     _passScoreConfirmed = false;
     _pendingPassRoundIndex = null;
     _passStartedAt = null;
+    _collisionCheckedElapsed = Duration.zero;
     _passArrivalAt = null;
     _passReadyAt = null;
     _passStartOffset = null;
@@ -808,13 +871,13 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
     }
     var changed = false;
     final deadline = _roundStartedAt?.add(_roundDuration);
-    if (!_passScoreConfirmed &&
-        deadline != null &&
-        !now.isAfter(deadline) &&
-        _hasCollidedWithMate(_ballOffset)) {
+    final caught = !_passScoreConfirmed && deadline != null
+        ? _sweptCatch(now, deadline)
+        : null;
+    if (caught != null) {
       // 捕球後80msは承認済み非保持画と独立球で保持位置まで連続接続。
       // 最後に球中心・寸法・傾きが一致した瞬間だけ保持画へ切り替えます。
-      final caughtBall = _ballOffset;
+      final caughtBall = caught;
       final caughtGeometry = _ballGeometry;
       _catchBallDisplacement = caughtBall - _mateBallOffset;
       _catchBallGeometry = caughtGeometry;
