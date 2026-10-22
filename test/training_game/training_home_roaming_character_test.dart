@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -20,6 +21,7 @@ Widget _host({
           child: SizedBox(
             width: 200,
             child: TrainingHomeRoamingCharacter(
+              random: math.Random(2),
               prepareWalk: prepareWalk,
               preparationKey: preparationKey,
               builder: (_, isWalking) => SizedBox.expand(
@@ -83,6 +85,20 @@ void main() {
     expect(avatar.right, lessThanOrEqualTo(200));
   });
 
+  testWidgets('繰り返し歩行の距離が変化し、常に画面内に収まる', (tester) async {
+    await tester.pumpWidget(_host());
+    final positions = <double>{};
+    for (var i = 0; i < 120; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+      final rect = tester.getRect(find.byKey(_avatarKey));
+      expect(rect.left, greaterThanOrEqualTo(0));
+      expect(rect.right, lessThanOrEqualTo(200));
+      if (find.text('idle').evaluate().isNotEmpty) positions.add(rect.left);
+    }
+    expect(positions.length, greaterThan(3));
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
   testWidgets('enabled=falseで歩行を停止して中央に戻す', (tester) async {
     await tester.pumpWidget(_host());
     await tester.pump(const Duration(milliseconds: 1));
@@ -118,7 +134,8 @@ void main() {
     expect(find.text('walking'), findsOneWidget);
     expect(tester.getRect(find.byKey(_avatarKey)).left, closeTo(60, 0.01));
     await tester.pump(const Duration(milliseconds: 300));
-    expect(tester.getRect(find.byKey(_avatarKey)).left, greaterThan(60));
+    expect(
+        tester.getRect(find.byKey(_avatarKey)).left, isNot(closeTo(60, 0.01)));
   });
 
   testWidgets('衣装切替時に古い素材準備が終わっても歩行を始めない', (tester) async {
