@@ -43,6 +43,7 @@ dependencies:
   json_annotation: ^4.9.0
   freezed_annotation: ^2.4.1
   intl: ^0.20.3
+  just_audio: ^0.10.6
   shimmer: ^4.0.0
   flutter_html: ^3.0.0-beta.2
   flutter_widget_from_html: ^0.17.4
@@ -105,6 +106,9 @@ flutter:
 
   assets:
     - "assets/fonts/line_seed_jp/OFL.txt"
+    - "assets/audio/training_game/basket-path1.mp3"
+    - "assets/audio/training_game/cute-sad1.mp3"
+    - "assets/audio/training_game/sceneswitch1.mp3"
     # BEGIN GENERATED ASSET INPUTS
     # Regenerate after adding assets: dart tool/update_asset_inputs.dart --write
     # Check without edits: dart tool/update_asset_inputs.dart --check

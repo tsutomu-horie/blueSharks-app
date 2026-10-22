@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:koto_blue_sharks/app/services/training_game_sound_service.dart';
 
 import '../models/mini_game_result.dart';
 import '../../models/mini_game_settings.dart';
@@ -455,6 +456,11 @@ class _TackleGameScreenState extends State<TackleGameScreen>
     _canAdvanceAfterAttempt = false;
     if (_attempts.length >= _settings.setCount) {
       setState(() => _phase = _TacklePhase.gameResult);
+      unawaited(
+        TrainingGameSoundService.instance.play(
+          TrainingGameSoundEffect.resultDisplayed,
+        ),
+      );
       return;
     }
     _startAttempt();

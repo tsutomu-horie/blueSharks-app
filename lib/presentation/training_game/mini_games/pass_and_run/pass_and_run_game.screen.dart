@@ -3,6 +3,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
+import 'package:koto_blue_sharks/app/services/training_game_sound_service.dart';
 
 import '../models/mini_game_result.dart';
 import 'pass_and_run_character_visual.dart';
@@ -333,6 +334,11 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
       _remainingMilliseconds = 0;
       _phase = _PassGamePhase.result;
     });
+    unawaited(
+      TrainingGameSoundService.instance.play(
+        TrainingGameSoundEffect.resultDisplayed,
+      ),
+    );
   }
 
   /// フリック開始位置を記録します。
@@ -385,6 +391,11 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
       deltaY: direction.deltaY,
       outbound: _isOutbound,
     )) {
+      unawaited(
+        TrainingGameSoundService.instance.play(
+          TrainingGameSoundEffect.passFailed,
+        ),
+      );
       setState(() {
         _isForwardPass = true;
         _lastPassSucceeded = false;
@@ -884,6 +895,11 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
       _roundScores[_roundIndex]++;
       _passScoreConfirmed = true;
       _lastPassSucceeded = true;
+      unawaited(
+        TrainingGameSoundService.instance.play(
+          TrainingGameSoundEffect.passReceived,
+        ),
+      );
       _passTravelDuration = _passElapsed;
       _passArrivalAt = now;
       _passReadyAt = null;
@@ -892,6 +908,11 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
     if (!_passScoreConfirmed &&
         _passArrivalAt != null &&
         !now.isBefore(_passArrivalAt!)) {
+      unawaited(
+        TrainingGameSoundService.instance.play(
+          TrainingGameSoundEffect.passFailed,
+        ),
+      );
       _isBallLost = true;
       _penaltyUntil = now.add(_missPenalty);
       _clearPassCycle();
