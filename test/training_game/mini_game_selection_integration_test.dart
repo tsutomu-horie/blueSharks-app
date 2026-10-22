@@ -8,6 +8,7 @@ import 'package:koto_blue_sharks/presentation/training_game/mini_games/models/mi
 import 'package:koto_blue_sharks/presentation/training_game/mini_games/pass_and_run/pass_and_run_game.screen.dart';
 import 'package:koto_blue_sharks/presentation/training_game/mini_games/tackle/tackle_game.screen.dart';
 import 'package:koto_blue_sharks/presentation/training_game/models/training_game_models.dart';
+import 'package:koto_blue_sharks/presentation/training_game/models/mini_game_settings.dart';
 import 'package:koto_blue_sharks/presentation/training_game/training_game.screen.dart';
 
 class _SelectionFixture extends TrainingGameController {
@@ -20,6 +21,12 @@ class _SelectionFixture extends TrainingGameController {
 
   @override
   bool canPerform(TrainingActionType type) => !coolingDown;
+
+  // Navigation fixtures stay offline; real start-time fetching is covered by
+  // mini_game_start_settings_test.dart.
+  @override
+  Future<MiniGameSettings?> prepareMiniGame(TrainingActionType type) async =>
+      const MiniGameSettings();
 
   @override
   Duration cooldownRemaining(TrainingActionType type) =>
