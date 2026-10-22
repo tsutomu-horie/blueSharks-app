@@ -334,4 +334,27 @@ void main() {
     await initial;
     expect(MySharedPref.getGameGuideArticlesCache(), '[]');
   });
+  test('絞り込み前に未取得ページを読み込み、後半の記事も選択対象にする', () async {
+    final provider = _FakeGameGuideProvider([]);
+    provider.handler =
+        (page) async => page == 1 ? _page(1) : [_post(11), _post(12)];
+    final c = _controller(provider, save: false);
+    await c.loadInitial();
+    expect(await c.loadAllForFilters(), isTrue);
+    expect(provider.requestedPages, [1, 2]);
+    expect(c.guides, hasLength(12));
+    expect(c.isLoadingFilters.value, isFalse);
+  });
+  test('追加ページの失敗と同一ページの繰り返しで絞り込み準備を無限に続けない', () async {
+    final provider = _FakeGameGuideProvider(_page(1));
+    final c = _controller(provider, save: false);
+    await c.loadInitial();
+    expect(await c.loadAllForFilters(), isFalse);
+    expect(provider.requestedPages, [1, 2]);
+    expect(c.errorMessage.value, isNotNull);
+    expect(c.isLoadingFilters.value, isFalse);
+    provider.shouldFail = true;
+    expect(await c.loadAllForFilters(), isFalse);
+    expect(c.guides, hasLength(10));
+  });
 }
