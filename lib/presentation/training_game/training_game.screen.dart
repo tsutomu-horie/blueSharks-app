@@ -38,8 +38,12 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
           backgroundColor: Colors.white,
           body: SafeArea(
             child: Obx(() {
+              final shouldShowEvolution =
+                  controller.evolutionStage.value != null &&
+                      (!controller.ended.value ||
+                          controller.clearPosition.value != null);
               final content = controller.isServerStateReady.value
-                  ? controller.evolutionStage.value != null
+                  ? shouldShowEvolution
                       ? _buildEvolutionFlow()
                       : controller.ended.value
                           ? _buildEndingFlow(context)
@@ -202,53 +206,72 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
   Widget _buildEvolutionFlow() {
     final stage = controller.currentStage;
     final evolutionStage = controller.evolutionStage.value;
-    final visual = switch (evolutionStage) {
-      1 => '🐣\n幼少へ進化',
-      2 => '🦈\n育成期へ進化',
-      3 => '🦈\n成長期へ進化',
-      _ => '✨\n進化演出',
-    };
+    final isLastStage =
+        controller.stageIndex.value == TrainingGameController.stages.length - 1;
+    final isKnownEarlierEvolution = evolutionStage != null &&
+        evolutionStage > 0 &&
+        evolutionStage < TrainingGameController.stages.length - 1;
+    final isFirstTeam = isLastStage &&
+        !isKnownEarlierEvolution &&
+        (!controller.ended.value || controller.clearPosition.value != null);
+    final visual = isFirstTeam
+        ? '🦈\n一軍'
+        : switch (evolutionStage) {
+            1 => '🐣\n幼少へ進化',
+            2 => '🦈\n育成期へ進化',
+            3 => '🦈\n成長期へ進化',
+            _ => '${stage.name}\n進化',
+          };
     final currentBodyFrame =
         SametarohAssets.idleFramesForBodyKey(_bodyKey).first;
-    final confirmedFirstTeamFrame = evolutionStage == 4
-        ? SametarohAssets.positionFrameFor(controller.position)
-        : null;
+    final visualWidget = isFirstTeam
+        ? _buildFirstTeamEvolutionReveal()
+        : switch (evolutionStage) {
+            1 => _buildSuppliedStatic(SametarohAssets.newbornFrame),
+            2 => TrainingEvolutionReveal(
+                key: const ValueKey('training-evolution-2'),
+                beforeFrame: SametarohAssets.newbornFrame,
+                afterFrame: currentBodyFrame,
+                beforeScale: 0.62,
+              ),
+            3 => TrainingEvolutionReveal(
+                key: const ValueKey('training-evolution-3'),
+                beforeFrame: SametarohAssets.normalFrames.first,
+                afterFrame: currentBodyFrame,
+                // 分岐未確定時も通常形を保ち、成長の差はサイズで見せます。
+                beforeScale: 0.7,
+              ),
+            _ => _buildSuppliedStatic(currentBodyFrame),
+          };
+    final message = isFirstTeam
+        ? 'ついに、一軍の舞台へ！'
+        : switch (evolutionStage) {
+            2 => '成長した鮫太郎と、いろんなことに挑戦してみましょう！！',
+            3 => '成長した鮫太郎と、いろんなことに挑戦してみましょう！！',
+            _ => '段階「${stage.name}」へ進みました。',
+          };
     return _buildEndingPage(
       title: '進化',
       visual: visual,
-      visualWidget: switch (evolutionStage) {
-        1 => _buildSuppliedStatic(SametarohAssets.newbornFrame),
-        2 => TrainingEvolutionReveal(
-            key: const ValueKey('training-evolution-2'),
-            beforeFrame: SametarohAssets.newbornFrame,
-            afterFrame: currentBodyFrame,
-            beforeScale: 0.62,
-          ),
-        3 => TrainingEvolutionReveal(
-            key: const ValueKey('training-evolution-3'),
-            beforeFrame: SametarohAssets.normalFrames.first,
-            afterFrame: currentBodyFrame,
-            // 分岐未確定時も通常形を保ち、成長の差はサイズで見せます。
-            beforeScale: 0.7,
-          ),
-        4 => TrainingEvolutionReveal(
-            key: const ValueKey('training-evolution-4'),
-            beforeFrame: currentBodyFrame,
-            // 一軍段階ではサーバー確定済みのポジション姿を使います。
-            // 未確定なら予想の姿を出さず、現在の姿を成長演出で見せます。
-            afterFrame: confirmedFirstTeamFrame ?? currentBodyFrame,
-            beforeScale: confirmedFirstTeamFrame == null ? 0.7 : 0.82,
-          ),
-        _ => null,
-      },
-      message: switch (evolutionStage) {
-        2 => '成長した鮫太郎と、いろんなことに挑戦してみましょう！！',
-        3 => '成長した鮫太郎と、いろんなことに挑戦してみましょう！！',
-        4 => 'ついに、一軍の舞台へ！',
-        _ => '段階「${stage.name}」へ進みました。',
-      },
+      visualWidget: visualWidget,
+      message: message,
       buttonLabel: '次へ',
       onPressed: controller.advanceEvolution,
+    );
+  }
+
+  /// 一軍への進化を、確定済みポジション姿へ切り替える既存演出で表示します。
+  Widget _buildFirstTeamEvolutionReveal() {
+    final currentBodyFrame =
+        SametarohAssets.idleFramesForBodyKey(_bodyKey).first;
+    final confirmedFirstTeamFrame =
+        SametarohAssets.positionFrameFor(controller.position);
+    return TrainingEvolutionReveal(
+      key: const ValueKey('training-evolution-4'),
+      beforeFrame: currentBodyFrame,
+      // 未確定時は推測ユニフォームを避け、現在の姿で成長演出します。
+      afterFrame: confirmedFirstTeamFrame ?? currentBodyFrame,
+      beforeScale: confirmedFirstTeamFrame == null ? 0.7 : 0.82,
     );
   }
 
@@ -259,9 +282,12 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
     if (step == 0 && isPositive) {
       return _buildEndingPage(
         title: '進化',
-        visual: '✨\n進化演出',
+        visual: '🦈\n一軍',
+        visualWidget: _buildFirstTeamEvolutionReveal(),
+        message: 'ついに、一軍の舞台へ！',
         buttonLabel: '次へ',
         onPressed: controller.advanceEndingStep,
+        guardRapidTap: true,
       );
     }
     if (step == 1 && isPositive) {
@@ -272,6 +298,7 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
         message: controller.position,
         buttonLabel: '次へ',
         onPressed: controller.advanceEndingStep,
+        guardRapidTap: true,
       );
     }
     if (step <= 2) {
@@ -564,6 +591,7 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
     required VoidCallback? onPressed,
     String? message,
     Widget? visualWidget,
+    bool guardRapidTap = false,
   }) {
     return Padding(
       padding: EdgeInsets.all(20.w),
@@ -599,8 +627,15 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
           SizedBox(
             width: double.infinity,
             height: 52.h,
-            child:
-                ElevatedButton(onPressed: onPressed, child: Text(buttonLabel)),
+            child: guardRapidTap
+                ? _EndingStepAdvanceButton(
+                    label: buttonLabel,
+                    onPressed: onPressed,
+                  )
+                : ElevatedButton(
+                    onPressed: onPressed,
+                    child: Text(buttonLabel),
+                  ),
           ),
         ],
       ),
@@ -1197,5 +1232,52 @@ class _AdvanceTimeDialogState extends State<_AdvanceTimeDialog> {
     final value = int.tryParse(_minutesController.text.trim());
     if (value == null || value <= 0) return;
     Navigator.pop(context, value);
+  }
+}
+
+/// 完了後の次画面を連打で飛ばさないよう、短時間だけ操作を抑止します。
+class _EndingStepAdvanceButton extends StatefulWidget {
+  const _EndingStepAdvanceButton({
+    required this.label,
+    required this.onPressed,
+  });
+
+  final String label;
+  final VoidCallback? onPressed;
+
+  @override
+  State<_EndingStepAdvanceButton> createState() =>
+      _EndingStepAdvanceButtonState();
+}
+
+class _EndingStepAdvanceButtonState extends State<_EndingStepAdvanceButton> {
+  static const _debounce = Duration(milliseconds: 450);
+
+  Timer? _unlockTimer;
+  bool _locked = false;
+
+  void _advance() {
+    final onPressed = widget.onPressed;
+    if (_locked || onPressed == null) return;
+
+    setState(() => _locked = true);
+    _unlockTimer = Timer(_debounce, () {
+      if (mounted) setState(() => _locked = false);
+    });
+    onPressed();
+  }
+
+  @override
+  void dispose() {
+    _unlockTimer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ElevatedButton(
+      onPressed: _locked ? null : _advance,
+      child: Text(widget.label),
+    );
   }
 }
