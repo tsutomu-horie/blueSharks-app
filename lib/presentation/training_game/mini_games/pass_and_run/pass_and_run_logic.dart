@@ -53,13 +53,21 @@ abstract final class PassAndRunRules {
     return flick.distance >= minimumDistance && flick.speed >= minimumVelocity;
   }
 
-  /// 成立したユーザーフリックだけを対象に、真横付近の指のブレを吸収する。
+  /// 真横付近の前方へのブレだけを吸収する。合法な後方の狙いは変えない。
   /// 自動返球の合法判定には適用しない。
-  static ({double deltaX, double deltaY}) userPassDirection(PassFlick flick) {
+  static ({double deltaX, double deltaY}) userPassDirection(
+    PassFlick flick, {
+    required bool outbound,
+  }) {
     final horizontal = flick.deltaX.abs();
     final snap = isFlick(flick) &&
         horizontal > 0 &&
-        flick.deltaY.abs() <= horizontal * math.tan(5 * math.pi / 180);
+        flick.deltaY.abs() <= horizontal * math.tan(5 * math.pi / 180) &&
+        isForwardDirection(
+          deltaX: flick.deltaX,
+          deltaY: flick.deltaY,
+          outbound: outbound,
+        );
     return (deltaX: flick.deltaX, deltaY: snap ? 0 : flick.deltaY);
   }
 
