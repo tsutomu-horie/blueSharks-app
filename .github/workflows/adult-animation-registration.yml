@@ -35,6 +35,7 @@ jobs:
       - name: Check adult animation and game integration
         run: >-
           flutter test --no-pub --reporter expanded
+          test/training_game/training_home_idle_registration_test.dart
           test/training_game/grounded_frame_initialization_test.dart
           test/training_game/adult_frame_registration_test.dart
           test/training_game/sametaroh_asset_test.dart

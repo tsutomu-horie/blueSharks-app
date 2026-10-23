@@ -26,9 +26,17 @@ Widget host(Widget child) => ScreenUtilInit(
       ),
     );
 
-String shownAsset(WidgetTester tester) =>
-    (tester.widget<Image>(find.byType(Image).first).image as AssetImage)
-        .assetName;
+String shownAsset(WidgetTester tester) {
+  final home = find.byType(TrainingHomeCharacterFrameImage);
+  if (home.evaluate().isNotEmpty) {
+    return tester
+        .widget<TrainingHomeCharacterFrameImage>(home.first)
+        .frame
+        .asset;
+  }
+  return (tester.widget<Image>(find.byType(Image).first).image as AssetImage)
+      .assetName;
+}
 
 double _evolutionAssetOpacity(WidgetTester tester, SametarohFrame frame) {
   final image = find.descendant(

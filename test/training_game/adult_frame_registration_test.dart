@@ -243,6 +243,10 @@ void main() {
       final centers = <double>[];
       for (var i = 0; i < frames.idleFrames.length; i++) {
         final frame = frames.idleFrames[i];
+        if (TrainingHomeIdleRegistration.supports(frame)) {
+          await tester
+              .runAsync(() => TrainingHomeIdleRegistration.prepare(frame));
+        }
         final rendered = await _capture(
             tester,
             TrainingHomeCharacterFrameImage(
@@ -800,6 +804,10 @@ Future<ui.Image> _capture(WidgetTester tester, Widget child) async {
         .widgetList<SametarohCleanWarp>(find.byType(SametarohCleanWarp))
         .toList();
     await Future.wait(warps.map((w) => SametarohCleanWarp.prepare(w.frame)));
+    final home = tester.widgetList<TrainingHomeIdleRegistration>(
+        find.byType(TrainingHomeIdleRegistration));
+    await Future.wait(home
+        .map((widget) => TrainingHomeIdleRegistration.prepare(widget.frame)));
     final decorations =
         tester.widgetList<DecoratedBox>(find.byType(DecoratedBox));
     for (final box in decorations) {
