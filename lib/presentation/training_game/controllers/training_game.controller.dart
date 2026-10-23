@@ -1383,7 +1383,7 @@ class TrainingGameController extends GetxController
 
   /// 仕事画面を開く直前に、サーバー時刻による実施可否を取得します。
   Future<bool> prepareWork() async {
-    if (_isWorkPreparationPending) {
+    if (debugPositionBusy.value || _isWorkPreparationPending) {
       return false;
     }
     _isWorkPreparationPending = true;
@@ -1519,7 +1519,8 @@ class TrainingGameController extends GetxController
 
   bool _canPerformAction(TrainingActionType type) {
     cooldownTick.value;
-    if (_pendingStageIndex != null ||
+    if (debugPositionBusy.value ||
+        _pendingStageIndex != null ||
         (_debugTimeSavePending && type != TrainingActionType.work))
       return false;
     return _actionGate.canPerform(
@@ -1746,7 +1747,7 @@ class TrainingGameController extends GetxController
 
   /// デバッグ用に、サーバー・端末の育成データを初期パラメータ付きで初期化します。
   Future<Map<String, dynamic>?> resetDebugGame() {
-    if (!_ownsSession(_ownedSessionVersion)) {
+    if (debugPositionBusy.value || !_ownsSession(_ownedSessionVersion)) {
       return Future<Map<String, dynamic>?>.value();
     }
     // 先行する同期を完了させてから削除し、古い状態の再保存を防ぎます。
@@ -1897,6 +1898,7 @@ class TrainingGameController extends GetxController
 
   /// 現在の状態でチュートリアル時間を進められるかを返します。
   bool get isTutorialTimeActive =>
+      !debugPositionBusy.value &&
       isServerStateReady.value &&
       !_isAppInBackground &&
       evolutionStage.value == null &&
@@ -1978,6 +1980,7 @@ class TrainingGameController extends GetxController
   /// 終了済みプレイヤーが取得できないことを理由に新しい育成サイクルを開始しません。
   /// 新規開始は卵獲得画面で明示的に行います。
   Future<void> _restoreServerState() async {
+    if (debugPositionBusy.value) return;
     if (!_ownsSession(_ownedSessionVersion)) return;
     serverErrorMessage.value = '';
     // 復帰イベントが短時間に複数回発生しても、取得処理を直列化します。
@@ -2852,7 +2855,8 @@ class TrainingGameController extends GetxController
     if (!_ownsSession(expectedSessionVersion)) return;
     // 仕事はサーバー受理前に楽観更新するため、その結果が確定するまで
     // 退室など別経路の同期で増分を送信しないようにします。
-    if (_syncBlockedUntilServerRestore ||
+    if (debugPositionBusy.value ||
+        _syncBlockedUntilServerRestore ||
         (_isWorkSyncPending && action != TrainingActionType.work)) {
       return;
     }
@@ -3384,6 +3388,110 @@ class TrainingGameController extends GetxController
     _syncServer(action: type, result: miniGameResult);
   }
 
+  final debugPositionBusy = false.obs;
+  String get debugResolvedPosition =>
+      _positionNameFromCode(_serverPositionCode.value) ?? '判定前';
+
+  bool get _canDebugPosition =>
+      AppEnvironment.showsTrainingDebugUi &&
+      _ownsSession(_ownedSessionVersion) &&
+      !debugPositionBusy.value &&
+      !ended.value &&
+      !_syncRunning &&
+      !_syncRequested &&
+      !_hasUnsyncedLocalState &&
+      !_syncBlockedUntilServerRestore &&
+      !_hasUnknownSyncOutcome &&
+      !_hasCorruptPendingActionQueue &&
+      !_hasForeignPendingAction &&
+      !_isMiniGamePreparationPending &&
+      !isReturningHome.value &&
+      pendingSyncActionCount == 0 &&
+      !_debugTimeSavePending &&
+      _debugTimeSync == null &&
+      !_isMiniGameOpen &&
+      !_isWorkPreparationPending &&
+      _pendingStageIndex == null &&
+      isServerStateReady.value;
+
+  Future<Map<String, dynamic>> loadDebugPositionOptions() async {
+    await _restoreChain;
+    if (!_canDebugPosition) throw StateError('同期完了後にもう一度開いてください。');
+    return _serverProvider.debugPositionOptions(
+        expectedSessionVersion: _ownedSessionVersion);
+  }
+
+  Future<void> applyDebugPosition(Map<String, dynamic> target,
+      {required bool complete, String? positionCode}) async {
+    await _restoreChain;
+    if (!_canDebugPosition ||
+        target['id'] != _serverPlayerId ||
+        target['cycle_no'] != _serverCycleNo ||
+        target['lock_version'] != _serverLockVersion ||
+        !_sameGameInstance(
+            _gameStartedAtFrom(target['started_at']), _serverGameStartedAt)) {
+      throw StateError('対象の育成状態が変わりました。開き直してください。');
+    }
+    final session = _ownedSessionVersion;
+    debugPositionBusy.value = true;
+    try {
+      Map<String, dynamic> data;
+      try {
+        data = await _serverProvider.debugPositionCommand(
+            target: target,
+            complete: complete,
+            positionCode: positionCode,
+            expectedSessionVersion: session);
+      } catch (_) {
+        // 書込みを再送せず、完了後も取得できる専用読取りで結果を照合します。
+        final options = await _serverProvider.debugPositionOptions(
+            expectedSessionVersion: session);
+        data = Map<String, dynamic>.from(options['current_game'] as Map);
+        if (data['id'] != target['id'] ||
+            data['cycle_no'] != target['cycle_no'] ||
+            data['started_at'] != target['started_at'] ||
+            data['lock_version'] != (target['lock_version'] as int) + 1 ||
+            (complete
+                ? data['status'] != 'positive_end'
+                : data['position_code'] != positionCode)) {
+          rethrow;
+        }
+      }
+      if (!_ownsSession(session)) return;
+      if (data['id'] != target['id'] ||
+          data['cycle_no'] != target['cycle_no'] ||
+          data['started_at'] != target['started_at'] ||
+          data['lock_version'] != (target['lock_version'] as int) + 1 ||
+          (complete
+              ? data['status'] != 'positive_end'
+              : data['position_code'] != positionCode)) {
+        throw StateError('操作結果を確認できませんでした。');
+      }
+      _hasUnsyncedLocalState = false;
+      if (!_initializeServerState(data, restoreLocalStateOverride: false)) {
+        throw StateError('操作結果を復元できませんでした。');
+      }
+      await _saveLocalGameState();
+      if (complete) {
+        try {
+          await refreshUnlockedPositions();
+        } catch (_) {
+          if (_ownsSession(session)) {
+            logs.insert(0, '育成完了を保存しました。図鑑情報は再表示時に取得します。');
+          }
+        }
+      }
+    } catch (_) {
+      if (_ownsSession(session)) {
+        _syncBlockedUntilServerRestore = true;
+        serverErrorMessage.value = 'デバッグ操作の結果を確認できません。画面を開き直してください。';
+      }
+      rethrow;
+    } finally {
+      debugPositionBusy.value = false;
+    }
+  }
+
   /// 指定時間を進め、自然減衰と段階移行を処理します。
   void advanceTime(int hours) {
     advanceTimeMinutes(hours * 60);
@@ -3392,6 +3500,7 @@ class TrainingGameController extends GetxController
   /// 指定した分数を進め、自然減衰と段階移行を処理します。
   void advanceTimeMinutes(int minutes) {
     if (!AppEnvironment.showsTrainingDebugUi ||
+        debugPositionBusy.value ||
         minutes <= 0 ||
         _isDisposed ||
         _debugTimeSavePending ||
@@ -3513,6 +3622,7 @@ class TrainingGameController extends GetxController
 
   /// デバッグ操作として育成期の初期状態にします。
   Future<void> debugStartAtTraining() async {
+    if (debugPositionBusy.value) return;
     if (_pendingStageIndex != null || !_ownsSession(_ownedSessionVersion))
       return;
     try {
@@ -3717,7 +3827,8 @@ class TrainingGameController extends GetxController
 
   /// サーバー時刻を基準に、アプリ前面中に経過した本編の時間を処理します。
   void _advanceActiveMainProgress() {
-    if (stageIndex.value < 2 ||
+    if (debugPositionBusy.value ||
+        stageIndex.value < 2 ||
         ended.value ||
         evolutionStage.value != null ||
         _pendingStageIndex != null ||
