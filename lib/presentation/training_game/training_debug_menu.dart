@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import 'controllers/training_game.controller.dart';
+import 'package:koto_blue_sharks/utils/app_environment.dart';
 
 /// テスト用操作を用途別に並べます。保存・権限判定は既存処理に委ねます。
 class TrainingDebugMenu extends StatelessWidget {
@@ -21,7 +22,9 @@ class TrainingDebugMenu extends StatelessWidget {
   final VoidCallback onStartTraining;
 
   @override
-  Widget build(BuildContext context) => SafeArea(
+  Widget build(BuildContext context) => Obx(() => IgnorePointer(
+      ignoring: controller.debugPositionBusy.value,
+      child: SafeArea(
         child: ConstrainedBox(
           constraints: BoxConstraints(
             maxHeight: MediaQuery.sizeOf(context).height * .85,
@@ -36,7 +39,7 @@ class TrainingDebugMenu extends StatelessWidget {
                         '現在：${controller.day.value}日目 ／ ${controller.currentStage.name} ${controller.daysInStage.value}/${controller.currentStage.days ?? '-'}日',
                       ),
                       subtitle: Text(
-                        '${controller.clockLabel}\n分岐：${controller.branch ?? '判定前'} ／ ポジション：${controller.position}',
+                        '${controller.clockLabel}\n分岐：${controller.branch ?? '判定前'} ／ ポジション：${controller.position}\n確定位置：${controller.debugResolvedPosition}',
                       ),
                     )),
                 const Divider(),
@@ -130,6 +133,21 @@ class TrainingDebugMenu extends StatelessWidget {
                   ],
                 ),
                 const Divider(),
+                if (AppEnvironment.showsTrainingDebugUi) ...[
+                  ListTile(
+                    leading: const Icon(Icons.push_pin),
+                    title: const Text('進化先ポジションを固定・解除'),
+                    subtitle: const Text('現在の育成周期だけに適用。次の周期には引き継ぎません。'),
+                    onTap: () => _positionCommand(context, false),
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.flag),
+                    title: const Text('育成完了までスキップ'),
+                    subtitle: const Text('固定済み位置、又は現在の傾向から確定する位置で正常完了します。'),
+                    onTap: () => _positionCommand(context, true),
+                  ),
+                  const Divider(),
+                ],
                 const ListTile(title: Text('開始状態の変更')),
                 ListTile(
                   leading: const Icon(Icons.refresh),
@@ -161,7 +179,71 @@ class TrainingDebugMenu extends StatelessWidget {
             ),
           ),
         ),
-      );
+      )));
+
+  Future<void> _positionCommand(BuildContext context, bool complete) async {
+    try {
+      final options = await controller.loadDebugPositionOptions();
+      if (!context.mounted) return;
+      final target = Map<String, dynamic>.from(options['current_game'] as Map);
+      final positions = (options['positions'] as List).cast<Map>();
+      String? selected = target['position_code'] as String?;
+      if (!positions.any((p) => p['position_code'] == selected)) {
+        selected = null;
+      }
+      final confirmed = await showDialog<bool>(
+          context: context,
+          builder: (dialogContext) => StatefulBuilder(
+                builder: (dialogContext, setState) => AlertDialog(
+                  title: Text(complete ? '育成完了までスキップ' : '進化先を固定・解除'),
+                  content: Column(mainAxisSize: MainAxisSize.min, children: [
+                    Text('対象：育成ID ${target['id']} / 周期 ${target['cycle_no']}\n'
+                        '${complete ? '現在の育成を正常完了し、履歴・図鑑へ登録します。' : '指定位置は現在周期の傾向値より優先します。解除時は現在の傾向から大別を再判定し、位置は未確定へ戻します。'}\n'
+                        'テスト専用アカウントであることを確認してください。'),
+                    if (!complete)
+                      DropdownButton<String>(
+                        isExpanded: true,
+                        value: selected ?? '',
+                        items: [
+                          const DropdownMenuItem(
+                              value: '', child: Text('固定解除（未確定へ戻す）')),
+                          ...positions.map((p) => DropdownMenuItem(
+                              value: p['position_code'] as String,
+                              child: Text(p['name'] as String)))
+                        ],
+                        onChanged: (value) => setState(
+                            () => selected = value == '' ? null : value),
+                      ),
+                  ]),
+                  actions: [
+                    TextButton(
+                        onPressed: () => Navigator.pop(dialogContext, false),
+                        child: const Text('キャンセル')),
+                    FilledButton(
+                        onPressed: () => Navigator.pop(dialogContext, true),
+                        child: const Text('実行する')),
+                  ],
+                ),
+              ));
+      if (confirmed != true || !context.mounted) return;
+      await controller.applyDebugPosition(target,
+          complete: complete, positionCode: selected);
+      if (context.mounted) Navigator.pop(context);
+    } catch (error) {
+      if (!context.mounted) return;
+      await showDialog<void>(
+          context: context,
+          builder: (c) => AlertDialog(
+                title: const Text('デバッグ操作を実行できませんでした'),
+                content: Text('$error'),
+                actions: [
+                  TextButton(
+                      onPressed: () => Navigator.pop(c),
+                      child: const Text('閉じる'))
+                ],
+              ));
+    }
+  }
 
   Future<void> _confirm(BuildContext context, String title, String effect,
       VoidCallback action) async {
