@@ -1,7 +1,9 @@
 import 'dart:async';
 import 'dart:math' as math;
+import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import 'sametaroh_asset.dart';
 
@@ -354,8 +356,21 @@ class TrainingHomeCharacterFrameSet {
             inputs[i].pixels.bounds.width /
             inputs[i].pixels.imageSize.width,
     ];
+    // 待機は箒等のない足元中心、歩行は踏み替えを含む従来の外形を維持。
+    // 足を揃えた後も尻尾・腕を切らない共通キャンバス幅を確保する。
+    final registeredWidths = <double>[
+      for (var i = 0; i < inputs.length; i++)
+        if (inputs[i].frame.footAnchorX case final anchor?)
+          2 *
+              math.max(
+                (anchor - inputs[i].pixels.bounds.left) * inputs[i].scale,
+                (inputs[i].pixels.bounds.right - anchor) * inputs[i].scale,
+              )
+        else
+          normalizedOpaqueWidths[i],
+    ];
     final canvasSize = Size(
-      normalizedOpaqueWidths.reduce(math.max),
+      registeredWidths.reduce(math.max),
       targetVisibleHeight,
     );
     final normalizedFrames = <TrainingHomeCharacterFrame>[];
@@ -376,8 +391,12 @@ class TrainingHomeCharacterFrameSet {
             sourceSize.height /
             input.pixels.imageSize.height,
       );
+      final anchor = input.frame.footAnchorX;
+      final imageLeft = anchor == null
+          ? (canvasSize.width - sourceAlpha.width) / 2 - sourceAlpha.left
+          : canvasSize.width / 2 - anchor * input.scale;
       final visibleBounds = Rect.fromLTWH(
-        (canvasSize.width - sourceAlpha.width) / 2,
+        imageLeft + sourceAlpha.left,
         0,
         sourceAlpha.width,
         targetVisibleHeight,
@@ -388,7 +407,7 @@ class TrainingHomeCharacterFrameSet {
           sourceSize: sourceSize,
           canvasSize: canvasSize,
           imageOffset: Offset(
-            visibleBounds.center.dx - sourceAlpha.center.dx,
+            imageLeft,
             visibleBounds.bottom - sourceAlpha.bottom,
           ),
           visibleBounds: visibleBounds,
@@ -439,6 +458,9 @@ class TrainingHomeCharacterFrameSet {
         context,
         onError: (exception, stackTrace) => loaded = false,
       );
+      if (loaded && TrainingHomeIdleRegistration.supports(frame)) {
+        await TrainingHomeIdleRegistration.prepare(frame);
+      }
     } catch (_) {
       loaded = false;
     }
@@ -497,6 +519,19 @@ class TrainingHomeCharacterFrameImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (TrainingHomeIdleRegistration.supports(frame)) {
+      return SizedBox(
+          width: width,
+          height: height,
+          child: FittedBox(
+            fit: BoxFit.contain,
+            alignment: Alignment.bottomCenter,
+            child: SizedBox.fromSize(
+                size: frame.canvasSize,
+                child: TrainingHomeIdleRegistration(
+                    frame: frame, semanticLabel: semanticLabel)),
+          ));
+    }
     return SizedBox(
       width: width,
       height: height,
@@ -526,6 +561,124 @@ class TrainingHomeCharacterFrameImage extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// Registers only WTB stationary feet inside one connected actor image.
+/// SH keeps its original RGBA with the frame set’s whole-image translation.
+/// The ankle coverage blends continuously; no independent foot layer is used.
+class TrainingHomeIdleRegistration extends StatelessWidget {
+  const TrainingHomeIdleRegistration(
+      {required this.frame, this.semanticLabel, super.key});
+  final TrainingHomeCharacterFrame frame;
+  final String? semanticLabel;
+  static final _pending = <String, Future<ui.Image>>{};
+  static final _ready = <String, ui.Image>{};
+  static bool supports(TrainingHomeCharacterFrame frame) =>
+      frame.asset.contains('/wtb/idle_');
+
+  static Future<ui.Image> _canvas(TrainingHomeCharacterFrame frame) async {
+    final data = await rootBundle.load(frame.asset);
+    final codec = await ui.instantiateImageCodec(data.buffer.asUint8List());
+    final source = (await codec.getNextFrame()).image;
+    codec.dispose();
+    final recorder = ui.PictureRecorder();
+    Canvas(recorder).drawImageRect(
+        source,
+        Rect.fromLTWH(0, 0, source.width.toDouble(), source.height.toDouble()),
+        frame.imageOffset & frame.sourceSize,
+        Paint()..filterQuality = FilterQuality.low);
+    final picture = recorder.endRecording();
+    final image = await picture.toImage(
+        frame.canvasSize.width.ceil(), frame.canvasSize.height.ceil());
+    picture.dispose();
+    source.dispose();
+    return image;
+  }
+
+  static Future<ui.Image> prepare(TrainingHomeCharacterFrame frame) {
+    final ready = _ready[frame.asset];
+    if (ready != null) return Future.value(ready);
+    return _pending.putIfAbsent(
+        frame.asset,
+        () => _prepare(frame).catchError((Object error) {
+              _pending.remove(frame.asset);
+              throw error;
+            }));
+  }
+
+  static Future<ui.Image> _prepare(TrainingHomeCharacterFrame frame) async {
+    final first =
+        TrainingHomeCharacterFrameSet.forBodyKey('wtb').idleFrames.first;
+    final source = await _canvas(frame);
+    if (frame.asset == first.asset) {
+      _ready[frame.asset] = source;
+      return source;
+    }
+    final canonical = await prepare(first);
+    final bytes = (await source.toByteData(format: ui.ImageByteFormat.rawRgba))!
+        .buffer
+        .asUint8List();
+    final reference =
+        (await canonical.toByteData(format: ui.ImageByteFormat.rawRgba))!
+            .buffer
+            .asUint8List();
+    final w = source.width, h = source.height;
+    bool sole(List<int> pixels, int i) {
+      final alpha = pixels[i + 3];
+      if (alpha == 0) return false;
+      final r = pixels[i] * 255 / alpha,
+          g = pixels[i + 1] * 255 / alpha,
+          b = pixels[i + 2] * 255 / alpha;
+      return r < 40 && g > 45 && g < 125 && b > 110;
+    }
+
+    for (var y = h - 50; y < h; y++) {
+      final t = ((y - (h - 50)) / 14).clamp(0.0, 1.0);
+      final blend = t * t * (3 - 2 * t);
+      for (var x = 0; x < w; x++) {
+        final i = (y * w + x) * 4;
+        if (!sole(bytes, i) && !sole(reference, i)) continue;
+        for (var c = 0; c < 4; c++) {
+          bytes[i + c] =
+              (bytes[i + c] * (1 - blend) + reference[i + c] * blend).round();
+        }
+      }
+    }
+    final complete = Completer<ui.Image>();
+    ui.decodeImageFromPixels(
+        bytes, w, h, ui.PixelFormat.rgba8888, complete.complete);
+    final result = await complete.future;
+    source.dispose();
+    _ready[frame.asset] = result;
+    return result;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final first =
+        TrainingHomeCharacterFrameSet.forBodyKey('wtb').idleFrames.first;
+    return FutureBuilder<ui.Image>(
+      key: ValueKey(frame.asset),
+      initialData: _ready[frame.asset] ?? _ready[first.asset],
+      future: prepare(frame),
+      builder: (context, snapshot) => snapshot.hasData
+          ? Semantics(
+              label: semanticLabel,
+              image: true,
+              child: RawImage(image: snapshot.data, fit: BoxFit.fill))
+          : ClipRect(
+              child: Stack(children: [
+              Positioned(
+                left: first.imageOffset.dx,
+                top: first.imageOffset.dy,
+                width: first.sourceSize.width,
+                height: first.sourceSize.height,
+                child: Image.asset(first.asset,
+                    fit: BoxFit.fill, semanticLabel: semanticLabel),
+              )
+            ])),
     );
   }
 }

@@ -1,3 +1,4 @@
+import 'prepare_grounded_frames.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -69,6 +70,7 @@ Future<void> _openCare(
 }
 
 void main() {
+  setUpAll(prepareGroundedFrames);
   for (final body in <String?>[null, SametarohAssets.childBodyKey]) {
     for (final action in _actions) {
       if (body == SametarohAssets.childBodyKey &&
@@ -91,6 +93,8 @@ void main() {
         expect(find.byType(SametarohAnimatedImage), findsOneWidget);
         expect(results, isEmpty);
         await tester.pump(const Duration(milliseconds: 1));
+        // 補正画像準備の実asyncを排出し、500msのfake clockは進めない。
+        await tester.runAsync(() => Future<void>.delayed(Duration.zero));
         await tester.pump();
         final done = tester
             .widget<SametarohFrameImage>(find.byType(SametarohFrameImage));

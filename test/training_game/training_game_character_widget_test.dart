@@ -1,3 +1,4 @@
+import 'prepare_grounded_frames.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -25,9 +26,17 @@ Widget host(Widget child) => ScreenUtilInit(
       ),
     );
 
-String shownAsset(WidgetTester tester) =>
-    (tester.widget<Image>(find.byType(Image).first).image as AssetImage)
-        .assetName;
+String shownAsset(WidgetTester tester) {
+  final home = find.byType(TrainingHomeCharacterFrameImage);
+  if (home.evaluate().isNotEmpty) {
+    return tester
+        .widget<TrainingHomeCharacterFrameImage>(home.first)
+        .frame
+        .asset;
+  }
+  return (tester.widget<Image>(find.byType(Image).first).image as AssetImage)
+      .assetName;
+}
 
 double _evolutionAssetOpacity(WidgetTester tester, SametarohFrame frame) {
   final image = find.descendant(
@@ -46,15 +55,20 @@ double _evolutionAssetOpacity(WidgetTester tester, SametarohFrame frame) {
       : tester.widget<Opacity>(opacity.first).opacity;
 }
 
-String shownCareAsset(WidgetTester tester) => (tester
-        .widget<Image>(find
-            .descendant(
+Future<String> shownCareAsset(WidgetTester tester) async {
+  // Engine image preparation completes on the real async queue, independently
+  // of the fake clock used to assert the five-second action timer.
+  await tester.runAsync(() => Future<void>.delayed(Duration.zero));
+  await tester.pump();
+  return tester
+      .widget<SametarohFrameImage>(find
+          .descendant(
               of: find.byType(TrainingGameCareActionScreen),
-              matching: find.byType(Image),
-            )
-            .first)
-        .image as AssetImage)
-    .assetName;
+              matching: find.byType(SametarohFrameImage))
+          .last)
+      .frame
+      .asset;
+}
 
 void configurePhone(WidgetTester tester) {
   tester.view.physicalSize = const Size(375, 812);
@@ -111,8 +125,6 @@ class _DisplayFixtureController extends TrainingGameController {
   // ignore: must_call_super
   void onInit() {}
   @override
-  void onClose() => super.onClose();
-  @override
   String get position => fixturePosition;
   @override
   String? get branch => stageIndex.value < 3 ? null : fixtureBranch;
@@ -145,6 +157,7 @@ class _DisplayFixtureController extends TrainingGameController {
 }
 
 void main() {
+  setUpAll(prepareGroundedFrames);
   setUpAll(() async {
     final lineSeed = FontLoader('LINESeedJP')
       ..addFont(
@@ -315,8 +328,14 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
     await tester.tap(find.text('5秒で自動完了します。画面タップでスキップ'));
+    await tester.runAsync(() => Future<void>.delayed(Duration.zero));
     await tester.pump();
-    expect(shownAsset(tester), endsWith('/sh/clean_done.png'));
+    expect(
+        tester
+            .widget<SametarohFrameImage>(find.byType(SametarohFrameImage).last)
+            .frame
+            .asset,
+        endsWith('/sh/clean_done.png'));
     await tester.pump(const Duration(milliseconds: 499));
     expect(result, isNull);
     await tester.pump(const Duration(milliseconds: 1));
@@ -545,7 +564,7 @@ void main() {
           find.byType(TrainingGameCareActionScreen));
       expect(care.bodyKey, SametarohAssets.childBodyKey);
       expect(care.actionType, entry.key);
-      expect(shownCareAsset(tester),
+      expect(await shownCareAsset(tester),
           'assets/images/training_game/child_care/${entry.key.name}_1.png');
       await tester.tap(find.byTooltip('お世話を中止'));
       await pumpRouteTransition(tester);
@@ -563,7 +582,7 @@ void main() {
                 find.byType(TrainingGameCareActionScreen))
             .bodyKey,
         isNull);
-    expect(shownCareAsset(tester),
+    expect(await shownCareAsset(tester),
         'assets/images/sametaroh/eating_sametaroh_1.png');
     await tester.tap(find.byTooltip('お世話を中止'));
     await pumpRouteTransition(tester);
@@ -753,7 +772,7 @@ void main() {
         expect(care.actionType, action);
         final initial =
             SametarohAssets.careFramesFor(action, bodyKey: entry.value).first;
-        expect(shownCareAsset(tester), initial.asset);
+        expect(await shownCareAsset(tester), initial.asset);
         expect(controller.callbackTrace,
             action == TrainingActionType.work ? ['prepareWork'] : isEmpty);
         await tester.tap(find.byTooltip('お世話を中止'));
@@ -772,7 +791,8 @@ void main() {
       // 操作せず5秒に到達すると既存の完了・効果反映経路へ進む。
       await tester.pump(const Duration(milliseconds: 4700));
       await tester.pump();
-      expect(shownCareAsset(tester), endsWith('/${entry.value}/work_done.png'));
+      expect(await shownCareAsset(tester),
+          endsWith('/${entry.value}/work_done.png'));
       await tester.pump(const Duration(milliseconds: 499));
       expect(controller.callbackTrace, ['prepareWork']);
       await tester.pump(const Duration(milliseconds: 1));

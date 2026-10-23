@@ -44,7 +44,7 @@ class TrainingCareScene {
       return completed
           ? const TrainingCareScene._(
               'assets/images/training_game/scenes/rest_room_day.png',
-              Rect.fromLTWH(34.1395, 123.0274, 95.85, 67.5),
+              Rect.fromLTWH(34.215, 120.8561, 95.85, 67.5),
             )
           : const TrainingCareScene._(
               'assets/images/training_game/scenes/rest_room_night.png',

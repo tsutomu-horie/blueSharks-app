@@ -250,10 +250,13 @@ void main() {
           reason: frame.asset,
         );
         expect(
-          frame.visibleBounds.center.dx,
-          closeTo(frames.canvasSize.width / 2, 0.001),
+          frame.visibleBounds.left,
+          greaterThanOrEqualTo(-0.001),
           reason: frame.asset,
         );
+        expect(frame.visibleBounds.right,
+            lessThanOrEqualTo(frames.canvasSize.width + 0.001),
+            reason: frame.asset);
       }
     }
   });
