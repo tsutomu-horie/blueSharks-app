@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:koto_blue_sharks/app/services/training_game_sound_service.dart';
 
 import '../models/mini_game_result.dart';
 import '../../models/mini_game_settings.dart';
@@ -29,6 +30,7 @@ class TackleGameScreen extends StatefulWidget {
   const TackleGameScreen({
     super.key,
     this.random,
+    this.soundService,
     this.settings = const TackleSettings(),
   });
 
@@ -36,12 +38,22 @@ class TackleGameScreen extends StatefulWidget {
 
   final Random? random;
 
+  /// 結果音の接続をプラグインなしで検証する差し替え点です。
+  @visibleForTesting
+  final TrainingGameSoundService? soundService;
+
   @override
   State<TackleGameScreen> createState() => _TackleGameScreenState();
 }
 
 class _TackleGameScreenState extends State<TackleGameScreen>
     with WidgetsBindingObserver, SingleTickerProviderStateMixin {
+  void _playSound(TrainingGameSoundEffect effect) {
+    unawaited(
+      (widget.soundService ?? TrainingGameSoundService.instance).play(effect),
+    );
+  }
+
   final _contactFieldKey = GlobalKey();
   final _contactPlayerKey = GlobalKey();
   final _contactOpponentKey = GlobalKey();
@@ -455,6 +467,7 @@ class _TackleGameScreenState extends State<TackleGameScreen>
     _canAdvanceAfterAttempt = false;
     if (_attempts.length >= _settings.setCount) {
       setState(() => _phase = _TacklePhase.gameResult);
+      _playSound(TrainingGameSoundEffect.resultDisplayed);
       return;
     }
     _startAttempt();

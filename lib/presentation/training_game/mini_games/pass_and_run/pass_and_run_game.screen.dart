@@ -3,6 +3,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
+import 'package:koto_blue_sharks/app/services/training_game_sound_service.dart';
 
 import '../models/mini_game_result.dart';
 import 'pass_and_run_character_visual.dart';
@@ -23,6 +24,7 @@ class PassAndRunGameScreen extends StatefulWidget {
     super.key,
     this.now,
     this.motionSeed,
+    this.soundService,
     this.settings = const PassRunSettings(),
   });
 
@@ -30,6 +32,10 @@ class PassAndRunGameScreen extends StatefulWidget {
 
   @visibleForTesting
   final int? motionSeed;
+
+  /// 受球・失敗・結果音の接続をプラグインなしで検証する差し替え点です。
+  @visibleForTesting
+  final TrainingGameSoundService? soundService;
 
   /// 入力・ticker・停止復帰を同じ瞬間で検証するための時計注入点です。
   /// 通常画面は育成ゲームの共通サーバー時計を使います。
@@ -54,6 +60,13 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
   static const _displayScale = .75;
   Duration get _turnDuration =>
       Duration(milliseconds: _settings.laneSwapDurationMs);
+
+  void _playSound(TrainingGameSoundEffect effect) {
+    unawaited(
+      (widget.soundService ?? TrainingGameSoundService.instance).play(effect),
+    );
+  }
+
   // 80msの捕球接続に短い余裕を加える最短待機。描画frame数は保証しない。
   static const _passReturnDelay = Duration(milliseconds: 96);
 
@@ -388,6 +401,7 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
       _remainingMilliseconds = 0;
       _phase = _PassGamePhase.result;
     });
+    _playSound(TrainingGameSoundEffect.resultDisplayed);
   }
 
   /// フリック開始位置を記録します。
@@ -443,6 +457,7 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
       deltaY: direction.deltaY,
       outbound: _isOutbound,
     )) {
+      _playSound(TrainingGameSoundEffect.passFailed);
       setState(() {
         _isForwardPass = true;
         _lastPassSucceeded = false;
@@ -1079,6 +1094,7 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
       _roundScores[_roundIndex]++;
       _passScoreConfirmed = true;
       _lastPassSucceeded = true;
+      _playSound(TrainingGameSoundEffect.passReceived);
       _passTravelDuration = _passElapsed;
       _passArrivalAt = now;
       final seconds = _motionSeconds;
@@ -1129,6 +1145,7 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
     if (!_passScoreConfirmed &&
         _passArrivalAt != null &&
         !now.isBefore(_passArrivalAt!)) {
+      _playSound(TrainingGameSoundEffect.passFailed);
       _isBallLost = true;
       _penaltyUntil = now.add(_missPenalty);
       _clearPassCycle();

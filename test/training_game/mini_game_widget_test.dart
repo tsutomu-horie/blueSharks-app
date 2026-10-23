@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:koto_blue_sharks/presentation/training_game/mini_games/pass_and_run/pass_and_run_motion.dart';
@@ -6,6 +8,8 @@ import 'package:koto_blue_sharks/presentation/training_game/mini_games/pass_and_
 import 'package:koto_blue_sharks/presentation/training_game/mini_games/mini_game_selection_thumbnail.dart';
 import 'package:koto_blue_sharks/presentation/training_game/mini_games/pass_and_run/pass_and_run_game.screen.dart';
 import 'package:koto_blue_sharks/presentation/training_game/mini_games/tackle/tackle_game.screen.dart';
+import 'package:koto_blue_sharks/presentation/training_game/models/mini_game_settings.dart';
+import 'recording_training_game_sound.dart';
 
 void main() {
   var serverTime = DateTime.utc(2026, 10, 8);
@@ -274,5 +278,38 @@ void main() {
       tester.widget<PassAndRunCharacterVisual>(player).facing,
       PassRunFacing.front,
     );
+  });
+
+  testWidgets('No.40タックル結果フックはsceneswitch1を再生する', (tester) async {
+    final sounds = RecordingTrainingGameSound();
+    addTearDown(sounds.dispose);
+    await tester.pumpWidget(
+      MaterialApp(
+        home: TackleGameScreen(
+          random: Random(5),
+          settings: const TackleSettings(setCount: 1),
+          soundService: sounds.service,
+        ),
+      ),
+    );
+    await tester.tap(find.text('スタート'));
+    await tester.pump();
+    await advance(tester, const Duration(milliseconds: 1400));
+    await tester.tap(find.text('上をタップ ▲'));
+    await tester.pump();
+    await advance(tester, const Duration(milliseconds: 650));
+
+    expect(find.text('SET 1 / 1'), findsOneWidget);
+    expect(sounds.playedAssetPaths, isEmpty);
+    await tester.tap(find.text('SET 1 / 1'));
+    await tester.pump();
+
+    expect(find.text('総合ランク'), findsOneWidget);
+    expect(sounds.createdAssetPaths, [
+      'assets/audio/training_game/sceneswitch1.mp3',
+    ]);
+    expect(sounds.playedAssetPaths, [
+      'assets/audio/training_game/sceneswitch1.mp3',
+    ]);
   });
 }

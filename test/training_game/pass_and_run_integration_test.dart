@@ -5,10 +5,12 @@ import 'package:koto_blue_sharks/presentation/training_game/models/mini_game_set
 import 'package:koto_blue_sharks/presentation/training_game/mini_games/pass_and_run/pass_and_run_direction_guide.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:koto_blue_sharks/app/services/server_time_clock.dart';
+import 'package:koto_blue_sharks/app/services/training_game_sound_service.dart';
 import 'package:koto_blue_sharks/presentation/training_game/mini_games/pass_and_run/pass_and_run_motion.dart';
 import 'package:koto_blue_sharks/presentation/training_game/mini_games/pass_and_run/pass_and_run_logic.dart';
 import 'package:koto_blue_sharks/presentation/training_game/mini_games/pass_and_run/pass_and_run_character_visual.dart';
 import 'package:koto_blue_sharks/presentation/training_game/mini_games/pass_and_run/pass_and_run_game.screen.dart';
+import 'recording_training_game_sound.dart';
 
 void main() {
   var clock = DateTime.utc(2026, 10, 20);
@@ -32,13 +34,17 @@ void main() {
 
   Future<void> start(WidgetTester t,
       {int seed = 54,
-      PassRunSettings settings = const PassRunSettings()}) async {
+      PassRunSettings settings = const PassRunSettings(),
+      TrainingGameSoundService? soundService}) async {
     currentMotionSeed = seed;
     currentSettings = settings;
     await t.pumpWidget(
       MaterialApp(
           home: PassAndRunGameScreen(
-              motionSeed: seed, settings: settings, now: () => clock)),
+              motionSeed: seed,
+              settings: settings,
+              now: () => clock,
+              soundService: soundService)),
     );
     final context = t.element(find.byType(PassAndRunGameScreen));
     await t.runAsync(() async {
@@ -674,7 +680,9 @@ void main() {
   });
 
   testWidgets('上下移動の向きに関係なく攻撃方向への投球は無得点・1秒制限', (t) async {
-    await start(t);
+    final sounds = RecordingTrainingGameSound();
+    addTearDown(sounds.dispose);
+    await start(t, soundService: sounds.service);
     for (final wait in [0, 3500]) {
       if (wait > 0) await step(t, wait);
       await t.flingFrom(t.getCenter(player), const Offset(100, -10), 2000);
@@ -687,6 +695,13 @@ void main() {
       await t.pump();
       expect(trail, findsNothing);
     }
+    expect(sounds.createdAssetPaths, [
+      'assets/audio/training_game/cute-sad1.mp3',
+    ]);
+    expect(sounds.playedAssetPaths, [
+      'assets/audio/training_game/cute-sad1.mp3',
+      'assets/audio/training_game/cute-sad1.mp3',
+    ]);
     await step(t, 2100);
     await t.flingFrom(t.getCenter(player), const Offset(-100, 0), 2000);
     await t.pump();
@@ -1164,4 +1179,58 @@ void main() {
       expect(t.takeException(), isNull);
     });
   }
+
+  testWidgets('No.40受球フックはbasket-path1を再生する', (t) async {
+    final sounds = RecordingTrainingGameSound();
+    addTearDown(sounds.dispose);
+    await start(t, seed: 3, soundService: sounds.service);
+    await step(t, 800);
+    await throwToMate(t, .8);
+    await catchAtMate(t);
+
+    expect(sounds.createdAssetPaths, [
+      'assets/audio/training_game/basket-path1.mp3',
+    ]);
+    expect(sounds.playedAssetPaths, [
+      'assets/audio/training_game/basket-path1.mp3',
+    ]);
+  });
+
+  testWidgets('No.40失敗フックはcute-sad1を再生する', (t) async {
+    final sounds = RecordingTrainingGameSound();
+    addTearDown(sounds.dispose);
+    await start(t, soundService: sounds.service);
+    await t.flingFrom(t.getCenter(player), const Offset(-100, 0), 2000);
+    await t.pump();
+    await step(t, 500);
+
+    expect(find.textContaining('MISS'), findsOneWidget);
+    expect(sounds.createdAssetPaths, [
+      'assets/audio/training_game/cute-sad1.mp3',
+    ]);
+    expect(sounds.playedAssetPaths, [
+      'assets/audio/training_game/cute-sad1.mp3',
+    ]);
+  });
+
+  testWidgets('No.40パス＆ラン結果フックはsceneswitch1を再生する', (t) async {
+    final sounds = RecordingTrainingGameSound();
+    addTearDown(sounds.dispose);
+    const settings = PassRunSettings(
+      roundDurationMs: 10000,
+      laneSwapDurationMs: 800,
+    );
+    await start(t, settings: settings, soundService: sounds.service);
+    await step(t, 10000);
+    await step(t, 800);
+    await step(t, 10100);
+
+    expect(find.text('メインへ戻る'), findsOneWidget);
+    expect(sounds.createdAssetPaths, [
+      'assets/audio/training_game/sceneswitch1.mp3',
+    ]);
+    expect(sounds.playedAssetPaths, [
+      'assets/audio/training_game/sceneswitch1.mp3',
+    ]);
+  });
 }
