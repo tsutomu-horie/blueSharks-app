@@ -1,0 +1,73 @@
+asset,body,pose,kind,sourceAnchor,oldCanvasAnchor,offsetX,newCanvasAnchor
+assets/images/sametaroh/normal_sameraroh_1.png,base,idle_1,"feet midpoint (lower silhouette, median rows 3-12)",72.5,83.5,0.0,83.5
+assets/images/sametaroh/normal_sametaroh_2.png,base,idle_2,"feet midpoint (lower silhouette, median rows 3-12)",87.0,87.0,-3.5,83.5
+assets/images/sametaroh/eating_sametaroh_start.png,base,meal_start,desk front midpoint,146.0,146.0,0.0,146.0
+assets/images/sametaroh/eating_sametaroh_1.png,base,meal_1,desk front midpoint,144.0,146.0,0.0,146.0
+assets/images/sametaroh/eating_sametaroh_2.png,base,meal_2,desk front midpoint,145.0,147.0,-1.0,146.0
+assets/images/sametaroh/eating_complete_sametaroh.png,base,meal_done,desk front midpoint,145.0,146.0,0.0,146.0
+assets/images/sametaroh/claening_sametaroh_1.png,base,clean_1,"feet midpoint (lower silhouette, median rows 3-12)",60.0,68.0,0.0,68.0
+assets/images/sametaroh/cleaning_sametaroh_2.png,base,clean_2,"feet midpoint (lower silhouette, median rows 3-12)",102.5,111.5,-43.5,68.0
+assets/images/sametaroh/cleaning_complete_sametaroh.png,base,clean_done,"feet midpoint (lower silhouette, median rows 3-12)",108.0,108.0,-40.0,68.0
+assets/images/sametaroh/sleeping_sametaroh_1.png,base,rest_1,bed left mattress edge,9,9.0,0.0,9.0
+assets/images/sametaroh/sleeping_sametaroh_2.png,base,rest_2,bed left mattress edge,9,12.0,-3.0,9.0
+assets/images/sametaroh/sleeping_complete_sametaroh.png,base,rest_done,bed left mattress edge,8,8.0,1.0,9.0
+assets/images/sametaroh/training_sametarohj_1.png,base,squat_1,"feet midpoint (lower silhouette, median rows 3-12)",87.0,101.0,0.0,101.0
+assets/images/sametaroh/training_sametaroh_2.png,base,squat_2,"feet midpoint (lower silhouette, median rows 3-12)",97.5,99.5,1.5,101.0
+assets/images/sametaroh/training_complete_sametaroh.png,base,squat_done,"feet midpoint (lower silhouette, median rows 3-12)",126.5,126.5,-25.5,101.0
+assets/images/sametaroh/working_sametaroh_1.png,base,work_1,desk front midpoint,145.0,155.0,0.0,155.0
+assets/images/sametaroh/working_sametaroh_2.png,base,work_2,desk front midpoint,145.0,154.0,1.0,155.0
+assets/images/sametaroh/warking_complete_sametaroh.png,base,work_done,desk front midpoint,144.0,144.0,11.0,155.0
+assets/images/training_game/main/pr/idle_1.png,pr,idle_1,"feet midpoint (lower silhouette, median rows 3-12)",111.0,111.0,0.0,111.0
+assets/images/training_game/main/pr/idle_2.png,pr,idle_2,"feet midpoint (lower silhouette, median rows 3-12)",104.0,104.0,7.0,111.0
+assets/images/training_game/main/pr/clean_1.png,pr,clean_1,"feet midpoint (lower silhouette, median rows 3-12)",67.0,75.5,0.0,75.5
+assets/images/training_game/main/pr/clean_2.png,pr,clean_2,"feet midpoint (lower silhouette, median rows 3-12)",100.0,107.5,-32.0,75.5
+assets/images/training_game/main/pr/clean_done.png,pr,clean_done,"feet midpoint (lower silhouette, median rows 3-12)",104.0,104.0,-28.5,75.5
+assets/images/training_game/main/pr/squat_1.png,pr,squat_1,"feet midpoint (lower silhouette, median rows 3-12)",96.0,107.0,0.0,107.0
+assets/images/training_game/main/pr/squat_2.png,pr,squat_2,"feet midpoint (lower silhouette, median rows 3-12)",107.0,107.0,0.0,107.0
+assets/images/training_game/main/pr/squat_done.png,pr,squat_done,"feet midpoint (lower silhouette, median rows 3-12)",111.0,123.0,-16.0,107.0
+assets/images/training_game/main/pr/work_1.png,pr,work_1,desk front midpoint,146.0,185.0,0.0,185.0
+assets/images/training_game/main/pr/work_2.png,pr,work_2,desk front midpoint,144.0,184.0,1.0,185.0
+assets/images/training_game/main/pr/work_done.png,pr,work_done,desk front midpoint,144.0,144.0,41.0,185.0
+assets/images/training_game/main/pr/meal_start.png,pr,meal_start,desk front midpoint,146.0,146.0,-1.0,145.0
+assets/images/training_game/main/pr/meal_1.png,pr,meal_1,desk front midpoint,144.0,145.0,0.0,145.0
+assets/images/training_game/main/pr/meal_2.png,pr,meal_2,desk front midpoint,145.0,146.0,-1.0,145.0
+assets/images/training_game/main/pr/meal_done.png,pr,meal_done,desk front midpoint,145.0,145.0,0.0,145.0
+assets/images/training_game/main/pr/rest_1.png,pr,rest_1,bed left mattress edge,9,9.0,0.0,9.0
+assets/images/training_game/main/pr/rest_2.png,pr,rest_2,bed left mattress edge,9,9.0,0.0,9.0
+assets/images/training_game/main/pr/rest_done.png,pr,rest_done,bed left mattress edge,9,9.0,0.0,9.0
+assets/images/training_game/main/sh/idle_1.png,sh,idle_1,"feet midpoint (lower silhouette, median rows 3-12)",98.5,98.5,0.0,98.5
+assets/images/training_game/main/sh/idle_2.png,sh,idle_2,"feet midpoint (lower silhouette, median rows 3-12)",91.5,91.5,7.0,98.5
+assets/images/training_game/main/sh/clean_1.png,sh,clean_1,"feet midpoint (lower silhouette, median rows 3-12)",62.5,74.5,0.0,74.5
+assets/images/training_game/main/sh/clean_2.png,sh,clean_2,"feet midpoint (lower silhouette, median rows 3-12)",108.0,120.0,-45.5,74.5
+assets/images/training_game/main/sh/clean_done.png,sh,clean_done,"feet midpoint (lower silhouette, median rows 3-12)",115.5,115.5,-41.0,74.5
+assets/images/training_game/main/sh/squat_1.png,sh,squat_1,"feet midpoint (lower silhouette, median rows 3-12)",102.0,109.0,0.0,109.0
+assets/images/training_game/main/sh/squat_2.png,sh,squat_2,"feet midpoint (lower silhouette, median rows 3-12)",105.5,107.5,1.5,109.0
+assets/images/training_game/main/sh/squat_done.png,sh,squat_done,"feet midpoint (lower silhouette, median rows 3-12)",129.0,129.0,-20.0,109.0
+assets/images/training_game/main/sh/work_1.png,sh,work_1,desk front midpoint,145.0,159.0,0.0,159.0
+assets/images/training_game/main/sh/work_2.png,sh,work_2,desk front midpoint,145.0,158.0,1.0,159.0
+assets/images/training_game/main/sh/work_done.png,sh,work_done,desk front midpoint,144.0,144.0,15.0,159.0
+assets/images/training_game/main/sh/meal_start.png,sh,meal_start,desk front midpoint,146.0,146.0,0.0,146.0
+assets/images/training_game/main/sh/meal_1.png,sh,meal_1,desk front midpoint,144.0,146.0,0.0,146.0
+assets/images/training_game/main/sh/meal_2.png,sh,meal_2,desk front midpoint,145.0,147.0,-1.0,146.0
+assets/images/training_game/main/sh/meal_done.png,sh,meal_done,desk front midpoint,145.0,146.0,0.0,146.0
+assets/images/training_game/main/sh/rest_1.png,sh,rest_1,bed left mattress edge,10,10.0,0.0,10.0
+assets/images/training_game/main/sh/rest_2.png,sh,rest_2,bed left mattress edge,10,13.5,-3.5,10.0
+assets/images/training_game/main/sh/rest_done.png,sh,rest_done,bed left mattress edge,9,9.0,1.0,10.0
+assets/images/training_game/main/wtb/idle_1.png,wtb,idle_1,"feet midpoint (lower silhouette, median rows 3-12)",79.5,87.0,0.0,87.0
+assets/images/training_game/main/wtb/idle_2.png,wtb,idle_2,"feet midpoint (lower silhouette, median rows 3-12)",84.5,84.5,2.5,87.0
+assets/images/training_game/main/wtb/clean_1.png,wtb,clean_1,"feet midpoint (lower silhouette, median rows 3-12)",71.5,83.0,0.0,83.0
+assets/images/training_game/main/wtb/clean_2.png,wtb,clean_2,"feet midpoint (lower silhouette, median rows 3-12)",96.0,107.5,-24.5,83.0
+assets/images/training_game/main/wtb/clean_done.png,wtb,clean_done,"feet midpoint (lower silhouette, median rows 3-12)",114.5,114.5,-31.5,83.0
+assets/images/training_game/main/wtb/squat_1.png,wtb,squat_1,"feet midpoint (lower silhouette, median rows 3-12)",94.0,107.0,0.0,107.0
+assets/images/training_game/main/wtb/squat_2.png,wtb,squat_2,"feet midpoint (lower silhouette, median rows 3-12)",103.0,103.0,4.0,107.0
+assets/images/training_game/main/wtb/squat_done.png,wtb,squat_done,"feet midpoint (lower silhouette, median rows 3-12)",104.5,117.5,-10.5,107.0
+assets/images/training_game/main/wtb/work_1.png,wtb,work_1,desk front midpoint,126.5,140.5,0.0,140.5
+assets/images/training_game/main/wtb/work_2.png,wtb,work_2,desk front midpoint,126.5,139.5,1.0,140.5
+assets/images/training_game/main/wtb/work_done.png,wtb,work_done,desk front midpoint,126.5,126.5,14.0,140.5
+assets/images/training_game/main/wtb/meal_start.png,wtb,meal_start,desk front midpoint,127.5,127.5,1.0,128.5
+assets/images/training_game/main/wtb/meal_1.png,wtb,meal_1,desk front midpoint,126.5,128.5,0.0,128.5
+assets/images/training_game/main/wtb/meal_2.png,wtb,meal_2,desk front midpoint,126.5,128.5,0.0,128.5
+assets/images/training_game/main/wtb/meal_done.png,wtb,meal_done,desk front midpoint,127.0,128.0,0.5,128.5
+assets/images/training_game/main/wtb/rest_1.png,wtb,rest_1,bed left mattress edge,9,9.0,0.0,9.0
+assets/images/training_game/main/wtb/rest_2.png,wtb,rest_2,bed left mattress edge,9,11.5,-2.5,9.0
+assets/images/training_game/main/wtb/rest_done.png,wtb,rest_done,bed left mattress edge,8,9.0,0.0,9.0

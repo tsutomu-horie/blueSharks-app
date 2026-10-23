@@ -316,7 +316,12 @@ void main() {
     await tester.pump(const Duration(milliseconds: 300));
     await tester.tap(find.text('5秒で自動完了します。画面タップでスキップ'));
     await tester.pump();
-    expect(shownAsset(tester), endsWith('/sh/clean_done.png'));
+    expect(
+        tester
+            .widget<SametarohFrameImage>(find.byType(SametarohFrameImage).last)
+            .frame
+            .asset,
+        endsWith('/sh/clean_done.png'));
     await tester.pump(const Duration(milliseconds: 499));
     expect(result, isNull);
     await tester.pump(const Duration(milliseconds: 1));

@@ -354,8 +354,21 @@ class TrainingHomeCharacterFrameSet {
             inputs[i].pixels.bounds.width /
             inputs[i].pixels.imageSize.width,
     ];
+    // 待機は箒等のない足元中心、歩行は踏み替えを含む従来の外形を維持。
+    // 足を揃えた後も尻尾・腕を切らない共通キャンバス幅を確保する。
+    final registeredWidths = <double>[
+      for (var i = 0; i < inputs.length; i++)
+        if (inputs[i].frame.footAnchorX case final anchor?)
+          2 *
+              math.max(
+                (anchor - inputs[i].pixels.bounds.left) * inputs[i].scale,
+                (inputs[i].pixels.bounds.right - anchor) * inputs[i].scale,
+              )
+        else
+          normalizedOpaqueWidths[i],
+    ];
     final canvasSize = Size(
-      normalizedOpaqueWidths.reduce(math.max),
+      registeredWidths.reduce(math.max),
       targetVisibleHeight,
     );
     final normalizedFrames = <TrainingHomeCharacterFrame>[];
@@ -376,8 +389,12 @@ class TrainingHomeCharacterFrameSet {
             sourceSize.height /
             input.pixels.imageSize.height,
       );
+      final anchor = input.frame.footAnchorX;
+      final imageLeft = anchor == null
+          ? (canvasSize.width - sourceAlpha.width) / 2 - sourceAlpha.left
+          : canvasSize.width / 2 - anchor * input.scale;
       final visibleBounds = Rect.fromLTWH(
-        (canvasSize.width - sourceAlpha.width) / 2,
+        imageLeft + sourceAlpha.left,
         0,
         sourceAlpha.width,
         targetVisibleHeight,
@@ -388,7 +405,7 @@ class TrainingHomeCharacterFrameSet {
           sourceSize: sourceSize,
           canvasSize: canvasSize,
           imageOffset: Offset(
-            visibleBounds.center.dx - sourceAlpha.center.dx,
+            imageLeft,
             visibleBounds.bottom - sourceAlpha.bottom,
           ),
           visibleBounds: visibleBounds,

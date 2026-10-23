@@ -1,0 +1,43 @@
+name: Adult animation registration
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/adult-animation-registration.yml'
+      - 'lib/presentation/training_game/sametaroh*.dart'
+      - 'lib/presentation/training_game/training_care_scene.dart'
+      - 'lib/presentation/training_game/training_home_roaming_character.dart'
+      - 'assets/images/sametaroh/**'
+      - 'assets/images/training_game/main/**'
+      - 'test/training_game/**'
+      - 'tool/no67/**'
+      - 'pubspec.yaml'
+      - 'pubspec.lock'
+
+permissions:
+  contents: read
+
+jobs:
+  adult-animation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install the validated Flutter SDK
+        shell: bash
+        run: |
+          git clone --depth 1 --branch 3.47.2 https://github.com/flutter/flutter.git "$RUNNER_TEMP/flutter"
+          test "$(git -C "$RUNNER_TEMP/flutter" rev-parse HEAD)" = d3b14c876900e553bc736ca19295fc09e3853e8e
+          echo "$RUNNER_TEMP/flutter/bin" >> "$GITHUB_PATH"
+      - name: Resolve locked dependencies
+        run: flutter pub get --enforce-lockfile
+      - name: Check adult animation and game integration
+        run: >-
+          flutter test --no-pub --reporter expanded
+          test/training_game/adult_frame_registration_test.dart
+          test/training_game/sametaroh_asset_test.dart
+          test/training_game/training_care_scene_test.dart
+          test/training_game/training_care_auto_complete_test.dart
+          test/training_game/training_home_roaming_character_test.dart
+          test/training_game/training_child_care_test.dart
+          test/training_game/training_game_character_widget_test.dart
