@@ -161,15 +161,25 @@ void main() {
 
   testWidgets('パス＆ランでボールと成功パスの軌跡を表示する', (tester) async {
     await tester.pumpWidget(
-      MaterialApp(home: PassAndRunGameScreen(now: () => serverTime)),
+      MaterialApp(
+          home: PassAndRunGameScreen(motionSeed: 54, now: () => serverTime)),
     );
 
     expect(find.byKey(const Key('pass-ball')), findsOneWidget);
     await readyPass(tester);
     await tester.tap(find.text('スタート'));
     await tester.pump();
+    // 独立移動では開始時の相手が前方の場合がある。元の相手狙い入力を
+    // 保持し、表示テストの前提となる実際の後方位置を待つ。
+    for (var i = 0; i < 140; i++) {
+      final p = tester.getCenter(find.byKey(const Key('pass-player')));
+      final m = tester.getCenter(find.byKey(const Key('pass-mate')));
+      if (m.dy > p.dy + 20) break;
+      await advance(tester, const Duration(milliseconds: 100));
+    }
     final player = tester.getCenter(find.byKey(const Key('pass-player')));
     final mate = tester.getCenter(find.byKey(const Key('pass-mate')));
+    expect(mate.dy, greaterThan(player.dy + 20));
     await tester.flingFrom(player, mate - player, 1200);
     await advance(tester, const Duration(milliseconds: 20));
 
