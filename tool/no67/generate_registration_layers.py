@@ -116,7 +116,33 @@ for asset,r in records.items():
  if action=='rest':
   static,dynamic,ff=bed_masks(a)
   if group not in masks:
-   bs,_,bfill=bed_masks(base);masks[group]=rects(bs);fills[group]=bfill
+   bs,_,bfill=bed_masks(base)
+   if body=='base':
+    # Normal's bottom-right post contains low-alpha transitions between the
+    # two blue furniture colors. Preserve the original furniture-only corner,
+    # including its alpha, rather than dropping pixels by nearest-color labels.
+    yy,xx=np.indices((bh,bw))
+    corner=(xx>=bw*.9)&(yy>=bh*.8)
+    bs |= (base[:,:,3]>0)&corner
+    # Keep the original translucent outer edge except for the explicit
+    # furniture joint below; broad opaque backing would change its silhouette.
+    # The supplied normal bed itself has a triangular open joint. Join only
+    # the front panel to the post (source x397..413 / y239..255), retaining
+    # the original post and all furniture outside this small seam.
+    join=np.zeros((bh,bw),bool)
+    for y in range(239,256):
+     left=np.flatnonzero(base[y,390:406,3]==255)+390
+     right=np.flatnonzero(base[y,406:420,3]==255)+406
+     if len(left) and len(right):join[y,left[-1]+1:right[0]]=True
+    originalCornerFills=[]
+    for color,runs in bfill:
+     mask=np.zeros((bh,bw),bool)
+     for x,y,rw,rh in runs:mask[y:y+rh,x:x+rw]=True
+     mask[corner]=False
+     if color==0xff529cc1:mask|=join
+     originalCornerFills.append((color,rects(mask)))
+    bfill=originalCornerFills
+   masks[group]=rects(bs);fills[group]=bfill
  offsets[group]=offset
  if action=='rest':
   expanded=dynamic.copy()
