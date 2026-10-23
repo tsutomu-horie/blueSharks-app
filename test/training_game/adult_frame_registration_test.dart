@@ -310,7 +310,7 @@ void main() {
     }
   });
 
-  testWidgets('ノーマル休養の右下家具は睡眠から起床まで原画RGBAを保持する', (tester) async {
+  testWidgets('ノーマル休養は右下接合部を連続させ補完範囲外の原画RGBAを保持する', (tester) async {
     final first = SametarohAssets.careFramesFor(TrainingActionType.rest).first;
     final original = (await tester.runAsync(() async {
       final asset = await rootBundle.load(first.asset);
@@ -335,6 +335,8 @@ void main() {
       var differences = 0;
       for (var y = 213; y < 266; y++) {
         for (var x = 384; x < 426; x++) {
+          // Only the explicit furniture joint may change from the supplied PNG.
+          if (x >= 397 && x <= 413 && y >= 239 && y <= 255) continue;
           final source = (y * 426 + x) * 4;
           final target = ((y + 34) * rendered.width + x) * 4;
           for (var c = 0; c < 4; c++) {
@@ -343,8 +345,15 @@ void main() {
         }
       }
       expect(differences, 0,
-          reason:
-              '${frame.asset}: original post/base contour and translucent blue seam');
+          reason: '${frame.asset}: original furniture outside the small joint');
+      for (var y = 274; y <= 289; y++) {
+        for (var x = 405; x <= 413; x++) {
+          final pixel = (y * rendered.width + x) * 4;
+          expect(bytes[pixel + 3], 255,
+              reason:
+                  '${frame.asset}: no background visible through joint ($x,$y)');
+        }
+      }
       rendered.dispose();
     }
   });
