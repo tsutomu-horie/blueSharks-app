@@ -314,7 +314,7 @@ class _CareActionPresentation {
           fit: BoxFit.contain,
           illustrationLabel: '筋トレ中',
           progressLabel: 'トレーニング中…',
-          description: '日課の筋トレで、フォワードと体格の傾向を伸ばします。',
+          description: '日々のトレーニングを重ねて、たくましい鮫太郎を目指しましょう！',
         ),
       TrainingActionType.tackle ||
       TrainingActionType.passAndRun =>
