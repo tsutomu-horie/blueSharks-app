@@ -6,6 +6,79 @@ import 'package:koto_blue_sharks/presentation/training_game/mini_games/pass_and_
 import 'package:koto_blue_sharks/presentation/training_game/mini_games/pass_and_run/pass_and_run_motion.dart';
 
 void main() {
+  test('seed120と110の長い初期待ちを再発させない', () {
+    for (final seed in [120, 110]) {
+      final watch = Stopwatch()..start();
+      final motion =
+          PassRunMotion(seed: seed, roundSeconds: 30, speedScale: .85);
+      watch.stop();
+      // ignore: avoid_print
+      print('construction seed=$seed elapsedUs=${watch.elapsedMicroseconds}');
+      for (final outbound in [true, false]) {
+        for (final carrier in PassRunRunner.values) {
+          var legalSamples = 0;
+          var forwardSamples = 0;
+          double? firstLegalAt;
+          var blockedRun = 0.0;
+          var longestBlocked = 0.0;
+          for (var step = 0; step <= 750; step++) {
+            final seconds = step * .02;
+            final origin = motion.yAt(
+              seconds,
+              carrier,
+              outbound: outbound,
+            );
+            final future = motion.yAt(
+              seconds + .65,
+              carrier == PassRunRunner.player
+                  ? PassRunRunner.companion
+                  : PassRunRunner.player,
+              outbound: outbound,
+            );
+            final forward = PassAndRunRules.isForwardDirection(
+              deltaX: -187.5,
+              deltaY: future - origin,
+              outbound: outbound,
+            );
+            if (forward) {
+              forwardSamples++;
+              blockedRun += .02;
+              longestBlocked = math.max(longestBlocked, blockedRun);
+            } else {
+              legalSamples++;
+              blockedRun = 0;
+              firstLegalAt ??= seconds;
+            }
+          }
+          expect(
+            legalSamples,
+            greaterThan(0),
+            reason:
+                'seed=$seed carrier=$carrier outbound=$outbound has no legal window',
+          );
+          expect(
+            forwardSamples,
+            greaterThan(0),
+            reason:
+                'seed=$seed carrier=$carrier outbound=$outbound should retain blocked positions',
+          );
+          // Regression: this seed previously began with 8.8 s of blocked returns.
+          expect(firstLegalAt, lessThanOrEqualTo(4.0));
+          expect(longestBlocked, lessThan(8.0),
+              reason: 'seed=$seed carrier=$carrier outbound=$outbound '
+                  'must not restore the old 8.58/11.3 second stall');
+          // ignore: avoid_print
+          print(
+            'seed=$seed carrier=$carrier outbound=$outbound '
+            'firstLegal=${firstLegalAt?.toStringAsFixed(2)}s '
+            'legal=$legalSamples forwardOnly=$forwardSamples '
+            'longestBlocked=${longestBlocked.toStringAsFixed(2)}s',
+          );
+        }
+      }
+    }
+  });
+
   test('各人が独立したランダム区間で共有の広い可動域を使う', () {
     expect(PassRunMotion.forwardRate, closeTo(.207, 1e-12));
     expect(PassRunMotion.turnDuration, const Duration(milliseconds: 1000));
