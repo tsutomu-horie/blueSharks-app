@@ -405,6 +405,69 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('一軍への進化は確定済みポジション姿を表示して切り替える', (tester) async {
+    configurePhone(tester);
+    Get.testMode = true;
+    addTearDown(() => Get.reset());
+    final controller = _DisplayFixtureController(
+      fixturePosition: 'プロップ',
+      fixtureBranch: 'A フォワード型',
+    );
+    controller.isServerStateReady.value = true;
+    controller.stageIndex.value = 4;
+    controller.evolutionStage.value = 4;
+    Get.put<TrainingGameController>(controller);
+    final before = SametarohAssets.idleFramesForBodyKey('pr').first;
+    final after = SametarohAssets.positionFrameFor('プロップ')!;
+
+    await tester.pumpWidget(host(const TrainingGameScreen()));
+    await preload(tester, [before, after]);
+    expect(find.byKey(const ValueKey('training-evolution-4')), findsOneWidget);
+    expect(_evolutionAssetOpacity(tester, before), 1);
+    expect(_evolutionAssetOpacity(tester, after), 0);
+
+    await tester.pump(const Duration(seconds: 2));
+    expect(_evolutionAssetOpacity(tester, before), 0);
+    expect(_evolutionAssetOpacity(tester, after), 1);
+    expect(find.text('ついに、一軍の舞台へ！'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('一軍ポジション未確定時は推測したユニフォームを表示しない', (tester) async {
+    configurePhone(tester);
+    Get.testMode = true;
+    addTearDown(() => Get.reset());
+    final controller = _DisplayFixtureController(
+      fixturePosition: '判定前',
+      fixtureBranch: 'A フォワード型',
+    );
+    controller.isServerStateReady.value = true;
+    controller.stageIndex.value = 4;
+    controller.evolutionStage.value = 4;
+    Get.put<TrainingGameController>(controller);
+    final existingBody = SametarohAssets.idleFramesForBodyKey('pr').first;
+    final prop = SametarohAssets.positionFrameFor('プロップ')!;
+
+    await tester.pumpWidget(host(const TrainingGameScreen()));
+    await preload(tester, [existingBody, prop]);
+    expect(find.byKey(const ValueKey('training-evolution-4')), findsOneWidget);
+    expect(
+      find.byWidgetPredicate((widget) =>
+          widget is Image &&
+          widget.image is AssetImage &&
+          (widget.image as AssetImage).assetName == prop.asset),
+      findsNothing,
+    );
+    expect(
+      find.byWidgetPredicate((widget) =>
+          widget is Image &&
+          widget.image is AssetImage &&
+          (widget.image as AssetImage).assetName == existingBody.asset),
+      findsWidgets,
+    );
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('卵を保持し、幼少の部屋と進化には支給newbornを表示する', (tester) async {
     configurePhone(tester);
     Get.testMode = true;

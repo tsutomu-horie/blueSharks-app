@@ -209,6 +209,9 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
     };
     final currentBodyFrame =
         SametarohAssets.idleFramesForBodyKey(_bodyKey).first;
+    final confirmedFirstTeamFrame = evolutionStage == 4
+        ? SametarohAssets.positionFrameFor(controller.position)
+        : null;
     return _buildEndingPage(
       title: '進化',
       visual: visual,
@@ -226,6 +229,14 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
             afterFrame: currentBodyFrame,
             // 分岐未確定時も通常形を保ち、成長の差はサイズで見せます。
             beforeScale: 0.7,
+          ),
+        4 => TrainingEvolutionReveal(
+            key: const ValueKey('training-evolution-4'),
+            beforeFrame: currentBodyFrame,
+            // 一軍段階ではサーバー確定済みのポジション姿を使います。
+            // 未確定なら予想の姿を出さず、現在の姿を成長演出で見せます。
+            afterFrame: confirmedFirstTeamFrame ?? currentBodyFrame,
+            beforeScale: confirmedFirstTeamFrame == null ? 0.7 : 0.82,
           ),
         _ => null,
       },
