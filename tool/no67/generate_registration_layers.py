@@ -1,5 +1,5 @@
 from pathlib import Path
-from PIL import Image,ImageDraw
+from PIL import Image
 import numpy as np,csv,re,base64,struct,json
 from collections import deque
 root=Path(__file__).resolve().parents[2];out=root/'lib/presentation/training_game/sametaroh_registration_layers.dart'
@@ -67,8 +67,22 @@ def bed_masks(a):
  return bed,opaque&~dynamicBed,fills
 entryFills={};entries=[];masks={};fills={};offsets={};mirrors={};mirrorAnchors={}
 for asset,r in records.items():
- if r['action'] not in ('clean','rest'):continue
+ if r['action'] not in ('clean','rest','squat'):continue
  p=Path(asset);body=r['body'];action=r['action'];group=body+'_'+action
+ if action=='squat':
+  a=pixels(asset);h,w=a.shape[:2];opaque=a[:,:,3]>0
+  prop=opaque&(((a[:,:,0]>130)&(a[:,:,1]<145))|((a[:,:,0]>160)&(a[:,:,1]>140)&(a[:,:,2]<200)&(a[:,:,0]-a[:,:,2]>20)))
+  group=body+'_squat_'+r['pose'];masks[group]=rects(prop);fills[group]=[];offsets[group]=(0,0)
+  entries.append((asset,asset,w,h,group,rects(opaque&~prop)));continue
+
+ if action=='clean':
+  a=pixels(asset);h,w=a.shape[:2]
+  group=group+'_'+r['pose']
+  broom=np.isin(labels(a),[9,10,11])&(a[:,:,3]>0)
+  masks[group]=rects(broom);fills[group]=[];offsets[group]=(0,0)
+  entries.append((asset,asset,w,h,group,rects((a[:,:,3]>0)&~broom)))
+  continue
+
  first=next((a for a,z in records.items() if z['body']==body and z['action']==action and z['pose'].endswith('_1')))
  a=pixels(asset);base=pixels(first);h,w=a.shape[:2];bh,bw=base.shape[:2]
  offset=(0,0)
@@ -76,87 +90,14 @@ for asset,r in records.items():
   static,dynamic,ff=bed_masks(a)
   if group not in masks:
    bs,_,bfill=bed_masks(base);masks[group]=rects(bs);fills[group]=bfill
- else:
-  # Preserve the first pose's connected lower silhouette. The broom is foreground.
-  bodyBlue=(base[:,:,0]==82)&(base[:,:,1]==156)&(base[:,:,2]==193)&(base[:,:,3]>80)
-  waist=int(np.where(bodyBlue)[0].max())-8
-  yy,xx=np.indices((h,w));localwaist=waist-(bh-h)
-  dark=(a[:,:,2]>a[:,:,1]+40)&(a[:,:,1]<130)&(a[:,:,2]>a[:,:,0]+40)&(a[:,:,3]>0)
-  lab=labels(a)
-  broom=np.isin(lab,[9,10,11])
-  dynamic=(a[:,:,3]>0)&((yy<localwaist)|broom)
-  if group not in masks:
-   by,bx=np.indices((bh,bw));bd=(base[:,:,2]>base[:,:,1]+40)&(base[:,:,1]<130)&(base[:,:,2]>base[:,:,0]+40)&(base[:,:,3]>0)
-   baseBroom=np.isin(labels(base),[9,10,11])
-   lower=(by>=waist)&(base[:,:,3]>0)&~baseBroom
-   # Discard detached torso fragments on the opposite side of the broom.
-   keep=np.zeros_like(lower);seenLower=np.zeros_like(lower)
-   for sy,sx in zip(*np.where(lower)):
-    if seenLower[sy,sx]:continue
-    q=deque([(sy,sx)]);seenLower[sy,sx]=1;pts=[]
-    while q:
-     py,px=q.popleft();pts.append((py,px))
-     for oy,ox in ((1,0),(-1,0),(0,1),(0,-1)):
-      ny,nx=py+oy,px+ox
-      if 0<=ny<bh and 0<=nx<bw and lower[ny,nx] and not seenLower[ny,nx]:seenLower[ny,nx]=1;q.append((ny,nx))
-    if max(py for py,px in pts)>=bh-22:
-     for py,px in pts:keep[py,px]=1
-   # A continuous hip bridge sits behind the moving belly, not at the soles.
-   bottom=int(np.where(bodyBlue)[0].max());top=waist
-   tx=np.where(bodyBlue[top])[0];end=min(bottom+10,bh-1)
-   ex=np.where(keep[end])[0]
-   bridge=np.zeros_like(keep)
-   if len(tx) and len(ex):
-    for y in range(top,end+1):
-     t=(y-top)/(end-top);l=round(tx.min()*(1-t)+ex.min()*t);rr=round(tx.max()*(1-t)+ex.max()*t)
-     bridge[y,max(0,l-2):min(bw,rr+1+round(5*(1-t)))]=1
-    keep[(by>=top)&(by<=end)&~bridge]=False
-   masks[group]=rects(keep);fills[group]=[(0xff185395,rects(bridge))]
-   fy=int(np.where(bd&(base[:,:,3]>80))[0].max())
-   anchor={'pr':75.5,'sh':78.5,'wtb':85.0,'base':76.0}[body];mirrorAnchors[group]=anchor
-   # The unobscured left sole supplies its hidden opposite under the broom.
-   candidate=bd&(by>=waist)&(bx<anchor-2)&((by>=fy-15)|(bx>=anchor-38))
-   visible=np.zeros_like(candidate);seen=np.zeros_like(candidate)
-   for cy,cx in zip(*np.where(candidate)):
-    if seen[cy,cx]:continue
-    q=deque([(cy,cx)]);seen[cy,cx]=1;pts=[]
-    while q:
-     py,px=q.popleft();pts.append((py,px))
-     for oy,ox in ((1,0),(-1,0),(0,1),(0,-1)):
-      ny,nx=py+oy,px+ox
-      if 0<=ny<bh and 0<=nx<bw and candidate[ny,nx] and not seen[ny,nx]:seen[ny,nx]=1;q.append((ny,nx))
-    if max(py for py,px in pts)>=fy-5:
-     for py,px in pts:visible[py,px]=1
-   mirrors[group]=rects(visible)
- if action=='clean':
-  # Join the current torso and the fixed hips with a convex local silhouette.
-  # The contact band and the legs below this small bridge are untouched.
-  combined=np.zeros((bh,bw),bool)
-  for x,y,rw,rh in masks[group]:combined[y:y+rh,x:x+rw]=1
-  shift=json.loads((Path(__file__).parent/'clean-pelvis-offsets.json').read_text())[asset]
-  dx=shift+(bw-w)/2
-  lab=labels(a);actor=(a[:,:,3]>200)&np.isin(lab,[2,3,6])
-  for py,px in zip(*np.where(actor)):
-   nx=round(px+dx);ny=py+(bh-h)
-   if 0<=ny<bh and 0<=nx<bw:combined[ny,nx]=1
-  by,bx=np.indices((bh,bw));roi=combined&(by>=waist-5)&(by<=waist+22)&(bx>=mirrorAnchors[group]-35)
-  pts=sorted((int(x),int(y)) for y,x in zip(*np.where(roi)))
-  def cross(o,a,b):return (a[0]-o[0])*(b[1]-o[1])-(a[1]-o[1])*(b[0]-o[0])
-  lower=[];upper=[]
-  for pt in pts:
-   while len(lower)>=2 and cross(lower[-2],lower[-1],pt)<=0:lower.pop()
-   lower.append(pt)
-  for pt in reversed(pts):
-   while len(upper)>=2 and cross(upper[-2],upper[-1],pt)<=0:upper.pop()
-   upper.append(pt)
-  im=Image.new('1',(bw,bh));ImageDraw.Draw(im).polygon(lower[:-1]+upper[:-1],fill=1)
-  entryFills[asset]=[(0xff185395,rects(np.array(im,dtype=bool)))]
  offsets[group]=offset
  if action=='rest':
   expanded=dynamic.copy()
   for oy,ox in ((1,0),(-1,0),(0,1),(0,-1)):
    expanded |= np.roll(dynamic,(oy,ox),(0,1))
-  dynamic=expanded&(a[:,:,3]>0)&(np.indices((h,w))[1]<w*.9)
+  dynamic=expanded&(a[:,:,3]>0)
+  if body not in ('sh','wtb'):
+   dynamic &= np.indices((h,w))[1]<w*.9
  entries.append((asset,first,bw,bh,group,rects(dynamic)))
 text='''// Generated clip geometry from unchanged original PNGs; see tool/no67/generate_registration_layers.py.\nimport 'dart:convert';\nimport 'dart:typed_data';\nimport 'package:flutter/material.dart';\n\nclass RegisteredFrameLayers {\n  const RegisteredFrameLayers(this.staticAsset, this.staticSize, this.staticClip, this.dynamicClip, this.fills, this.staticOffset, this.mirrorClip, this.mirrorAnchor);\n  final String staticAsset;\n  final Size staticSize;\n  final List<int> staticClip;\n  final List<int> dynamicClip;\n  final Map<int, List<int>> fills;
   final Offset staticOffset;
@@ -167,6 +108,7 @@ def packed(rs):
  return "_runs('"+encoded+"')"
 text+="List<int> _runs(String encoded) { final bytes=base64Decode(encoded); final data=ByteData.sublistView(bytes); return List<int>.generate(bytes.length~/2,(i)=>data.getUint16(i*2,Endian.little),growable:false); }\n"
 for group,rs in masks.items():
+ if group not in {e[4] for e in entries}:continue
  text+=f'final _{group} = '+packed(rs)+';\n'
  if group in mirrors:text+=f'final _{group}Mirror = '+packed(mirrors[group])+';\n'
 
@@ -174,6 +116,7 @@ text+='\nfinal registeredFrameLayers = <String,RegisteredFrameLayers>{\n'
 for asset,first,w,h,g,rs in entries:text+=f"'{asset}': RegisteredFrameLayers('{first}',Size({w},{h}),_{g},"+packed(rs)+',<int,List<int>>{'+','.join(hex(c)+':'+packed(rr) for c,rr in entryFills.get(asset,fills[g]))+'},'+f'Offset({offsets[g][0]},{offsets[g][1]}),'+(f'_{g}Mirror' if g in mirrors else 'null')+f',{mirrorAnchors.get(g,0)}),\n'
 text+='};\n'
 for b in ['base','pr','sh','wtb']:
- for ac in ['clean','rest']:text=text.replace('_'+b+'_'+ac,'_'+b+ac.title())
+ for ac in ['clean','rest','squat']:text=text.replace('_'+b+'_'+ac,'_'+b+ac.title())
+text=re.sub(r'_([a-z]+)(Squat|Clean)_(?:squat|clean)_([a-z0-9]+)',lambda m:'_'+m[1]+m[2]+m[3].title(),text)
 out.write_text(text)
 print('geometry bytes',out.stat().st_size,'frames',len(entries))

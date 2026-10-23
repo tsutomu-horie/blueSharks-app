@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import 'models/training_game_models.dart';
 import 'sametaroh_registration_layers.dart';
+import 'sametaroh_clean_warp.dart';
 
 /// 鮫太朗の状態別イラストをまとめたアセット定義です。
 abstract final class SametarohAssets {
@@ -830,6 +831,9 @@ class _SametarohAnimatedImageState extends State<SametarohAnimatedImage> {
   Future<void> _precacheFrame(SametarohFrame frame) async {
     try {
       await precacheImage(AssetImage(frame.asset), context);
+      if (SametarohCleanWarp.supports(frame)) {
+        await SametarohCleanWarp.prepare(frame);
+      }
     } catch (_) {
       // 失敗した素材は通常のImageProviderの読み込みに任せて再生します。
     }
@@ -912,6 +916,36 @@ class SametarohFrameImage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final layers = registeredFrameLayers[frame.asset];
+    final content = SametarohCleanWarp.supports(frame)
+        ? SametarohCleanWarp(frame: frame, semanticLabel: semanticLabel)
+        : layers != null
+            ? _RegisteredFrameContent(
+                frame: frame, layers: layers, semanticLabel: semanticLabel)
+            : Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  Positioned.fill(
+                    child: Transform.translate(
+                      offset: Offset(frame.registrationX, 0),
+                      child: Align(
+                        alignment: frame.asset.contains('/pr/work_')
+                            ? Alignment.bottomCenter
+                            : alignment,
+                        child: SizedBox(
+                          width: frame.sourceSize.width,
+                          height: frame.sourceSize.height,
+                          child: Image.asset(
+                            frame.asset,
+                            fit: BoxFit.fill,
+                            gaplessPlayback: true,
+                            semanticLabel: semanticLabel,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              );
     return SizedBox(
       width: width,
       height: height,
@@ -921,36 +955,37 @@ class SametarohFrameImage extends StatelessWidget {
         child: SizedBox(
           width: frame.canvasSize.width,
           height: frame.canvasSize.height,
-          child: layers != null
-              ? _RegisteredFrameContent(
-                  frame: frame, layers: layers, semanticLabel: semanticLabel)
-              : Stack(
-                  clipBehavior: Clip.none,
-                  children: [
-                    Positioned.fill(
-                      child: Transform.translate(
-                        offset: Offset(frame.registrationX, 0),
-                        child: Align(
-                          alignment: alignment,
-                          child: SizedBox(
-                            width: frame.sourceSize.width,
-                            height: frame.sourceSize.height,
-                            child: Image.asset(
-                              frame.asset,
-                              fit: BoxFit.fill,
-                              gaplessPlayback: true,
-                              semanticLabel: semanticLabel,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+          child: frame.asset.contains('/pr/work_')
+              ? _PreservedPrDeskObject(child: content)
+              : content,
         ),
       ),
     );
   }
+}
+
+/// Restore the desk object missing from PR work frame 2, in frame canvas space.
+class _PreservedPrDeskObject extends StatelessWidget {
+  const _PreservedPrDeskObject({required this.child});
+  final Widget child;
+  @override
+  Widget build(BuildContext context) => Stack(children: [
+        Positioned.fill(child: child),
+        Positioned.fill(
+            child: Align(
+          alignment: Alignment.bottomCenter,
+          child: SizedBox.fromSize(
+              size: const Size(292, 354),
+              child: ClipPath(
+                clipper: const _RegistrationClip([33, 227, 39, 41]),
+                clipBehavior: Clip.hardEdge,
+                child: Image.asset(
+                    'assets/images/training_game/main/pr/work_1.png',
+                    fit: BoxFit.fill,
+                    excludeFromSemantics: true),
+              )),
+        )),
+      ]);
 }
 
 // Furniture and planted lower body are registered once from the first pose.

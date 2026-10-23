@@ -5,6 +5,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import 'models/training_game_models.dart';
 import 'sametaroh_asset.dart';
+import 'sametaroh_clean_warp.dart';
 import 'training_care_scene.dart';
 
 /// ④-a〜④-eのお世話実行中画面を共通レイアウトで表示します。
@@ -93,10 +94,21 @@ class _TrainingGameCareActionScreenState
     );
     _completionPrecache = widget.actionType == TrainingActionType.rest
         ? Future.wait<void>([
-            _precacheAsset(completionAsset),
+            _precacheCompletionFrame(presentation.completionFrame),
             _precacheAsset(completionScene!.asset),
           ]).then((_) {})
-        : _precacheAsset(completionAsset);
+        : _precacheCompletionFrame(presentation.completionFrame);
+  }
+
+  Future<void> _precacheCompletionFrame(SametarohFrame frame) async {
+    await _precacheAsset(frame.asset);
+    if (SametarohCleanWarp.supports(frame)) {
+      try {
+        await SametarohCleanWarp.prepare(frame);
+      } catch (_) {
+        // 補正描画の失敗時は元画像へフォールバックして完了を継続します。
+      }
+    }
   }
 
   /// 完了フレームを先読みし、切り替え時の空白を防ぎます。
