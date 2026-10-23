@@ -11,6 +11,8 @@ import '../../models/training_game_clock.dart';
 import '../../models/mini_game_settings.dart';
 import 'pass_and_run_logic.dart';
 import 'pass_and_run_motion.dart';
+import 'pass_and_run_return_sprint.dart';
+import 'pass_and_run_pace_assist.dart';
 
 enum _PassGamePhase { waiting, playing, result }
 
@@ -59,7 +61,17 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
   final _roundScores = <int>[0, 0];
   final _fieldTick = ValueNotifier<int>(0);
   late final Ticker _fieldTicker;
-  late final PassRunMotion _motion;
+  late PassRunMotion _motion;
+  PassRunReturnSprint? _mateSprint;
+  PassRunPaceAssist? _playerAssist;
+  double? _blockedSince;
+  double? _lastPaceDecisionAt;
+  double? _playerTurnStartFraction;
+  double _playerAssistDistanceBase = 0;
+  double _outboundPlayerDistanceDelta = 0;
+  double? _mateTurnStartFraction;
+  double _mateSprintDistanceBase = 0;
+  double _outboundMateDistanceDelta = 0;
   Timer? _clockTimer;
   DateTime? _roundStartedAt;
   DateTime? _penaltyUntil;
@@ -141,16 +153,14 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
     _remainingMilliseconds = _roundDuration.inMilliseconds;
     _passTravelDuration = _passArrivalDuration;
     _passReturnDuration = _passArrivalDuration;
-    _motion = PassRunMotion(
-      seed: widget.motionSeed ?? math.Random().nextInt(1 << 31),
-      roundSeconds: _roundDuration.inMicroseconds / 1000000,
-      speedScale: _settings.runSpeedScale,
-    );
+    _motion = _createMotion();
     WidgetsBinding.instance.addObserver(this);
     _fieldTicker = Ticker((_) {
       if (!mounted) return;
       // 描画フレームごとに確認し、移動中の仲間との衝突を取りこぼさないようにします。
-      if (_updatePassCycle(_now())) setState(() {});
+      final now = _now();
+      final movementChanged = _updateMovementAssistance();
+      if (_updatePassCycle(now) || movementChanged) setState(() {});
       _fieldTick.value++;
     });
   }
@@ -229,6 +239,9 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
   /// 往路を開始し、制限時間と並走位置の更新を始めます。
   void _startGame() {
     if (!_assetsReady) return;
+    // Retryでも同じ移動パターンを再生しないよう、実プレイごとにseedを変えます。
+    _motion = _createMotion();
+    _motion.updateFieldGeometry(_fieldSize);
     _roundIndex = 0;
     _roundScores
       ..clear()
@@ -236,9 +249,27 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
     _startRound();
   }
 
+  PassRunMotion _createMotion() => PassRunMotion(
+        seed: widget.motionSeed ?? math.Random().nextInt(1 << 31),
+        roundSeconds: _roundDuration.inMicroseconds / 1000000,
+        speedScale: _settings.runSpeedScale,
+      );
+
   /// 現在の片道ラウンドを開始します。
   void _startRound({Duration carryPenalty = Duration.zero}) {
     _clockTimer?.cancel();
+    _mateSprint = null;
+    _playerAssist = null;
+    _blockedSince = null;
+    _lastPaceDecisionAt = null;
+    _playerAssistDistanceBase = 0;
+    _mateSprintDistanceBase = 0;
+    if (_isOutbound) {
+      _mateTurnStartFraction = null;
+      _outboundMateDistanceDelta = 0;
+      _playerTurnStartFraction = null;
+      _outboundPlayerDistanceDelta = 0;
+    }
     _roundStartedAt = _isOutbound ? _now() : _now().add(_turnDuration);
     _penaltyUntil = carryPenalty > Duration.zero
         ? _roundStartedAt!.add(carryPenalty)
@@ -322,6 +353,30 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
     _dragStart = null;
     _dragCurrent = null;
     if (_roundIndex == 0) {
+      final endSeconds = _roundDuration.inMilliseconds / 1000;
+      _mateTurnStartFraction =
+          (_mateOffsetAt(endSeconds).dy / _fieldSize.height -
+                  _motion.geometry.minimum) /
+              (_motion.geometry.movementRadius * 2);
+      _playerTurnStartFraction =
+          (_playerOffsetAt(endSeconds).dy / _fieldSize.height -
+                  _motion.geometry.minimum) /
+              (_motion.geometry.movementRadius * 2);
+      final playerAssist = _playerAssist;
+      if (playerAssist != null) {
+        _outboundPlayerDistanceDelta = _distanceCorrection(playerAssist,
+            _playerAssistDistanceBase, PassRunRunner.player, endSeconds);
+      }
+      final sprint = _mateSprint;
+      if (sprint != null) {
+        _outboundMateDistanceDelta = _mateSprintDistanceBase +
+            _motion.runningForwardRate * (endSeconds - sprint.start) +
+            _motion.geometry.movementRadius *
+                2 *
+                sprint.distanceSinceStart(endSeconds) -
+            (_motion.distanceAt(endSeconds, PassRunRunner.companion) -
+                _motion.distanceAt(sprint.start, PassRunRunner.companion));
+      }
       // 確定仕様に従い、往路終了時のペナルティ残時間を復路へ持ち越します。
       final carryPenalty =
           _isPenalized ? _penaltyUntil!.difference(_now()) : Duration.zero;
@@ -378,7 +433,10 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
       setState(() {});
       return;
     }
-    final direction = PassAndRunRules.userPassDirection(flick);
+    final direction = PassAndRunRules.userPassDirection(
+      flick,
+      outbound: _isOutbound,
+    );
     // 補正後の投球方向を判定し、実際の球筋も同じ方向へ揃えます。
     if (PassAndRunRules.isForwardDirection(
       deltaX: direction.deltaX,
@@ -409,6 +467,7 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
     );
     // 成否は発射時には決めず、移動中にボールと仲間が衝突した時点で確定します。
     final now = _now();
+    _playerAssist?.release(_motionSeconds);
     _passInFlight = true;
     _passScoreConfirmed = false;
     _isBallLost = false;
@@ -535,9 +594,22 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
         runner,
         field: _fieldSize,
         actorSize: _characterSize,
+        playerStartY: _playerTurnStartFraction == null
+            ? null
+            : _motion.geometry.minimum +
+                _motion.geometry.movementRadius * 2 * _playerTurnStartFraction!,
+        mateStartY: _mateTurnStartFraction == null
+            ? null
+            : _motion.geometry.minimum +
+                _motion.geometry.movementRadius * 2 * _mateTurnStartFraction!,
       );
     }
-    final y = _motion.yAt(seconds, runner, outbound: _isOutbound);
+    final PassRunAssistedMovement? assisted =
+        player ? _playerAssist : _mateSprint;
+    final y = assisted != null
+        ? _motion.geometry.minimum +
+            _motion.geometry.movementRadius * 2 * assisted.positionAt(seconds)
+        : _motion.yAt(seconds, runner, outbound: _isOutbound);
     final lane = player == _isOutbound ? .25 : .75;
     return Offset(_fieldSize.width * lane, _fieldSize.height * y);
   }
@@ -567,16 +639,30 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
   // 脚は各本人の走行距離に追従。衝突半径は従来の240ms時計を維持します。
   int _frameAt(double seconds, PassRunCharacter kind) {
     final runner = _runner(kind);
-    final outboundDistance = _motion.distanceAt(
-      _roundDuration.inMicroseconds / 1000000,
-      runner,
-    );
-    final distance = _isOutbound
+    final outboundDistance = (kind == PassRunCharacter.companion
+            ? _outboundMateDistanceDelta
+            : _outboundPlayerDistanceDelta) +
+        _motion.distanceAt(
+          _roundDuration.inMicroseconds / 1000000,
+          runner,
+        );
+    var distance = _isOutbound
         ? _motion.distanceAt(seconds, runner)
         : outboundDistance +
             _motion.runningForwardRate *
                 (_turnProgress * _turnDuration.inMicroseconds / 1000000) +
             _motion.distanceAt(seconds, runner, outbound: false);
+    final PassRunAssistedMovement? sprint =
+        kind == PassRunCharacter.companion ? _mateSprint : _playerAssist;
+    if (sprint != null && seconds >= sprint.start) {
+      distance += _distanceCorrection(
+          sprint,
+          kind == PassRunCharacter.companion
+              ? _mateSprintDistanceBase
+              : _playerAssistDistanceBase,
+          runner,
+          seconds);
+    }
     return (distance * 45).floor() % 2;
   }
 
@@ -715,15 +801,21 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
       return null;
     }
     final endUs = math.min(
-        _passTravelDuration.inMicroseconds,
-        math.min(now.difference(started).inMicroseconds,
-            deadline.difference(started).inMicroseconds));
+      _passTravelDuration.inMicroseconds,
+      math.min(
+        now.difference(started).inMicroseconds,
+        deadline.difference(started).inMicroseconds,
+      ),
+    );
     var fromUs = _collisionCheckedElapsed.inMicroseconds;
     if (endUs < fromUs) return null;
     final startSeconds =
         started.difference(_roundStartedAt!).inMicroseconds / 1000000;
-    Offset ballAt(int us) => Offset.lerp(_passStartOffset, _passTargetOffset,
-        (us / _passTravelDuration.inMicroseconds).clamp(0, 1))!;
+    Offset ballAt(int us) => Offset.lerp(
+          _passStartOffset,
+          _passTargetOffset,
+          (us / _passTravelDuration.inMicroseconds).clamp(0, 1),
+        )!;
     double radiusAt(int us) {
       final seconds = startSeconds + us / 1000000;
       final from = _releaseCollisionRadius ??
@@ -835,6 +927,109 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
     _returnReleaseGeometry = null;
   }
 
+  double _distanceCorrection(PassRunAssistedMovement movement, double previous,
+          PassRunRunner runner, double seconds) =>
+      previous +
+      _motion.runningForwardRate * (seconds - movement.start) +
+      _motion.geometry.movementRadius *
+          2 *
+          movement.distanceSinceStart(seconds) -
+      (_motion.distanceAt(seconds, runner, outbound: _isOutbound) -
+          _motion.distanceAt(movement.start, runner, outbound: _isOutbound));
+
+  /// Help only a prolonged blocked relationship, never align both runners.
+  bool _updateMovementAssistance() {
+    if (_phase != _PassGamePhase.playing || _isPaused || _turnProgress < 1) {
+      return false;
+    }
+    final t = _motionSeconds;
+    final mateCarrier = _passScoreConfirmed && _returnStartedAt == null;
+    final playerCarrier = !_passInFlight && !_isPenalized;
+    if (!mateCarrier && !playerCarrier) {
+      _blockedSince = null;
+      _playerAssist?.release(t);
+      return false;
+    }
+    final direction = mateCarrier
+        ? _returnPlan(_mateBallOffset).target - _mateBallOffset
+        : _mateOffset - _playerOffset;
+    final blocked = PassAndRunRules.isForwardDirection(
+        deltaX: direction.dx, deltaY: direction.dy, outbound: _isOutbound);
+    if (!blocked) {
+      _blockedSince = null;
+      _playerAssist?.release(t);
+      return false;
+    }
+    _blockedSince ??= t;
+    if (t - _blockedSince! < (mateCarrier ? .25 : .65) ||
+        (_lastPaceDecisionAt != null && t - _lastPaceDecisionAt! < .35)) {
+      return false;
+    }
+    final previous = _playerAssist;
+    final up = _isOutbound;
+    double base(double at) =>
+        (_motion.yAt(at, PassRunRunner.player, outbound: up) -
+            _motion.geometry.minimum) /
+        (_motion.geometry.movementRadius * 2);
+    double velocity(double at) =>
+        (_motion.worldVelocityYAt(at, PassRunRunner.player, outbound: up) +
+            (up ? 1 : -1) * _motion.runningForwardRate) /
+        (_motion.geometry.movementRadius * 2);
+    if (previous != null) {
+      _playerAssistDistanceBase = _distanceCorrection(
+          previous, _playerAssistDistanceBase, PassRunRunner.player, t);
+    }
+
+    final forecastSeconds =
+        _motion.roundSeconds + PassRunMotion.maxForecastSeconds;
+    final phaseRoom = math.max(
+        0.0,
+        PassRunMotion.trajectoryProfileHorizonSeconds /
+                _settings.runSpeedScale -
+            forecastSeconds);
+    // Reserve 25% for a smooth rate transition's small overshoot. Preserve
+    // the existing random profile instead of regenerating it with a new horizon.
+    final maximumRate =
+        math.min(1.12, 1 + phaseRoom / (forecastSeconds * 1.25));
+    final mateMovement = _mateSprint;
+    double mateAt(double at) =>
+        mateMovement?.positionAt(at) ??
+        (_motion.yAt(at, PassRunRunner.companion, outbound: up) -
+                _motion.geometry.minimum) /
+            (_motion.geometry.movementRadius * 2);
+    PassRunPaceAssist? selected;
+    var bestCost = double.infinity;
+    // Choose only a pace, never a position or a new route. Reevaluate slowly
+    // because the independent random path may turn while an assist is active.
+    for (final rate in [1.0, maximumRate, .88]) {
+      final candidate = PassRunPaceAssist(
+          start: t,
+          normalPosition: base,
+          normalVelocity: velocity,
+          targetRate: rate,
+          attackUp: up,
+          previous: previous);
+      var firstLegal = 3.05, deficit = 0.0;
+      for (var tick = 1; tick <= 60; tick++) {
+        final ahead = tick * .05;
+        final difference = (mateCarrier
+                ? candidate.positionAt(t + ahead) - mateAt(t + ahead)
+                : mateAt(t + ahead) - candidate.positionAt(t + ahead)) *
+            (up ? 1 : -1);
+        if (difference >= .01 && firstLegal > 3) firstLegal = ahead;
+        deficit += math.max(0, -difference) * (1 - ahead / 4);
+      }
+      final cost = firstLegal * 100 + deficit;
+      if (cost < bestCost) {
+        bestCost = cost;
+        selected = candidate;
+      }
+    }
+    _playerAssist = selected!;
+    _lastPaceDecisionAt = t;
+    return true;
+  }
+
   /// 慣性なし・一定球速と、現在の移動モデルによる将来の受球点です。
   /// 距離は場内に有界、開始時は距離>0、上限では球移動距離が必ず勝ちます。
   /// 投球後は直線等速で、この確定点へ飛ばします。
@@ -886,6 +1081,48 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
       _lastPassSucceeded = true;
       _passTravelDuration = _passElapsed;
       _passArrivalAt = now;
+      final seconds = _motionSeconds;
+      final previousSprint = _mateSprint;
+      final outbound = _isOutbound;
+      // Store sprint coordinates in the usable-area fraction, so rotation
+      // changes the field mapping rather than invalidating cached bounds.
+      double basePosition(double t) =>
+          (_motion.yAt(t, PassRunRunner.companion, outbound: outbound) -
+              _motion.geometry.minimum) /
+          (_motion.geometry.movementRadius * 2);
+      double baseVelocity(double t) =>
+          (_motion.worldVelocityYAt(t, PassRunRunner.companion,
+                  outbound: outbound) +
+              (outbound ? 1 : -1) * _motion.runningForwardRate) /
+          (_motion.geometry.movementRadius * 2);
+      if (previousSprint != null) {
+        _mateSprintDistanceBase +=
+            _motion.runningForwardRate * (seconds - previousSprint.start) +
+                _motion.geometry.movementRadius *
+                    2 *
+                    previousSprint.distanceSinceStart(seconds) -
+                (_motion.distanceAt(seconds, PassRunRunner.companion,
+                        outbound: outbound) -
+                    _motion.distanceAt(
+                        previousSprint.start, PassRunRunner.companion,
+                        outbound: outbound));
+      }
+      _mateSprint = PassRunReturnSprint(
+        start: seconds,
+        position: previousSprint?.positionAt(seconds) ?? basePosition(seconds),
+        velocity: previousSprint?.velocityAt(seconds) ?? baseVelocity(seconds),
+        acceleration: previousSprint?.accelerationAt(seconds) ??
+            (baseVelocity(seconds + .001) - baseVelocity(seconds)) / .001,
+        minimum: 0,
+        maximum: 1,
+        attackUp: outbound,
+        normalPosition: basePosition,
+        normalVelocity: baseVelocity,
+        end: _roundDuration.inMilliseconds / 1000 + 6,
+        normalSpeed: .18 *
+            _settings.runSpeedScale /
+            (_motion.geometry.movementRadius * 2),
+      );
       _passReadyAt = null;
       changed = true;
     }
@@ -901,9 +1138,16 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
         _passArrivalAt != null &&
         !now.isBefore(_passArrivalAt!.add(_passReturnDelay))) {
       final origin = _mateBallOffset;
-      final plan = _returnPlan(origin);
-      final direction = plan.target - origin;
-      // 自動返球でも同じ攻撃方向。顔や受け手側に合わせて反転しません。
+      var plan = _returnPlan(origin);
+      var direction = plan.target - origin;
+      // Freeze the receiver's coast BEFORE fixing the flight endpoint.
+      // An assisted forecast must never change after the ball has launched.
+      if (!PassAndRunRules.isForwardDirection(
+          deltaX: direction.dx, deltaY: direction.dy, outbound: _isOutbound)) {
+        _playerAssist?.release(_motionSeconds);
+        plan = _returnPlan(origin);
+        direction = plan.target - origin;
+      }
       if (!PassAndRunRules.isForwardDirection(
         deltaX: direction.dx,
         deltaY: direction.dy,
@@ -916,6 +1160,7 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
         );
         _passReturnTargetOffset = plan.target;
         _passReturnDuration = plan.duration;
+        _mateSprint?.release(_motionSeconds);
         _returnStartedAt = now;
         _passReadyAt = now.add(plan.duration);
         changed = true;
@@ -1062,6 +1307,7 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
     return LayoutBuilder(
       builder: (context, constraints) {
         _fieldSize = constraints.biggest;
+        _motion.updateFieldGeometry(_fieldSize);
         final player = _playerOffset;
         final mate = _mateOffset;
         final ball = _ballOffset;

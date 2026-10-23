@@ -3,27 +3,28 @@
 /// サーバーから受け取った日時を基準にし、通信後の経過だけは端末の単調時計
 /// で補間します。端末のカレンダー日時やタイムゾーンは参照しません。
 class ServerTimeClock {
-  ServerTimeClock._();
+  ServerTimeClock._() : _elapsedSinceSync = Stopwatch()..start();
 
   static final ServerTimeClock instance = ServerTimeClock._();
 
   DateTime? _serverTimeAtSync;
-  Stopwatch? _elapsedSinceSync;
+  Stopwatch _elapsedSinceSync;
 
   bool get isSynchronized => _serverTimeAtSync != null;
 
   /// APIレスポンスのサーバー時刻で基準を更新します。
   void synchronize(DateTime serverTime) {
     _serverTimeAtSync = serverTime;
-    _elapsedSinceSync = Stopwatch()..start();
+    _elapsedSinceSync
+      ..reset()
+      ..start();
   }
 
   /// APIがserver_timeを返さない場合も、サーバーが返した開始日時と経過秒から同期します。
   void synchronizeFromPayload(Map<String, dynamic> data) {
     final directServerTime = data['server_time'];
-    final serverTime = directServerTime is String
-        ? DateTime.tryParse(directServerTime)
-        : null;
+    final serverTime =
+        directServerTime is String ? DateTime.tryParse(directServerTime) : null;
     if (serverTime != null) {
       synchronize(serverTime);
       return;
@@ -37,8 +38,8 @@ class ServerTimeClock {
     synchronize(parsedStartedAt.add(Duration(seconds: elapsedSeconds.toInt())));
   }
 
-  /// 最後に同期したサーバー時刻からの経過時間です。
-  Duration get elapsedSinceSync => _elapsedSinceSync?.elapsed ?? Duration.zero;
+  /// 同期後は最後に同期したサーバー時刻から、同期前は単調時計の基準からの経過時間です。
+  Duration get elapsedSinceSync => _elapsedSinceSync.elapsed;
 
   /// 現在のサーバー時刻です。
   ///

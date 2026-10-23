@@ -5,6 +5,7 @@ on:
     paths:
       - '.github/workflows/pass-and-run.yml'
       - 'lib/presentation/training_game/**'
+      - 'lib/app/services/server_time_clock.dart'
       - 'lib/app/providers/training_game/**'
       - 'test/training_game/**'
       - 'assets/images/training_game/minigames/**/pass_run*.png'
@@ -35,25 +36,18 @@ jobs:
           dart format --output=none --set-exit-if-changed
           lib/presentation/training_game/mini_games/pass_and_run
           test/training_game/pass_and_run*.dart
+          lib/app/services/server_time_clock.dart
+          test/training_game/server_time_clock_test.dart
       - name: Analyze pass and run
         run: >-
           flutter analyze --no-pub --no-fatal-infos
           lib/presentation/training_game/mini_games/pass_and_run
-          test/training_game/pass_and_run_loading_test.dart
-          test/training_game/pass_and_run_motion_test.dart
-          test/training_game/pass_and_run_settings_motion_test.dart
-          test/training_game/pass_and_run_settings_screen_test.dart
-          test/training_game/pass_and_run_logic_test.dart
-          test/training_game/pass_and_run_ball_visual_test.dart
-          test/training_game/pass_and_run_integration_test.dart
+          lib/app/services/server_time_clock.dart
+          test/training_game/pass_and_run*.dart
+          test/training_game/server_time_clock_test.dart
       - name: Test pass and run
         run: >-
           flutter test --no-pub --reporter expanded
-          test/training_game/pass_and_run_loading_test.dart
-          test/training_game/pass_and_run_motion_test.dart
-          test/training_game/pass_and_run_settings_motion_test.dart
-          test/training_game/pass_and_run_settings_screen_test.dart
-          test/training_game/pass_and_run_logic_test.dart
-          test/training_game/pass_and_run_ball_visual_test.dart
-          test/training_game/pass_and_run_integration_test.dart
+          test/training_game/pass_and_run*.dart
+          test/training_game/server_time_clock_test.dart
           test/training_game/mini_game_widget_test.dart

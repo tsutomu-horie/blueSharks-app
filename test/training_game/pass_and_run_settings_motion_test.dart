@@ -42,12 +42,52 @@ void main() {
                 motion.distanceAt(t, runner, outbound: outbound),
                 closeTo(base.distanceAt(baseTime, runner, outbound: outbound),
                     1e-12));
-            expect(motion.yAt(30, runner, outbound: outbound),
-                inInclusiveRange(.41, .59));
+            expect(
+                motion.yAt(30, runner, outbound: outbound),
+                inInclusiveRange(
+                    motion.geometry.minimum, motion.geometry.maximum));
           }
         }
       }
     }
+  });
+
+  test('ラウンド時間はランダム移動間隔を変えず、予測区間も終端固定しない', () {
+    final shortRound = PassRunMotion(seed: 54, roundSeconds: 10);
+    final longRound = PassRunMotion(seed: 54, roundSeconds: 30);
+    for (final outbound in [true, false]) {
+      for (final runner in PassRunRunner.values) {
+        for (var ms = 0; ms <= 17000; ms += 20) {
+          final t = ms / 1000;
+          expect(
+            shortRound.yAt(t, runner, outbound: outbound),
+            longRound.yAt(t, runner, outbound: outbound),
+          );
+          expect(
+            shortRound.worldVelocityYAt(t, runner, outbound: outbound),
+            longRound.worldVelocityYAt(t, runner, outbound: outbound),
+          );
+        }
+        for (var ms = 30000; ms <= 32000; ms += 20) {
+          final y = longRound.yAt(ms / 1000, runner, outbound: outbound);
+          expect(
+              y,
+              inInclusiveRange(
+                  longRound.geometry.minimum, longRound.geometry.maximum));
+          expect(
+            longRound
+                .worldVelocityYAt(ms / 1000, runner, outbound: outbound)
+                .isFinite,
+            isTrue,
+          );
+        }
+      }
+    }
+    // 30秒を1.25倍で進め、受球の最大予測窓を見ても末尾に達しない。
+    expect(
+      PassRunMotion.trajectoryProfileHorizonSeconds,
+      greaterThan((30 + 6) * 1.25),
+    );
   });
 
   test('速度・時間の範囲端点64seedは連続し、入替経路も画面内に収まる', () {
@@ -69,7 +109,9 @@ void main() {
                     motion.worldVelocityYAt(t, runner, outbound: outbound);
                 final context =
                     '$profile outbound=$outbound runner=$runner t=$t';
-                if (!y.isFinite || y < .40 || y > .60) {
+                if (!y.isFinite ||
+                    y < motion.geometry.minimum ||
+                    y > motion.geometry.maximum) {
                   fail('位置が有限なfield範囲外: $context y=$y');
                 }
                 if (!velocity.isFinite) {
