@@ -34,9 +34,14 @@ class TrainingHomeDaylight {
 
 /// ゲームと同じサーバー時計を参照し、休止中はタイマーを停止します。
 class TrainingHomeBackground extends StatefulWidget {
-  const TrainingHomeBackground({this.now, super.key});
+  const TrainingHomeBackground({
+    this.now,
+    this.imageFit = BoxFit.fitWidth,
+    super.key,
+  });
 
   final DateTime Function()? now;
+  final BoxFit imageFit;
 
   @override
   State<TrainingHomeBackground> createState() => _TrainingHomeBackgroundState();
@@ -103,7 +108,7 @@ class _TrainingHomeBackgroundState extends State<TrainingHomeBackground>
           color: _skyColor,
           image: DecorationImage(
             image: AssetImage(_asset),
-            fit: BoxFit.fitWidth,
+            fit: widget.imageFit,
             alignment: Alignment.bottomCenter,
           ),
         ),
