@@ -74,6 +74,19 @@ Future<void> preload(
   await tester.pump();
 }
 
+Future<void> preloadTrainingHomeBackground(WidgetTester tester) async {
+  final context = tester.element(find.byType(MaterialApp));
+  await tester.runAsync(() async {
+    for (final asset in [
+      'assets/images/training_game/scenes/home_outdoor_day.png',
+      'assets/images/training_game/scenes/home_outdoor_night.png',
+    ]) {
+      await precacheImage(AssetImage(asset, bundle: rootBundle), context);
+    }
+  });
+  await tester.pump();
+}
+
 // 呼吸・歩行は常時動くので、画面全体の静止を待たず遷移だけを進めます。
 Future<void> pumpRouteTransition(WidgetTester tester) async {
   final theme = Theme.of(tester.element(find.byType(Navigator).first));
@@ -132,6 +145,15 @@ class _DisplayFixtureController extends TrainingGameController {
 }
 
 void main() {
+  setUpAll(() async {
+    final lineSeed = FontLoader('LINESeedJP')
+      ..addFont(
+          rootBundle.load('assets/fonts/line_seed_jp/LINESeedJP-Regular.ttf'))
+      ..addFont(
+          rootBundle.load('assets/fonts/line_seed_jp/LINESeedJP-Bold.ttf'));
+    await lineSeed.load();
+  });
+
   for (final size in [const Size(375, 812), const Size(320, 568)]) {
     testWidgets('ホーム背景がHUDの背面まで続き、同期通知でも下部配置を保つ $size', (tester) async {
       tester.view.physicalSize = size;
@@ -848,33 +870,133 @@ void main() {
     expect(controller.callbackTrace, ['refreshUnlockedPositions']);
     expect(tester.takeException(), isNull);
   });
-  testWidgets('終了図鑑表示中の解放履歴更新で画像とlocked表示が追従する', (tester) async {
-    configurePhone(tester);
-    addTearDown(Get.reset);
-    Get.testMode = true;
-    final controller = _DisplayFixtureController();
-    controller.isServerStateReady.value = true;
-    controller.stageIndex.value = 4;
-    controller.ended.value = true;
-    controller.endingStep.value = 3;
-    Get.put<TrainingGameController>(controller);
-    await tester.pumpWidget(host(const TrainingGameScreen()));
-    await preload(tester, [SametarohAssets.positionFrameFor('プロップ')!]);
-    final propImage = find.byWidgetPredicate((widget) =>
-        widget is Image &&
-        widget.image is AssetImage &&
-        (widget.image as AssetImage).assetName ==
-            'assets/images/training_game/main/jersey/prop_plain.png');
-    expect(propImage, findsNothing);
-    expect(find.text('👤'), findsNWidgets(10));
-    controller.unlockedPositions.assignAll(['prop']);
-    await tester.pump();
-    expect(propImage, findsOneWidget);
-    expect(find.text('👤'), findsNWidgets(9));
-    controller.unlockedPositions.clear();
-    await tester.pump();
-    expect(propImage, findsNothing);
-    expect(find.text('👤'), findsNWidgets(10));
-    expect(tester.takeException(), isNull);
-  });
+  for (final size in [const Size(375, 812), const Size(320, 568)]) {
+    testWidgets('完了後図鑑は屋外背景の2列5行で到達状態を反映する $size', (tester) async {
+      tester.view.physicalSize = size;
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      addTearDown(Get.reset);
+      Get.testMode = true;
+      const positions = [
+        'プロップ',
+        'フッカー',
+        'ロック',
+        'フランカー',
+        'ナンバーエイト',
+        'スクラムハーフ',
+        'スタンドオフ',
+        'ウイング',
+        'センター',
+        'フルバック',
+      ];
+      final controller = _DisplayFixtureController();
+      controller.isServerStateReady.value = true;
+      controller.stageIndex.value = 4;
+      controller.ended.value = true;
+      controller.clearPosition.value = 'ウイング';
+      controller.endingStep.value = 3;
+      Get.put<TrainingGameController>(controller);
+      await tester.pumpWidget(host(const TrainingGameScreen()));
+      await preloadTrainingHomeBackground(tester);
+      await preload(
+        tester,
+        positions.map(
+          (position) => SametarohAssets.positionFrameFor(position)!,
+        ),
+      );
+
+      Finder imageFor(SametarohFrame frame) => find.byWidgetPredicate(
+            (widget) =>
+                widget is Image &&
+                widget.image is AssetImage &&
+                (widget.image as AssetImage).assetName == frame.asset,
+          );
+      final prop = SametarohAssets.positionFrameFor('プロップ')!;
+      final wing = SametarohAssets.positionFrameFor('ウイング')!;
+      expect(find.byType(TrainingHomeBackground), findsOneWidget);
+      expect(
+        tester
+            .widget<TrainingHomeBackground>(
+              find.byType(TrainingHomeBackground),
+            )
+            .imageFit,
+        BoxFit.cover,
+      );
+      final backgroundDecoration = tester
+          .widget<DecoratedBox>(
+            find.descendant(
+              of: find.byType(TrainingHomeBackground),
+              matching: find.byType(DecoratedBox),
+            ),
+          )
+          .decoration as BoxDecoration;
+      expect(backgroundDecoration.image?.fit, BoxFit.cover);
+      expect(backgroundDecoration.image?.alignment, Alignment.bottomCenter);
+      expect(find.byType(TrainingDexDialog), findsNothing);
+      expect(find.byType(Dialog), findsNothing);
+      expect(
+        find.byKey(const ValueKey('training-completion-title-pill')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const ValueKey('training-completion-count-pill')),
+        findsOneWidget,
+      );
+      expect(find.text('図鑑・クリア履歴'), findsOneWidget);
+      expect(find.text('到達 1/10'), findsOneWidget);
+      expect(find.text('次の卵へ'), findsOneWidget);
+      expect(
+        find.descendant(
+          of: find.byKey(const ValueKey('training-completion-next-egg')),
+          matching: find.byType(Icon),
+        ),
+        findsNothing,
+      );
+      expect(imageFor(prop), findsOneWidget);
+      expect(imageFor(wing), findsOneWidget);
+      expect(find.byType(ColorFiltered), findsNWidgets(9));
+      final grid = tester.widget<GridView>(
+        find.byKey(const ValueKey('training-completion-history-grid')),
+      );
+      expect(find.byType(SametarohFrameImage), findsNWidgets(10));
+      expect(grid.childrenDelegate.estimatedChildCount, 10);
+      expect(
+        (grid.gridDelegate as SliverGridDelegateWithFixedCrossAxisCount)
+            .crossAxisCount,
+        2,
+      );
+      final wingCard = find.byKey(
+        const ValueKey('training-completion-position-7'),
+      );
+      final wingImage = find.descendant(
+        of: wingCard,
+        matching: find.byType(SametarohFrameImage),
+      );
+      final wingLabel = find.descendant(
+        of: wingCard,
+        matching: find.text('ウイング'),
+      );
+      expect(
+        tester.getRect(wingImage).center.dx,
+        closeTo(tester.getRect(wingCard).center.dx, 2),
+      );
+      expect(
+        tester.getRect(wingImage).bottom,
+        lessThan(tester.getRect(wingLabel).top),
+      );
+      expect(tester.takeException(), isNull);
+
+      controller.unlockedPositions.assignAll(['prop']);
+      await tester.pump();
+      expect(find.text('到達 2/10'), findsOneWidget);
+      expect(find.byType(ColorFiltered), findsNWidgets(8));
+
+      controller.unlockedPositions.clear();
+      await tester.pump();
+      expect(find.text('到達 1/10'), findsOneWidget);
+      expect(find.byType(ColorFiltered), findsNWidgets(9));
+      expect(tester.takeException(), isNull);
+    });
+  }
 }

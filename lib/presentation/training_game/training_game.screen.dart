@@ -339,7 +339,7 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
     return _buildDexPage();
   }
 
-  /// ⑪図鑑・クリア履歴の5列グリッドを表示します。
+  /// ⑪育成完了後の図鑑・クリア履歴を2列5行で表示します。
   Widget _buildDexPage() {
     const positions = [
       'プロップ',
@@ -353,89 +353,188 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
       'センター',
       'フルバック',
     ];
-    // GridViewの遅延builder外で履歴を読み、表示中の解放更新もObxへ登録します。
+    // 保存済み履歴と今回の到達結果を合わせ、表示中の更新もObxで反映します。
     final unlockedStates = positions
-        .map((position) =>
-            controller.isPositionUnlocked(position) ||
-            position == controller.clearPosition.value)
+        .map(
+          (position) =>
+              controller.isPositionUnlocked(position) ||
+              position == controller.clearPosition.value,
+        )
         .toList();
-    return Padding(
-      padding: EdgeInsets.fromLTRB(12.w, 12.h, 12.w, 16.h),
-      child: Column(
-        children: [
-          Align(
-            alignment: Alignment.centerLeft,
-            child: Text(
-              '図鑑・クリア履歴',
-              style: TextStyle(fontSize: 20.sp, fontWeight: FontWeight.w700),
-            ),
-          ),
-          SizedBox(height: 12.h),
-          Expanded(
-            child: GridView.builder(
-              itemCount: positions.length,
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 5,
-                crossAxisSpacing: 4,
-                mainAxisSpacing: 4,
-                childAspectRatio: .78,
+    final registeredCount = unlockedStates.where((unlocked) => unlocked).length;
+
+    return Stack(
+      key: const ValueKey('training-completion-history'),
+      children: [
+        const Positioned.fill(
+          child: TrainingHomeBackground(imageFit: BoxFit.cover),
+        ),
+        Padding(
+          padding: EdgeInsets.fromLTRB(12.w, 10.h, 12.w, 12.h),
+          child: Column(
+            children: [
+              Container(
+                key: const ValueKey('training-completion-title-pill'),
+                padding: EdgeInsets.symmetric(horizontal: 22.w, vertical: 7.h),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  border: Border.all(color: TrainingHomeStyle.border),
+                  borderRadius: BorderRadius.circular(24.r),
+                ),
+                child: Text(
+                  '図鑑・クリア履歴',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: TrainingHomeStyle.navy,
+                    fontFamily: 'LINESeedJP',
+                    fontSize: 20.sp,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
               ),
-              itemBuilder: (_, index) {
-                final unlocked = unlockedStates[index];
-                return Container(
-                  padding: EdgeInsets.all(3.w),
-                  decoration: BoxDecoration(
-                    color: unlocked ? Colors.white : const Color(0xfff1f1f1),
-                    border: Border.all(color: const Color(0xffd8d8d8)),
-                    borderRadius: BorderRadius.circular(6.r),
+              SizedBox(height: 6.h),
+              Container(
+                key: const ValueKey('training-completion-count-pill'),
+                padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 4.h),
+                decoration: BoxDecoration(
+                  color: const Color(0xffe4f4fb),
+                  borderRadius: BorderRadius.circular(18.r),
+                ),
+                child: Text(
+                  '到達 $registeredCount/10',
+                  key: const ValueKey('training-completion-registered-count'),
+                  style: TextStyle(
+                    color: TrainingHomeStyle.navy,
+                    fontFamily: 'LINESeedJP',
+                    fontSize: 13.sp,
+                    fontWeight: FontWeight.w700,
                   ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      if (unlocked &&
-                          SametarohAssets.positionFrameFor(positions[index]) !=
-                              null)
-                        _buildSuppliedStatic(
-                          SametarohAssets.positionFrameFor(positions[index])!,
-                          width: 36,
-                          height: 48,
-                        )
-                      else
-                        Text(
-                          unlocked ? '🦈' : '👤',
-                          style: TextStyle(
-                            fontSize: 26.sp,
-                            color: unlocked ? null : Colors.grey,
-                          ),
-                        ),
-                      SizedBox(height: 2.h),
-                      Text(
-                        positions[index],
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 8.sp,
-                          color: unlocked ? Colors.black : Colors.grey,
-                          fontWeight:
-                              unlocked ? FontWeight.w700 : FontWeight.normal,
-                        ),
+                ),
+              ),
+              SizedBox(height: 10.h),
+              Expanded(
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    const rowCount = 5;
+                    final rowHeight =
+                        (constraints.maxHeight - 8.h * (rowCount - 1)) /
+                            rowCount;
+                    final portraitHeight =
+                        (rowHeight * .66).clamp(38.h, 72.h).toDouble();
+
+                    return GridView.builder(
+                      key: const ValueKey('training-completion-history-grid'),
+                      padding: EdgeInsets.zero,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: positions.length,
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 2,
+                        crossAxisSpacing: 8.w,
+                        mainAxisSpacing: 8.h,
+                        mainAxisExtent: rowHeight,
                       ),
-                    ],
+                      itemBuilder: (_, index) {
+                        final position = positions[index];
+                        final unlocked = unlockedStates[index];
+                        final frame = SametarohAssets.positionFrameFor(
+                          position,
+                        );
+                        final portrait = frame == null
+                            ? const SizedBox.shrink()
+                            : SametarohFrameImage(
+                                frame: frame,
+                                width: 64.w,
+                                height: portraitHeight,
+                                alignment: Alignment.bottomCenter,
+                                semanticLabel: position,
+                              );
+
+                        return Container(
+                          key: ValueKey('training-completion-position-$index'),
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 5.w,
+                            vertical: 3.h,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            border: Border.all(color: const Color(0xffd4e2ec)),
+                            borderRadius: BorderRadius.circular(12.r),
+                          ),
+                          child: Semantics(
+                            label: '$position、${unlocked ? '到達済み' : '未到達'}',
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Flexible(
+                                  child: Center(
+                                    child: unlocked
+                                        ? portrait
+                                        : ColorFiltered(
+                                            colorFilter: const ColorFilter.mode(
+                                              Color(0xffc5cbd2),
+                                              BlendMode.srcIn,
+                                            ),
+                                            child: Opacity(
+                                              opacity: .72,
+                                              child: portrait,
+                                            ),
+                                          ),
+                                  ),
+                                ),
+                                SizedBox(height: 2.h),
+                                Text(
+                                  position,
+                                  maxLines: 1,
+                                  softWrap: false,
+                                  overflow: TextOverflow.ellipsis,
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    color: TrainingHomeStyle.navy,
+                                    fontFamily: 'LINESeedJP',
+                                    fontSize: 11.sp,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    );
+                  },
+                ),
+              ),
+              SizedBox(height: 10.h),
+              SizedBox(
+                width: double.infinity,
+                height: 52.h,
+                child: ElevatedButton(
+                  key: const ValueKey('training-completion-next-egg'),
+                  onPressed: _openNewEgg,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.white,
+                    foregroundColor: TrainingHomeStyle.navy,
+                    elevation: 0,
+                    side: const BorderSide(color: Color(0xffb8deee)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12.r),
+                    ),
                   ),
-                );
-              },
-            ),
+                  child: Text(
+                    '次の卵へ',
+                    style: TextStyle(
+                      color: TrainingHomeStyle.navy,
+                      fontFamily: 'LINESeedJP',
+                      fontSize: 16.sp,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
-          SizedBox(height: 12.h),
-          SizedBox(
-            width: double.infinity,
-            height: 52.h,
-            child: ElevatedButton(
-              onPressed: _openNewEgg,
-              child: const Text('次の卵へ'),
-            ),
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
