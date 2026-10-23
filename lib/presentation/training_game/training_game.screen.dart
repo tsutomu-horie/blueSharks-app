@@ -229,9 +229,12 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
           ),
         _ => null,
       },
-      message: evolutionStage == 2 || evolutionStage == 3
-          ? '成長した鮫太郎と、いろんなことに挑戦してみましょう！！'
-          : '段階「${stage.name}」へ進みました。',
+      message: switch (evolutionStage) {
+        2 => '成長した鮫太郎と、いろんなことに挑戦してみましょう！！',
+        3 => '成長した鮫太郎と、いろんなことに挑戦してみましょう！！',
+        4 => 'ついに、一軍の舞台へ！',
+        _ => '段階「${stage.name}」へ進みました。',
+      },
       buttonLabel: '次へ',
       onPressed: controller.advanceEvolution,
     );

@@ -309,27 +309,29 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('育成期と成長期の進化本文を差し替え、他段階の本文と次へ操作を保つ', (tester) async {
+  testWidgets('進化段階ごとの本文を出し分け、他段階の本文と次へ操作を保つ', (tester) async {
     configurePhone(tester);
     Get.testMode = true;
     addTearDown(() => Get.reset());
     final controller = _DisplayFixtureController(fixtureBranch: 'A フォワード型');
     controller.isServerStateReady.value = true;
     Get.put<TrainingGameController>(controller);
-    const message = '成長した鮫太郎と、いろんなことに挑戦してみましょう！！';
+    const growthMessage = '成長した鮫太郎と、いろんなことに挑戦してみましょう！！';
+    const firstTeamMessage = 'ついに、一軍の舞台へ！';
 
-    for (final stage in [1, 2, 3]) {
+    for (final stage in [1, 2, 3, 4]) {
       controller.stageIndex.value = stage;
       controller.evolutionStage.value = stage;
       await tester.pumpWidget(host(const TrainingGameScreen()));
       await tester.pump();
 
       expect(find.text('進化'), findsOneWidget);
-      final usesGrowthMessage = stage == 2 || stage == 3;
-      expect(find.text(message),
-          usesGrowthMessage ? findsOneWidget : findsNothing);
+      expect(find.text(growthMessage),
+          stage == 2 || stage == 3 ? findsOneWidget : findsNothing);
+      expect(find.text(firstTeamMessage),
+          stage == 4 ? findsOneWidget : findsNothing);
       expect(find.text('段階「${controller.currentStage.name}」へ進みました。'),
-          usesGrowthMessage ? findsNothing : findsOneWidget);
+          stage == 1 ? findsOneWidget : findsNothing);
       await tester.tap(find.text('次へ'));
       expect(controller.evolutionStage.value, isNull);
       expect(controller.stageIndex.value, stage);
