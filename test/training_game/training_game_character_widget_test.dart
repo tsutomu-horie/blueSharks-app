@@ -10,6 +10,7 @@ import 'package:koto_blue_sharks/presentation/training_game/mini_games/models/mi
 import 'package:koto_blue_sharks/presentation/training_game/training_game.screen.dart';
 import 'package:koto_blue_sharks/presentation/training_game/models/training_game_models.dart';
 import 'package:koto_blue_sharks/presentation/training_game/sametaroh_asset.dart';
+import 'package:koto_blue_sharks/presentation/training_game/training_evolution_reveal.dart';
 import 'package:koto_blue_sharks/presentation/training_game/training_game_care_action.screen.dart';
 import 'package:koto_blue_sharks/presentation/training_game/training_home_background.dart';
 import 'package:koto_blue_sharks/presentation/training_game/training_home_roaming_character.dart';
@@ -26,6 +27,23 @@ Widget host(Widget child) => ScreenUtilInit(
 String shownAsset(WidgetTester tester) =>
     (tester.widget<Image>(find.byType(Image).first).image as AssetImage)
         .assetName;
+
+double _evolutionAssetOpacity(WidgetTester tester, SametarohFrame frame) {
+  final image = find.descendant(
+    of: find.byType(TrainingEvolutionReveal),
+    matching: find.byWidgetPredicate(
+      (widget) =>
+          widget is Image &&
+          widget.image is AssetImage &&
+          (widget.image as AssetImage).assetName == frame.asset,
+    ),
+  );
+  if (image.evaluate().isEmpty) return 0;
+  final opacity = find.ancestor(of: image, matching: find.byType(Opacity));
+  return opacity.evaluate().isEmpty
+      ? 1
+      : tester.widget<Opacity>(opacity.first).opacity;
+}
 
 String shownCareAsset(WidgetTester tester) => (tester
         .widget<Image>(find
@@ -291,11 +309,11 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('育成期の進化本文だけを差し替え、他段階の本文と次へ操作を保つ', (tester) async {
+  testWidgets('育成期と成長期の進化本文を差し替え、他段階の本文と次へ操作を保つ', (tester) async {
     configurePhone(tester);
     Get.testMode = true;
     addTearDown(() => Get.reset());
-    final controller = _DisplayFixtureController();
+    final controller = _DisplayFixtureController(fixtureBranch: 'A フォワード型');
     controller.isServerStateReady.value = true;
     Get.put<TrainingGameController>(controller);
     const message = '成長した鮫太郎と、いろんなことに挑戦してみましょう！！';
@@ -307,14 +325,82 @@ void main() {
       await tester.pump();
 
       expect(find.text('進化'), findsOneWidget);
-      expect(find.text(message), stage == 2 ? findsOneWidget : findsNothing);
+      final usesGrowthMessage = stage == 2 || stage == 3;
+      expect(find.text(message),
+          usesGrowthMessage ? findsOneWidget : findsNothing);
       expect(find.text('段階「${controller.currentStage.name}」へ進みました。'),
-          stage == 2 ? findsNothing : findsOneWidget);
+          usesGrowthMessage ? findsNothing : findsOneWidget);
       await tester.tap(find.text('次へ'));
       expect(controller.evolutionStage.value, isNull);
       expect(controller.stageIndex.value, stage);
       expect(tester.takeException(), isNull);
     }
+  });
+
+  testWidgets('育成期の進化は幼体から通常形へ切り替わる', (tester) async {
+    configurePhone(tester);
+    Get.testMode = true;
+    addTearDown(() => Get.reset());
+    final controller = _DisplayFixtureController();
+    controller.isServerStateReady.value = true;
+    controller.stageIndex.value = 2;
+    controller.evolutionStage.value = 2;
+    Get.put<TrainingGameController>(controller);
+    final before = SametarohAssets.newbornFrame;
+    final after = SametarohAssets.normalFrames.first;
+
+    await tester.pumpWidget(host(const TrainingGameScreen()));
+    await preload(tester, [before, after]);
+    expect(_evolutionAssetOpacity(tester, before), 1);
+    expect(_evolutionAssetOpacity(tester, after), 0);
+
+    await tester.pump(const Duration(seconds: 2));
+    expect(_evolutionAssetOpacity(tester, before), 0);
+    expect(_evolutionAssetOpacity(tester, after), 1);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('進化演出は既存の前後素材を一度だけ切り替え、背景復帰後も続けられる', (tester) async {
+    configurePhone(tester);
+    Get.testMode = true;
+    addTearDown(() => Get.reset());
+    final controller = _DisplayFixtureController(fixtureBranch: 'A フォワード型');
+    controller.isServerStateReady.value = true;
+    controller.stageIndex.value = 3;
+    controller.evolutionStage.value = 3;
+    Get.put<TrainingGameController>(controller);
+    final before = SametarohAssets.normalFrames.first;
+    final after = SametarohAssets.idleFramesForBodyKey('pr').first;
+    const screen = TrainingGameScreen();
+
+    await tester.pumpWidget(host(screen));
+    await preload(tester, [before, after]);
+    expect(find.byKey(const ValueKey('training-evolution-3')), findsOneWidget);
+    expect(_evolutionAssetOpacity(tester, before), 1);
+    expect(_evolutionAssetOpacity(tester, after), 0);
+
+    await tester.pump(const Duration(milliseconds: 650));
+    final beforePause = _evolutionAssetOpacity(tester, before);
+    final afterPause = _evolutionAssetOpacity(tester, after);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+    await tester.pump(const Duration(seconds: 3));
+    expect(_evolutionAssetOpacity(tester, before), beforePause);
+    expect(_evolutionAssetOpacity(tester, after), afterPause);
+
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    await tester.pumpWidget(host(screen));
+    await tester.pump(const Duration(seconds: 2));
+    expect(_evolutionAssetOpacity(tester, before), 0);
+    expect(_evolutionAssetOpacity(tester, after), 1);
+    await tester.pumpWidget(host(screen));
+    expect(_evolutionAssetOpacity(tester, after), 1);
+    await tester.pump(const Duration(seconds: 2));
+    expect(_evolutionAssetOpacity(tester, after), 1);
+
+    await tester.tap(find.text('次へ'));
+    expect(controller.evolutionStage.value, isNull);
+    expect(controller.stageIndex.value, 3);
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('卵を保持し、幼少の部屋と進化には支給newbornを表示する', (tester) async {
@@ -512,7 +598,12 @@ void main() {
       expect(animation.frameSet.walkFrames.first.asset, move.first.asset);
       controller.evolutionStage.value = 3;
       await tester.pump();
-      expect(shownAsset(tester), idle.first.asset);
+      if (entry.value == null) {
+        expect(shownAsset(tester), idle.first.asset);
+      } else {
+        await tester.pump(const Duration(seconds: 2));
+        expect(_evolutionAssetOpacity(tester, idle.first), 1);
+      }
       controller.evolutionStage.value = null;
       controller.ended.value = true;
       controller.clearPosition.value = 'プロップ';

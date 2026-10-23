@@ -19,6 +19,7 @@ import 'training_home_controls.dart';
 import 'training_home_roaming_character.dart';
 import 'training_sync_indicator.dart';
 import 'training_debug_menu.dart';
+import 'training_evolution_reveal.dart';
 
 /// 参照HTMLのスマートフォン画面部分だけをアプリ用に再現します。
 class TrainingGameScreen extends GetView<TrainingGameController> {
@@ -199,22 +200,36 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
   /// ⑧〜⑪の育成完了後フローを表示します。
   Widget _buildEvolutionFlow() {
     final stage = controller.currentStage;
-    final visual = switch (controller.evolutionStage.value) {
+    final evolutionStage = controller.evolutionStage.value;
+    final visual = switch (evolutionStage) {
       1 => '🐣\n幼少へ進化',
       2 => '🦈\n育成期へ進化',
       3 => '🦈\n成長期へ進化',
       _ => '✨\n進化演出',
     };
+    final currentBodyFrame =
+        SametarohAssets.idleFramesForBodyKey(_bodyKey).first;
     return _buildEndingPage(
       title: '進化',
       visual: visual,
-      visualWidget: switch (controller.evolutionStage.value) {
+      visualWidget: switch (evolutionStage) {
         1 => _buildSuppliedStatic(SametarohAssets.newbornFrame),
-        2 || 3 => _buildSuppliedStatic(
-            SametarohAssets.idleFramesForBodyKey(_bodyKey).first),
+        2 => TrainingEvolutionReveal(
+            key: const ValueKey('training-evolution-2'),
+            beforeFrame: SametarohAssets.newbornFrame,
+            afterFrame: currentBodyFrame,
+            beforeScale: 0.62,
+          ),
+        3 => TrainingEvolutionReveal(
+            key: const ValueKey('training-evolution-3'),
+            beforeFrame: SametarohAssets.normalFrames.first,
+            afterFrame: currentBodyFrame,
+            // 分岐未確定時も通常形を保ち、成長の差はサイズで見せます。
+            beforeScale: 0.7,
+          ),
         _ => null,
       },
-      message: controller.evolutionStage.value == 2
+      message: evolutionStage == 2 || evolutionStage == 3
           ? '成長した鮫太郎と、いろんなことに挑戦してみましょう！！'
           : '段階「${stage.name}」へ進みました。',
       buttonLabel: '次へ',
