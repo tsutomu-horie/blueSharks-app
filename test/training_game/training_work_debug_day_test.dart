@@ -1,3 +1,6 @@
+import 'package:koto_blue_sharks/presentation/training_game/models/mini_game_settings.dart';
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -18,6 +21,162 @@ void main() {
     await MySharedPref.init();
   });
 
+  test('日付をまたがない時間加算も専用APIへ保存し、日次履歴は解除しない', () async {
+    final provider = DebugDayProvider();
+    final controller = TrainingGameController(serverProvider: provider);
+    addTearDown(controller.onClose);
+    await controller.debugStartAtTraining();
+    controller.advanceTime(1);
+    final expectedMeters = {
+      for (final e in controller.meters.entries)
+        e.key: e.value.truncateToDouble(),
+    };
+    expect(await controller.prepareWork(), isTrue);
+    controller.finishWorkPreparation();
+    expect(provider.timeSaves, 1);
+    expect(provider.dailyResets, 0);
+    expect(controller.meters, expectedMeters);
+    expect(controller.elapsedHours.value, 1);
+  });
+
+  test('時間加算保存中は追加加算と行動を重ねず、保存後は再照会で値を維持する', () async {
+    final provider = DebugDayProvider();
+    final controller = TrainingGameController(serverProvider: provider);
+    addTearDown(controller.onClose);
+    await controller.debugStartAtTraining();
+    controller.advanceTime(1);
+    final expectedMeters = {
+      for (final e in controller.meters.entries)
+        e.key: e.value.truncateToDouble(),
+    };
+    controller.advanceTime(6);
+    controller.perform(TrainingActionType.rest);
+    expect(controller.elapsedHours.value, 1);
+    expect({
+      for (final e in controller.meters.entries)
+        e.key: e.value.truncateToDouble()
+    }, expectedMeters);
+    expect(await controller.prepareWork(), isTrue);
+    controller.finishWorkPreparation();
+    expect(provider.timeSaves, 1);
+    expect(controller.meters, expectedMeters);
+  });
+
+  test('日付をまたがない時間保存の拒否を隠さず、同じ加算後の値を再試行する', () async {
+    final provider = DebugDayProvider()..failTimeSync = true;
+    final controller = TrainingGameController(serverProvider: provider);
+    addTearDown(controller.onClose);
+    await controller.debugStartAtTraining();
+    controller.advanceTime(1);
+    final expectedMeters = {
+      for (final e in controller.meters.entries)
+        e.key: e.value.truncateToDouble(),
+    };
+    expect(await controller.prepareWork(), isFalse);
+    expect(controller.workAvailabilityError.value, contains('時間変更を保存できませんでした'));
+    expect(provider.dailyResets, 0);
+    controller.advanceTime(1);
+    expect(controller.elapsedHours.value, 1);
+    provider.failTimeSync = false;
+    expect(await controller.prepareWork(), isTrue);
+    controller.finishWorkPreparation();
+    expect(provider.timeSaves, 2);
+    expect(provider.dailyResets, 0);
+    expect(controller.meters, expectedMeters);
+  });
+
+  test('時間加算後にControllerを再作成しても進行カウンターと値が残る', () async {
+    final provider = DebugDayProvider();
+    final controller = TrainingGameController(serverProvider: provider);
+    await controller.debugStartAtTraining();
+    controller.advanceTime(1);
+    expect(await controller.prepareWork(), isTrue);
+    controller.finishWorkPreparation();
+    final expectedMeters = {
+      for (final e in controller.meters.entries)
+        e.key: e.value.truncateToDouble(),
+    };
+    controller.onClose();
+    final restored = TrainingGameController(serverProvider: provider);
+    addTearDown(restored.onClose);
+    await restored.retryRestoreServerState();
+    expect(restored.elapsedHours.value, 1);
+    expect(restored.meters, expectedMeters);
+    expect(restored.clockLabel, contains('01:00:00'));
+  });
+
+  test('時間保存の遅延中にバックグラウンド同期と復帰取得を重ねても順序を守る', () async {
+    final provider = DebugDayProvider()..timeGate = Completer<void>();
+    final controller = TrainingGameController(serverProvider: provider);
+    addTearDown(controller.onClose);
+    await controller.debugStartAtTraining();
+    controller.advanceTime(1);
+    await Future<void>.delayed(Duration.zero);
+    controller.didChangeAppLifecycleState(AppLifecycleState.paused);
+    final restore = controller.retryRestoreServerState();
+    await Future<void>.delayed(Duration.zero);
+    expect(provider.normalSaves, 0);
+    expect(provider.currentReads, 0);
+    provider.timeGate!.complete();
+    await restore;
+    await TrainingGameProvider.waitForPendingSync();
+    expect(provider.normalSaves, 1);
+    expect(provider.timeSaves, 1);
+    expect(controller.syncStatus.value, TrainingSyncStatus.idle);
+    expect(controller.elapsedHours.value, 1);
+  });
+
+  test('専用保存後に応答だけ失われても再取得で確認し加算を再送しない', () async {
+    final provider = DebugDayProvider()..loseTimeResponse = true;
+    final controller = TrainingGameController(serverProvider: provider);
+    addTearDown(controller.onClose);
+    await controller.debugStartAtTraining();
+    controller.advanceTime(1);
+    final expectedMeters = {
+      for (final e in controller.meters.entries)
+        e.key: e.value.truncateToDouble(),
+    };
+    expect(await controller.prepareWork(), isTrue);
+    controller.finishWorkPreparation();
+    expect(provider.timeSaves, 1);
+    expect(provider.dailyResets, 0);
+    expect(controller.elapsedHours.value, 1);
+    expect(controller.meters, expectedMeters);
+    expect(controller.canPerform(TrainingActionType.rest), isTrue);
+  });
+
+  test('保存結果が別状態なら明示再取得で保留を終了し、再送も日次解除もしない', () async {
+    final provider = DebugDayProvider()..loseChangedTimeResponse = true;
+    final controller = TrainingGameController(serverProvider: provider);
+    addTearDown(controller.onClose);
+    await controller.debugStartAtTraining();
+    controller.advanceTime(1);
+    expect(await controller.prepareWork(), isFalse);
+    expect(controller.canResolveDebugTimeSave, isTrue);
+    expect(provider.timeSaves, 1);
+    await controller.retryRestoreServerState();
+    expect(provider.timeSaves, 1);
+    expect(provider.dailyResets, 0);
+    expect(controller.canResolveDebugTimeSave, isFalse);
+    expect(controller.meters['食事'], provider.payload()['parameters']['hunger']);
+    expect(controller.elapsedHours.value, 1);
+    expect(controller.canPerform(TrainingActionType.rest), isTrue);
+  });
+
+  test('時間保存失敗中はホーム遷移を保存成功扱いせず、復帰操作を残す', () async {
+    final provider = DebugDayProvider()..failTimeSync = true;
+    final controller = TrainingGameController(serverProvider: provider);
+    addTearDown(controller.onClose);
+    await controller.debugStartAtTraining();
+    controller.advanceTime(1);
+    expect(await controller.syncBeforeReturningHome(), isFalse);
+    expect(controller.isReturningHome.value, isFalse);
+    expect(controller.canResolveDebugTimeSave, isTrue);
+    expect(provider.normalSaves, 0);
+    await controller.retryRestoreServerState();
+    expect(controller.canResolveDebugTimeSave, isFalse);
+  });
+
   test('仕事後に＋1日を押してすぐ再照会しても、日次解除後の仕事を開始できる', () async {
     final provider = DebugDayProvider();
     final controller = TrainingGameController(serverProvider: provider);
@@ -30,7 +189,10 @@ void main() {
     expect(controller.canWorkToday, isFalse);
 
     controller.advanceTime(24);
-    final expectedMeters = Map<String, double>.from(controller.meters);
+    final expectedMeters = {
+      for (final e in controller.meters.entries)
+        e.key: e.value.truncateToDouble(),
+    };
     expect(await controller.prepareWork(), isTrue);
     expect(provider.dailyResets, 1);
     expect(controller.meters, expectedMeters);
@@ -52,11 +214,17 @@ void main() {
       controller.perform(TrainingActionType.work);
       await TrainingGameProvider.waitForPendingSync();
       controller.advanceTime(24);
-      final expectedMeters = Map<String, double>.from(controller.meters);
+      final expectedMeters = {
+        for (final e in controller.meters.entries)
+          e.key: e.value.truncateToDouble(),
+      };
 
       expect(await controller.prepareWork(), isFalse);
       expect(controller.workAvailabilityError.value, contains('時間変更'));
-      expect(controller.meters, expectedMeters);
+      expect({
+        for (final e in controller.meters.entries)
+          e.key: e.value.truncateToDouble()
+      }, expectedMeters);
       provider.failDailyReset = false;
       provider.failTimeSync = false;
       expect(await controller.prepareWork(), isTrue);
@@ -78,6 +246,39 @@ void main() {
     expect(await controller.prepareWork(), isFalse);
     expect(controller.workAvailabilityError.value, contains('同期待ち'));
     expect(provider.dailyResets, 0);
+  });
+
+  testWidgets('デバコマの＋1時間から保存し、再照会後も減衰した表示を維持する', (tester) async {
+    tester.view.physicalSize = const Size(375, 812);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    Get.testMode = true;
+    addTearDown(Get.reset);
+    final provider = DebugDayProvider();
+    final controller = _ManualController(serverProvider: provider);
+    await tester.runAsync(controller.debugStartAtTraining);
+    final before = controller.meters['食事']!;
+    Get.put<TrainingGameController>(controller);
+    await tester.pumpWidget(ScreenUtilInit(
+      designSize: const Size(375, 812),
+      builder: (_, __) => const MaterialApp(home: TrainingGameScreen()),
+    ));
+    await tester.tap(find.byTooltip('デバッグコマンド'));
+    await tester.pumpAndSettle();
+    await tester.runAsync(() async {
+      await tester.tap(find.text('＋1時間'));
+      expect(await controller.prepareWork(), isTrue);
+      controller.finishWorkPreparation();
+    });
+    await tester.pumpAndSettle();
+    expect(provider.timeSaves, 1);
+    expect(provider.dailyResets, 0);
+    expect(controller.meters['食事'], lessThan(before));
+    expect(controller.meters['食事'], provider.payload()['parameters']['hunger']);
+    expect(controller.elapsedHours.value, 1);
+    await tester.pumpWidget(const SizedBox());
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('＋1日の日次解除を再試行してから仕事中の画面を表示し、中止では仕事を実行しない', (tester) async {
@@ -146,6 +347,12 @@ class _ManualController extends TrainingGameController {
 
 class DebugDayProvider extends TrainingGameProvider {
   int dailyResets = 0;
+  int timeSaves = 0;
+  int normalSaves = 0;
+  int currentReads = 0;
+  Completer<void>? timeGate;
+  bool loseTimeResponse = false;
+  bool loseChangedTimeResponse = false;
   int workActions = 0;
   bool failDailyReset = false;
   bool failTimeSync = false;
@@ -187,8 +394,10 @@ class DebugDayProvider extends TrainingGameProvider {
 
   @override
   Future<Map<String, dynamic>?> fetchCurrent(
-          {int? expectedSessionVersion}) async =>
-      payload();
+      {int? expectedSessionVersion}) async {
+    currentReads++;
+    return payload();
+  }
 
   @override
   Future<List<String>> fetchUnlockedPositions(
@@ -202,12 +411,21 @@ class DebugDayProvider extends TrainingGameProvider {
     required int lockVersion,
     int? expectedSessionVersion,
   }) async {
+    timeSaves++;
+    await timeGate?.future;
     expect(lockVersion, _lockVersion);
     if (failTimeSync) {
       throw TrainingGameApiException(statusCode: 404, message: 'Not Found');
     }
-    _parameters = Map.of(parameters);
+    _parameters = {
+      for (final e in parameters.entries) e.key: e.value.truncateToDouble()
+    };
     _lockVersion++;
+    if (loseChangedTimeResponse) {
+      _parameters['hunger'] = _parameters['hunger']! - 1;
+      throw TimeoutException('changed response lost');
+    }
+    if (loseTimeResponse) throw TimeoutException('response lost');
     return payload();
   }
 
@@ -240,10 +458,12 @@ class DebugDayProvider extends TrainingGameProvider {
     int? actionAttemptCount,
     int? actionSuccessCount,
     int? actionSuccessfulReactionTotalUs,
+    TackleSettings? actionTackleSettings,
     double? actionScore,
     double? actionEffectMultiplier,
     bool debugBypassCooldown = false,
   }) async {
+    normalSaves++;
     if (actionCode == 'work' && rateLimitWork) {
       throw TrainingGameApiException(
           statusCode: 429,
@@ -252,7 +472,7 @@ class DebugDayProvider extends TrainingGameProvider {
     }
     expect(lockVersion, _lockVersion);
     _lockVersion++;
-    _parameters = Map.of(parameters);
+    // 通常同期はサーバー正本。端末パラメータをそのまま採用しません。
     if (actionCode == 'work') {
       workActions++;
       _workAvailable = false;

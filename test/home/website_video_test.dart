@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:koto_blue_sharks/utils/constant.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -7,7 +8,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:koto_blue_sharks/app/data/models/home/website_video.dart';
 import 'package:koto_blue_sharks/app/providers/home/website_video_provider.dart';
 import 'package:koto_blue_sharks/presentation/home/controllers/home.controller.dart';
-import 'package:koto_blue_sharks/utils/constant.dart';
 
 // Reduced fixture matching the public .top-movie markup observed 2026-10-16.
 const homepage = '''
@@ -110,7 +110,7 @@ void main() {
     await first;
     expect(controller.websiteVideos, isEmpty);
   });
-  test('初回失敗は既存固定動画用の空状態を保持する', () async {
+  test('初回失敗は動画未取得の空状態を保持する', () async {
     final controller = HomeController(
         websiteVideoProvider: WebsiteVideoProvider(
       loadHomepage: (_) async => throw const WebsiteVideoRequestException(),
@@ -119,7 +119,7 @@ void main() {
     expect(controller.websiteVideos, isEmpty);
     controller.onClose();
   });
-  testWidgets('320/375/430幅で動画を横送りでき、空なら既存カードを表示する', (tester) async {
+  testWidgets('320/375/430幅で動画を横送りでき、空なら旧固定カードを表示しない', (tester) async {
     final videos = WebsiteVideo.parseHomepage(homepage, origin);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
@@ -147,10 +147,11 @@ void main() {
     ));
     await tester.pumpAndSettle();
     expect(find.byType(PageView), findsNothing);
-    expect(tester.widget<Image>(find.byType(Image)).image, isA<AssetImage>());
+    expect(find.byType(Image), findsNothing);
+    expect(find.byType(InkWell), findsNothing);
     expect(tester.takeException(), isNull);
   });
-  testWidgets('固定動画は従来の開き方を維持し、HP動画は対応URLを外部で開く', (tester) async {
+  testWidgets('新サイト動画の未取得時は旧固定動画を起動せず、取得後は掲載URLを開く', (tester) async {
     const channel = MethodChannel('plugins.flutter.io/url_launcher');
     final calls = <MethodCall>[];
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
@@ -173,6 +174,7 @@ void main() {
         ),
       ));
       await tester.pumpAndSettle();
+      if (videos.isEmpty) return;
       await tester.tap(find
           .descendant(
               of: find.byType(VideoThumbnailView),
@@ -182,15 +184,10 @@ void main() {
     }
 
     await show([]);
-    var args = calls.last.arguments as Map;
-    expect(calls.last.method, 'launch');
-    expect(args['url'], Constants.videoUrl);
-    expect(args['useSafariVC'], isTrue);
-    expect(args['useWebView'], isFalse);
-    calls.clear();
+    expect(calls, isEmpty);
     final videos = WebsiteVideo.parseHomepage(homepage, origin);
     await show(videos);
-    args = calls.last.arguments as Map;
+    final args = calls.last.arguments as Map;
     expect(args['url'], videos.first.url.toString());
     expect(args['useSafariVC'], isFalse);
     expect(args['useWebView'], isFalse);

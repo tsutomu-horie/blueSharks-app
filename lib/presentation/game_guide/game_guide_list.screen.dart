@@ -21,6 +21,8 @@ class _GameGuideListScreenState extends State<GameGuideListScreen>
     with WidgetsBindingObserver {
   late final GameGuideController controller;
   bool _wasBackgrounded = false;
+  bool _filtersOpen = false;
+  bool _refreshAfterFilters = false;
 
   GameGuideController _controller() {
     if (Get.isRegistered<GameGuideController>()) {
@@ -47,7 +49,11 @@ class _GameGuideListScreenState extends State<GameGuideListScreen>
     }
     if (state == AppLifecycleState.resumed && _wasBackgrounded) {
       _wasBackgrounded = false;
-      unawaited(controller.refreshOnResume());
+      if (_filtersOpen) {
+        _refreshAfterFilters = true;
+      } else {
+        unawaited(controller.refreshOnResume());
+      }
     }
   }
 
@@ -66,7 +72,7 @@ class _GameGuideListScreenState extends State<GameGuideListScreen>
         foregroundColor: Colors.white,
         automaticallyImplyLeading: false,
         title: Text(
-          'ホームゲームの楽しみ方',
+          'ホストゲームの楽しみ方',
           style: TextStyle(
             fontSize: 18.sp,
             fontWeight: FontWeight.w700,
@@ -84,11 +90,21 @@ class _GameGuideListScreenState extends State<GameGuideListScreen>
               ),
             ),
           ),
-          IconButton(
-            tooltip: '絞り込み',
-            onPressed: () => _showFilters(context, controller),
-            icon: const Icon(Icons.tune),
-          ),
+          Obx(() => IconButton(
+                tooltip: '絞り込み',
+                onPressed: controller.isLoadingFilters.value ||
+                        controller.isLoading.value ||
+                        controller.isLoadingMore.value
+                    ? null
+                    : () => _showFilters(context, controller),
+                icon: controller.isLoadingFilters.value
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                            strokeWidth: 2, color: Colors.white))
+                    : const Icon(Icons.tune),
+              )),
         ],
       ),
       body: Obx(
@@ -118,10 +134,7 @@ class _GameGuideListScreenState extends State<GameGuideListScreen>
         physics: const AlwaysScrollableScrollPhysics(),
         padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 32.h),
         children: [
-          _GuideIntroduction(
-            hasActiveFilters: controller.hasActiveFilters,
-            onFilterTap: () => _showFilters(context, controller),
-          ),
+          const _GuideIntroduction(),
           _SyncStatusBanner(
             state: controller.syncState.value,
             lastSyncedAt: controller.lastSyncedAt.value,
@@ -232,157 +245,146 @@ class _GameGuideListScreenState extends State<GameGuideListScreen>
     BuildContext context,
     GameGuideController controller,
   ) async {
-    var season = controller.selectedSeason.value;
-    var location = controller.selectedLocation.value;
-    var status = controller.selectedStatus.value;
+    if (!await controller.loadAllForFilters() || !context.mounted) return;
+    var season = controller.seasons.contains(controller.selectedSeason.value)
+        ? controller.selectedSeason.value
+        : null;
+    var location =
+        controller.locations.contains(controller.selectedLocation.value)
+            ? controller.selectedLocation.value
+            : null;
+    var status = controller.statuses.contains(controller.selectedStatus.value)
+        ? controller.selectedStatus.value
+        : null;
 
-    await showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      showDragHandle: true,
-      builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setState) {
-            return SafeArea(
-              child: Padding(
-                padding: EdgeInsets.fromLTRB(
-                  20.w,
-                  0,
-                  20.w,
-                  MediaQuery.of(context).viewInsets.bottom + 24.h,
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      '記事を絞り込む',
-                      style: TextStyle(
-                        fontSize: 20.sp,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    SizedBox(height: 8.h),
-                    Text(
-                      '絞り込み軸は仮実装です。WordPressの項目が設定されている場合に選択できます。',
-                      style: TextStyle(
-                        fontSize: 12.sp,
-                        color: TextColor.secondary,
-                      ),
-                    ),
-                    SizedBox(height: 20.h),
-                    _FilterDropdown(
-                      label: 'シーズン',
-                      value: season,
-                      options: controller.seasons,
-                      onChanged: (value) => setState(() => season = value),
-                    ),
-                    SizedBox(height: 12.h),
-                    _FilterDropdown(
-                      label: '開催地',
-                      value: location,
-                      options: controller.locations,
-                      onChanged: (value) => setState(() => location = value),
-                    ),
-                    SizedBox(height: 12.h),
-                    _FilterDropdown(
-                      label: '開催状態',
-                      value: status,
-                      options: controller.statuses,
-                      onChanged: (value) => setState(() => status = value),
-                    ),
-                    SizedBox(height: 24.h),
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: () {
-                          controller.applyFilters(
-                            season: season,
-                            location: location,
-                            status: status,
-                          );
-                          Navigator.of(context).pop();
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: BrandColor.hover,
-                          foregroundColor: Colors.white,
-                          minimumSize: Size.fromHeight(48.h),
+    _filtersOpen = true;
+    try {
+      await showModalBottomSheet<void>(
+        context: context,
+        isScrollControlled: true,
+        showDragHandle: true,
+        builder: (context) {
+          return StatefulBuilder(
+            builder: (context, setState) {
+              return SafeArea(
+                child: SingleChildScrollView(
+                    child: Padding(
+                  padding: EdgeInsets.fromLTRB(
+                    20.w,
+                    0,
+                    20.w,
+                    MediaQuery.of(context).viewInsets.bottom + 24.h,
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '記事を絞り込む',
+                        style: TextStyle(
+                          fontSize: 20.sp,
+                          fontWeight: FontWeight.w700,
                         ),
-                        child: const Text('この条件で表示'),
                       ),
-                    ),
-                    SizedBox(
-                      width: double.infinity,
-                      child: TextButton(
-                        onPressed: () {
-                          controller.clearFilters();
-                          Navigator.of(context).pop();
-                        },
-                        child: const Text('条件をクリア'),
+                      SizedBox(height: 8.h),
+                      Text(
+                        controller.filterInfoUnavailable.value
+                            ? '一部の絞り込み情報を取得できませんでした。画面を更新して再度お試しください。'
+                            : 'シーズン・開催地・開催状態を選んでください。開催状態を確認できない記事は「すべて」に含まれます。',
+                        style: TextStyle(
+                          fontSize: 12.sp,
+                          color: TextColor.secondary,
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          },
-        );
-      },
-    );
+                      SizedBox(height: 20.h),
+                      _FilterDropdown(
+                        label: 'シーズン',
+                        value: season,
+                        options: controller.seasons,
+                        onChanged: (value) => setState(() => season = value),
+                      ),
+                      SizedBox(height: 12.h),
+                      _FilterDropdown(
+                        label: '開催地',
+                        value: location,
+                        options: controller.locations,
+                        onChanged: (value) => setState(() => location = value),
+                      ),
+                      SizedBox(height: 12.h),
+                      _FilterDropdown(
+                        label: '開催状態',
+                        value: status,
+                        options: controller.statuses,
+                        onChanged: (value) => setState(() => status = value),
+                      ),
+                      SizedBox(height: 24.h),
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: () {
+                            controller.applyFilters(
+                              season: season,
+                              location: location,
+                              status: status,
+                            );
+                            Navigator.of(context).pop();
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: BrandColor.hover,
+                            foregroundColor: Colors.white,
+                            minimumSize: Size.fromHeight(48.h),
+                          ),
+                          child: const Text('この条件で表示'),
+                        ),
+                      ),
+                      SizedBox(
+                        width: double.infinity,
+                        child: TextButton(
+                          onPressed: () {
+                            controller.clearFilters();
+                            Navigator.of(context).pop();
+                          },
+                          child: const Text('条件をクリア'),
+                        ),
+                      ),
+                    ],
+                  ),
+                )),
+              );
+            },
+          );
+        },
+      );
+    } finally {
+      _filtersOpen = false;
+      if (_refreshAfterFilters && mounted) {
+        _refreshAfterFilters = false;
+        unawaited(controller.refreshOnResume());
+      }
+    }
   }
 }
 
 class _GuideIntroduction extends StatelessWidget {
-  const _GuideIntroduction({
-    required this.hasActiveFilters,
-    required this.onFilterTap,
-  });
-
-  final bool hasActiveFilters;
-  final VoidCallback onFilterTap;
+  const _GuideIntroduction();
 
   @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.only(bottom: 16.h),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '観戦前に知りたいこと',
-                  style: TextStyle(
+  Widget build(BuildContext context) => Padding(
+        padding: EdgeInsets.only(bottom: 16.h),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('観戦前に知りたいこと',
+                style: TextStyle(
                     fontSize: 20.sp,
                     fontWeight: FontWeight.w700,
-                    color: TextColor.primary,
-                  ),
-                ),
-                SizedBox(height: 4.h),
-                Text(
-                  '記事を選ぶとアプリ内で詳細を確認できます。',
-                  style: TextStyle(
-                    fontSize: 12.sp,
-                    color: TextColor.secondary,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          TextButton.icon(
-            onPressed: onFilterTap,
-            icon: Icon(
-              Icons.tune,
-              size: 18.w,
-            ),
-            label: Text(hasActiveFilters ? '条件あり' : '絞り込み'),
-          ),
-        ],
-      ),
-    );
-  }
+                    color: TextColor.primary)),
+            SizedBox(height: 4.h),
+            Text('記事を選ぶとアプリ内で詳細を確認できます。',
+                style: TextStyle(fontSize: 12.sp, color: TextColor.secondary)),
+          ],
+        ),
+      );
 }
 
 class _GameGuideCard extends StatelessWidget {
@@ -520,11 +522,12 @@ class _FilterDropdown extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return DropdownButtonFormField<String?>(
+      isExpanded: true,
       value: options.contains(value) ? value : null,
       decoration: InputDecoration(
         labelText: label,
         border: const OutlineInputBorder(),
-        helperText: options.isEmpty ? 'WordPressフィールド未設定' : null,
+        helperText: options.isEmpty ? '選択できる情報がありません' : null,
       ),
       items: [
         const DropdownMenuItem<String?>(
@@ -534,7 +537,7 @@ class _FilterDropdown extends StatelessWidget {
         ...options.map(
           (option) => DropdownMenuItem<String?>(
             value: option,
-            child: Text(option),
+            child: Text(option, maxLines: 1, overflow: TextOverflow.ellipsis),
           ),
         ),
       ],

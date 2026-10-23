@@ -8,6 +8,10 @@ class AppEnvironment {
   static const usesProductionServices = name == 'production';
   static const usesLocalServices = name == 'local';
   static const badgeLabel = usesProductionServices ? '' : 'DEBUG';
+
+  /// 検証版の育成UI。Flutterのビルド方式やサーバーの操作権限とは独立。
+  /// 通常版ではDebugビルドでも表示しません。API側の権限判定は維持します。
+  static const showsTrainingDebugUi = name == 'test' || name == 'local';
   static const localAuthApiHost = String.fromEnvironment('LOCAL_AUTH_API_HOST');
 
   // localでは会員APIのみPCへ接続し、他のサービスはテスト環境を使います。
@@ -16,9 +20,9 @@ class AppEnvironment {
       : usesProductionServices
           ? 'https://app.blue-sharks.jp/api/mobile/v1/'
           : 'https://memodevelop.com/bluesharks_web/index.php/api/mobile/v1/';
-  static const wordpressApiBaseUrl = usesProductionServices
-      ? 'https://blue-sharks.jp/wp-json/wp/v2/'
-      : 'https://blue-sharks.donati.jp/wp-json/wp/v2/';
+  // Website content is shared by production and test app environments.
+  static const websiteBaseUrl = 'https://blue-sharks.donati.jp';
+  static const wordpressApiBaseUrl = '$websiteBaseUrl/wp-json/wp/v2/';
   static const webBaseUrl = usesProductionServices
       ? 'https://app.blue-sharks.jp/api/'
       : 'https://dev-blueshark.tmdsite.my.id/api';
@@ -26,21 +30,11 @@ class AppEnvironment {
       usesProductionServices ? 'news_prod' : 'news_dev';
   static const remoteConfigEnvironment =
       usesProductionServices ? 'production' : 'debug';
-  static const ticketsUrl = usesProductionServices
-      ? 'https://blue-sharks.jp/tickets/'
-      : 'https://blue-sharks.donati.jp/tickets/';
-  static const fanClubUrl = usesProductionServices
-      ? 'https://blue-sharks.jp/fanclub/'
-      : 'https://blue-sharks.donati.jp/fanclub/';
-  static const partnerUrl = usesProductionServices
-      ? 'https://blue-sharks.jp/partner/'
-      : 'https://blue-sharks.donati.jp/partner/';
-  static const teamUrl = usesProductionServices
-      ? 'https://blue-sharks.jp/team/'
-      : 'https://blue-sharks.donati.jp/team/';
-  static const wordpressAdminUrl = usesProductionServices
-      ? 'https://blue-sharks.jp/wp-admin/'
-      : 'https://blue-sharks.donati.jp/wp-admin/';
+  static const ticketsUrl = '$websiteBaseUrl/tickets/';
+  static const fanClubUrl = '$websiteBaseUrl/fanclub/';
+  static const partnerUrl = '$websiteBaseUrl/partner/';
+  static const teamUrl = '$websiteBaseUrl/team/';
+  static const wordpressAdminUrl = '$websiteBaseUrl/wp-admin/';
 
   /// mainの通信・SDK初期化より前に検証します。assertには依存しません。
   static void validate() {

@@ -17,6 +17,8 @@ class GameGuideController extends GetxController {
   final visibleGuides = <GameGuidePost>[].obs;
   final isLoading = false.obs;
   final isLoadingMore = false.obs;
+  final isLoadingFilters = false.obs;
+  final filterInfoUnavailable = false.obs;
   final hasMore = true.obs;
   final errorMessage = RxnString();
   final showingCachedData = false.obs;
@@ -42,9 +44,7 @@ class GameGuideController extends GetxController {
         guides.map((item) => item.location),
       );
 
-  List<String> get statuses => _filterOptions(
-        guides.map((item) => item.status),
-      );
+  List<String> get statuses => const ['開催予定', '試合終了'];
 
   bool get hasActiveFilters =>
       selectedSeason.value != null ||
@@ -74,7 +74,8 @@ class GameGuideController extends GetxController {
       final firstPage = await _fetchWithRetry(1);
       guides.assignAll(firstPage);
       _currentPage = 1;
-      hasMore.value = firstPage.length == GameGuideProvider.defaultPageSize;
+      hasMore.value = provider.hasMoreForPage(1) ??
+          firstPage.length == GameGuideProvider.defaultPageSize;
       showingCachedData.value = false;
       cachedAt.value = null;
       _markSynced();
@@ -87,6 +88,11 @@ class GameGuideController extends GetxController {
       }
     } finally {
       isLoading.value = false;
+    }
+    if (hasActiveFilters &&
+        syncState.value == GameGuideSyncState.synced &&
+        hasMore.value) {
+      await loadAllForFilters();
     }
   }
 
@@ -109,7 +115,8 @@ class GameGuideController extends GetxController {
         nextItems.where((item) => existingIds.add(item.id)),
       );
       _currentPage = nextPage;
-      hasMore.value = nextItems.length == GameGuideProvider.defaultPageSize;
+      hasMore.value = provider.hasMoreForPage(nextPage) ??
+          nextItems.length == GameGuideProvider.defaultPageSize;
       showingCachedData.value = false;
       _markSynced();
       _applyFilters();
@@ -119,6 +126,27 @@ class GameGuideController extends GetxController {
       errorMessage.value = '追加の記事を取得できませんでした。';
     } finally {
       isLoadingMore.value = false;
+    }
+  }
+
+  Future<bool> loadAllForFilters() async {
+    if (isLoading.value || isLoadingMore.value || isLoadingFilters.value)
+      return false;
+    if (showingCachedData.value) return true;
+    isLoadingFilters.value = true;
+    try {
+      while (hasMore.value) {
+        final count = guides.length;
+        await loadMore();
+        if (errorMessage.value != null) return false;
+        if (hasMore.value && guides.length == count) {
+          errorMessage.value = '記事の続きを取得できませんでした。再度お試しください。';
+          return false;
+        }
+      }
+      return true;
+    } finally {
+      isLoadingFilters.value = false;
     }
   }
 
@@ -156,7 +184,9 @@ class GameGuideController extends GetxController {
     Object? lastError;
     for (var attempt = 0; attempt < 3; attempt++) {
       try {
-        return await provider.fetchGuides(page: page);
+        final posts = await provider.fetchGuides(page: page);
+        filterInfoUnavailable.value = provider.filterInfoUnavailable;
+        return posts;
       } catch (error) {
         lastError = error;
       }
@@ -249,5 +279,11 @@ class GameGuideController extends GetxController {
       // 壊れたキャッシュは表示せず、ネットワーク取得を継続する。
       return false;
     }
+  }
+
+  @override
+  void onClose() {
+    provider.onDelete();
+    super.onClose();
   }
 }

@@ -16,17 +16,55 @@ import 'package:koto_blue_sharks/utils/date_formatter.dart';
 import 'package:koto_blue_sharks/utils/match+extensions.dart';
 import 'package:koto_blue_sharks/app/views/views/html_text_view.dart';
 import 'package:shimmer/shimmer.dart';
-import 'package:koto_blue_sharks/utils/match+extensions.dart';
 
-class MatchDetailScreen extends GetView<MatchDetailController> {
+class MatchDetailScreen extends StatelessWidget {
   const MatchDetailScreen(this.data, {super.key, required this.homeStatus});
+  final MatchResultBySeason? data;
+  final String homeStatus;
+
+  @override
+  Widget build(BuildContext context) {
+    final controller = Get.put(MatchDetailController());
+    if (data == null) {
+      return _NativeMatchDetailScreen(data, homeStatus: homeStatus);
+    }
+    controller.loadDetail(data!);
+    return Obx(() {
+      if (!controller.loading.value && !controller.failed.value) {
+        final value = controller.detail.value ?? data;
+        return _NativeMatchDetailScreen(value, homeStatus: homeStatus);
+      }
+      return Scaffold(
+        appBar: AppBar(title: const Text('試合情報')),
+        body: Center(
+          child: controller.failed.value
+              ? Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Text('情報を取得できませんでした。'),
+                    TextButton(
+                      onPressed: () =>
+                          controller.loadDetail(data!, retry: true),
+                      child: const Text('再試行'),
+                    ),
+                  ],
+                )
+              : const CircularProgressIndicator(),
+        ),
+      );
+    });
+  }
+}
+
+class _NativeMatchDetailScreen extends GetView<MatchDetailController> {
+  const _NativeMatchDetailScreen(this.data, {required this.homeStatus});
 
   final MatchResultBySeason? data;
   final String homeStatus;
 
   @override
   Widget build(BuildContext context) {
-    final MatchDetailController controller = Get.put(MatchDetailController());
+    final MatchDetailController controller = Get.find<MatchDetailController>();
 
     print("data ${data}");
     final gameDate = data?.custom_field.gameDate ?? [];
@@ -183,7 +221,8 @@ class MatchDetailScreen extends GetView<MatchDetailController> {
                         Column(
                           children: [
                             FutureBuilder<String>(
-                              future: getImage(controller.mediaProvider, matchStatus?["teamLogo"]),
+                              future: getImage(controller.mediaProvider,
+                                  matchStatus?["teamLogo"]),
                               // Wait for the image URL to resolve
                               builder: (context, snapshot) {
                                 if (snapshot.connectionState ==
@@ -218,17 +257,17 @@ class MatchDetailScreen extends GetView<MatchDetailController> {
                               height: 4.h,
                             ),
                             SizedBox(
-                                width: 104.w,
-                                child: HtmlTextView(
-                                  "${data?.custom_field.team_1?.first}",
-                                  style: Style(
-                                      fontSize: FontSize(12.sp),
-                                      color: PrimaryColor.pressed,
-                                      fontWeight: FontWeight.w700,
-                                      maxLines: 2,
-                                      textOverflow: TextOverflow.ellipsis,
-                                      alignment: Alignment.center),
-                                ),
+                              width: 104.w,
+                              child: HtmlTextView(
+                                "${data?.custom_field.team_1?.first}",
+                                style: Style(
+                                    fontSize: FontSize(12.sp),
+                                    color: PrimaryColor.pressed,
+                                    fontWeight: FontWeight.w700,
+                                    maxLines: 2,
+                                    textOverflow: TextOverflow.ellipsis,
+                                    alignment: Alignment.center),
+                              ),
                             ),
                           ],
                         ),
@@ -240,8 +279,13 @@ class MatchDetailScreen extends GetView<MatchDetailController> {
                               Container(
                                 width: 56.w,
                                 height: 32.h,
-                                color:  customField?.game_result?.first != null && customField?.game_result?.first !=
-                                    "試合前" ? (customField?.game_result?.first == "LOSE" ? BackgroundColor.muted : BrandColor.background) : SuccessColor.main,
+                                color: customField?.game_result?.first !=
+                                            null &&
+                                        customField?.game_result?.first != "試合前"
+                                    ? (customField?.game_result?.first == "LOSE"
+                                        ? BackgroundColor.muted
+                                        : BrandColor.background)
+                                    : SuccessColor.main,
                                 child: Center(
                                   child: CustomTextView(
                                     customField?.game_result?.first != null
@@ -259,14 +303,21 @@ class MatchDetailScreen extends GetView<MatchDetailController> {
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  if (customField?.game_result?.first == LocaleKeys.pre_game.tr)
-                                    CustomTextView("-", style: TDSTypography.headlineLarge, color: TextColor.primary,)
+                                  if (customField?.game_result?.first ==
+                                      LocaleKeys.pre_game.tr)
+                                    CustomTextView(
+                                      "-",
+                                      style: TDSTypography.headlineLarge,
+                                      color: TextColor.primary,
+                                    )
                                   else
                                     Row(
-                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
                                       children: [
                                         CustomTextView(
-                                          customField?.team_score_1?.first ?? "0",
+                                          customField?.team_score_1?.first ??
+                                              "0",
                                           style: TextStyle(
                                             fontWeight: FontWeight.w700,
                                             color: BrandColor.hover,
@@ -284,7 +335,8 @@ class MatchDetailScreen extends GetView<MatchDetailController> {
                                         ),
                                         SizedBox(width: 8.w),
                                         CustomTextView(
-                                          customField?.team_score_2?.first ?? "0",
+                                          customField?.team_score_2?.first ??
+                                              "0",
                                           style: TextStyle(
                                             fontWeight: FontWeight.w700,
                                             color: TextColor.primary,
@@ -879,7 +931,8 @@ class MatchDetailScreen extends GetView<MatchDetailController> {
                                 if (controller.selectedIndex.value == 1)
                                   ReportView(data?.content.rendered ?? ""),
                                 if (controller.selectedIndex.value == 2)
-                                  GalleryView(controller, data?.custom_field.photos),
+                                  GalleryView(
+                                      controller, data?.custom_field.photos),
                               ],
                             ),
                           );
@@ -944,49 +997,54 @@ class MatchDetailScreen extends GetView<MatchDetailController> {
     );
   }
 
-  Widget GalleryView(MatchDetailController controller, List<String>? listMedia) {
+  Widget GalleryView(
+      MatchDetailController controller, List<String>? listMedia) {
     return Column(
       children: [
         DefaultHeaderTitleView(
             LocaleKeys.gallery.tr, LocaleKeys.gallery_en.tr.toUpperCase()),
-        if (listMedia != null )
-        SizedBox(
-          child: GridView.builder(
-            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 3, // Number of columns
-              crossAxisSpacing: 2.w, // Horizontal space between items
-              mainAxisSpacing: 2.h, // Vertical space between items
-              childAspectRatio: 1.0, // Aspect ratio of grid items
-            ),
-            shrinkWrap: true,
-            // Use shrinkWrap for smooth scrolling
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: listMedia.length, // Total number of items
-            itemBuilder: (context, index) {
-              return FutureBuilder<String>(
-                future: getImage(controller.mediaProvider,listMedia[index]), // The Future you want to resolve
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(
-                        child:
-                            CircularProgressIndicator()); // Loading indicator
-                  } else if (snapshot.hasError) {
-                    return const Center(child: Text('Error loading data'));
-                  } else {
-                    final postImage = snapshot.data ??
-                        'https://example.com/placeholder.png'; // Fallback in case of null
+        if (listMedia != null)
+          SizedBox(
+            child: GridView.builder(
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 3, // Number of columns
+                crossAxisSpacing: 2.w, // Horizontal space between items
+                mainAxisSpacing: 2.h, // Vertical space between items
+                childAspectRatio: 1.0, // Aspect ratio of grid items
+              ),
+              shrinkWrap: true,
+              // Use shrinkWrap for smooth scrolling
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: listMedia.length, // Total number of items
+              itemBuilder: (context, index) {
+                return FutureBuilder<String>(
+                  future: getImage(controller.mediaProvider,
+                      listMedia[index]), // The Future you want to resolve
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(
+                          child:
+                              CircularProgressIndicator()); // Loading indicator
+                    } else if (snapshot.hasError) {
+                      return const Center(child: Text('Error loading data'));
+                    } else {
+                      final postImage = snapshot.data ??
+                          'https://example.com/placeholder.png'; // Fallback in case of null
 
-                    // Use your CustomImageView with the fetched image URL
-                    return CustomImageView(image: postImage, radius: 0,); // Display image
-                  }
-                },
-              );
-            },
-          ),
-        )
+                      // Use your CustomImageView with the fetched image URL
+                      return CustomImageView(
+                        image: postImage,
+                        radius: 0,
+                      ); // Display image
+                    }
+                  },
+                );
+              },
+            ),
+          )
         else
           SizedBox()
-          // Text("Kosong")
+        // Text("Kosong")
       ],
     );
   }

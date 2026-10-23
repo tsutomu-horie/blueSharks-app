@@ -5,20 +5,34 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 
 import '../models/mini_game_result.dart';
-import '../mini_game_character_asset.dart';
+import 'pass_and_run_character_visual.dart';
+import 'pass_and_run_direction_guide.dart';
 import '../../models/training_game_clock.dart';
+import '../../models/mini_game_settings.dart';
 import 'pass_and_run_logic.dart';
+import 'pass_and_run_motion.dart';
 
-enum _PassGamePhase {
-  waiting,
-  playing,
-  result,
-}
+enum _PassGamePhase { waiting, playing, result }
 
 /// 仲間の方向へフリックして成功回数を競うパス＆ランです。
 class PassAndRunGameScreen extends StatefulWidget {
   /// パス＆ラン画面を作成します。
-  const PassAndRunGameScreen({super.key});
+  const PassAndRunGameScreen({
+    super.key,
+    this.now,
+    this.motionSeed,
+    this.settings = const PassRunSettings(),
+  });
+
+  final PassRunSettings settings;
+
+  @visibleForTesting
+  final int? motionSeed;
+
+  /// 入力・ticker・停止復帰を同じ瞬間で検証するための時計注入点です。
+  /// 通常画面は育成ゲームの共通サーバー時計を使います。
+  @visibleForTesting
+  final DateTime Function()? now;
 
   @override
   State<PassAndRunGameScreen> createState() => _PassAndRunGameScreenState();
@@ -26,35 +40,61 @@ class PassAndRunGameScreen extends StatefulWidget {
 
 class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
     with WidgetsBindingObserver {
-  static const _passArrivalDuration = Duration(milliseconds: 220);
-  static const _passReturnDelay = Duration(milliseconds: 120);
+  late final PassRunSettings _settings;
+  Duration get _roundDuration =>
+      Duration(milliseconds: _settings.roundDurationMs);
+  Duration get _missPenalty => Duration(milliseconds: _settings.missPenaltyMs);
+  Duration get _passArrivalDuration =>
+      Duration(milliseconds: _settings.ballHalfFieldTravelMs);
+  // Keep the validated collision-radius blend independent of ball speed.
+  static const _collisionBlendDuration = Duration(milliseconds: 220);
+  static const _catchSettleDuration = Duration(milliseconds: 80);
+  static const _displayScale = .75;
+  Duration get _turnDuration =>
+      Duration(milliseconds: _settings.laneSwapDurationMs);
+  // 80msの捕球接続に短い余裕を加える最短待機。描画frame数は保証しない。
+  static const _passReturnDelay = Duration(milliseconds: 96);
 
   _PassGamePhase _phase = _PassGamePhase.waiting;
   final _roundScores = <int>[0, 0];
   final _fieldTick = ValueNotifier<int>(0);
   late final Ticker _fieldTicker;
+  late final PassRunMotion _motion;
   Timer? _clockTimer;
   DateTime? _roundStartedAt;
   DateTime? _penaltyUntil;
   DateTime? _passStartedAt;
+  Duration _collisionCheckedElapsed = Duration.zero;
   DateTime? _passArrivalAt;
   DateTime? _passReadyAt;
   Offset? _passStartOffset;
   Offset? _passTargetOffset;
-  Duration _passTravelDuration = _passArrivalDuration;
-  Duration _passReturnDuration = _passArrivalDuration;
-  double _passOutboundDistance = 0;
+  late Duration _passTravelDuration;
+  late Duration _passReturnDuration;
+  DateTime? _returnStartedAt;
+  Duration? _pausedReturnElapsed;
+  bool _isForwardPass = false;
   Offset? _passReturnStartOffset;
   Offset? _passReturnTargetOffset;
+  Offset? _catchBallDisplacement;
+  PassRunBallGeometry? _catchBallGeometry;
+  PassRunBallGeometry? _releaseBallGeometry;
+  double? _releaseCollisionRadius;
+  PassRunBallGeometry? _returnReleaseGeometry;
   Offset? _dragStart;
   Offset? _dragCurrent;
   Size _fieldSize = Size.zero;
   int _roundIndex = 0;
-  int _remainingMilliseconds = PassAndRunRules.roundDuration.inMilliseconds;
+  late int _remainingMilliseconds;
   bool _lastPassSucceeded = false;
+  bool _precacheStarted = false;
+  bool _assetsReady = false;
+  bool _assetLoadFailed = false;
+  bool _preparingImages = false;
+  final _pinnedImages =
+      <({ImageStream stream, ImageStreamListener listener})>[];
   bool _passInFlight = false;
   bool _passScoreConfirmed = false;
-  bool _isFailedPass = false;
   bool _isBallLost = false;
   int? _pendingPassRoundIndex;
   bool _isPaused = false;
@@ -63,25 +103,33 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
   Duration? _pausedPassRemaining;
   Duration? _pausedPassElapsed;
 
+  String _secondsLabel(Duration duration) {
+    final seconds = duration.inMilliseconds / 1000;
+    return seconds == seconds.roundToDouble()
+        ? seconds.toInt().toString()
+        : seconds.toString();
+  }
+
+  DateTime _now() => widget.now?.call() ?? TrainingGameClock.now();
+
   bool get _isOutbound => _roundIndex == 0;
-  bool get _isPenalized =>
-      _penaltyUntil != null && TrainingGameClock.now().isBefore(_penaltyUntil!);
+  bool get _isPenalized => _isPaused
+      ? (_pausedPenaltyRemaining ?? Duration.zero) > Duration.zero
+      : _penaltyUntil != null && _now().isBefore(_penaltyUntil!);
 
   /// ラウンド終了時刻を過ぎていない場合だけ、新しいパスを受け付けます。
   bool get _canPass {
     final roundStartedAt = _roundStartedAt;
     if (roundStartedAt == null ||
-        !TrainingGameClock.now().isBefore(
-          roundStartedAt.add(PassAndRunRules.roundDuration),
-        )) {
+        _now().isBefore(roundStartedAt) ||
+        !_now().isBefore(roundStartedAt.add(_roundDuration))) {
       return false;
     }
     return _phase == _PassGamePhase.playing &&
         !_isPaused &&
         !_isPenalized &&
         !_passInFlight &&
-        (_passReadyAt == null ||
-            !TrainingGameClock.now().isBefore(_passReadyAt!));
+        (_passReadyAt == null || !_now().isBefore(_passReadyAt!));
   }
 
   int get _totalScore => _roundScores.fold(0, (sum, score) => sum + score);
@@ -89,18 +137,79 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
   @override
   void initState() {
     super.initState();
+    _settings = widget.settings;
+    _remainingMilliseconds = _roundDuration.inMilliseconds;
+    _passTravelDuration = _passArrivalDuration;
+    _passReturnDuration = _passArrivalDuration;
+    _motion = PassRunMotion(
+      seed: widget.motionSeed ?? math.Random().nextInt(1 << 31),
+      roundSeconds: _roundDuration.inMicroseconds / 1000000,
+      speedScale: _settings.runSpeedScale,
+    );
     WidgetsBinding.instance.addObserver(this);
     _fieldTicker = Ticker((_) {
       if (!mounted) return;
       // 描画フレームごとに確認し、移動中の仲間との衝突を取りこぼさないようにします。
-      if (_updatePassCycle(TrainingGameClock.now())) setState(() {});
+      if (_updatePassCycle(_now())) setState(() {});
       _fieldTick.value++;
+    });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_precacheStarted) {
+      _precacheStarted = true;
+      unawaited(_prepareImages());
+    }
+  }
+
+  Future<void> _prepareImages() async {
+    if (_preparingImages) return;
+    _preparingImages = true;
+    var failed = false;
+    final configuration = createLocalImageConfiguration(context);
+    // Pin each state immediately and wait for its decoded image, so cache
+    // eviction cannot race the transition from preparation into play.
+    await Future.wait(
+      PassAndRunCharacterVisual.assets.map((path) {
+        final ready = Completer<void>();
+        final stream = AssetImage(path).resolve(configuration);
+        final listener = ImageStreamListener(
+          (image, synchronousCall) {
+            image.dispose();
+            if (!ready.isCompleted) ready.complete();
+          },
+          onError: (Object error, StackTrace? stack) {
+            failed = true;
+            if (!ready.isCompleted) ready.complete();
+          },
+        );
+        _pinnedImages.add((stream: stream, listener: listener));
+        stream.addListener(listener);
+        return ready.future;
+      }),
+    );
+    if (!mounted) return;
+    if (failed) {
+      for (final image in _pinnedImages) {
+        image.stream.removeListener(image.listener);
+      }
+      _pinnedImages.clear();
+    }
+    setState(() {
+      _preparingImages = false;
+      _assetsReady = !failed;
+      _assetLoadFailed = failed;
     });
   }
 
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    for (final image in _pinnedImages) {
+      image.stream.removeListener(image.listener);
+    }
     _clockTimer?.cancel();
     _fieldTicker.dispose();
     _fieldTick.dispose();
@@ -119,6 +228,7 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
 
   /// 往路を開始し、制限時間と並走位置の更新を始めます。
   void _startGame() {
+    if (!_assetsReady) return;
     _roundIndex = 0;
     _roundScores
       ..clear()
@@ -126,28 +236,33 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
     _startRound();
   }
 
-  /// 現在の片道15秒を開始します。
+  /// 現在の片道ラウンドを開始します。
   void _startRound({Duration carryPenalty = Duration.zero}) {
     _clockTimer?.cancel();
-    _roundStartedAt = TrainingGameClock.now();
+    _roundStartedAt = _isOutbound ? _now() : _now().add(_turnDuration);
     _penaltyUntil = carryPenalty > Duration.zero
-        ? TrainingGameClock.now().add(carryPenalty)
+        ? _roundStartedAt!.add(carryPenalty)
         : null;
     _passReadyAt = null;
     _passStartedAt = null;
+    _collisionCheckedElapsed = Duration.zero;
     _passArrivalAt = null;
     _passStartOffset = null;
     _passTargetOffset = null;
     _passReturnDuration = _passArrivalDuration;
-    _passOutboundDistance = 0;
+    _returnStartedAt = null;
+    _catchBallDisplacement = null;
+    _catchBallGeometry = null;
+    _releaseBallGeometry = null;
+    _returnReleaseGeometry = null;
+    _isForwardPass = false;
     _passReturnStartOffset = null;
     _passReturnTargetOffset = null;
     _passInFlight = false;
     _passScoreConfirmed = false;
-    _isFailedPass = false;
     _isBallLost = false;
     _pendingPassRoundIndex = null;
-    _remainingMilliseconds = PassAndRunRules.roundDuration.inMilliseconds;
+    _remainingMilliseconds = _roundDuration.inMilliseconds;
     setState(() {
       _phase = _PassGamePhase.playing;
       _isPaused = false;
@@ -163,15 +278,18 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
       ..start();
     _clockTimer = Timer.periodic(const Duration(milliseconds: 50), (_) {
       if (!mounted || _roundStartedAt == null) return;
-      final now = TrainingGameClock.now();
+      final now = _now();
       final previousRemainingDeciseconds = _remainingMilliseconds ~/ 100;
       final elapsed = now.difference(_roundStartedAt!);
-      final remaining = PassAndRunRules.roundDuration - elapsed;
+      final remaining = _roundDuration - elapsed;
       if (remaining <= Duration.zero) {
         _finishRound();
         return;
       }
-      _remainingMilliseconds = remaining.inMilliseconds;
+      _remainingMilliseconds = remaining.inMilliseconds.clamp(
+        0,
+        _roundDuration.inMilliseconds,
+      );
       if (previousRemainingDeciseconds != _remainingMilliseconds ~/ 100) {
         setState(() {});
       }
@@ -180,28 +298,33 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
 
   /// 往路から復路、または復路から結果画面へ進みます。
   void _finishRound() {
-    _updatePassCycle(TrainingGameClock.now());
+    _updatePassCycle(_now());
     _clockTimer?.cancel();
     _fieldTicker.stop();
     _passInFlight = false;
     _passScoreConfirmed = false;
-    _isFailedPass = false;
     _isBallLost = false;
     _pendingPassRoundIndex = null;
     _passStartedAt = null;
+    _collisionCheckedElapsed = Duration.zero;
     _passArrivalAt = null;
     _passReadyAt = null;
     _passStartOffset = null;
     _passTargetOffset = null;
     _passReturnStartOffset = null;
     _passReturnTargetOffset = null;
+    _returnStartedAt = null;
+    _catchBallDisplacement = null;
+    _catchBallGeometry = null;
+    _releaseBallGeometry = null;
+    _returnReleaseGeometry = null;
+    _isForwardPass = false;
     _dragStart = null;
     _dragCurrent = null;
     if (_roundIndex == 0) {
       // 確定仕様に従い、往路終了時のペナルティ残時間を復路へ持ち越します。
-      final carryPenalty = _isPenalized
-          ? _penaltyUntil!.difference(TrainingGameClock.now())
-          : Duration.zero;
+      final carryPenalty =
+          _isPenalized ? _penaltyUntil!.difference(_now()) : Duration.zero;
       _roundIndex = 1;
       _startRound(carryPenalty: carryPenalty);
       return;
@@ -255,25 +378,58 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
       setState(() {});
       return;
     }
+    final direction = PassAndRunRules.userPassDirection(flick);
+    // 補正後の投球方向を判定し、実際の球筋も同じ方向へ揃えます。
+    if (PassAndRunRules.isForwardDirection(
+      deltaX: direction.deltaX,
+      deltaY: direction.deltaY,
+      outbound: _isOutbound,
+    )) {
+      setState(() {
+        _isForwardPass = true;
+        _lastPassSucceeded = false;
+        _isBallLost = false;
+        _penaltyUntil = _now().add(_missPenalty);
+      });
+      return;
+    }
+    _isForwardPass = false;
+    _isBallLost = false;
+    _returnStartedAt = null;
+    _catchBallDisplacement = null;
+    _catchBallGeometry = null;
+    _releaseBallGeometry = null;
+    _returnReleaseGeometry = null;
     // 発射位置を固定し、フリック方向へボールを飛ばします。
     final player = _playerOffset;
     final playerBall = _playerBallOffsetAt(player);
+    final releaseGeometry = _geometryAt(
+      PassRunCharacter.normal,
+      _motionSeconds,
+    );
     // 成否は発射時には決めず、移動中にボールと仲間が衝突した時点で確定します。
-    final now = TrainingGameClock.now();
+    final now = _now();
     _passInFlight = true;
     _passScoreConfirmed = false;
-    _isFailedPass = false;
     _isBallLost = false;
     _pendingPassRoundIndex = _roundIndex;
     _passStartedAt = now;
+    _collisionCheckedElapsed = Duration.zero;
     _passStartOffset = playerBall;
-    _passTargetOffset = _flickExitOffset(start: start, current: current);
+    _releaseBallGeometry = releaseGeometry;
+    _releaseCollisionRadius = _collisionRadiusAt(
+      PassRunCharacter.normal,
+      _motionSeconds,
+    );
+    _passTargetOffset = _flickExitOffset(
+      start: start,
+      current: start + Offset(direction.deltaX, direction.deltaY),
+    );
     _passReturnStartOffset = null;
     _passReturnTargetOffset = null;
     // 基準速度を保つため、フリック先までの距離に応じて移動時間を延長します。
     final actualDistance = (_passTargetOffset! - _passStartOffset!).distance;
     final standardPassDistance = _fieldSize.width * .5;
-    _passOutboundDistance = actualDistance;
     _passTravelDuration = standardPassDistance == 0
         ? _passArrivalDuration
         : Duration(
@@ -314,51 +470,314 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
     final startedAt = _roundStartedAt;
     if (startedAt == null) return 0;
     if (_isPaused && _pausedRoundRemaining != null) {
-      return (PassAndRunRules.roundDuration - _pausedRoundRemaining!)
-              .inMilliseconds /
-          1000;
+      return math.max(
+        0,
+        (_roundDuration - _pausedRoundRemaining!).inMilliseconds / 1000,
+      );
     }
-    return TrainingGameClock.now().difference(startedAt).inMilliseconds / 1000;
+    return math.max(0, _now().difference(startedAt).inMilliseconds / 1000);
   }
 
-  Offset _playerOffsetAt(double seconds) {
-    final y = .5 + .28 * math.sin(seconds * math.pi * 2 / 2.6);
-    return Offset(
-      _fieldSize.width * (_isOutbound ? .25 : .75),
-      _fieldSize.height * y,
+  // The inbound clock starts after the turn. Both actors and the held ball
+  // share this geometry, so the transition never separates them or costs play time.
+  double get _turnProgress {
+    if (_isOutbound || _roundStartedAt == null) return 1;
+    final remaining = _isPaused && _pausedRoundRemaining != null
+        ? _pausedRoundRemaining! - _roundDuration
+        : _roundStartedAt!.difference(_now());
+    return (1 - remaining.inMicroseconds / _turnDuration.inMicroseconds)
+        .clamp(0, 1)
+        .toDouble();
+  }
+
+  PassRunRunner _runner(PassRunCharacter kind) =>
+      kind == PassRunCharacter.normal
+          ? PassRunRunner.player
+          : PassRunRunner.companion;
+
+  ({PassRunFacing from, PassRunFacing to, double progress}) _facingAt(
+    PassRunCharacter kind,
+    double seconds,
+  ) {
+    if (!_isOutbound && _turnProgress < 1) {
+      final elapsed =
+          (_turnProgress * _turnDuration.inMicroseconds).round() / 1000000;
+      if (elapsed < PassRunMotion.facingSettleSeconds) {
+        return (
+          from: PassRunFacing.back,
+          to: PassRunFacing.front,
+          progress: (elapsed / PassRunMotion.facingSettleSeconds).clamp(0, 1),
+        );
+      }
+    }
+    return PassRunMotion.facingAt(
+      seconds,
+      _runner(kind),
+      outbound: _isOutbound,
     );
   }
 
-  Offset _mateOffsetAt(double seconds) {
-    final y = .5 + .28 * math.sin(seconds * math.pi * 2 / 2.05 + math.pi * .65);
-    return Offset(
-      _fieldSize.width * (_isOutbound ? .75 : .25),
-      _fieldSize.height * y,
-    );
+  PassRunFacing _spriteFacing(PassRunCharacter kind) {
+    final transition = _facingAt(kind, _motionSeconds);
+    return transition.progress == 0 ? transition.from : transition.to;
   }
+
+  bool _directionChanging(PassRunCharacter kind) {
+    final facing = _facingAt(kind, _motionSeconds);
+    return facing.from != facing.to && facing.progress < 1;
+  }
+
+  Offset _actorOffsetAt(double seconds, {required bool player}) {
+    final runner = player ? PassRunRunner.player : PassRunRunner.companion;
+    if (_turnProgress < 1) {
+      return _motion.turnOffset(
+        _turnProgress,
+        runner,
+        field: _fieldSize,
+        actorSize: _characterSize,
+      );
+    }
+    final y = _motion.yAt(seconds, runner, outbound: _isOutbound);
+    final lane = player == _isOutbound ? .25 : .75;
+    return Offset(_fieldSize.width * lane, _fieldSize.height * y);
+  }
+
+  Offset _playerOffsetAt(double seconds) =>
+      _actorOffsetAt(seconds, player: true);
+
+  Offset _mateOffsetAt(double seconds) =>
+      _actorOffsetAt(seconds, player: false);
 
   Offset get _playerOffset => _playerOffsetAt(_motionSeconds);
 
   Offset get _mateOffset => _mateOffsetAt(_motionSeconds);
 
-  /// 指定したプレイヤー座標に対応するボール表示位置を返します。
-  Offset _playerBallOffsetAt(Offset playerOffset) =>
-      playerOffset +
-      Offset(
-        _isOutbound ? 24 : -24,
-        4,
+  double get _characterSize =>
+      _displayScale *
+      math.min(
+        PassAndRunCharacterVisual.canvasSize,
+        math.min(_fieldSize.height * .4, _fieldSize.width * .5),
       );
 
-  /// 鮫太朗が保持しているときの現在のボール表示位置です。
-  Offset get _playerBallOffset => _playerBallOffsetAt(_playerOffset);
+  double get _floorOffset =>
+      _motion.runningForwardRate *
+      _fieldSize.height *
+      (_isOutbound ? _motionSeconds : _motion.roundSeconds - _motionSeconds);
 
-  /// 表示中のボールが、現在位置の仲間に衝突しているかを返します。
-  bool _hasCollidedWithMate(Offset ball) {
-    final mate = _mateOffset;
-    return PassAndRunRules.hasCollided(
-      ballDeltaX: ball.dx - mate.dx,
-      ballDeltaY: ball.dy - mate.dy,
+  // 脚は各本人の走行距離に追従。衝突半径は従来の240ms時計を維持します。
+  int _frameAt(double seconds, PassRunCharacter kind) {
+    final runner = _runner(kind);
+    final outboundDistance = _motion.distanceAt(
+      _roundDuration.inMicroseconds / 1000000,
+      runner,
     );
+    final distance = _isOutbound
+        ? _motion.distanceAt(seconds, runner)
+        : outboundDistance +
+            _motion.runningForwardRate *
+                (_turnProgress * _turnDuration.inMicroseconds / 1000000) +
+            _motion.distanceAt(seconds, runner, outbound: false);
+    return (distance * 45).floor() % 2;
+  }
+
+  PassRunBallGeometry _geometryAt(PassRunCharacter kind, double seconds) {
+    final facing = _facingAt(kind, seconds);
+    PassRunBallGeometry geometry(PassRunFacing direction) =>
+        PassAndRunCharacterVisual.heldBallGeometry(
+          character: kind,
+          frame: _frameAt(seconds, kind),
+          facing: direction,
+          size: _characterSize,
+        );
+    return PassRunBallGeometry.lerp(
+      geometry(facing.from),
+      geometry(facing.to),
+      facing.progress,
+    );
+  }
+
+  Offset _heldBallOffsetAt(
+    Offset actor,
+    double seconds,
+    PassRunCharacter kind,
+  ) =>
+      actor + _geometryAt(kind, seconds).offset;
+
+  Offset _playerBallOffsetAt(Offset actor, {double? seconds}) =>
+      _heldBallOffsetAt(
+        actor,
+        seconds ?? _motionSeconds,
+        PassRunCharacter.normal,
+      );
+
+  Offset get _playerBallOffset => _playerBallOffsetAt(_playerOffset);
+  Offset get _mateBallOffset => _heldBallOffsetAt(
+        _mateOffset,
+        _motionSeconds,
+        PassRunCharacter.companion,
+      );
+
+  bool get _mateHolding =>
+      _passInFlight && _passScoreConfirmed && _returnStartedAt == null;
+  bool get _playerHolding =>
+      _phase != _PassGamePhase.result &&
+      !_passInFlight &&
+      (!_isBallLost || !_isPenalized);
+  double get _catchProgress =>
+      ((_passElapsed - _passTravelDuration).inMicroseconds /
+              _catchSettleDuration.inMicroseconds)
+          .clamp(0, 1)
+          .toDouble();
+  bool get _catchSettling => _mateHolding && _catchProgress < 1;
+  bool get _mateHoldingVisual =>
+      _mateHolding &&
+      !_catchSettling &&
+      !_directionChanging(PassRunCharacter.companion);
+  bool get _playerHoldingVisual =>
+      _playerHolding && !_directionChanging(PassRunCharacter.normal);
+  bool get _showFlightBall =>
+      (_passInFlight && (!_mateHolding || _catchSettling)) ||
+      (_playerHolding && !_playerHoldingVisual) ||
+      (_mateHolding && !_mateHoldingVisual);
+  bool get _showFlightTrail => _passInFlight && !_mateHolding;
+
+  bool get _ballBehindActor {
+    if (_playerHolding) {
+      return _spriteFacing(PassRunCharacter.normal) == PassRunFacing.back;
+    }
+    if (_mateHolding) {
+      return _spriteFacing(PassRunCharacter.companion) == PassRunFacing.back;
+    }
+    // Switch draw order only once the full ball clears a rear-facing actor's
+    // canvas. This avoids revealing an overlapping ball at an arbitrary time.
+    final ballBounds = Rect.fromCenter(
+      center: _ballOffset,
+      width: _ballGeometry.extent,
+      height: _ballGeometry.extent,
+    );
+    bool overlapsRear(PassRunCharacter kind, Offset actor) =>
+        _spriteFacing(kind) == PassRunFacing.back &&
+        ballBounds.overlaps(
+          Rect.fromCenter(
+            center: actor,
+            width: _characterSize,
+            height: _characterSize,
+          ),
+        );
+    return overlapsRear(PassRunCharacter.normal, _playerOffset) ||
+        overlapsRear(PassRunCharacter.companion, _mateOffset);
+  }
+
+  PassRunBallGeometry get _ballGeometry {
+    final normal = _geometryAt(PassRunCharacter.normal, _motionSeconds);
+    final companion = _geometryAt(PassRunCharacter.companion, _motionSeconds);
+    if (_mateHolding) {
+      return PassRunBallGeometry.lerp(
+        _catchBallGeometry ?? companion,
+        companion,
+        _catchProgress,
+      );
+    }
+    if (_returnStartedAt != null) {
+      return PassRunBallGeometry.lerp(
+        _returnReleaseGeometry ?? companion,
+        normal,
+        _returnElapsed.inMicroseconds / _passReturnDuration.inMicroseconds,
+      );
+    }
+    if (!_passInFlight) return normal;
+    return PassRunBallGeometry.lerp(
+      _releaseBallGeometry ?? normal,
+      companion,
+      _passElapsed.inMicroseconds / _passArrivalDuration.inMicroseconds,
+    );
+  }
+
+  // Keep the validated pre-art-update collision envelope. Re-measuring the
+  // new art must not silently enlarge/shrink the successful receiving window.
+  double _collisionRadiusAt(PassRunCharacter kind, double seconds) {
+    final even = (seconds * 1000 ~/ 240).isEven;
+    final diameter = kind == PassRunCharacter.normal
+        ? (even ? 27.549925049569 : 27.600348580376)
+        : (even ? 30.956565121244 : 31.061003284964);
+    return diameter /
+        2 *
+        (_characterSize / PassAndRunCharacterVisual.canvasSize);
+  }
+
+  /// 前回検査から期限内の終点まで、球と仲間の相対移動をsweepする。
+  /// pause中の壁時計を使わず、投球経過時間で保持する。
+  Offset? _sweptCatch(DateTime now, DateTime deadline) {
+    final started = _passStartedAt;
+    if (started == null ||
+        _passStartOffset == null ||
+        _passTargetOffset == null) {
+      return null;
+    }
+    final endUs = math.min(
+        _passTravelDuration.inMicroseconds,
+        math.min(now.difference(started).inMicroseconds,
+            deadline.difference(started).inMicroseconds));
+    var fromUs = _collisionCheckedElapsed.inMicroseconds;
+    if (endUs < fromUs) return null;
+    final startSeconds =
+        started.difference(_roundStartedAt!).inMicroseconds / 1000000;
+    Offset ballAt(int us) => Offset.lerp(_passStartOffset, _passTargetOffset,
+        (us / _passTravelDuration.inMicroseconds).clamp(0, 1))!;
+    double radiusAt(int us) {
+      final seconds = startSeconds + us / 1000000;
+      final from = _releaseCollisionRadius ??
+          _collisionRadiusAt(PassRunCharacter.normal, startSeconds);
+      final to = _collisionRadiusAt(PassRunCharacter.companion, seconds);
+      final blend = (us / _collisionBlendDuration.inMicroseconds).clamp(0, 1);
+      return from +
+          (to - from) * blend +
+          PassAndRunRules.mateCollisionRadius *
+              (_characterSize / PassAndRunCharacterVisual.canvasSize);
+    }
+
+    // 半径が変わる240ms境界と220ms blend終端だけで区切る。
+    // 描画時間を固定刻みに細分化するループではない。
+    do {
+      final seconds = startSeconds + fromUs / 1000000;
+      final nextRadiusUs =
+          (((seconds * 1000000 / 240000).floor() + 1) * 240000 -
+              (startSeconds * 1000000).round());
+      var toUs = math.min(endUs, math.max(fromUs + 1, nextRadiusUs));
+      if (fromUs < _collisionBlendDuration.inMicroseconds) {
+        toUs = math.min(toUs, _collisionBlendDuration.inMicroseconds);
+      }
+      final startDelta =
+          ballAt(fromUs) - _mateOffsetAt(startSeconds + fromUs / 1000000);
+      final endDelta =
+          ballAt(toUs) - _mateOffsetAt(startSeconds + toUs / 1000000);
+      // 境界直前の半径で区間を解き、境界後の値は次区間で扱う。
+      final hit = PassAndRunRules.sweptCollision(
+        startX: startDelta.dx,
+        startY: startDelta.dy,
+        endX: endDelta.dx,
+        endY: endDelta.dy,
+        startRadius: radiusAt(fromUs),
+        endRadius: radiusAt(toUs > fromUs ? toUs - 1 : toUs),
+      );
+      if (hit != null) {
+        _collisionCheckedElapsed = Duration(microseconds: endUs);
+        return ballAt(fromUs + ((toUs - fromUs) * hit).round());
+      }
+      // 半径が不連続に増える境界が検査終端でも、境界後の円を検査する。
+      if (PassAndRunRules.hasCollided(
+        ballDeltaX: endDelta.dx,
+        ballDeltaY: endDelta.dy,
+        ballRadius: radiusAt(toUs),
+        mateRadius: 0,
+      )) {
+        _collisionCheckedElapsed = Duration(microseconds: endUs);
+        return ballAt(toUs);
+      }
+      fromUs = toUs;
+    } while (fromUs < endUs);
+    _collisionCheckedElapsed = Duration(microseconds: endUs);
+    return null;
   }
 
   /// 一時停止を考慮した現在のパス経過時間を返します。
@@ -366,120 +785,149 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
     if (_isPaused && _pausedPassElapsed != null) return _pausedPassElapsed!;
     final startedAt = _passStartedAt;
     if (startedAt == null) return Duration.zero;
-    return TrainingGameClock.now().difference(startedAt);
+    return _now().difference(startedAt);
   }
 
-  /// 成功時は往路と返球、失敗時は画面外へ抜ける現在のボール位置を返します。
+  Duration get _returnElapsed {
+    if (_isPaused && _pausedReturnElapsed != null) return _pausedReturnElapsed!;
+    return _returnStartedAt == null
+        ? Duration.zero
+        : _now().difference(_returnStartedAt!);
+  }
+
+  /// 独立球は飛翔中だけ表示。仲間保持中は画像内の球が移動に追従します。
   Offset get _ballOffset {
-    final start = _passStartOffset;
-    final target = _passTargetOffset;
-    if (!_passInFlight || start == null || target == null) {
-      return _playerBallOffset;
+    if (!_passInFlight) return _playerBallOffset;
+    if (_mateHolding) {
+      return _mateBallOffset +
+          (_catchBallDisplacement ?? Offset.zero) * (1 - _catchProgress);
     }
-    final elapsed = _passElapsed;
-    if (elapsed <= _passTravelDuration) {
-      final progress =
-          elapsed.inMicroseconds / _passTravelDuration.inMicroseconds;
-      return Offset.lerp(start, target, progress.clamp(0, 1).toDouble())!;
-    }
-    if (_isFailedPass) return target;
-    final returnStart = _passReturnStartOffset ?? target;
-    final returnTarget = _passReturnTargetOffset ?? _playerBallOffset;
-    final returnElapsed = elapsed - _passTravelDuration - _passReturnDelay;
-    if (returnElapsed.isNegative) return returnStart;
-    final progress =
-        returnElapsed.inMicroseconds / _passReturnDuration.inMicroseconds;
-    return Offset.lerp(
-      returnStart,
-      returnTarget,
-      progress.clamp(0, 1).toDouble(),
-    )!;
+    final returning = _returnStartedAt != null;
+    final start = returning ? _passReturnStartOffset : _passStartOffset;
+    final target = returning ? _passReturnTargetOffset : _passTargetOffset;
+    if (start == null || target == null) return _playerBallOffset;
+    final elapsed = returning ? _returnElapsed : _passElapsed;
+    final duration = returning ? _passReturnDuration : _passTravelDuration;
+    final progress = elapsed.inMicroseconds / duration.inMicroseconds;
+    return Offset.lerp(start, target, progress.clamp(0, 1).toDouble())!;
   }
 
-  /// 軌跡残像の始点を、パス往路・返球に応じて返します。
-  Offset get _ballTrailStart {
-    if (_isFailedPass || _passElapsed <= _passTravelDuration) {
-      return _passStartOffset ?? _playerOffset;
-    }
-    return _passReturnStartOffset ?? _passTargetOffset ?? _mateOffset;
+  Offset get _ballTrailStart => _returnStartedAt == null
+      ? _passStartOffset ?? _playerOffset
+      : _passReturnStartOffset ?? _mateOffset;
+
+  void _clearPassCycle() {
+    _passInFlight = false;
+    _passScoreConfirmed = false;
+    _pendingPassRoundIndex = null;
+    _passStartedAt = null;
+    _collisionCheckedElapsed = Duration.zero;
+    _passArrivalAt = null;
+    _passReadyAt = null;
+    _passStartOffset = null;
+    _passTargetOffset = null;
+    _passReturnStartOffset = null;
+    _passReturnTargetOffset = null;
+    _returnStartedAt = null;
+    _catchBallDisplacement = null;
+    _catchBallGeometry = null;
+    _releaseBallGeometry = null;
+    _returnReleaseGeometry = null;
   }
 
-  /// ボールの衝突・画面外到達・返球完了に応じて、パスの状態を更新します。
+  /// 慣性なし・一定球速と、現在の移動モデルによる将来の受球点です。
+  /// 距離は場内に有界、開始時は距離>0、上限では球移動距離が必ず勝ちます。
+  /// 投球後は直線等速で、この確定点へ飛ばします。
+  ({Offset target, Duration duration}) _returnPlan(Offset origin) {
+    final speed = _fieldSize.width *
+        .5 /
+        (_passArrivalDuration.inMicroseconds / Duration.microsecondsPerSecond);
+    final seconds = _motionSeconds;
+    var low = 0.0;
+    var high = (_fieldSize.width + _fieldSize.height + 224) / speed;
+    for (var i = 0; i < 32; i++) {
+      final mid = (low + high) / 2;
+      final future = seconds + mid;
+      final target = _playerBallOffsetAt(
+        _playerOffsetAt(future),
+        seconds: future,
+      );
+      if ((target - origin).distance > speed * mid) {
+        low = mid;
+      } else {
+        high = mid;
+      }
+    }
+    final future = seconds + high;
+    return (
+      target: _playerBallOffsetAt(_playerOffsetAt(future), seconds: future),
+      duration: Duration(microseconds: math.max(1, (high * 1000000).round())),
+    );
+  }
+
   bool _updatePassCycle(DateTime now) {
     if (!_passInFlight || _isPaused || _pendingPassRoundIndex != _roundIndex) {
       return false;
     }
     var changed = false;
-    // ラウンド終了後のタイマー更新で、遅れて発生した衝突を得点化しないようにします。
-    final roundDeadline = _roundStartedAt?.add(PassAndRunRules.roundDuration);
-    if (!_passScoreConfirmed &&
-        roundDeadline != null &&
-        !now.isAfter(roundDeadline) &&
-        _hasCollidedWithMate(_ballOffset)) {
-      _confirmPassSuccess(now);
+    final deadline = _roundStartedAt?.add(_roundDuration);
+    final caught = !_passScoreConfirmed && deadline != null
+        ? _sweptCatch(now, deadline)
+        : null;
+    if (caught != null) {
+      // 捕球後80msは承認済み非保持画と独立球で保持位置まで連続接続。
+      // 最後に球中心・寸法・傾きが一致した瞬間だけ保持画へ切り替えます。
+      final caughtBall = caught;
+      final caughtGeometry = _ballGeometry;
+      _catchBallDisplacement = caughtBall - _mateBallOffset;
+      _catchBallGeometry = caughtGeometry;
+      _roundScores[_roundIndex]++;
+      _passScoreConfirmed = true;
+      _lastPassSucceeded = true;
+      _passTravelDuration = _passElapsed;
+      _passArrivalAt = now;
+      _passReadyAt = null;
       changed = true;
     }
     if (!_passScoreConfirmed &&
         _passArrivalAt != null &&
         !now.isBefore(_passArrivalAt!)) {
-      // 画面外へ抜けた失敗ボールを、ペナルティ中は再表示しません。
-      _isFailedPass = true;
       _isBallLost = true;
-      _penaltyUntil = now.add(PassAndRunRules.missPenalty);
-      changed = true;
+      _penaltyUntil = now.add(_missPenalty);
+      _clearPassCycle();
+      return true;
     }
-    if (_passReadyAt != null && !now.isBefore(_passReadyAt!)) {
-      _passInFlight = false;
-      _passScoreConfirmed = false;
-      _pendingPassRoundIndex = null;
-      _passStartedAt = null;
-      _passArrivalAt = null;
-      _passReadyAt = null;
-      _passStartOffset = null;
-      _passTargetOffset = null;
-      _passReturnDuration = _passArrivalDuration;
-      _passOutboundDistance = 0;
-      _passReturnStartOffset = null;
-      _passReturnTargetOffset = null;
-      _isFailedPass = false;
+    if (_mateHolding &&
+        _passArrivalAt != null &&
+        !now.isBefore(_passArrivalAt!.add(_passReturnDelay))) {
+      final origin = _mateBallOffset;
+      final plan = _returnPlan(origin);
+      final direction = plan.target - origin;
+      // 自動返球でも同じ攻撃方向。顔や受け手側に合わせて反転しません。
+      if (!PassAndRunRules.isForwardDirection(
+        deltaX: direction.dx,
+        deltaY: direction.dy,
+        outbound: _isOutbound,
+      )) {
+        _passReturnStartOffset = origin;
+        _returnReleaseGeometry = _geometryAt(
+          PassRunCharacter.companion,
+          _motionSeconds,
+        );
+        _passReturnTargetOffset = plan.target;
+        _passReturnDuration = plan.duration;
+        _returnStartedAt = now;
+        _passReadyAt = now.add(plan.duration);
+        changed = true;
+      }
+    }
+    if (_returnStartedAt != null &&
+        _passReadyAt != null &&
+        !now.isBefore(_passReadyAt!)) {
+      _clearPassCycle();
       changed = true;
     }
     return changed;
-  }
-
-  /// 仲間との衝突位置を返球の始点として、得点と返球処理を確定します。
-  void _confirmPassSuccess(DateTime now) {
-    final collisionOffset = _ballOffset;
-    _roundScores[_roundIndex]++;
-    _passScoreConfirmed = true;
-    _lastPassSucceeded = true;
-    _passTargetOffset = collisionOffset;
-    _passTravelDuration = _passElapsed;
-    _passArrivalAt = now;
-    _passReturnStartOffset = collisionOffset;
-    // 衝突時までのボール速度を保ったまま、仲間からプレイヤーへ返球します。
-    final outboundStart = _passStartOffset ?? collisionOffset;
-    _passOutboundDistance = (_passReturnStartOffset! - outboundStart).distance;
-    final initialReturnSeconds = _motionSeconds +
-        (_passReturnDelay + _passTravelDuration).inMilliseconds / 1000;
-    final initialReturnTarget = _playerOffsetAt(initialReturnSeconds) +
-        Offset(_isOutbound ? 24 : -24, 4);
-    final returnDistance =
-        (initialReturnTarget - _passReturnStartOffset!).distance;
-    _passReturnDuration = _passOutboundDistance == 0
-        ? _passArrivalDuration
-        : Duration(
-            microseconds: (_passArrivalDuration.inMicroseconds *
-                    returnDistance /
-                    _passOutboundDistance)
-                .round(),
-          );
-    // 返球時間に合わせ、移動中のプレイヤーが受け取る位置を先読みします。
-    final returnSeconds = _motionSeconds +
-        (_passReturnDelay + _passReturnDuration).inMilliseconds / 1000;
-    _passReturnTargetOffset =
-        _playerOffsetAt(returnSeconds) + Offset(_isOutbound ? 24 : -24, 4);
-    _passReadyAt = now.add(_passReturnDelay + _passReturnDuration);
   }
 
   /// ミニゲーム結果を育成画面へ返します。
@@ -495,8 +943,21 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
   /// 手動操作またはOS割り込みで、残り時間を保持したまま停止します。
   void _pauseGame() {
     if (_phase != _PassGamePhase.playing || _isPaused) return;
-    final now = TrainingGameClock.now();
-    _pausedRoundRemaining = Duration(milliseconds: _remainingMilliseconds);
+    final now = _now();
+    if (!now.isBefore(_roundStartedAt!.add(_roundDuration))) {
+      _finishRound();
+      if (_phase != _PassGamePhase.playing) return;
+    }
+    // 次のticker前に返球期限を越えても、完了状態を保存して停止します。
+    _updatePassCycle(now);
+    _pausedRoundRemaining =
+        _roundStartedAt!.add(_roundDuration).difference(now);
+    _remainingMilliseconds = _pausedRoundRemaining!.inMilliseconds.clamp(
+      0,
+      _roundDuration.inMilliseconds,
+    );
+    _pausedReturnElapsed =
+        _returnStartedAt == null ? null : now.difference(_returnStartedAt!);
     _pausedPenaltyRemaining =
         _penaltyUntil != null && now.isBefore(_penaltyUntil!)
             ? _penaltyUntil!.difference(now)
@@ -517,8 +978,8 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
     if (_phase != _PassGamePhase.playing || !_isPaused || remaining == null) {
       return;
     }
-    final now = TrainingGameClock.now();
-    _roundStartedAt = now.subtract(PassAndRunRules.roundDuration - remaining);
+    final now = _now();
+    _roundStartedAt = now.subtract(_roundDuration - remaining);
     _penaltyUntil = _pausedPenaltyRemaining == null
         ? null
         : now.add(_pausedPenaltyRemaining!);
@@ -527,6 +988,9 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
     if (_passInFlight && _pausedPassElapsed != null) {
       _passStartedAt = now.subtract(_pausedPassElapsed!);
       _passArrivalAt = _passStartedAt!.add(_passTravelDuration);
+      if (_returnStartedAt != null && _pausedReturnElapsed != null) {
+        _returnStartedAt = now.subtract(_pausedReturnElapsed!);
+      }
     }
     setState(() => _isPaused = false);
     _startRoundTimers();
@@ -534,7 +998,10 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
 
   @override
   Widget build(BuildContext context) {
-    final remainingSeconds = (_remainingMilliseconds / 1000).clamp(0, 15);
+    final remainingSeconds = (_remainingMilliseconds / 1000).clamp(
+      0,
+      _motion.roundSeconds,
+    );
     return Scaffold(
       backgroundColor: const Color(0xffe9f4e5),
       appBar: AppBar(
@@ -561,11 +1028,16 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
                   Text(
                     _isOutbound ? '往路' : '復路',
                     style: const TextStyle(
-                        fontSize: 18, fontWeight: FontWeight.w800),
+                      fontSize: 18,
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
-                  Text(
-                    '残り ${remainingSeconds.toStringAsFixed(1)}s　PASS $_totalScore',
-                    style: const TextStyle(fontWeight: FontWeight.w700),
+                  Flexible(
+                    child: Text(
+                      '残り ${remainingSeconds.toStringAsFixed(1)}s　PASS $_totalScore',
+                      textAlign: TextAlign.right,
+                      style: const TextStyle(fontWeight: FontWeight.w700),
+                    ),
                   ),
                 ],
               ),
@@ -593,7 +1065,14 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
         final player = _playerOffset;
         final mate = _mateOffset;
         final ball = _ballOffset;
+        final actorSize = _characterSize;
+        final labelScale = math.min(
+          1.0,
+          math.max(0.0, _fieldSize.height * .22 - actorSize / 2 - 2) / 16,
+        );
+        final ballGeometry = _ballGeometry;
         return GestureDetector(
+          key: const Key('pass-field'),
           behavior: HitTestBehavior.opaque,
           onPanStart: _handlePanStart,
           onPanUpdate: _handlePanUpdate,
@@ -603,19 +1082,35 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
             child: Stack(
               children: [
                 Positioned.fill(
-                    child: Container(color: const Color(0xff79ba63))),
+                  child: Container(color: const Color(0xff79ba63)),
+                ),
                 Positioned(
                   left: constraints.maxWidth * .25 - 2,
                   top: 16,
                   bottom: 16,
-                  child: const _LaneLine(),
+                  child: _LaneLine(offset: _floorOffset),
                 ),
                 Positioned(
                   left: constraints.maxWidth * .75 - 2,
                   top: 16,
                   bottom: 16,
-                  child: const _LaneLine(),
+                  child: _LaneLine(offset: _floorOffset),
                 ),
+                if (_phase == _PassGamePhase.playing &&
+                    !_isPaused &&
+                    _playerHolding)
+                  Positioned.fill(
+                    child: IgnorePointer(
+                      child: CustomPaint(
+                        key: const Key('pass-direction-guide'),
+                        painter: PassRunDirectionGuidePainter(
+                          center: player,
+                          attackUp: _isOutbound,
+                          seconds: _motionSeconds,
+                        ),
+                      ),
+                    ),
+                  ),
                 if (_dragStart != null && _dragCurrent != null)
                   CustomPaint(
                     key: const Key('pass-flick-guide'),
@@ -625,7 +1120,7 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
                       end: _dragCurrent!,
                     ),
                   ),
-                if (_passInFlight)
+                if (_showFlightTrail)
                   CustomPaint(
                     key: const Key('pass-ball-trail'),
                     size: constraints.biggest,
@@ -634,30 +1129,75 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
                       current: ball,
                     ),
                   ),
+                if (_showFlightBall && _ballBehindActor)
+                  Positioned(
+                    key: const Key('pass-ball'),
+                    left: ball.dx - ballGeometry.extent / 2,
+                    top: ball.dy - ballGeometry.extent / 2,
+                    child: PassAndRunBallVisual(geometry: ballGeometry),
+                  ),
                 Positioned(
-                  left: player.dx - 28,
-                  top: player.dy - 28,
-                  child: MiniGameCharacterAsset(
+                  left: player.dx - actorSize / 2,
+                  top: player.dy - actorSize / 2,
+                  child: PassAndRunCharacterVisual(
                     key: const Key('pass-player'),
-                    pose: MiniGameCharacterPose.forPass(
-                      outbound: _isOutbound,
-                      passing: _passInFlight && !_isPenalized,
-                    ),
-                    fontSize: 52,
+                    character: PassRunCharacter.normal,
+                    holding: _playerHoldingVisual,
+                    frame: _frameAt(_motionSeconds, PassRunCharacter.normal),
+                    facing: _spriteFacing(PassRunCharacter.normal),
+                    size: actorSize,
+                    ballKey: const Key('pass-ball'),
                   ),
                 ),
                 Positioned(
-                  left: mate.dx - 24,
-                  top: mate.dy - 24,
-                  child: const Text('🏃', style: TextStyle(fontSize: 46)),
+                  left: player.dx - actorSize / 2,
+                  top: player.dy - actorSize / 2 - 16 * labelScale - 2,
+                  width: actorSize,
+                  child: IgnorePointer(
+                    child: Center(
+                      child: Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 6 * labelScale,
+                          vertical: 2 * labelScale,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xff153d5b),
+                          borderRadius: BorderRadius.circular(5),
+                        ),
+                        child: Text(
+                          '鮫太郎',
+                          key: Key('pass-player-label'),
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 10 * labelScale,
+                            height: 1.2,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
                 ),
-                if (_phase != _PassGamePhase.result &&
-                    (!_isBallLost || !_isPenalized))
+                Positioned(
+                  left: mate.dx - actorSize / 2,
+                  top: mate.dy - actorSize / 2,
+                  child: PassAndRunCharacterVisual(
+                    key: const Key('pass-mate'),
+                    character: PassRunCharacter.companion,
+                    holding: _mateHoldingVisual,
+                    frame: _frameAt(_motionSeconds, PassRunCharacter.companion),
+                    facing: _spriteFacing(PassRunCharacter.companion),
+                    size: actorSize,
+                    ballKey: const Key('pass-ball'),
+                  ),
+                ),
+                if (_showFlightBall && !_ballBehindActor)
                   Positioned(
                     key: const Key('pass-ball'),
-                    left: ball.dx - 15,
-                    top: ball.dy - 10,
-                    child: const _MockRugbyBall(),
+                    left: ball.dx - ballGeometry.extent / 2,
+                    top: ball.dy - ballGeometry.extent / 2,
+                    child: PassAndRunBallVisual(geometry: ballGeometry),
                   ),
                 if (_phase == _PassGamePhase.waiting) _buildStartOverlay(),
                 if (_phase == _PassGamePhase.result) _buildResultOverlay(),
@@ -683,15 +1223,28 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
             ),
             const SizedBox(height: 8),
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 24),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
               child: Text(
-                '15秒 × 往復2セット',
+                '${_secondsLabel(_roundDuration)}秒 × 往復2セット\n攻撃方向へは投げず、真横・後方の仲間を狙おう',
                 textAlign: TextAlign.center,
               ),
             ),
             const SizedBox(height: 20),
-            ElevatedButton(onPressed: _startGame, child: const Text('スタート')),
+            ElevatedButton(
+              onPressed: _assetsReady
+                  ? _startGame
+                  : _assetLoadFailed
+                      ? _prepareImages
+                      : null,
+              child: Text(
+                _assetsReady
+                    ? 'スタート'
+                    : _assetLoadFailed
+                        ? '再読込'
+                        : '準備中…',
+              ),
+            ),
           ],
         ),
       ),
@@ -715,8 +1268,10 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
                 fontWeight: FontWeight.w900,
               ),
             ),
-            const Text('回',
-                style: TextStyle(color: Colors.white, fontSize: 20)),
+            const Text(
+              '回',
+              style: TextStyle(color: Colors.white, fontSize: 20),
+            ),
             const SizedBox(height: 8),
             Text(
               '往路 ${_roundScores[0]} ＋ 復路 ${_roundScores[1]}',
@@ -724,7 +1279,9 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
             ),
             const SizedBox(height: 24),
             ElevatedButton(
-                onPressed: _completeGame, child: const Text('メインへ戻る')),
+              onPressed: _completeGame,
+              child: const Text('メインへ戻る'),
+            ),
           ],
         ),
       ),
@@ -760,20 +1317,22 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
   /// 入力可能状態、返球待ち、ミスペナルティを表示します。
   Widget _buildStatusPanel() {
     final message = _phase == _PassGamePhase.waiting
-        ? '15秒 × 往復2セット（合計30秒）'
+        ? '${_secondsLabel(_roundDuration)}秒 × 往復2セット（合計${_secondsLabel(_roundDuration * 2)}秒）'
         : _phase == _PassGamePhase.result
             ? 'プレイ完了'
             : _isPenalized
-                ? 'MISS　2秒間パス不可'
+                ? '${_isForwardPass ? '前方パス' : 'MISS'}　${_secondsLabel(_missPenalty)}秒間パス不可'
                 : _passInFlight && !_passScoreConfirmed
                     ? 'ボール移動中…'
-                    : _passInFlight
-                        ? '仲間から返球中…'
-                        : !_canPass
-                            ? '次のパスを準備中…'
-                            : _lastPassSucceeded
-                                ? 'PASS!　次の仲間位置を狙おう'
-                                : '仲間の現在位置へ素早くフリック';
+                    : _mateHolding
+                        ? '仲間からの返球待ち…'
+                        : _passInFlight
+                            ? '仲間から返球中…'
+                            : !_canPass
+                                ? '次のパスを準備中…'
+                                : _lastPassSucceeded
+                                    ? 'PASS!　次の仲間位置を狙おう'
+                                    : '仲間の現在位置へ素早くフリック';
     return Container(
       width: double.infinity,
       height: 72,
@@ -793,38 +1352,39 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
 
 /// 縦方向の移動レーンを破線で描画します。
 class _LaneLine extends StatelessWidget {
-  const _LaneLine();
+  const _LaneLine({required this.offset});
+  final double offset;
 
   @override
   Widget build(BuildContext context) {
     return SizedBox(
       width: 4,
-      child: CustomPaint(painter: _DashedLinePainter()),
+      child: CustomPaint(painter: _DashedLinePainter(offset)),
     );
   }
 }
 
 class _DashedLinePainter extends CustomPainter {
+  const _DashedLinePainter(this.offset);
+  final double offset;
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
       ..color = Colors.white70
       ..strokeWidth = 3;
-    for (var y = 0.0; y < size.height; y += 18) {
+    for (var y = offset % 20 - 20; y < size.height; y += 20) {
       canvas.drawLine(Offset(2, y), Offset(2, y + 10), paint);
     }
   }
 
   @override
-  bool shouldRepaint(covariant _DashedLinePainter oldDelegate) => false;
+  bool shouldRepaint(covariant _DashedLinePainter oldDelegate) =>
+      offset != oldDelegate.offset;
 }
 
 /// フリックの開始位置と現在の入力方向を、操作中だけ重ねて表示します。
 class _FlickGuidePainter extends CustomPainter {
-  const _FlickGuidePainter({
-    required this.start,
-    required this.end,
-  });
+  const _FlickGuidePainter({required this.start, required this.end});
 
   final Offset start;
   final Offset end;
@@ -865,10 +1425,7 @@ class _FlickGuidePainter extends CustomPainter {
 
 /// ボール移動中の残像と発光ラインを描画します。
 class _BallTrailPainter extends CustomPainter {
-  const _BallTrailPainter({
-    required this.start,
-    required this.current,
-  });
+  const _BallTrailPainter({required this.start, required this.current});
 
   final Offset start;
   final Offset current;
@@ -890,9 +1447,7 @@ class _BallTrailPainter extends CustomPainter {
       final factor = 1 - index * .13;
       final point = Offset.lerp(start, current, factor)!;
       final trailPaint = Paint()
-        ..color = const Color(0xfffff0a8).withValues(
-          alpha: .42 - index * .07,
-        );
+        ..color = const Color(0xfffff0a8).withValues(alpha: .42 - index * .07);
       canvas.drawOval(
         Rect.fromCenter(
           center: point,
@@ -908,61 +1463,4 @@ class _BallTrailPainter extends CustomPainter {
   bool shouldRepaint(covariant _BallTrailPainter oldDelegate) {
     return start != oldDelegate.start || current != oldDelegate.current;
   }
-}
-
-/// 正式素材へ差し替えるまで使用するデフォルメラグビーボールです。
-class _MockRugbyBall extends StatelessWidget {
-  const _MockRugbyBall();
-
-  @override
-  Widget build(BuildContext context) {
-    return Transform.rotate(
-      angle: -.35,
-      child: const SizedBox(
-        width: 30,
-        height: 20,
-        child: CustomPaint(painter: _MockRugbyBallPainter()),
-      ),
-    );
-  }
-}
-
-class _MockRugbyBallPainter extends CustomPainter {
-  const _MockRugbyBallPainter();
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final ballRect = Offset.zero & size;
-    canvas.drawOval(
-      ballRect,
-      Paint()..color = const Color(0xff9a552d),
-    );
-    canvas.drawOval(
-      ballRect.deflate(1),
-      Paint()
-        ..color = const Color(0xff5f301c)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 2,
-    );
-    final seamPaint = Paint()
-      ..color = Colors.white
-      ..strokeWidth = 1.5
-      ..strokeCap = StrokeCap.round;
-    canvas.drawLine(
-      Offset(size.width * .3, size.height * .5),
-      Offset(size.width * .7, size.height * .5),
-      seamPaint,
-    );
-    for (var index = 0; index < 4; index++) {
-      final x = size.width * (.4 + index * .07);
-      canvas.drawLine(
-        Offset(x, size.height * .38),
-        Offset(x, size.height * .62),
-        seamPaint,
-      );
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant _MockRugbyBallPainter oldDelegate) => false;
 }

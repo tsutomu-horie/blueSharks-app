@@ -1,0 +1,199 @@
+import 'package:flutter/material.dart';
+
+import 'models/training_game_models.dart';
+
+/// 既存HOMEの文字・白地・細い枠に合わせる育成専用の表示定数です。
+abstract final class TrainingHomeStyle {
+  static const navy = Color(0xff002b6d);
+  static const border = Color(0xffcccccc);
+  static const footerHeight = 92.0;
+  static const buttonHeight = 67.0;
+}
+
+/// 通常100・超過50の既存ゲージを、数値と同じ枠に表示します。
+class TrainingHomeMeter extends StatelessWidget {
+  const TrainingHomeMeter({super.key, required this.name, required this.value});
+  final String name;
+  final double value;
+
+  @override
+  Widget build(BuildContext context) {
+    final normal = value.clamp(0, 100) / 100;
+    final overage = (value - 100).clamp(0, 50) / 50;
+    final color = value <= 19
+        ? const Color(0xffd03b3b)
+        : value < 50
+            ? const Color(0xffeda100)
+            : value < 80
+                ? const Color(0xff7ec8f0)
+                : const Color(0xff5ee05e);
+    return Semantics(
+      label: '$name ${value.round()}',
+      excludeSemantics: true,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Row(children: [
+            Expanded(child: Text(name, style: const TextStyle(fontSize: 12))),
+            Text('${value.round()}',
+                style:
+                    const TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
+          ]),
+          const SizedBox(height: 6),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(2),
+            child: SizedBox(
+              height: 5,
+              child: Stack(fit: StackFit.expand, children: [
+                const Positioned.fill(
+                    child: ColoredBox(color: Color(0xffe8edf2))),
+                FractionallySizedBox(
+                    alignment: Alignment.centerLeft,
+                    widthFactor: normal,
+                    child: ColoredBox(color: color)),
+                if (overage > 0)
+                  FractionallySizedBox(
+                      alignment: Alignment.centerLeft,
+                      widthFactor: overage,
+                      child: const ColoredBox(color: Color(0xffd03b3b))),
+              ]),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// 待機中も外寸を変えず、ラベルだけを残り時間へ置き換えます。
+class TrainingHomeCareButton extends StatefulWidget {
+  const TrainingHomeCareButton({
+    super.key,
+    required this.type,
+    required this.label,
+    required this.remaining,
+    required this.onPressed,
+    this.trainingCount,
+  });
+  final TrainingActionType type;
+  final String label;
+  final Duration remaining;
+  final VoidCallback? onPressed;
+  final int? trainingCount;
+
+  @override
+  State<TrainingHomeCareButton> createState() => _TrainingHomeCareButtonState();
+}
+
+class _TrainingHomeCareButtonState extends State<TrainingHomeCareButton> {
+  Duration _displaySpan = const Duration(seconds: 60);
+
+  void _updateSpan() {
+    // サーバー側が60秒より長い期限を返しても、見た目の分母だけで受け止めます。
+    if (widget.remaining <= Duration.zero) {
+      _displaySpan = const Duration(seconds: 60);
+    } else if (widget.remaining > _displaySpan) {
+      _displaySpan = widget.remaining;
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _updateSpan();
+  }
+
+  @override
+  void didUpdateWidget(TrainingHomeCareButton oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _updateSpan();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final waiting = widget.remaining > Duration.zero;
+    final enabled = widget.onPressed != null;
+    final seconds =
+        (widget.remaining.inMicroseconds / Duration.microsecondsPerSecond)
+            .ceil();
+    final time =
+        '${(seconds ~/ 60).toString().padLeft(2, '0')}:${(seconds % 60).toString().padLeft(2, '0')}';
+    final icon = switch (widget.type) {
+      TrainingActionType.meal => Icons.restaurant_outlined,
+      TrainingActionType.clean => Icons.cleaning_services_outlined,
+      TrainingActionType.squat => Icons.fitness_center_outlined,
+      TrainingActionType.work => Icons.work_outline,
+      TrainingActionType.rest => Icons.bed_outlined,
+      _ => Icons.sports_rugby_outlined,
+    };
+    return Semantics(
+      label: waiting ? '${widget.label}、待機中、あと $time' : widget.label,
+      value: widget.trainingCount == null ? null : '${widget.trainingCount}/15',
+      button: true,
+      enabled: enabled,
+      onTap: widget.onPressed,
+      excludeSemantics: true,
+      child: SizedBox(
+        height: TrainingHomeStyle.buttonHeight,
+        child: TextButton(
+          onPressed: widget.onPressed,
+          style: TextButton.styleFrom(
+            padding: EdgeInsets.zero,
+            minimumSize: const Size(48, TrainingHomeStyle.buttonHeight),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+            foregroundColor: TrainingHomeStyle.navy,
+          ),
+          child: Stack(
+            children: [
+              Center(
+                  child: Column(mainAxisSize: MainAxisSize.min, children: [
+                Icon(icon,
+                    size: 24,
+                    color: enabled
+                        ? TrainingHomeStyle.navy
+                        : const Color(0xff888888)),
+                const SizedBox(height: 6),
+                SizedBox(
+                    height: 16,
+                    child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(waiting ? 'あと $time' : widget.label,
+                            style: TextStyle(
+                                fontFamily: 'LINESeedJP',
+                                fontSize: waiting ? 10 : 11,
+                                color: waiting || enabled
+                                    ? TrainingHomeStyle.navy
+                                    : const Color(0xff616161))))),
+              ])),
+              if (waiting)
+                Positioned(
+                  left: 7,
+                  right: 7,
+                  bottom: 4,
+                  child: SizedBox(
+                    height: 2,
+                    child: LinearProgressIndicator(
+                      value: (widget.remaining.inMicroseconds /
+                              _displaySpan.inMicroseconds)
+                          .clamp(0, 1),
+                      color: const Color(0xff48a6d5),
+                      backgroundColor: const Color(0xffe5ebf0),
+                      minHeight: 2,
+                    ),
+                  ),
+                ),
+              if (widget.trainingCount != null)
+                Positioned(
+                    top: 0,
+                    right: 2,
+                    child: Text('${widget.trainingCount}/15',
+                        style: const TextStyle(
+                            fontSize: 9, color: TrainingHomeStyle.navy))),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}

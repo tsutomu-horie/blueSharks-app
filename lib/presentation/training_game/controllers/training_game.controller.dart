@@ -8,9 +8,11 @@ import 'package:koto_blue_sharks/app/providers/training_game/training_game_provi
 import 'package:koto_blue_sharks/app/services/auth_token.dart';
 import 'package:koto_blue_sharks/app/services/server_time_clock.dart';
 import 'package:koto_blue_sharks/utils/my_shared_pref.dart';
+import 'package:koto_blue_sharks/utils/app_environment.dart';
 
 import '../mini_games/models/mini_game_result.dart';
 import '../models/training_action_gate.dart';
+import '../models/mini_game_settings.dart';
 import '../models/training_game_models.dart';
 
 enum TrainingSyncStatus {
@@ -307,6 +309,7 @@ class TrainingGameController extends GetxController
   DateTime? _syncRetryNotBefore;
   bool _syncRequestMayHaveBeenApplied = false;
   Future<void>? _debugTimeSync;
+  bool _debugTimeSavePending = false;
   bool _debugDailyResetPending = false;
   String _debugTimeSyncError = '';
   bool _syncBlockedUntilServerRestore = false;
@@ -1390,14 +1393,14 @@ class TrainingGameController extends GetxController
       final debugTimeSync = _debugTimeSync;
       if (debugTimeSync != null) {
         await debugTimeSync;
-      } else if (_debugDailyResetPending) {
+      } else if (_debugTimeSavePending) {
         await _queueDebugTimeSync();
       }
       if (!_ownsSession(_ownedSessionVersion)) {
         workAvailabilityError.value = 'ログイン状態を確認して、育成画面を開き直してください。';
         return false;
       }
-      if (_debugDailyResetPending) {
+      if (_debugTimeSavePending) {
         workAvailabilityError.value = _debugTimeSyncError;
         return false;
       }
@@ -1431,13 +1434,94 @@ class TrainingGameController extends GetxController
     }
   }
 
+  bool _isMiniGamePreparationPending = false;
+  bool _isMiniGameOpen = false;
+  int? _miniGamePlayerId;
+  int? _miniGameCycleNo;
+  DateTime? _miniGameStartedAt;
+
+  /// Each play fetches fresh settings. Network failure must not launch with
+  /// stale cached admin values; an old server response uses the fixed defaults.
+  Future<MiniGameSettings?> prepareMiniGame(TrainingActionType type) async {
+    if (_isMiniGamePreparationPending ||
+        _isMiniGameOpen ||
+        (type != TrainingActionType.tackle &&
+            type != TrainingActionType.passAndRun)) {
+      return null;
+    }
+    _isMiniGamePreparationPending = true;
+    cooldownTick.value++;
+    try {
+      if (!_ownsSession(_ownedSessionVersion) ||
+          !isServerStateReady.value ||
+          pendingSyncActionCount > 0 ||
+          _syncRunning ||
+          _syncRequested ||
+          _debugTimeSavePending ||
+          _pendingStageIndex != null ||
+          _hasUnknownSyncOutcome ||
+          syncStatus.value != TrainingSyncStatus.idle ||
+          !_canPerformAction(type)) {
+        logs.insert(0, '育成状態の同期が完了してからミニゲームを開始してください。');
+        return null;
+      }
+      final playerId = _serverPlayerId;
+      final cycleNo = _serverCycleNo;
+      final startedAt = _serverGameStartedAt;
+      final data = await _serverProvider.fetchCurrent(
+          expectedSessionVersion: _ownedSessionVersion);
+      if (!_ownsSession(_ownedSessionVersion)) return null;
+      if (data == null) {
+        logs.insert(0, '育成状態を確認できませんでした。育成画面を開き直してください。');
+        return null;
+      }
+      if (!_initializeServerState(data) ||
+          _serverPlayerId != playerId ||
+          _serverCycleNo != cycleNo ||
+          !_sameGameInstance(_serverGameStartedAt, startedAt) ||
+          stageIndex.value < 2 ||
+          ended.value ||
+          !_canPerformAction(type)) {
+        logs.insert(0, '育成状態が変わりました。状態を確認してから開始してください。');
+        return null;
+      }
+      _miniGamePlayerId = playerId;
+      _miniGameCycleNo = cycleNo;
+      _miniGameStartedAt = startedAt;
+      _isMiniGameOpen = true;
+      return MiniGameSettings.fromJson(data['mini_game_settings']);
+    } catch (_) {
+      if (_ownsSession(_ownedSessionVersion)) {
+        logs.insert(0, 'ミニゲームの設定を取得できませんでした。通信状態を確認して再試行してください。');
+      }
+      return null;
+    } finally {
+      _isMiniGamePreparationPending = false;
+      cooldownTick.value++;
+    }
+  }
+
+  void finishMiniGamePreparation() {
+    _isMiniGameOpen = false;
+    _miniGamePlayerId = null;
+    _miniGameCycleNo = null;
+    _miniGameStartedAt = null;
+  }
+
   /// 仕事の専用画面を閉じた後、次の仕事開始を可能にします。
   void finishWorkPreparation() => _isWorkPreparationPending = false;
 
   /// 指定行動のクールタイムが終了しているかを返します。
   bool canPerform(TrainingActionType type) {
     cooldownTick.value;
-    if (_pendingStageIndex != null) return false;
+    return !_isMiniGamePreparationPending && _canPerformAction(type);
+  }
+
+  bool _canPerformAction(TrainingActionType type) {
+    cooldownTick.value;
+    if (_pendingStageIndex != null ||
+        (_debugTimeSavePending && type != TrainingActionType.work))
+      return false;
     return _actionGate.canPerform(
       type,
       clientCooldownEnabled: isCooldownEnabled(type),
@@ -1727,6 +1811,7 @@ class TrainingGameController extends GetxController
     _isWorkAvailable = false;
     _isWorkSyncPending = false;
     _isWorkPreparationPending = false;
+    _debugTimeSavePending = false;
     _debugDailyResetPending = false;
     _debugTimeSyncError = '';
     _lowConditionTraining = 0;
@@ -1840,7 +1925,8 @@ class TrainingGameController extends GetxController
         Future<void>.delayed(randomTransitionLoadingDuration()),
       ]);
       if (!_ownsSession(_ownedSessionVersion)) return false;
-      complete = _queuedActions.isEmpty &&
+      complete = !_debugTimeSavePending &&
+          _queuedActions.isEmpty &&
           !_syncRequested &&
           !_syncRunning &&
           syncStatus.value == TrainingSyncStatus.idle;
@@ -1897,7 +1983,9 @@ class TrainingGameController extends GetxController
     // 復帰イベントが短時間に複数回発生しても、取得処理を直列化します。
     _restoreChain = _restoreChain.then((_) async {
       if (!_ownsSession(_ownedSessionVersion)) return;
-      // 復帰直前のローカル操作を先に保存してからサーバー状態を読み込みます。
+      // 時間保存と通常同期を完了してから、サーバー状態を読み込みます。
+      await _debugTimeSync;
+      if (_debugTimeSavePending) return;
       await _syncChain;
       if (!_ownsSession(_ownedSessionVersion)) return;
       // Controller破棄時に予約されたjournal書き込みも反映してから復元します。
@@ -1935,7 +2023,25 @@ class TrainingGameController extends GetxController
   /// 通信エラー画面からサーバー状態の取得を再試行します。
   Future<void> retryRestoreServerState() async {
     if (!_ownsSession(_ownedSessionVersion)) return;
+    await _debugTimeSync;
+    if (_debugTimeSavePending) {
+      // 明示的な再取得では保留時間操作を再送せず、サーバー正本を採用します。
+      // 表示時計と日数の端末加算は残し、日次履歴の解除は行いません。
+      _debugTimeSavePending = false;
+      _debugDailyResetPending = false;
+      _debugTimeSyncError = '';
+      _pendingStageIndex = null;
+      _pendingStageSyncQueued = false;
+      syncStatusMessage.value = '';
+      cooldownTick.value++;
+    }
     await _restoreServerState();
+    await _saveLocalGameState();
+  }
+
+  bool get canResolveDebugTimeSave {
+    cooldownTick.value;
+    return _debugTimeSavePending && _debugTimeSyncError.isNotEmpty;
   }
 
   /// 初期状態をサーバーへ保存します。
@@ -2401,7 +2507,11 @@ class TrainingGameController extends GetxController
   Future<void> _queueSync({
     TrainingActionType? action,
     MiniGameResult? miniGameResult,
-  }) {
+  }) async {
+    if (_debugTimeSavePending) {
+      await _debugTimeSync;
+      if (_debugTimeSavePending) return;
+    }
     if (!_ownsSession(_ownedSessionVersion) || _syncBlockedUntilServerRestore) {
       return Future<void>.value();
     }
@@ -2780,6 +2890,7 @@ class TrainingGameController extends GetxController
         actionSuccessCount: miniGameResult?.tackleResult?.successCount,
         actionSuccessfulReactionTotalUs:
             miniGameResult?.tackleResult?.successfulReactionTotalUs,
+        actionTackleSettings: miniGameResult?.tackleResult?.settings,
         debugBypassCooldown: bypassCooldown,
         status: isPositiveEnd
             ? 'positive_end'
@@ -3096,6 +3207,13 @@ class TrainingGameController extends GetxController
 
   /// 完了したミニゲームの結果を、育成アクション1回分として反映します。
   void completeMiniGame(TrainingActionType type, MiniGameResult result) {
+    if (_isMiniGameOpen &&
+        (_miniGamePlayerId != _serverPlayerId ||
+            _miniGameCycleNo != _serverCycleNo ||
+            !_sameGameInstance(_miniGameStartedAt, _serverGameStartedAt))) {
+      logs.insert(0, '育成状態が変わったため、この結果を別の育成へ反映できません。');
+      return;
+    }
     if (type != TrainingActionType.tackle &&
         type != TrainingActionType.passAndRun) return;
     final expectedType = type == TrainingActionType.tackle
@@ -3107,7 +3225,12 @@ class TrainingGameController extends GetxController
 
   /// 指定した行動を実行し、メーターと傾向値を更新します。
   void perform(TrainingActionType type, {MiniGameResult? miniGameResult}) {
-    if (ended.value || evolutionStage.value != null) return;
+    if (_isMiniGamePreparationPending ||
+        ended.value ||
+        evolutionStage.value != null ||
+        _debugTimeSavePending) {
+      return;
+    }
     if (!_ownsSession(_ownedSessionVersion)) {
       syncStatusMessage.value = 'ログイン状態が変わったため、この画面では操作できません。';
       return;
@@ -3268,7 +3391,14 @@ class TrainingGameController extends GetxController
 
   /// 指定した分数を進め、自然減衰と段階移行を処理します。
   void advanceTimeMinutes(int minutes) {
-    if (minutes <= 0 ||
+    if (!AppEnvironment.showsTrainingDebugUi ||
+        minutes <= 0 ||
+        _isDisposed ||
+        _debugTimeSavePending ||
+        _debugTimeSync != null ||
+        _syncRunning ||
+        pendingSyncActionCount > 0 ||
+        !_ownsSession(_ownedSessionVersion) ||
         ended.value ||
         evolutionStage.value != null ||
         _pendingStageIndex != null) {
@@ -3291,12 +3421,10 @@ class TrainingGameController extends GetxController
     _mainClockTick.value++;
     logs.insert(0, '${minutes}分経過。メーターが自然に減少しました。');
     if (_isDisposed) return;
-    if (day.value > previousDay) {
-      _debugDailyResetPending = true;
-      unawaited(_queueDebugTimeSync());
-    } else {
-      _syncServer();
-    }
+    _debugTimeSavePending = true;
+    _debugDailyResetPending = day.value > previousDay;
+    cooldownTick.value++;
+    unawaited(_queueDebugTimeSync());
   }
 
   Future<void> _queueDebugTimeSync() {
@@ -3308,10 +3436,9 @@ class TrainingGameController extends GetxController
     });
   }
 
-  /// デバッグでゲーム内日付を進めた場合だけ、日次アクション制限も解除します。
+  /// 加算後の値を専用APIへ保存し、日付が進んだ場合だけ日次制限も解除します。
   Future<void> _syncDebugTimeAndResetDailyActions() async {
     final expectedSessionVersion = _ownedSessionVersion;
-    _debugDailyResetPending = true;
     try {
       await TrainingGameProvider.waitForPendingSync();
       if (!_ownsSession(expectedSessionVersion)) return;
@@ -3319,29 +3446,67 @@ class TrainingGameController extends GetxController
         _debugTimeSyncError = '前回の操作が同期待ちです。画面上部の同期状態を確認してから、もう一度仕事を押してください。';
         return;
       }
-      final syncedData = await _serverProvider.syncDebugTime(
-        stageCode: _stageCode,
-        parameters: _serverParameters,
-        lockVersion: _serverLockVersion,
-        expectedSessionVersion: expectedSessionVersion,
-      );
+      final parameters = Map<String, double>.from(_serverParameters);
+      final lockVersion = _serverLockVersion;
+      final stageCode = _stageCode;
+      final playerId = _serverPlayerId;
+      final cycleNo = _serverCycleNo;
+      final startedAt = _serverGameStartedAt;
+      Map<String, dynamic> syncedData;
+      try {
+        syncedData = await _serverProvider.syncDebugTime(
+          stageCode: stageCode,
+          parameters: parameters,
+          lockVersion: lockVersion,
+          expectedSessionVersion: expectedSessionVersion,
+        );
+      } catch (_) {
+        // 保存後に応答だけ失われても、同じ加算を再送する前に現在値を照合します。
+        final current = await _serverProvider.fetchCurrent(
+          expectedSessionVersion: expectedSessionVersion,
+        );
+        final saved = current?['parameters'];
+        if (current == null ||
+            current['lock_version'] != lockVersion + 1 ||
+            current['stage_code'] != stageCode ||
+            current['id'] != playerId ||
+            current['cycle_no'] != cycleNo ||
+            !_sameGameInstance(
+                _gameStartedAtFrom(current['started_at']), startedAt) ||
+            saved is! Map ||
+            !parameters.entries.every((entry) =>
+                (saved[entry.key] as num?)?.toInt() == entry.value.toInt())) {
+          rethrow;
+        }
+        syncedData = current;
+      }
       if (!_ownsSession(expectedSessionVersion)) return;
       _serverLockVersion =
           (syncedData['lock_version'] as num?)?.toInt() ?? _serverLockVersion;
-      final data = await _serverProvider.resetDebugDailyActionUsage(
-        expectedSessionVersion: expectedSessionVersion,
-      );
+      final data = _debugDailyResetPending
+          ? await _serverProvider.resetDebugDailyActionUsage(
+              expectedSessionVersion: expectedSessionVersion,
+            )
+          : syncedData;
       if (_ownsSession(expectedSessionVersion)) {
-        if (data['work_available'] is! bool || !_initializeServerState(data)) {
-          throw StateError('日次制限解除後の育成状態を確認できませんでした。');
+        if (data['work_available'] is! bool ||
+            !_initializeServerState(data, restoreLocalStateOverride: false)) {
+          throw StateError('時間変更後の育成状態を確認できませんでした。');
         }
+        _debugTimeSavePending = false;
         _debugDailyResetPending = false;
+        cooldownTick.value++;
         _debugTimeSyncError = '';
+        syncStatusMessage.value = '';
+        await _saveLocalGameState();
       }
     } catch (_) {
       if (_ownsSession(expectedSessionVersion)) {
         _debugTimeSyncError = '時間変更を保存できませんでした。通信状態と接続先を確認して、もう一度仕事を押してください。';
-        logs.insert(0, 'デバッグ用の日次アクション制限をリセットできませんでした。');
+        syncStatusMessage.value =
+            '時間変更の保存を確認できません。サーバーの状態を再取得できます。表示時計の加算は残り、保留時間操作の再送や日次履歴の解除はしません。';
+        cooldownTick.value++;
+        logs.insert(0, _debugTimeSyncError);
       }
     }
   }

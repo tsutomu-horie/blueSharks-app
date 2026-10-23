@@ -1,5 +1,7 @@
 import 'dart:convert';
 
+import 'app_environment.dart';
+
 import 'package:shared_preferences/shared_preferences.dart';
 
 class MySharedPref {
@@ -16,8 +18,11 @@ class MySharedPref {
   static const String _notificationKey = 'notification';
   static const String _isFirstOpen = 'isFirstOpen';
   static const String _saveGameGuideArticles = 'saveGameGuideArticles';
-  static const String _gameGuideArticlesCache = 'gameGuideArticlesCache';
-  static const String _gameGuideArticlesCachedAt = 'gameGuideArticlesCachedAt';
+  // Keep saved articles separate when the website source changes.
+  static const String _gameGuideArticlesCache =
+      'gameGuideArticlesCache:${AppEnvironment.websiteBaseUrl}:match-filters-v1';
+  static const String _gameGuideArticlesCachedAt =
+      'gameGuideArticlesCachedAt:${AppEnvironment.websiteBaseUrl}:match-filters-v1';
   static const String _trainingGameStartedAt = 'trainingGameStartedAt';
   static const String _trainingGameDebugElapsedSeconds =
       'trainingGameDebugElapsedSeconds';

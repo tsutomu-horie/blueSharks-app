@@ -16,8 +16,7 @@ class GameGuidePost {
   final String detailUrl;
   final String? thumbnailUrl;
 
-  // WordPress側の正式な絞り込みフィールドが未確定のため、
-  // 仮実装では acf または直下に同名項目がある場合のみ利用する。
+  // Verified metadata from the schedule card linking to this article.
   final String? season;
   final String? location;
   final String? status;
@@ -35,6 +34,19 @@ class GameGuidePost {
     );
   }
 
+  GameGuidePost withFilters(
+          {String? season, String? location, String? status}) =>
+      GameGuidePost(
+        id: id,
+        title: title,
+        publishedAt: publishedAt,
+        detailUrl: detailUrl,
+        thumbnailUrl: thumbnailUrl,
+        season: season,
+        location: location,
+        status: status,
+      );
+
   factory GameGuidePost.fromJson(Map<String, dynamic> json) {
     final title = _nestedString(json, ['title', 'rendered']);
     final detailUrl = _string(json['link']);
@@ -45,22 +57,12 @@ class GameGuidePost {
       throw const FormatException('Required game guide fields are missing.');
     }
 
-    final acf = json['acf'] is Map
-        ? Map<String, dynamic>.from(json['acf'] as Map)
-        : const <String, dynamic>{};
-
     return GameGuidePost(
       id: _int(json['id']) ?? 0,
       title: _stripHtml(title),
       publishedAt: DateTime.tryParse(_string(json['date']) ?? ''),
       detailUrl: detailUrl,
       thumbnailUrl: _featuredImageUrl(json),
-      season: _firstString(acf['season'], json['season']),
-      location: _firstString(acf['location'], json['location']),
-      status: _firstString(
-        acf['game_status'] ?? acf['status'],
-        json['game_status'] ?? json['status'],
-      ),
     );
   }
 

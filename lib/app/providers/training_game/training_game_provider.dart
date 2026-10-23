@@ -1,8 +1,11 @@
+import 'package:koto_blue_sharks/presentation/training_game/models/mini_game_settings.dart';
+import 'package:koto_blue_sharks/presentation/training_game/mini_games/models/mini_game_result.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:koto_blue_sharks/app/services/auth_token.dart';
 import 'package:koto_blue_sharks/app/services/server_time_clock.dart';
 import 'package:koto_blue_sharks/utils/constant.dart';
+import 'package:koto_blue_sharks/utils/app_environment.dart';
 
 /// 育成ゲームのサーバー同期APIを担当します。
 class TrainingGameProvider extends GetConnect {
@@ -109,6 +112,9 @@ class TrainingGameProvider extends GetConnect {
     required int lockVersion,
     int? expectedSessionVersion,
   }) async {
+    if (!AppEnvironment.showsTrainingDebugUi) {
+      throw StateError('通常版ではデバッグ時間操作を実行できません。');
+    }
     final write = _pendingWrite.then((_) async {
       final headers = await _headers(expectedSessionVersion);
       _assertSessionVersion(expectedSessionVersion);
@@ -145,24 +151,30 @@ class TrainingGameProvider extends GetConnect {
     int? actionAttemptCount,
     int? actionSuccessCount,
     int? actionSuccessfulReactionTotalUs,
+    TackleSettings? actionTackleSettings,
     bool debugBypassCooldown = false,
     String status = 'playing',
   }) async {
     final hasTackleMetadata = actionResultPolicy != null ||
         actionAttemptCount != null ||
         actionSuccessCount != null ||
-        actionSuccessfulReactionTotalUs != null;
-    if (hasTackleMetadata &&
-        (actionCode != 'tackle' ||
-            actionResultPolicy != 'tackle_v2_750_penalty_mean' ||
-            actionAttemptCount != 3 ||
-            actionSuccessCount == null ||
-            actionSuccessCount < 0 ||
-            actionSuccessCount > 3 ||
-            actionSuccessfulReactionTotalUs == null ||
-            actionSuccessfulReactionTotalUs < 0 ||
-            actionSuccessfulReactionTotalUs > actionSuccessCount * 750000)) {
-      throw ArgumentError('Incomplete or invalid tackle action metadata');
+        actionSuccessfulReactionTotalUs != null ||
+        actionTackleSettings != null;
+    if (hasTackleMetadata) {
+      if (actionCode != 'tackle' ||
+          actionSuccessCount == null ||
+          actionSuccessfulReactionTotalUs == null) {
+        throw ArgumentError('Incomplete tackle action metadata');
+      }
+      final metadata = TackleResultMetadata(
+        successCount: actionSuccessCount,
+        successfulReactionTotalUs: actionSuccessfulReactionTotalUs,
+        settings: actionTackleSettings ?? const TackleSettings(),
+      );
+      if (actionResultPolicy != metadata.resultPolicy ||
+          actionAttemptCount != metadata.attemptCount) {
+        throw ArgumentError('Inconsistent tackle action snapshot');
+      }
     }
     final write = _pendingWrite.then((_) async {
       final headers = await _headers(expectedSessionVersion);
@@ -187,6 +199,8 @@ class TrainingGameProvider extends GetConnect {
                 'attempt_count': actionAttemptCount,
                 'success_count': actionSuccessCount,
                 'successful_reaction_total_us': actionSuccessfulReactionTotalUs,
+                if (actionTackleSettings?.snapshotToken != null)
+                  'rule_snapshot_token': actionTackleSettings!.snapshotToken,
               },
               if (debugBypassCooldown) 'debug_bypass_cooldown': true,
               if (actionScore != null) 'score': actionScore,

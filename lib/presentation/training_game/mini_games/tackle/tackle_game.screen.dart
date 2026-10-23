@@ -4,6 +4,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 
 import '../models/mini_game_result.dart';
+import '../../models/mini_game_settings.dart';
 import 'tackle_player_visual.dart';
 import 'tackle_opponent_visual.dart';
 import 'tackle_contact_geometry.dart';
@@ -22,10 +23,16 @@ enum _TacklePhase {
   gameResult,
 }
 
-/// 3セットの反応速度を計測するタックルミニゲームです。
+/// 設定されたセット数の反応速度を計測するタックルミニゲームです。
 class TackleGameScreen extends StatefulWidget {
   /// タックルミニゲーム画面を作成します。
-  const TackleGameScreen({super.key, this.random});
+  const TackleGameScreen({
+    super.key,
+    this.random,
+    this.settings = const TackleSettings(),
+  });
+
+  final TackleSettings settings;
 
   final Random? random;
 
@@ -71,13 +78,15 @@ class _TackleGameScreenState extends State<TackleGameScreen>
       return Alignment.lerp(
         _failureFrom!,
         _opponentAlignment,
-        Curves.easeIn
-            .transform(((_realRunningMs - _failureAt!) / 520).clamp(0, 1)),
+        Curves.easeIn.transform(
+          ((_realRunningMs - _failureAt!) / 520).clamp(0, 1),
+        ),
       )!;
     }
     return route.sample(_paintRunningMs);
   }
 
+  late final TackleSettings _settings;
   late final Random _random;
   late TackleTrialPlan _trialPlan;
   final _attempts = <TackleAttempt>[];
@@ -103,9 +112,17 @@ class _TackleGameScreenState extends State<TackleGameScreen>
 
   int get _setNumber => _displayedSetNumber;
 
+  bool get _opponentIsRunning =>
+      !_isPaused &&
+      (_phase == _TacklePhase.approach ||
+          _phase == _TacklePhase.feint ||
+          _phase == _TacklePhase.input ||
+          _phase == _TacklePhase.resolution);
+
   @override
   void initState() {
     super.initState();
+    _settings = widget.settings;
     _random = widget.random ?? Random();
     WidgetsBinding.instance.addObserver(this);
     _runningClock =
@@ -160,7 +177,7 @@ class _TackleGameScreenState extends State<TackleGameScreen>
     _cancelTimers();
     _phaseStartedAt = TrainingGameClock.now();
     final nextSetNumber =
-        (_attempts.length + 1).clamp(1, TackleRules.setCount).toInt();
+        (_attempts.length + 1).clamp(1, _settings.setCount).toInt();
     setState(() {
       _displayedSetNumber = nextSetNumber;
       _latestAttempt = null;
@@ -231,7 +248,7 @@ class _TackleGameScreenState extends State<TackleGameScreen>
     _timers.add(Timer(TackleRunningTrajectory.feintDuration, _startInput));
   }
 
-  /// 本進路へ切り返すGOでのみ、反応計測と750ms受付を開始します。
+  /// 本進路へ切り返すGOでのみ、反応計測と入力受付を開始します。
   void _startInput() {
     if (!mounted ||
         _isPaused ||
@@ -254,7 +271,7 @@ class _TackleGameScreenState extends State<TackleGameScreen>
       );
     });
     _runningClock.forward(from: 0);
-    _timers.add(Timer(TackleRules.inputLimit, () => _finishAttempt(null)));
+    _timers.add(Timer(_settings.inputLimit, () => _finishAttempt(null)));
   }
 
   /// 上下いずれかのタップを現在セットの結果へ変換します。
@@ -263,7 +280,7 @@ class _TackleGameScreenState extends State<TackleGameScreen>
     if (_phase == _TacklePhase.approach || _phase == _TacklePhase.feint) {
       // 判定開始前のタップは、お手つきとしてこのセットをMISSにします。
       _finishAttempt(
-        const TackleAttempt(isCorrect: false),
+        TackleAttempt(isCorrect: false, settings: _settings),
         tappedDirection: direction,
       );
       return;
@@ -274,8 +291,9 @@ class _TackleGameScreenState extends State<TackleGameScreen>
     _finishAttempt(
       TackleAttempt(
         isCorrect:
-            direction == _actualDirection && reaction <= TackleRules.inputLimit,
+            direction == _actualDirection && reaction <= _settings.inputLimit,
         reaction: reaction,
+        settings: _settings,
       ),
       tappedDirection: direction,
     );
@@ -294,7 +312,8 @@ class _TackleGameScreenState extends State<TackleGameScreen>
     }
     _cancelTimers();
     _reactionWatch.stop();
-    final result = attempt ?? const TackleAttempt(isCorrect: false);
+    final result =
+        attempt ?? TackleAttempt(isCorrect: false, settings: _settings);
     final success = result.isCorrect;
     final visualNow = _runningMs;
     final contactTime = TackleRunningTrajectory.contactTime(visualNow);
@@ -332,7 +351,8 @@ class _TackleGameScreenState extends State<TackleGameScreen>
                 microseconds: ((contactTime - visualNow) *
                         1000 /
                         TackleRunningTrajectory.presentationRate)
-                    .round())
+                    .round(),
+              )
             : const Duration(milliseconds: 160);
         _playerAlignment = contact?.playerAlignment ??
             Alignment(-.82, tappedDirection == TackleDirection.up ? -.36 : .36);
@@ -426,14 +446,14 @@ class _TackleGameScreenState extends State<TackleGameScreen>
         : TackleDirection.up;
   }
 
-  /// 次セット、または3セット後の総合結果へ進みます。
+  /// 次セット、または全セット後の総合結果へ進みます。
   void _advanceAfterAttempt() {
     if (_phase != _TacklePhase.attemptResult || !_canAdvanceAfterAttempt) {
       return;
     }
     // 同じタップや重複したコールバックで、2セット進まないようにします。
     _canAdvanceAfterAttempt = false;
-    if (_attempts.length >= TackleRules.setCount) {
+    if (_attempts.length >= _settings.setCount) {
       setState(() => _phase = _TacklePhase.gameResult);
       return;
     }
@@ -442,12 +462,18 @@ class _TackleGameScreenState extends State<TackleGameScreen>
 
   /// ミニゲーム結果を育成画面へ返します。
   void _completeGame() {
-    final successCount = TackleRules.successCount(_attempts);
+    final successCount = TackleRules.successCount(
+      _attempts,
+      settings: _settings,
+    );
     Navigator.of(context).pop(
       MiniGameResult.tackle(
+        settings: _settings,
         successCount: successCount,
-        successfulReactionTotalUs:
-            TackleRules.successfulReactionTotalUs(_attempts),
+        successfulReactionTotalUs: TackleRules.successfulReactionTotalUs(
+          _attempts,
+          settings: _settings,
+        ),
       ),
     );
   }
@@ -475,7 +501,7 @@ class _TackleGameScreenState extends State<TackleGameScreen>
         ? _trialPlan.approachDuration
         : _phase == _TacklePhase.feint
             ? TackleRunningTrajectory.feintDuration
-            : TackleRules.inputLimit;
+            : _settings.inputLimit;
     _pausedDelay = elapsed >= limit ? Duration.zero : limit - elapsed;
     _restartInputOnResume =
         _phase == _TacklePhase.input || _phase == _TacklePhase.feint;
@@ -500,7 +526,7 @@ class _TackleGameScreenState extends State<TackleGameScreen>
         ? _trialPlan.approachDuration
         : _phase == _TacklePhase.feint
             ? TackleRunningTrajectory.feintDuration
-            : TackleRules.inputLimit;
+            : _settings.inputLimit;
     _phaseStartedAt = TrainingGameClock.now().subtract(limit - delay);
     setState(() {
       _isPaused = false;
@@ -563,10 +589,10 @@ class _TackleGameScreenState extends State<TackleGameScreen>
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(
-          'SET $_setNumber / ${TackleRules.setCount}',
+          'SET $_setNumber / ${_settings.setCount}',
           style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
         ),
-        const Text('判定猶予 0.75秒'),
+        Text('判定猶予 ${_settings.inputLimitMs / 1000}秒'),
       ],
     );
   }
@@ -650,7 +676,10 @@ class _TackleGameScreenState extends State<TackleGameScreen>
                                 ? 'tackle-running-up'
                                 : 'tackle-running-down'),
                       ),
-                child: const TackleOpponentVisual(key: Key('tackle-opponent')),
+                child: TackleOpponentVisual(
+                  key: const Key('tackle-opponent'),
+                  running: _opponentIsRunning,
+                ),
               ),
             ),
           ),
@@ -658,7 +687,7 @@ class _TackleGameScreenState extends State<TackleGameScreen>
           if (_phase == _TacklePhase.waiting)
             _buildOverlay(
               title: 'タックル練習',
-              detail: '全3セット',
+              detail: '全${_settings.setCount}セット',
               buttonLabel: 'スタート',
               onPressed: _startAttempt,
             ),
@@ -739,11 +768,14 @@ class _TackleGameScreenState extends State<TackleGameScreen>
     );
   }
 
-  /// 3セットの総合ランクと記録を表示します。
+  /// 全セットの総合ランクと記録を表示します。
   Widget _buildResultOverlay() {
-    final rank = TackleRules.overallRank(_attempts);
-    final successCount = TackleRules.successCount(_attempts);
-    final average = TackleRules.averageReaction(_attempts);
+    final rank = TackleRules.overallRank(_attempts, settings: _settings);
+    final successCount = TackleRules.successCount(
+      _attempts,
+      settings: _settings,
+    );
+    final average = TackleRules.averageReaction(_attempts, settings: _settings);
     final averageLabel = average == null
         ? '―'
         : '${(average.inMicroseconds / Duration.microsecondsPerSecond).toStringAsFixed(2)}秒';
@@ -763,7 +795,7 @@ class _TackleGameScreenState extends State<TackleGameScreen>
               ),
             ),
             Text(
-              '判定平均 $averageLabel　成功 $successCount/${TackleRules.setCount}',
+              '判定平均 $averageLabel　成功 $successCount/${_settings.setCount}',
               style: const TextStyle(
                 color: Colors.white,
                 fontWeight: FontWeight.w700,
@@ -819,7 +851,7 @@ class _TackleGameScreenState extends State<TackleGameScreen>
                     ? 'GO! 進む方向をタップ'
                     : _phase == _TacklePhase.feint
                         ? '相手の動きを見よう'
-                        : '全3セットの反応速度を計測します',
+                        : '全${_settings.setCount}セットの反応速度を計測します',
             key: _phase == _TacklePhase.input
                 ? const Key('tackle-input-cue')
                 : null,
@@ -829,7 +861,7 @@ class _TackleGameScreenState extends State<TackleGameScreen>
     }
     final reaction = _latestAttempt!.reaction;
     final reactionLabel = reaction == null
-        ? '時間切れ'
+        ? '突破された！'
         : '${(reaction.inMicroseconds / Duration.microsecondsPerSecond).toStringAsFixed(2)}秒';
     return SizedBox(
       height: 96,

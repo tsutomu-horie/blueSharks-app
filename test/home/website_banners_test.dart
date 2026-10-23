@@ -169,7 +169,7 @@ void main() {
     await task;
     expect(c.websiteBanners, isEmpty);
   });
-  test('Debug画面更新は旧認証banners・旧試合APIを呼ばず公開TOPを使用する', () async {
+  test('本番・テストの画面更新は旧認証banners・旧試合APIを呼ばず新サイトを使用する', () async {
     final schedule = File('test/home/fixtures/renewal_schedule_20261019.html')
         .readAsStringSync();
     final requests = <Uri>[];
@@ -341,7 +341,8 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('website-rank-link')));
     await tester.pumpAndSettle();
     expect(requested, rank.rankingsUrl);
-    expect(find.byType(DataTable), findsOneWidget);
+    expect(
+        find.byKey(const ValueKey('website-ranking-team-0')), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 }

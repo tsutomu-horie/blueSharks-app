@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'game_guide_filter_provider.dart';
 
 import 'package:get/get.dart';
 import 'package:koto_blue_sharks/app/data/models/game_guide/game_guide_media.dart';
@@ -6,6 +7,20 @@ import 'package:koto_blue_sharks/app/data/models/game_guide/game_guide_post.dart
 import 'package:koto_blue_sharks/utils/Constant.dart';
 
 class GameGuideProvider extends GetConnect {
+  GameGuideProvider({GameGuideFilterProvider? filters})
+      : filters = filters ?? GameGuideFilterProvider();
+  final GameGuideFilterProvider filters;
+  bool get filterInfoUnavailable => filters.unavailable;
+  int? _fetchedPage;
+  bool? _hasMore;
+  bool? hasMoreForPage(int page) => _fetchedPage == page ? _hasMore : null;
+
+  @override
+  void onClose() {
+    filters.onDelete();
+    super.onClose();
+  }
+
   static const int defaultPageSize = 10;
   static const int _mediaPageSize = 100;
 
@@ -19,6 +34,7 @@ class GameGuideProvider extends GetConnect {
     required int page,
     int perPage = defaultPageSize,
   }) async {
+    if (page == 1) filters.reset();
     final response = await get<dynamic>(
       'game-guide',
       query: {
@@ -30,6 +46,18 @@ class GameGuideProvider extends GetConnect {
       decoder: (body) => body,
     );
 
+    if (page > 1 && response.statusCode == 400) {
+      try {
+        final error = jsonDecode(response.bodyString ?? '');
+        if (error is Map && error['code'] == 'rest_post_invalid_page') {
+          _fetchedPage = page;
+          _hasMore = false;
+          return [];
+        }
+      } on FormatException {
+        // Other malformed errors remain failures below.
+      }
+    }
     if (response.hasError) {
       throw GameGuideRequestException(
         statusCode: response.statusCode,
@@ -73,7 +101,9 @@ class GameGuideProvider extends GetConnect {
         message: 'No valid game guides in the response.',
       );
     }
-    return _attachFallbackThumbnails(posts);
+    _fetchedPage = page;
+    _hasMore = items.length == perPage;
+    return filters.attach(await _attachFallbackThumbnails(posts));
   }
 
   Future<List<GameGuidePost>> _attachFallbackThumbnails(

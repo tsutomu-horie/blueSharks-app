@@ -1,3 +1,4 @@
+import 'package:koto_blue_sharks/presentation/training_game/models/mini_game_settings.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:get/get.dart';
@@ -130,6 +131,46 @@ void main() {
             actionAttemptCount: 3,
             actionSuccessCount: 0,
             actionSuccessfulReactionTotalUs: 0),
+        throwsArgumentError);
+  });
+  test(
+      'v3 provider sends original opaque token and aggregates without local rules',
+      () async {
+    FlutterSecureStorage.setMockInitialValues(
+        {'accessToken': 'transport-test-token'});
+    addTearDown(() => FlutterSecureStorage.setMockInitialValues({}));
+    final provider = _CaptureBodyProvider();
+    addTearDown(provider.onClose);
+    const settings = TackleSettings(
+        setCount: 2, inputLimitMs: 1000, snapshotToken: 'saved-snapshot');
+    await provider.sync(
+        stageCode: 'training',
+        parameters: {},
+        lockVersion: 0,
+        cycleNo: 1,
+        actionCode: 'tackle',
+        actionIdempotencyKey: 'v3-body',
+        actionResultPolicy: TackleResultMetadata.snapshotPolicy,
+        actionAttemptCount: 2,
+        actionSuccessCount: 1,
+        actionSuccessfulReactionTotalUs: 200000,
+        actionTackleSettings: settings);
+    final action = provider.bodies.single['action'] as Map;
+    expect(action['rule_snapshot_token'], 'saved-snapshot');
+    expect(action['result_policy'], TackleResultMetadata.snapshotPolicy);
+    expect(action['attempt_count'], 2);
+    expect(action.containsKey('rule_snapshot'), isFalse);
+    await expectLater(
+        provider.sync(
+            stageCode: 'training',
+            parameters: {},
+            lockVersion: 0,
+            cycleNo: 1,
+            actionCode: 'tackle',
+            actionResultPolicy: TackleResultMetadata.snapshotPolicy,
+            actionAttemptCount: 2,
+            actionSuccessCount: 1,
+            actionSuccessfulReactionTotalUs: 200000),
         throwsArgumentError);
   });
 }

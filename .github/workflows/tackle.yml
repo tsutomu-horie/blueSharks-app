@@ -5,6 +5,9 @@ on:
     paths:
       - '.github/workflows/tackle.yml'
       - 'lib/presentation/training_game/**'
+      - 'lib/utils/app_environment.dart'
+      - 'test/support/app_environment_probe.dart'
+      - 'tools/tests/test_app_environment.py'
       - 'lib/app/providers/training_game/**'
       - 'test/training_game/**'
       - 'assets/images/training_game/minigames/tackle*.png'
@@ -35,9 +38,12 @@ jobs:
           dart format --output=none --set-exit-if-changed
           lib/presentation/training_game/mini_games/tackle
           lib/presentation/training_game/mini_games/models/mini_game_result.dart
+          lib/presentation/training_game/models/mini_game_settings.dart
           lib/app/providers/training_game/training_game_provider.dart
           test/training_game/tackle*.dart
           test/training_game/mini_game_result_test.dart
+          test/training_game/mini_game_settings_contract_test.dart
+          test/training_game/mini_game_start_settings_test.dart
           test/training_game/training_game_sync_queue_test.dart
           test/training_game/training_work_debug_day_test.dart
       - name: Analyze affected code
@@ -45,6 +51,7 @@ jobs:
           flutter analyze --no-pub --no-fatal-infos
           lib/presentation/training_game/mini_games/tackle
           lib/presentation/training_game/mini_games/models/mini_game_result.dart
+          lib/presentation/training_game/models/mini_game_settings.dart
           lib/app/providers/training_game/training_game_provider.dart
           lib/presentation/training_game/controllers/training_game.controller.dart
           test/training_game/tackle_game_logic_test.dart
@@ -56,8 +63,12 @@ jobs:
           test/training_game/tackle_result_transport_test.dart
           test/training_game/tackle_trial_plan_test.dart
           test/training_game/tackle_variety_widget_test.dart
+          test/training_game/tackle_settings_test.dart
+          test/training_game/tackle_settings_widget_test.dart
           test/training_game/tackle_test_driver.dart
           test/training_game/mini_game_result_test.dart
+          test/training_game/mini_game_settings_contract_test.dart
+          test/training_game/mini_game_start_settings_test.dart
           test/training_game/training_game_sync_queue_test.dart
           test/training_game/training_work_debug_day_test.dart
       - name: Test tackle and sync compatibility
@@ -72,7 +83,28 @@ jobs:
           test/training_game/tackle_result_transport_test.dart
           test/training_game/tackle_trial_plan_test.dart
           test/training_game/tackle_variety_widget_test.dart
+          test/training_game/tackle_settings_test.dart
+          test/training_game/tackle_settings_widget_test.dart
           test/training_game/mini_game_result_test.dart
+          test/training_game/mini_game_settings_contract_test.dart
+          test/training_game/mini_game_start_settings_test.dart
           test/training_game/training_game_sync_queue_test.dart
           test/training_game/training_work_debug_day_test.dart
           test/training_game/mini_game_widget_test.dart
+
+      - name: Check training debug visibility in test and production
+        run: |
+          flutter test --no-pub test/training_game/training_debug_ui_test.dart
+          flutter test --no-pub --dart-define=APP_ENV=production test/training_game/training_debug_ui_test.dart
+          python3 -m unittest tools.tests.test_app_environment
+
+      - name: Check training HOME controls
+        run: |
+          dart format --output=none --set-exit-if-changed lib/presentation/training_game/training_home_controls.dart lib/presentation/training_game/training_game.screen.dart test/training_game/training_home_controls_test.dart test/training_game/training_game_character_widget_test.dart
+          flutter analyze --no-pub --no-fatal-infos lib/presentation/training_game/training_home_controls.dart test/training_game/training_home_controls_test.dart
+          flutter test --no-pub test/training_game/training_home_controls_test.dart test/training_game/training_game_character_widget_test.dart
+
+      - name: Check direct training entry and hatching
+        run: |
+          flutter analyze --no-pub --no-fatal-infos lib/presentation/training_game/training_game_flow.screen.dart test/training_game/training_game_launch_test.dart
+          flutter test --no-pub test/training_game/training_game_launch_test.dart test/training_game/training_game_new_game_screen_test.dart

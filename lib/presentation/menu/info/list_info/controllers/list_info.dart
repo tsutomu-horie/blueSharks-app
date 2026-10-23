@@ -29,11 +29,14 @@ class TopicListController extends GetxController {
   final ScrollController interviewScrollController = ScrollController();
 
   // Track page numbers for pagination
-  final RxMap<int, int> pageNumbers = RxMap<int, int>({0: 1, 1: 1, 2: 1, 3: 1, 4: 1});
-  final RxMap<int, bool> isImageLoading = RxMap<int, bool>({0: true, 1: true, 2: true, 3: true, 4: true});
+  final RxMap<int, int> pageNumbers =
+      RxMap<int, int>({0: 1, 1: 1, 2: 1, 3: 1, 4: 1});
+  final RxMap<int, bool> isImageLoading =
+      RxMap<int, bool>({0: true, 1: true, 2: true, 3: true, 4: true});
 
   // Loading states for each tab
-  final RxMap<int, bool> isLoading = RxMap<int, bool>({0: false, 1: false, 2: false, 3: false, 4: false});
+  final RxMap<int, bool> isLoading =
+      RxMap<int, bool>({0: false, 1: false, 2: false, 3: false, 4: false});
   final isLoadingFirstTime = false.obs;
 
   @override
@@ -44,13 +47,15 @@ class TopicListController extends GetxController {
     getInfo(0);
 
     matchScrollController.addListener(() => onScroll(0, matchScrollController));
-    noticeScrollController.addListener(() => onScroll(1, noticeScrollController));
+    noticeScrollController
+        .addListener(() => onScroll(1, noticeScrollController));
     eventScrollController.addListener(() => onScroll(2, eventScrollController));
-    activitiesScrollController.addListener(() => onScroll(3, activitiesScrollController));
-    interviewScrollController.addListener(() => onScroll(4, interviewScrollController));
+    activitiesScrollController
+        .addListener(() => onScroll(3, activitiesScrollController));
+    interviewScrollController
+        .addListener(() => onScroll(4, interviewScrollController));
 
     AnalyticsService.logPageView(Routes.LIST_TOPICS);
-
   }
 
   void disableIndexReset() {
@@ -78,11 +83,12 @@ class TopicListController extends GetxController {
   }
 
   void getInfo(int tabIndex) async {
-
-    if (isLoading[tabIndex]!) return; // Avoid multiple API calls at the same time
+    if (isLoading[tabIndex]!)
+      return; // Avoid multiple API calls at the same time
 
     isLoading[tabIndex] = true; // Set loading to true
-    int page = pageNumbers[tabIndex]!; // Get the current page number for the tab
+    int page =
+        pageNumbers[tabIndex]!; // Get the current page number for the tab
 
     try {
       if (page == 0) {
@@ -137,7 +143,6 @@ class TopicListController extends GetxController {
     }
   }
 
-
   // Fetch data for each tab
   Future<List<Post>> _fetchDataForTab(int tabIndex, int page) async {
     switch (tabIndex) {
@@ -163,7 +168,6 @@ class TopicListController extends GetxController {
   }
 
   void changeTab(int index) async {
-
     isTabChanging.value = true;
     selectedIndex.value = index; // Update selected tab index after the delay
 
@@ -202,6 +206,7 @@ class TopicListController extends GetxController {
       getInfo(tabIndex); // Load next page when scrolled to the bottom
     }
   }
+
   // Method to handle swipe between pages
   void onPageChanged(int index) {
     selectedIndex.value = index;
@@ -218,7 +223,7 @@ class TopicListController extends GetxController {
     if (match != null && match.namedGroup('src') != null) {
       return match.namedGroup('src')!;
     } else {
-      return "https://blue-sharks.jp/wp-content/themes/blue-sharks/images/common/noimage.webp";
+      return '';
     }
 
     // If no match is found, fallback to fetching via mediaProvider
@@ -228,12 +233,10 @@ class TopicListController extends GetxController {
   }
 
   Future<String> getFeaturedImage(String mediaId) async {
-
     final imageData = await mediaProvider.fetchMedia(mediaId);
     print("GET NEWS IMAGE ${imageData}");
     final image = imageData.media_details.sizes.thumbnail.source_url;
     print("GET NEWS IMAGE ${mediaId}, ${image}");
     return image ?? "";
   }
-
 }

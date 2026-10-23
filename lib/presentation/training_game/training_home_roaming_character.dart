@@ -23,6 +23,7 @@ class TrainingHomeRoamingCharacter extends StatefulWidget {
     this.idleDuration = const Duration(seconds: 6),
     this.walkDuration = const Duration(milliseconds: 1400),
     this.enabled = true,
+    this.random,
     super.key,
   });
 
@@ -38,6 +39,7 @@ class TrainingHomeRoamingCharacter extends StatefulWidget {
   final Duration idleDuration;
   final Duration walkDuration;
   final bool enabled;
+  final math.Random? random;
 
   @override
   State<TrainingHomeRoamingCharacter> createState() =>
@@ -50,14 +52,13 @@ class _TrainingHomeRoamingCharacterState
   late final AnimationController _controller;
   Timer? _idleTimer;
   bool _isWalking = false;
-  int _targetIndex = 0;
+  late final math.Random _random = widget.random ?? math.Random();
+  double _maxOffset = 0;
+  double _speedScale = 1;
   int _preparationGeneration = 0;
   double _fromOffset = 0;
   double _toOffset = 0;
   double _currentOffset = 0;
-
-  // 中央から片側へ少し移動し、次は中央へ戻る動きを交互にします。
-  static const _targetMultipliers = <double>[1, 0, -1, 0];
 
   @override
   void initState() {
@@ -84,7 +85,7 @@ class _TrainingHomeRoamingCharacterState
       _idleTimer = null;
       _controller.stop();
       _isWalking = false;
-      _targetIndex = 0;
+      _speedScale = 1;
       _fromOffset = 0;
       _toOffset = 0;
       _currentOffset = 0;
@@ -123,13 +124,35 @@ class _TrainingHomeRoamingCharacterState
       return;
     }
 
-    // 素材の先読み完了と同じ状態遷移で、歩行フレームと移動を始めます。
+    if (_maxOffset <= 0 || widget.travelDistance <= 0) {
+      _scheduleNextWalk();
+      return;
+    }
+    _fromOffset = _currentOffset.clamp(-_maxOffset, _maxOffset).toDouble();
+    final edgeMargin = math.min(widget.travelDistance * 0.35, _maxOffset);
+    final goRight = _fromOffset <= -_maxOffset + edgeMargin
+        ? true
+        : _fromOffset >= _maxOffset - edgeMargin
+            ? false
+            : _random.nextBool();
+    final available =
+        goRight ? _maxOffset - _fromOffset : _fromOffset + _maxOffset;
+    final maxStep = math.min(available, widget.travelDistance * 1.25);
+    final distance = maxStep * (0.35 + _random.nextDouble() * 0.65);
+    _toOffset = _fromOffset + (goRight ? distance : -distance);
+    // 長い一歩ほど速くし、既存速度の1.25倍（若干早歩き）を上限にします。
+    _speedScale = 0.65 + 0.6 * distance / (widget.travelDistance * 1.25);
+    _controller.duration = Duration(
+      microseconds: math.max(
+        1,
+        (widget.walkDuration.inMicroseconds *
+                distance /
+                widget.travelDistance /
+                _speedScale)
+            .round(),
+      ),
+    );
     setState(() => _isWalking = true);
-    _fromOffset = _currentOffset;
-    final multiplier =
-        _targetMultipliers[_targetIndex % _targetMultipliers.length];
-    _targetIndex++;
-    _toOffset = multiplier * widget.travelDistance;
     try {
       await _controller.forward(from: 0).orCancel;
     } on TickerCanceled {
@@ -163,6 +186,7 @@ class _TrainingHomeRoamingCharacterState
               (constraints.maxWidth - widget.width) / 2,
             ),
           );
+          _maxOffset = maxOffset;
           final fromOffset =
               _fromOffset.clamp(-maxOffset, maxOffset).toDouble();
           final toOffset = _toOffset.clamp(-maxOffset, maxOffset).toDouble();
@@ -179,7 +203,13 @@ class _TrainingHomeRoamingCharacterState
                     bottom: 0,
                     width: widget.width,
                     height: widget.height,
-                    child: widget.builder(context, _isWalking),
+                    child: _TrainingHomeWalkTempo(
+                      speedScale: _isWalking ? _speedScale : 1,
+                      child: Builder(
+                        builder: (context) =>
+                            widget.builder(context, _isWalking),
+                      ),
+                    ),
                   );
                 },
               ),
@@ -189,6 +219,19 @@ class _TrainingHomeRoamingCharacterState
       ),
     );
   }
+}
+
+class _TrainingHomeWalkTempo extends InheritedWidget {
+  const _TrainingHomeWalkTempo({
+    required this.speedScale,
+    required super.child,
+  });
+
+  final double speedScale;
+
+  @override
+  bool updateShouldNotify(_TrainingHomeWalkTempo oldWidget) =>
+      speedScale != oldWidget.speedScale;
 }
 
 /// 既存PNGの透明余白を吸収し、idle／walk間で実際の絵の高さと足元を揃えます。
@@ -515,6 +558,7 @@ class _TrainingHomeCharacterAnimationState
     extends State<TrainingHomeCharacterAnimation> {
   Timer? _frameTimer;
   int _frameIndex = 0;
+  double _speedScale = 1;
 
   @override
   void initState() {
@@ -526,13 +570,22 @@ class _TrainingHomeCharacterAnimationState
   void didChangeDependencies() {
     super.didChangeDependencies();
     _precacheFrames();
+    final speed = context
+            .dependOnInheritedWidgetOfExactType<_TrainingHomeWalkTempo>()
+            ?.speedScale ??
+        1;
+    if (_speedScale != speed) {
+      _speedScale = speed;
+      _startFrameTimer();
+    }
   }
 
   @override
   void didUpdateWidget(covariant TrainingHomeCharacterAnimation oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.frameSet != widget.frameSet ||
-        oldWidget.isWalking != widget.isWalking) {
+        oldWidget.isWalking != widget.isWalking ||
+        oldWidget.frameDuration != widget.frameDuration) {
       _frameIndex = 0;
       _startFrameTimer();
       if (oldWidget.frameSet != widget.frameSet) _precacheFrames();
@@ -549,7 +602,15 @@ class _TrainingHomeCharacterAnimationState
     _frameTimer?.cancel();
     final frames = widget.frameSet.framesFor(walking: widget.isWalking);
     if (frames.length < 2) return;
-    _frameTimer = Timer.periodic(widget.frameDuration, (_) {
+    final duration = Duration(
+      microseconds: math.max(
+        1,
+        (widget.frameDuration.inMicroseconds /
+                (widget.isWalking ? _speedScale : 1))
+            .round(),
+      ),
+    );
+    _frameTimer = Timer.periodic(duration, (_) {
       if (!mounted) return;
       setState(() => _frameIndex = (_frameIndex + 1) % frames.length);
     });
@@ -603,10 +664,14 @@ class _TrainingHomeIdleMotionState extends State<TrainingHomeIdleMotion>
   @override
   void initState() {
     super.initState();
-    _controller =
-        AnimationController(vsync: this, duration: widget.cycleDuration);
-    _breath =
-        CurvedAnimation(parent: _controller, curve: Curves.easeInOutCubic);
+    _controller = AnimationController(
+      vsync: this,
+      duration: widget.cycleDuration,
+    );
+    _breath = CurvedAnimation(
+      parent: _controller,
+      curve: Curves.easeInOutCubic,
+    );
     if (widget.enabled) _controller.repeat(reverse: true);
   }
 

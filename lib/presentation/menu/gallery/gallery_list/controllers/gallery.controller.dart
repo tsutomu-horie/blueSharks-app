@@ -1,63 +1,63 @@
-import 'package:flutter/cupertino.dart';
 import 'package:get/get.dart';
 import 'package:koto_blue_sharks/app/data/models/media/media.dart';
 import 'package:koto_blue_sharks/app/providers/gallery/gallery_provider.dart';
 import 'package:koto_blue_sharks/app/services/analytics_service.dart';
 import 'package:koto_blue_sharks/generated/locales.g.dart';
 import 'package:koto_blue_sharks/infrastructure/navigation/routes.dart';
-import 'package:koto_blue_sharks/utils/utils.dart';
 
 class GalleryController extends GetxController {
-  var selectedIndex = 1.obs;
-  var selectedName = LocaleKeys.game.tr.obs;
-  var selectedYear = "".obs;
-  final GalleryProvider apiProvider = GalleryProvider();
-  final RxList<Album> album = <Album>[].obs;
+  GalleryController({GalleryProvider? apiProvider})
+      : apiProvider = apiProvider ?? GalleryProvider();
+  final selectedIndex = 1.obs;
+  final selectedName = LocaleKeys.game.tr.obs;
+  final selectedYear = ''.obs;
+  final GalleryProvider apiProvider;
+  final album = <Album>[].obs;
   final isLoading = false.obs;
+  final errorMessage = ''.obs;
+  int _request = 0;
 
   @override
-  void onInit() async {
+  void onInit() {
     super.onInit();
     apiProvider.onInit();
     getGalleryList();
-
     AnalyticsService.logPageView(Routes.GALLERY);
-
   }
 
-  void onRefresh() {
-    // selectedIndex.value = 1;
-    // selectedName.value = LocaleKeys.game.tr;
-    // selectedYear.value = "";
-    onSwitch(selectedIndex.value, selectedName.value);
-  }
+  Future<void> onRefresh() => getGalleryList();
 
-  void onSwitch(int index, String name) {
-    print("switch $index $name");
+  Future<void> onSwitch(int index, String name) {
     selectedIndex.value = index;
-    selectedName.value =  name;
-    getGalleryList();
+    selectedName.value = name;
+    return getGalleryList();
   }
 
-  void getGalleryList() async {
+  Future<void> getGalleryList() async {
+    final request = ++_request;
+    final category = selectedIndex.value;
+    final year = selectedYear.value;
     isLoading.value = true;
-
-    print("get year data ${selectedYear.value}");
-    final response = await apiProvider.fetchGalleryList(
-      selectedIndex.value,
-      selectedYear.value,
-          (){
-        // Utils.showError(context, LocaleKeys.error_login_message.tr, null );
-      },
-    );
-
-    album.value = response;
-    print("index == ${album.length}");
-    isLoading.value = false;
+    errorMessage.value = '';
+    try {
+      final response =
+          await apiProvider.fetchGalleryList(category, year, () {});
+      if (!isClosed && request == _request) album.assignAll(response);
+    } catch (_) {
+      if (!isClosed && request == _request)
+        errorMessage.value = '写真を取得できませんでした。';
+    } finally {
+      if (!isClosed && request == _request) isLoading.value = false;
+    }
   }
 
-  String imageCompressor(String bactchImage){
-    print("compress ${bactchImage}");
-    return "https://wsrv.nl/?url=$bactchImage&dpr=2";
+  @override
+  void onClose() {
+    _request++;
+    apiProvider.httpClient.close();
+    super.onClose();
   }
+
+  String imageCompressor(String image) =>
+      'https://wsrv.nl/?url=${Uri.encodeComponent(image)}&dpr=2';
 }

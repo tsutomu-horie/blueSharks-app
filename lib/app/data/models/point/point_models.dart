@@ -130,6 +130,7 @@ class PointReward {
     required this.offerId,
     required this.name,
     required this.description,
+    this.imageUrl,
     required this.requiredPoints,
     this.exchangeStartsAt,
     this.exchangeEndsAt,
@@ -142,6 +143,7 @@ class PointReward {
   final String offerId;
   final String name;
   final String description;
+  final String? imageUrl;
   final int requiredPoints;
   final DateTime? exchangeStartsAt;
   final DateTime? exchangeEndsAt;
