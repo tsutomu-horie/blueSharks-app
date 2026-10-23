@@ -1018,6 +1018,13 @@ class _RegisteredFrameContent extends StatelessWidget {
                                     fit: BoxFit.fill,
                                     gaplessPlayback: true,
                                     excludeFromSemantics: true))),
+                        // Only the mattress plane covers sleeping-pose edge colors.
+                        // Rail/base backing stays below the original furniture.
+                        Positioned.fill(
+                            child: CustomPaint(
+                                painter: _FurnitureFill(Map.fromEntries(
+                                    layers.fills.entries.where(
+                                        (entry) => entry.key == 0xffc7e7f1))))),
                         if (layers.mirrorClip case final mirror?)
                           Positioned.fill(
                               child: Transform(

@@ -237,6 +237,47 @@ void main() {
     }
   });
 
+  testWidgets('休養完了に睡眠輪郭を残さず右支柱との継ぎ目を不透明に保つ', (tester) async {
+    const formerSleeperEdges = <String, List<Offset>>{
+      'pr': [Offset(27, 206), Offset(381, 216)],
+      'sh': [Offset(428, 208), Offset(409, 217)],
+      'wtb': [Offset(336, 235), Offset(328, 245)],
+    };
+    const mattressPostSeams = <String, List<Offset>>{
+      'pr': [Offset(385, 187), Offset(389, 197)],
+      'sh': [Offset(432, 150), Offset(439, 166), Offset(444, 179)],
+      'wtb': [Offset(339, 192), Offset(343, 202)],
+    };
+    for (final body in ['pr', 'sh', 'wtb']) {
+      final frames = [
+        ...SametarohAssets.careFramesFor(TrainingActionType.rest,
+            bodyKey: body),
+        SametarohAssets.completionFrameFor(TrainingActionType.rest,
+            bodyKey: body),
+      ];
+      for (var n = 0; n < frames.length; n++) {
+        final image = await _render(tester, frames[n]);
+        final bytes = (await tester.runAsync(
+                () => image.toByteData(format: ui.ImageByteFormat.rawRgba)))!
+            .buffer
+            .asUint8List();
+        for (final point in mattressPostSeams[body]!) {
+          final i = (point.dy.toInt() * image.width + point.dx.toInt()) * 4;
+          expect(bytes[i + 3], 255,
+              reason: '$body pose$n original mattress/post seam $point');
+        }
+        if (n == frames.length - 1) {
+          for (final point in formerSleeperEdges[body]!) {
+            final i = (point.dy.toInt() * image.width + point.dx.toInt()) * 4;
+            expect(bytes.sublist(i, i + 4), [199, 231, 241, 255],
+                reason: '$body no sleeping outline at $point');
+          }
+        }
+        image.dispose();
+      }
+    }
+  });
+
   testWidgets('ホームの透明余白正規化後も全体形の待機足中心を固定する', (tester) async {
     for (final body in <String?>[null, ...SametarohAssets.supportedBodyKeys]) {
       final frames = TrainingHomeCharacterFrameSet.forBodyKey(body);

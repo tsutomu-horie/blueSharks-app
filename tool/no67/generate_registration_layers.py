@@ -1,5 +1,5 @@
 from pathlib import Path
-from PIL import Image
+from PIL import Image,ImageDraw
 import numpy as np,csv,re,base64,struct,json
 from collections import deque
 root=Path(__file__).resolve().parents[2];out=root/'lib/presentation/training_game/sametaroh_registration_layers.dart'
@@ -58,13 +58,40 @@ def bed_masks(a):
     if label==2:xs=xs[xs<w*.955]
     if len(xs)>2:fill[y,xs.min():xs.max()+1]=1
   if label==0:
-   ys,xs=np.where(mask);top=int(ys.min());bottom=int(ys.max());left=int(xs.min());right=int(xs.max())
-   for y in range(top,bottom+1):
-    l=round(left+.4*(bottom-y));r=round(right-.4*(bottom-y))
-    fill[y,l:r+1]=1
+   # Reconstruct the flat surface from its original convex outer edges.
+   ys,xs=np.where(exactMat);top=int(ys.min());bottom=int(ys.max())
+   edges=[]
+   for y in range(round(top+.6*(bottom-top)),bottom+1):
+    row=np.flatnonzero(exactMat[y])
+    if len(row)>2:edges.append((y,int(row[0]),int(row[-1])))
+   edges=np.array(edges)
+   leftLine=np.polyfit(edges[:,0],edges[:,1],1)
+   rightLine=np.polyfit(edges[:,0],edges[:,2],1)
+   # The sleeper occludes the far corners; continue the original visible
+   # straight side edges up to the original top edge before taking the hull.
+   corners=[(round(np.polyval(leftLine,top)),top),(round(np.polyval(rightLine,top)),top)]
+   pts=sorted(set(zip(*np.where(exactMat)[::-1]))|set(corners))
+   def cross(o,a,b):return (a[0]-o[0])*(b[1]-o[1])-(a[1]-o[1])*(b[0]-o[0])
+   lower=[];upper=[]
+   for p in pts:
+    while len(lower)>=2 and cross(lower[-2],lower[-1],p)<=0:lower.pop()
+    lower.append(p)
+   for p in reversed(pts):
+    while len(upper)>=2 and cross(upper[-2],upper[-1],p)<=0:upper.pop()
+    upper.append(p)
+   surface=Image.new('1',(w,h));ImageDraw.Draw(surface).polygon([(int(x),int(y)) for x,y in lower[:-1]+upper[:-1]],fill=1)
+   fill=np.array(surface,dtype=bool)
   fills.append((color,rects(fill)))
  dynamicBed = bed | (((lab==0)&(yy>=matTop-2) | (lab==1)&((xx>=w*.8)|(yy>=matTop+50)))&opaque)
- return bed,opaque&~dynamicBed,fills
+ # Keep original anti-aliased transitions between the mattress and right post.
+ # A pixel midway between both colors is farther than the old per-color
+ # threshold from either endpoint; excluding it made a transparent seam.
+ gridY,gridX=np.indices((h,w))
+ delta=colors[1]-colors[0]
+ t=np.clip(((a[:,:,:3]-colors[0])*delta).sum(axis=2)/(delta*delta).sum(),0,1)
+ distance=((a[:,:,:3]-(colors[0]+t[:,:,None]*delta))**2).sum(axis=2)
+ staticBridge=(distance<900)&opaque&(gridX>=w*.88)&(gridY>=matTop)
+ return bed|staticBridge,opaque&~dynamicBed,fills
 entryFills={};entries=[];masks={};fills={};offsets={};mirrors={};mirrorAnchors={}
 for asset,r in records.items():
  if r['action'] not in ('clean','rest','squat'):continue
