@@ -2124,6 +2124,10 @@ class TrainingGameController extends GetxController
     bool restoreDebugElapsed = true,
   }) {
     final previousStageIndex = stageIndex.value;
+    final wasUndecidedFirstTeam = previousStageIndex == stages.length - 1 &&
+        _serverPositionCode.value == null &&
+        !ended.value &&
+        !isEndingSyncPending.value;
     final stage = data['stage_code'] as String?;
     final serverStageIndex = _stageIndexFromCode(stage);
     // 同一育成サイクルの段階は後退しない。定期取得や復帰処理で古いレスポンスが
@@ -2208,6 +2212,17 @@ class TrainingGameController extends GetxController
       preserveLocalCooldowns: restoreLocalState,
     );
     _restoreEndedState(data);
+    // 一軍で未確定だった進化先が応答で決まった場合も、通常の進化演出へ進めます。
+    // 「次へ」から既存の完了同期を使い、次のお世話や翌日を待たせません。
+    if (wasUndecidedFirstTeam &&
+        serverStageIndex == stages.length - 1 &&
+        data['status'] == 'playing' &&
+        position != '判定前' &&
+        !ended.value &&
+        !isEndingSyncPending.value &&
+        evolutionStage.value == null) {
+      _showEvolutionForCurrentStage();
+    }
     return true;
   }
 
@@ -4016,6 +4031,23 @@ class TrainingGameController extends GetxController
         await retryPendingSync();
       } else if (_syncRunning) {
         await _syncChain;
+        if (!_ownsSession(expectedSessionVersion)) return;
+        // 先行同期がplayingのままなら、演出中に決まった終了状態を送ります。
+        // 既に完了している場合は重複送信しません。
+        final current = await _serverProvider.fetchCurrent(
+          expectedSessionVersion: expectedSessionVersion,
+        );
+        if (!_ownsSession(expectedSessionVersion)) return;
+        if (current != null &&
+            current['id'] == _serverPlayerId &&
+            current['cycle_no'] == _serverCycleNo &&
+            _sameGameInstance(
+              _gameStartedAtFrom(current['started_at']),
+              _serverGameStartedAt,
+            ) &&
+            current['status'] == 'playing') {
+          await _queueSync();
+        }
       } else {
         await _queueSync();
       }
