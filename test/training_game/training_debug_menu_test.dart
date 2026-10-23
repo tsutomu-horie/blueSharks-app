@@ -6,6 +6,24 @@ import 'package:koto_blue_sharks/presentation/training_game/models/training_game
 import 'package:koto_blue_sharks/presentation/training_game/training_debug_menu.dart';
 
 class _MenuController extends TrainingGameController {
+  final commands = <String>[];
+  @override
+  Future<Map<String, dynamic>> loadDebugPositionOptions() async => {
+        'positions': [
+          {'position_code': 'wing', 'name': 'ウイング'}
+        ],
+        'current_game': {
+          'id': 7,
+          'cycle_no': 1,
+          'position_code': 'inactive_position'
+        },
+      };
+  @override
+  Future<void> applyDebugPosition(Map<String, dynamic> target,
+      {required bool complete, String? positionCode}) async {
+    commands.add(complete ? 'complete' : positionCode ?? 'release');
+  }
+
   final advancedHours = <int>[];
   @override
   // ignore: must_call_super
@@ -62,6 +80,21 @@ void main() {
     await tester.tap(finder);
     await tester.pumpAndSettle();
   }
+
+  testWidgets('固定候補にない現在位置でも開き、取消では書かず、完了は確認後だけ実行する', (tester) async {
+    await open(tester);
+    await tapVisible(tester, find.text('進化先ポジションを固定・解除'));
+    expect(tester.takeException(), isNull);
+    expect(find.text('固定解除（未確定へ戻す）'), findsOneWidget);
+    await tester.tap(find.text('キャンセル'));
+    await tester.pumpAndSettle();
+    expect(controller.commands, isEmpty);
+    await tapVisible(tester, find.text('育成完了までスキップ'));
+    expect(controller.commands, isEmpty);
+    await tester.tap(find.text('実行する'));
+    await tester.pumpAndSettle();
+    expect(controller.commands, ['complete']);
+  });
 
   testWidgets('開くだけでは状態変更せず、現在値と速度の選択を表示する', (tester) async {
     await open(tester);

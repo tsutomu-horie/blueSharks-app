@@ -133,6 +133,45 @@ class TrainingGameProvider extends GetConnect {
     return write;
   }
 
+  /// テスト環境の有効な位置と操作対象を取得します。
+  Future<Map<String, dynamic>> debugPositionOptions(
+      {int? expectedSessionVersion}) async {
+    if (!AppEnvironment.showsTrainingDebugUi) throw StateError('通常版では実行できません。');
+    await _pendingWrite;
+    final headers = await _headers(expectedSessionVersion);
+    _assertSessionVersion(expectedSessionVersion);
+    return _data(await get('game/debug/position-options', headers: headers)) ??
+        <String, dynamic>{};
+  }
+
+  /// 確認済みの現在サイクルだけへ、位置固定又は完了を要求します。
+  Future<Map<String, dynamic>> debugPositionCommand({
+    required Map<String, dynamic> target,
+    required bool complete,
+    String? positionCode,
+    int? expectedSessionVersion,
+  }) async {
+    if (!AppEnvironment.showsTrainingDebugUi) throw StateError('通常版では実行できません。');
+    final write = _pendingWrite.then((_) async {
+      final headers = await _headers(expectedSessionVersion);
+      _assertSessionVersion(expectedSessionVersion);
+      return _data(await post(
+              complete ? 'game/debug/complete' : 'game/debug/position',
+              {
+                'confirm': true,
+                'expected_player_id': target['id'],
+                'expected_cycle_no': target['cycle_no'],
+                'expected_lock_version': target['lock_version'],
+                'expected_started_at': target['started_at'],
+                if (!complete) 'position_code': positionCode,
+              },
+              headers: headers)) ??
+          <String, dynamic>{};
+    });
+    _pendingWrite = write.then<void>((_) {}, onError: (_, __) {});
+    return write;
+  }
+
   /// ローカルで確定した状態とアクションをサーバーへ同期します。
   Future<Map<String, dynamic>> sync({
     required String stageCode,
