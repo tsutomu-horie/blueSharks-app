@@ -1,7 +1,53 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:get/get.dart';
+import 'package:koto_blue_sharks/app/providers/training_game/training_game_provider.dart';
 import 'package:koto_blue_sharks/presentation/training_game/controllers/training_game.controller.dart';
+import 'package:koto_blue_sharks/presentation/training_game/models/mini_game_settings.dart';
+import 'package:koto_blue_sharks/presentation/training_game/models/training_game_models.dart';
+import 'package:koto_blue_sharks/utils/my_shared_pref.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
+  setUp(() async {
+    TrainingGameProvider.registerPendingSync(Future<void>.value());
+    SharedPreferences.setMockInitialValues({});
+    await MySharedPref.init();
+    Get.testMode = true;
+  });
+
+  test('サーバー確定のfirst_team遷移は一軍の進化ウィンドウへ進む', () async {
+    final provider = _FirstTeamTransitionProvider();
+    Get.routing.args = provider.state('growth');
+    final controller = TrainingGameController(
+      serverProvider: provider,
+      writePendingActions: (_) async => true,
+      clearPendingActions: () async => true,
+      archivePendingActions: (_) async => true,
+    );
+    addTearDown(() {
+      controller.onClose();
+      Get.routing.args = null;
+    });
+    controller.onInit();
+    await Future<void>.delayed(Duration.zero);
+
+    expect(controller.isServerStateReady.value, isTrue);
+    expect(controller.stageIndex.value, 3);
+    controller.setCooldownEnabled(TrainingActionType.meal, false);
+    controller.daysInStage.value = 7;
+    controller.perform(TrainingActionType.meal);
+    await TrainingGameProvider.waitForPendingSync();
+
+    expect(provider.syncedStageCodes, isNotEmpty);
+    expect(provider.syncedStageCodes, everyElement('first_team'));
+    expect(provider.syncedActionCodes, contains('meal'));
+    expect(controller.stageIndex.value, 4);
+    expect(controller.currentStage.name, '一軍');
+    expect(controller.evolutionStage.value, 4);
+  });
+
   test('進化演出中のOS割り込み後も、次へ進むと16倍速の時間が再開する', () {
     final controller = TrainingGameController();
     controller.isServerStateReady.value = true;
@@ -29,4 +75,64 @@ void main() {
 
     expect(controller.isTutorialTimeActive, isFalse);
   });
+}
+
+class _FirstTeamTransitionProvider extends TrainingGameProvider {
+  final syncedStageCodes = <String>[];
+  final syncedActionCodes = <String?>[];
+
+  Map<String, dynamic> state(String stageCode) => {
+        'id': 7,
+        'cycle_no': 3,
+        'lock_version': syncedStageCodes.length,
+        'stage_code': stageCode,
+        'status': 'playing',
+        'started_at': '2026-10-20T00:00:00Z',
+        'elapsed_seconds': 0,
+        'actions_today': 0,
+        'work_available': false,
+        'branch_code': null,
+        'position_code': null,
+        'parameters': {
+          'hunger': 80.0,
+          'cleanliness': 80.0,
+          'condition': 80.0,
+          'work': 80.0,
+          'tendency_fw': 0.0,
+          'tendency_command': 0.0,
+          'tendency_backs': 0.0,
+          'tendency_bulk': 0.0,
+          'tendency_tech': 0.0,
+        },
+        'cooldowns': <String, dynamic>{},
+        if (stageCode == 'growth')
+          'stage_progress': {'next_stage_code': 'first_team'},
+      };
+
+  @override
+  Future<Map<String, dynamic>> sync({
+    required String stageCode,
+    required Map<String, double> parameters,
+    required int lockVersion,
+    required int cycleNo,
+    String? positionCode,
+    String? branchCode,
+    String? actionCode,
+    String? actionIdempotencyKey,
+    int? expectedSessionVersion,
+    double? actionScore,
+    double? actionEffectMultiplier,
+    String? actionResultCode,
+    String? actionResultPolicy,
+    int? actionAttemptCount,
+    int? actionSuccessCount,
+    int? actionSuccessfulReactionTotalUs,
+    TackleSettings? actionTackleSettings,
+    bool debugBypassCooldown = false,
+    String status = 'playing',
+  }) async {
+    syncedStageCodes.add(stageCode);
+    syncedActionCodes.add(actionCode);
+    return state(stageCode);
+  }
 }
