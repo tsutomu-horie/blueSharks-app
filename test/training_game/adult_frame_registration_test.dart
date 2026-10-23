@@ -278,6 +278,77 @@ void main() {
     }
   });
 
+  test('ノーマルもホーム待機と全補正アクションの対象になる', () {
+    final home = TrainingHomeCharacterFrameSet.forBodyKey(null);
+    expect(home.bodyKey, 'normal');
+    expect(home.idleFrames.map((frame) => frame.asset),
+        SametarohAssets.normalFrames.map((frame) => frame.asset));
+    for (final action in [
+      TrainingActionType.clean,
+      TrainingActionType.squat,
+      TrainingActionType.work,
+      TrainingActionType.rest
+    ]) {
+      for (final frame in [
+        ...SametarohAssets.careFramesFor(action),
+        SametarohAssets.completionFrameFor(action),
+      ]) {
+        expect(frame.asset, startsWith('assets/images/sametaroh/'));
+        if (frame ==
+            SametarohAssets.completionFrameFor(TrainingActionType.work)) {
+          // Work completion preserves the original whole pose by translation.
+          expect(frame.registrationX, 11);
+        } else {
+          expect(
+              action == TrainingActionType.rest
+                  ? registeredFrameLayers.containsKey(frame.asset)
+                  : SametarohCleanWarp.supports(frame),
+              isTrue,
+              reason: frame.asset);
+        }
+      }
+    }
+  });
+
+  testWidgets('ノーマル休養の右下家具は睡眠から起床まで原画RGBAを保持する', (tester) async {
+    final first = SametarohAssets.careFramesFor(TrainingActionType.rest).first;
+    final original = (await tester.runAsync(() async {
+      final asset = await rootBundle.load(first.asset);
+      final codec = await ui.instantiateImageCodec(asset.buffer.asUint8List());
+      final image = (await codec.getNextFrame()).image;
+      final data = (await image.toByteData(format: ui.ImageByteFormat.rawRgba))!
+          .buffer
+          .asUint8List();
+      image.dispose();
+      codec.dispose();
+      return data;
+    }))!;
+    for (final frame in [
+      ...SametarohAssets.careFramesFor(TrainingActionType.rest),
+      SametarohAssets.completionFrameFor(TrainingActionType.rest),
+    ]) {
+      final rendered = await _render(tester, frame);
+      final bytes = (await tester.runAsync(
+              () => rendered.toByteData(format: ui.ImageByteFormat.rawRgba)))!
+          .buffer
+          .asUint8List();
+      var differences = 0;
+      for (var y = 213; y < 266; y++) {
+        for (var x = 384; x < 426; x++) {
+          final source = (y * 426 + x) * 4;
+          final target = ((y + 34) * rendered.width + x) * 4;
+          for (var c = 0; c < 4; c++) {
+            if (bytes[target + c] != original[source + c]) differences++;
+          }
+        }
+      }
+      expect(differences, 0,
+          reason:
+              '${frame.asset}: original post/base contour and translucent blue seam');
+      rendered.dispose();
+    }
+  });
+
   testWidgets('ホームの透明余白正規化後も全体形の待機足中心を固定する', (tester) async {
     for (final body in <String?>[null, ...SametarohAssets.supportedBodyKeys]) {
       final frames = TrainingHomeCharacterFrameSet.forBodyKey(body);

@@ -116,7 +116,24 @@ for asset,r in records.items():
  if action=='rest':
   static,dynamic,ff=bed_masks(a)
   if group not in masks:
-   bs,_,bfill=bed_masks(base);masks[group]=rects(bs);fills[group]=bfill
+   bs,_,bfill=bed_masks(base)
+   if body=='base':
+    # Normal's bottom-right post contains low-alpha transitions between the
+    # two blue furniture colors. Preserve the original furniture-only corner,
+    # including its alpha, rather than dropping pixels by nearest-color labels.
+    yy,xx=np.indices((bh,bw))
+    corner=(xx>=bw*.9)&(yy>=bh*.8)
+    bs |= (base[:,:,3]>0)&corner
+    # This visible corner is already complete in the original. Do not put
+    # opaque backing beneath its translucent edge or change its silhouette.
+    originalCornerFills=[]
+    for color,runs in bfill:
+     mask=np.zeros((bh,bw),bool)
+     for x,y,rw,rh in runs:mask[y:y+rh,x:x+rw]=True
+     mask[corner]=False
+     originalCornerFills.append((color,rects(mask)))
+    bfill=originalCornerFills
+   masks[group]=rects(bs);fills[group]=bfill
  offsets[group]=offset
  if action=='rest':
   expanded=dynamic.copy()
