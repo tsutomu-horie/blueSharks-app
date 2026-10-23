@@ -2192,7 +2192,10 @@ class TrainingGameController extends GetxController
         restoreProgressCounters: restoreLocalCounters,
       );
     } else {
-      _hasUnsyncedLocalState = false;
+      // 時間保存は終了状態を送らないため、その応答だけでは終了要求を同期済みにしません。
+      // 後続の終了同期が最新lock_versionでpositive/negative_endを保存します。
+      _hasUnsyncedLocalState =
+          _debugTimeSavePending && ended.value && isEndingSyncPending.value;
     }
     _restoreLocalCountersOnNextServerState = false;
     final serverActionsToday = (data['actions_today'] as num?)?.toInt();

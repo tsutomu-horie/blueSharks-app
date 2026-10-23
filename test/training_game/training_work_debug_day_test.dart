@@ -12,6 +12,7 @@ import 'package:koto_blue_sharks/presentation/training_game/training_game.screen
 import 'package:koto_blue_sharks/presentation/training_game/training_game_care_action.screen.dart';
 import 'package:koto_blue_sharks/utils/my_shared_pref.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:koto_blue_sharks/app/services/auth_token.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -19,6 +20,110 @@ void main() {
   setUp(() async {
     SharedPreferences.setMockInitialValues({});
     await MySharedPref.init();
+  });
+
+  test('一軍確定後の＋1日は時間保存応答で終了意思を失わず正常完了を一度保存する', () async {
+    final provider = DebugDayProvider()
+      ..stageCode = 'first_team'
+      ..positionCode = 'fullback'
+      ..timeGate = Completer<void>();
+    final controller = TrainingGameController(serverProvider: provider);
+    addTearDown(controller.onClose);
+    await controller.retryRestoreServerState();
+    expect(controller.position, 'フルバック');
+    controller.advanceTime(24);
+    expect(controller.ended.value, isTrue);
+    controller.advanceTime(24);
+    await Future<void>.delayed(Duration.zero);
+    expect(provider.normalStatuses, isEmpty);
+    provider.timeGate!.complete();
+    for (var i = 0; i < 20; i++) {
+      await Future<void>.delayed(Duration.zero);
+    }
+    expect(provider.timeSaves, 1);
+    expect(provider.dailyResets, 1);
+    expect(provider.normalStatuses, ['positive_end']);
+    expect(controller.ended.value, isTrue);
+    expect(controller.clearPosition.value, 'フルバック');
+    expect(controller.endingSyncError.value, isEmpty);
+  });
+
+  for (final failTime in [true, false]) {
+    test('完了時の${failTime ? '時間保存' : '日次解除'}失敗では完了を送らず再試行エラーを残す', () async {
+      final provider = DebugDayProvider()
+        ..stageCode = 'first_team'
+        ..positionCode = 'fullback'
+        ..failTimeSync = failTime
+        ..failDailyReset = !failTime;
+      final controller = TrainingGameController(serverProvider: provider);
+      addTearDown(controller.onClose);
+      await controller.retryRestoreServerState();
+      controller.advanceTime(24);
+      for (var i = 0; i < 20; i++) {
+        await Future<void>.delayed(Duration.zero);
+      }
+      expect(provider.normalStatuses, isEmpty);
+      expect(controller.ended.value, isTrue);
+      expect(controller.endingSyncError.value, isNotEmpty);
+      expect(controller.canResolveDebugTimeSave, isTrue);
+    });
+  }
+
+  test('完了時間保存中の本人セッション変更では終了を送信しない', () async {
+    final provider = DebugDayProvider()
+      ..stageCode = 'first_team'
+      ..positionCode = 'fullback'
+      ..timeGate = Completer<void>();
+    final controller = TrainingGameController(serverProvider: provider);
+    addTearDown(controller.onClose);
+    await controller.retryRestoreServerState();
+    controller.advanceTime(24);
+    await Future<void>.delayed(Duration.zero);
+    await AuthToken.notifySessionChangedForTesting();
+    provider.timeGate!.complete();
+    for (var i = 0; i < 20; i++) {
+      await Future<void>.delayed(Duration.zero);
+    }
+    expect(provider.normalStatuses, isEmpty);
+    expect(provider.dailyResets, 0);
+  });
+
+  test('終了保存の拒否を成功扱いせずサーバーの育成中状態とエラーを残す', () async {
+    final provider = DebugDayProvider()
+      ..stageCode = 'first_team'
+      ..positionCode = 'fullback'
+      ..failEnding = true;
+    final controller = TrainingGameController(serverProvider: provider);
+    addTearDown(controller.onClose);
+    await controller.retryRestoreServerState();
+    controller.advanceTime(24);
+    for (var i = 0; i < 20; i++) {
+      await Future<void>.delayed(Duration.zero);
+    }
+    expect(provider.normalStatuses, ['positive_end']);
+    expect(provider.serverStatus, 'playing');
+    expect(controller.ended.value, isFalse);
+    expect(controller.endingSyncError.value, isNotEmpty);
+  });
+
+  test('時間保存応答が新周期なら旧周期の終了要求を持ち越さない', () async {
+    final provider = DebugDayProvider()
+      ..stageCode = 'first_team'
+      ..positionCode = 'fullback'
+      ..timeGate = Completer<void>();
+    final controller = TrainingGameController(serverProvider: provider);
+    addTearDown(controller.onClose);
+    await controller.retryRestoreServerState();
+    controller.advanceTime(24);
+    await Future<void>.delayed(Duration.zero);
+    provider.cycleNo = 2;
+    provider.timeGate!.complete();
+    for (var i = 0; i < 20; i++) {
+      await Future<void>.delayed(Duration.zero);
+    }
+    expect(provider.normalStatuses, isNot(contains('positive_end')));
+    expect(controller.ended.value, isFalse);
+    expect(controller.clearPosition.value, isNull);
   });
 
   test('日付をまたがない時間加算も専用APIへ保存し、日次履歴は解除しない', () async {
@@ -346,6 +451,12 @@ class _ManualController extends TrainingGameController {
 }
 
 class DebugDayProvider extends TrainingGameProvider {
+  String stageCode = 'training';
+  String? positionCode;
+  String serverStatus = 'playing';
+  int cycleNo = 1;
+  bool failEnding = false;
+  final normalStatuses = <String?>[];
   int dailyResets = 0;
   int timeSaves = 0;
   int normalSaves = 0;
@@ -369,10 +480,12 @@ class DebugDayProvider extends TrainingGameProvider {
 
   Map<String, dynamic> payload() => {
         'id': 7,
-        'cycle_no': 1,
+        'cycle_no': cycleNo,
         'lock_version': _lockVersion,
-        'stage_code': 'training',
-        'status': 'playing',
+        'stage_code': stageCode,
+        'position_code': positionCode,
+        'branch_code': positionCode == null ? null : 'FW',
+        'status': serverStatus,
         'started_at': _startedAt.toIso8601String(),
         'server_time': _startedAt.toIso8601String(),
         'elapsed_seconds': 0,
@@ -396,7 +509,7 @@ class DebugDayProvider extends TrainingGameProvider {
   Future<Map<String, dynamic>?> fetchCurrent(
       {int? expectedSessionVersion}) async {
     currentReads++;
-    return payload();
+    return serverStatus == 'playing' ? payload() : null;
   }
 
   @override
@@ -464,6 +577,11 @@ class DebugDayProvider extends TrainingGameProvider {
     bool debugBypassCooldown = false,
   }) async {
     normalSaves++;
+    normalStatuses.add(status);
+    if (failEnding && status == 'positive_end') {
+      throw TrainingGameApiException(
+          statusCode: 422, message: 'Ending rejected');
+    }
     if (actionCode == 'work' && rateLimitWork) {
       throw TrainingGameApiException(
           statusCode: 429,
@@ -472,6 +590,7 @@ class DebugDayProvider extends TrainingGameProvider {
     }
     expect(lockVersion, _lockVersion);
     _lockVersion++;
+    serverStatus = status ?? 'playing';
     // 通常同期はサーバー正本。端末パラメータをそのまま採用しません。
     if (actionCode == 'work') {
       workActions++;
