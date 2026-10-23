@@ -214,7 +214,9 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
             SametarohAssets.idleFramesForBodyKey(_bodyKey).first),
         _ => null,
       },
-      message: '段階「${stage.name}」へ進みました。',
+      message: controller.evolutionStage.value == 2
+          ? '成長した鮫太郎と、いろんなことに挑戦してみましょう！！'
+          : '段階「${stage.name}」へ進みました。',
       buttonLabel: '次へ',
       onPressed: controller.advanceEvolution,
     );

@@ -44,9 +44,7 @@ class GameGuideController extends GetxController {
         guides.map((item) => item.location),
       );
 
-  List<String> get statuses => _filterOptions(
-        guides.map((item) => item.status),
-      );
+  List<String> get statuses => const ['開催予定', '試合終了'];
 
   bool get hasActiveFilters =>
       selectedSeason.value != null ||

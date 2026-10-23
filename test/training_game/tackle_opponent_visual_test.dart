@@ -2,7 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:koto_blue_sharks/presentation/training_game/mini_games/tackle/tackle_opponent_visual.dart';
 
+import 'tackle_test_driver.dart';
+
 void main() {
+  String visibleAsset(WidgetTester tester, Finder owner) {
+    final image = find.descendant(of: owner, matching: find.byType(Image));
+    return (tester.widget<Image>(image).image as AssetImage).assetName;
+  }
+
   for (final alignment in [
     const Alignment(1.25, 0),
     const Alignment(.45, 0),
@@ -10,7 +17,7 @@ void main() {
     const Alignment(-.36, .58),
     const Alignment(-1.35, -.58),
   ]) {
-    testWidgets('opponent preserves legacy box and center at $alignment', (
+    testWidgets('running mate preserves legacy box and center at $alignment', (
       tester,
     ) async {
       Widget host(Widget child) => MaterialApp(
@@ -32,89 +39,163 @@ void main() {
       await tester.pumpWidget(
         host(const TackleOpponentVisual(key: Key('opponent'))),
       );
-      expect(tester.getSize(find.byKey(const Key('opponent'))), expectedSize);
+      final opponent = find.byKey(const Key('opponent'));
+      expect(tester.getSize(opponent), expectedSize);
+      expect(tester.getCenter(opponent), expectedCenter);
+      expect(visibleAsset(tester, opponent), TackleOpponentVisual.assetPathA);
+      final image = find.descendant(of: opponent, matching: find.byType(Image));
       expect(
-        tester.getCenter(find.byKey(const Key('opponent'))),
-        expectedCenter,
-      );
-      final image = find.descendant(
-        of: find.byKey(const Key('opponent')),
-        matching: find.byType(Image),
-      );
-      expect(
-        tester.getSize(image).height,
-        closeTo(72 * (206 / 216) * (891 / 867), .000001),
-      );
-      expect(
-        tester.getSize(image).width,
-        closeTo(72 * (206 / 216) * (562 / 867), .000001),
-      );
-      expect(tester.getRect(image).right,
-          closeTo(expectedCenter.dx + (58 * 562 / 891) / 2, .000001));
-      expect(
-        tester.getCenter(image).dy,
-        closeTo(expectedCenter.dy - 1 / 3, .000001),
-      );
-      expect(
-        (tester.widget<Image>(image).image as AssetImage).assetName,
-        TackleOpponentVisual.assetPath,
-      );
-    });
-  }
-
-  testWidgets(
-    'B alpha head and feet match Normal body height at same baseline',
-    (tester) async {
-      await tester.pumpWidget(
-        const MaterialApp(
-          home: Center(child: TackleOpponentVisual(key: Key('opponent'))),
+        tester.getSize(image),
+        const Size(
+          TackleOpponentVisual.spriteSize,
+          TackleOpponentVisual.spriteSize,
         ),
       );
-      final opponent = find.byKey(const Key('opponent'));
-      final center = tester.getCenter(opponent);
-      final image = find.descendant(of: opponent, matching: find.byType(Image));
-      final box = tester.renderObject<RenderBox>(image);
-      // Independent measured alpha128 bounds: B[12,12,550,879]/562x891;
-      // Normal rest3x[8,4,107,210]/114x216 displayed at height72.
-      final bTop = box.localToGlobal(Offset(0, box.size.height * 12 / 891)).dy;
-      final bBottom =
-          box.localToGlobal(Offset(0, box.size.height * 879 / 891)).dy;
-      final normalTop = center.dy - 36 + 72 * 4 / 216;
-      final normalBottom = center.dy - 36 + 72 * 210 / 216;
-      expect(bTop, closeTo(normalTop, .000001));
-      expect(bBottom, closeTo(normalBottom, .000001));
-      expect(bBottom - bTop, closeTo(72 * 206 / 216, .000001));
-    },
-  );
-
-  for (final fieldWidth in [288.0, 328.0, 343.0, 370.0]) {
-    testWidgets('enlarged exit does not regress at field width $fieldWidth',
-        (tester) async {
-      await tester.pumpWidget(MaterialApp(
-          home: Center(
-              child: SizedBox(
-        key: const Key('field'),
-        width: fieldWidth,
-        height: 400,
-        child: const Align(
-            alignment: Alignment(-1.35, -.58),
-            child: TackleOpponentVisual(key: Key('opponent'))),
-      ))));
-      final field = tester.getRect(find.byKey(const Key('field')));
-      final opponent = find.byKey(const Key('opponent'));
-      final image = find.descendant(of: opponent, matching: find.byType(Image));
-      final box = tester.renderObject<RenderBox>(image);
-      final alphaRight =
-          box.localToGlobal(Offset(box.size.width * 550 / 562, 0)).dx;
-      // Independent source alpha edge and the previous58px image at this center.
-      final oldAlphaRight =
-          tester.getCenter(opponent).dx + 58 * (550 - 281) / 891;
-      expect(alphaRight, lessThanOrEqualTo(oldAlphaRight + .000001));
-      if (fieldWidth >= 328) expect(alphaRight, lessThanOrEqualTo(field.left));
-      debugPrint(
-          'OPPONENT_SIZE_EXIT field=$fieldWidth old=${oldAlphaRight - field.left} new=${alphaRight - field.left}');
+      final imageRect = tester.getRect(image);
+      expect(
+        imageRect.center.dx,
+        closeTo(
+          expectedCenter.dx + TackleOpponentVisual.spriteOffsetX,
+          .000001,
+        ),
+      );
+      expect(
+        imageRect.center.dy,
+        closeTo(
+          expectedCenter.dy + TackleOpponentVisual.spriteOffsetY,
+          .000001,
+        ),
+      );
+      // The character art faces left in both approved frames; translation does
+      // not mirror or rotate its approved orientation.
+      final transform = tester.widget<Transform>(
+        find.ancestor(of: image, matching: find.byType(Transform)).first,
+      );
+      expect(
+        transform.transform.entry(0, 0),
+        TackleOpponentVisual.spriteScaleX,
+      );
+      expect(transform.transform.entry(1, 1), 1);
+      expect(transform.transform.entry(0, 1), 0);
+      expect(transform.transform.entry(1, 0), 0);
     });
   }
+
+  test('approved sprite scale keeps the previous visible runner height', () {
+    expect(
+      TackleOpponentVisual.spriteSize * 96 / 112,
+      closeTo(TackleOpponentVisual.imageHeight * 867 / 891, .000001),
+    );
+    expect(TackleOpponentVisual.assetPathA, contains('pass_run_mate_free_a'));
+    expect(TackleOpponentVisual.assetPathB, contains('pass_run_mate_free_b'));
+    expect(TackleOpponentVisual.spriteScaleX, lessThan(1));
+  });
+
+  for (final fieldWidth in [288.0, 328.0, 343.0, 370.0]) {
+    testWidgets(
+      'running frames preserve the legacy exit edge at $fieldWidth px',
+      (tester) async {
+        const alignment = Alignment(-1.35, -.58);
+        final field = find.byKey(const Key('field'));
+        final opponent = find.byKey(const Key('opponent'));
+
+        Widget host() => MaterialApp(
+              home: Center(
+                child: SizedBox(
+                  key: const Key('field'),
+                  width: fieldWidth,
+                  height: 400,
+                  child: const Align(
+                    alignment: alignment,
+                    child: TackleOpponentVisual(
+                      key: Key('opponent'),
+                      running: true,
+                    ),
+                  ),
+                ),
+              ),
+            );
+
+        Future<void> expectExitEdge(String asset, double alphaRight) async {
+          expect(visibleAsset(tester, opponent), asset);
+          final fieldRect = tester.getRect(field);
+          final opponentCenter = tester.getCenter(opponent);
+          final image = find.descendant(
+            of: opponent,
+            matching: find.byKey(const Key('tackle-opponent-running-frame')),
+          );
+          final box = tester.renderObject<RenderBox>(image);
+          final right = box
+              .localToGlobal(
+                Offset(box.size.width * alphaRight / 112, box.size.height / 2),
+              )
+              .dx;
+          // Independent alpha128 bounds of the approved 112px frames: A right
+          // edge 85, B right edge 87. The former art used 550/562.
+          final legacyRight = opponentCenter.dx + 58 * (550 - 281) / 891;
+          expect(right, lessThanOrEqualTo(legacyRight + .000001));
+          if (fieldWidth >= 328) {
+            expect(right, lessThanOrEqualTo(fieldRect.left + .000001));
+          }
+        }
+
+        await tester.pumpWidget(host());
+        await expectExitEdge(TackleOpponentVisual.assetPathA, 85);
+        await tester.pump(const Duration(milliseconds: 110));
+        await expectExitEdge(TackleOpponentVisual.assetPathB, 87);
+        await tester.pumpWidget(const SizedBox.shrink());
+      },
+    );
+  }
+
+  testWidgets('running animation alternates approved frames and can pause', (
+    tester,
+  ) async {
+    final opponent = find.byKey(const Key('opponent'));
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Center(
+          child: TackleOpponentVisual(key: Key('opponent'), running: true),
+        ),
+      ),
+    );
+    expect(visibleAsset(tester, opponent), TackleOpponentVisual.assetPathA);
+    await tester.pump(const Duration(milliseconds: 110));
+    expect(visibleAsset(tester, opponent), TackleOpponentVisual.assetPathB);
+    await tester.pump(const Duration(milliseconds: 108));
+    expect(visibleAsset(tester, opponent), TackleOpponentVisual.assetPathA);
+
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Center(
+          child: TackleOpponentVisual(key: Key('opponent'), running: false),
+        ),
+      ),
+    );
+    final pausedAsset = visibleAsset(tester, opponent);
+    await tester.pump(const Duration(milliseconds: 500));
+    expect(visibleAsset(tester, opponent), pausedAsset);
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
+  testWidgets('tackle approach animates the companion while it moves', (
+    tester,
+  ) async {
+    addTearDown(() async {
+      await tester.pumpWidget(const SizedBox.shrink());
+    });
+    await tester.pumpWidget(MaterialApp(home: tackleTestScreen()));
+    final opponent = find.byKey(const Key('tackle-opponent'));
+    expect(visibleAsset(tester, opponent), TackleOpponentVisual.assetPathA);
+    await tester.tap(find.text('スタート'));
+    await tester.pump();
+    await tester.pump();
+    expect(tester.widget<TackleOpponentVisual>(opponent).running, isTrue);
+    final before = tester.getCenter(opponent);
+    await tester.pump(const Duration(milliseconds: 110));
+    expect(visibleAsset(tester, opponent), TackleOpponentVisual.assetPathB);
+    expect(tester.getCenter(opponent).dx, lessThan(before.dx));
+  });
 
   testWidgets('opponent visual passes taps to parent', (tester) async {
     var taps = 0;
@@ -131,5 +212,6 @@ void main() {
     );
     await tester.tapAt(tester.getCenter(find.byKey(const Key('opponent'))));
     expect(taps, 1);
+    await tester.pumpWidget(const SizedBox.shrink());
   });
 }
