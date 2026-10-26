@@ -624,11 +624,7 @@ class MypageScreen extends GetView<MypageController> {
                                     Get.to(() =>
                                     const DeleteAccountConfirmationScreen())
                                         ?.then((result) {
-                                      if (result == true) {
-                                        controller.logout();
-                                        controller.onInit();
-                                        print("Thssdksflsjd s");
-                                      }
+                                      controller.handleAccountDeletionResult(result);
                                     });
                                   },
                                   style: ButtonStyle(
@@ -812,81 +808,130 @@ class MypageScreen extends GetView<MypageController> {
   }
 
   // Add this function at the bottom of the file
-  void showLogoutConfirmation(BuildContext context, VoidCallback onConfirm) {
-    showModalBottomSheet(
+  void showLogoutConfirmation(
+      BuildContext context, Future<void> Function() onConfirm) {
+    showModalBottomSheet<void>(
       context: context,
       backgroundColor: Colors.white,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
       ),
-      builder: (context) {
-        return Padding(
-          padding: EdgeInsets.all(16.w),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                Icons.info_outline,
-                color: WarningColor.main,
-                size: 24.w,
-              ),
-              SizedBox(height: 16.h),
-              CustomTextView(
-                LocaleKeys.logout_confirmation_title.tr,
-                type: TDSFontType.titleMedium,
-                color: TextColor.primary,
-                align: TextAlign.center,
-              ),
-              SizedBox(height: 8.h),
-              CustomTextView(
-                LocaleKeys.logout_confirmation_desc.tr,
-                type: TDSFontType.bodyTextMedium,
-                color: TextColor.secondary,
-                align: TextAlign.center,
-              ),
-              SizedBox(height: 24.h),
-              Row(
+      builder: (sheetContext) {
+        var isProcessing = false;
+        String? errorMessage;
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return Padding(
+              key: const Key('logout-sheet-content'),
+              padding: EdgeInsets.all(16.w),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: () => Get.back(),
-                      style: OutlinedButton.styleFrom(
-                        side: BorderSide(color: BorderColor.primary),
-                        padding: EdgeInsets.symmetric(vertical: 12.h),
-                      ),
-                      child: CustomTextView(
-                        LocaleKeys.cancel.tr,
-                        type: TDSFontType.labelLarge,
-                        color: TextColor.primary,
-                      ),
-                    ),
+                  Icon(
+                    Icons.info_outline,
+                    color: WarningColor.main,
+                    size: 24.w,
                   ),
-                  SizedBox(width: 16.w),
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: () {
-                        Get.back();
-                        onConfirm();
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: BrandColor.main,
-                        padding: EdgeInsets.symmetric(vertical: 12.h),
-                      ),
-                      child: CustomTextView(
-                        LocaleKeys.yes.tr,
-                        type: TDSFontType.labelLarge,
-                        color: Colors.white,
-                      ),
+                  SizedBox(height: 16.h),
+                  CustomTextView(
+                    LocaleKeys.logout_confirmation_title.tr,
+                    type: TDSFontType.titleMedium,
+                    color: TextColor.primary,
+                    align: TextAlign.center,
+                  ),
+                  SizedBox(height: 8.h),
+                  CustomTextView(
+                    LocaleKeys.logout_confirmation_desc.tr,
+                    type: TDSFontType.bodyTextMedium,
+                    color: TextColor.secondary,
+                    align: TextAlign.center,
+                  ),
+                  if (errorMessage != null) ...[
+                    SizedBox(height: 12.h),
+                    Text(
+                      errorMessage!,
+                      key: const Key('logout-error'),
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: TextColor.error),
                     ),
+                  ],
+                  SizedBox(height: 24.h),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: isProcessing
+                              ? null
+                              : () => Navigator.of(sheetContext).pop(),
+                          style: OutlinedButton.styleFrom(
+                            side: BorderSide(color: BorderColor.primary),
+                            padding: EdgeInsets.symmetric(vertical: 12.h),
+                          ),
+                          child: CustomTextView(
+                            LocaleKeys.cancel.tr,
+                            type: TDSFontType.labelLarge,
+                            color: TextColor.primary,
+                          ),
+                        ),
+                      ),
+                      SizedBox(width: 16.w),
+                      Expanded(
+                        child: ElevatedButton(
+                          key: const Key('logout-confirm'),
+                          onPressed: isProcessing
+                              ? null
+                              : () async {
+                                  setModalState(() {
+                                    isProcessing = true;
+                                    errorMessage = null;
+                                  });
+                                  try {
+                                    await onConfirm();
+                                    if (sheetContext.mounted) {
+                                      Navigator.of(sheetContext).pop();
+                                    }
+                                  } catch (_) {
+                                    if (sheetContext.mounted) {
+                                      setModalState(() {
+                                        isProcessing = false;
+                                        errorMessage =
+                                            'ログアウトできませんでした。通信状況を確認して、もう一度お試しください。';
+                                      });
+                                    }
+                                  }
+                                },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: BrandColor.main,
+                            padding: EdgeInsets.symmetric(vertical: 12.h),
+                          ),
+                          child: isProcessing
+                              ? SizedBox(
+                                  key: const Key('logout-progress'),
+                                  width: 20.w,
+                                  height: 20.w,
+                                  child: const CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Colors.white,
+                                  ),
+                                )
+                              : CustomTextView(
+                                  LocaleKeys.yes.tr,
+                                  type: TDSFontType.labelLarge,
+                                  color: Colors.white,
+                                ),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
-            ],
-          ),
+            );
+          },
         );
       },
     );
   }
+
 }
 
 Widget shimmer() {
