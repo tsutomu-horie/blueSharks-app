@@ -5,6 +5,8 @@ import 'package:get/get.dart';
 import 'package:koto_blue_sharks/app/views/views/environment_badge.dart';
 import 'package:koto_blue_sharks/presentation/training_game/controllers/training_game.controller.dart';
 import 'package:koto_blue_sharks/presentation/training_game/training_game.screen.dart';
+import 'package:koto_blue_sharks/presentation/training_game/training_home_controls.dart';
+import 'package:koto_blue_sharks/presentation/training_game/training_home_roaming_character.dart';
 import 'package:koto_blue_sharks/utils/app_environment.dart';
 
 class _DisplayController extends TrainingGameController {
@@ -15,7 +17,7 @@ class _DisplayController extends TrainingGameController {
 }
 
 void main() {
-  testWidgets('検証版のDEBUG・デバコマ・段階とタイプは同時表示、通常版はすべて非表示', (tester) async {
+  testWidgets('状態・段階ラベルは全環境で非表示、DEBUGと数値・操作UIを維持', (tester) async {
     tester.view.physicalSize = const Size(375, 812);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
@@ -35,15 +37,34 @@ void main() {
       ),
     ));
     await tester.pump();
-    const visible = AppEnvironment.showsTrainingDebugUi;
-    final expected = visible ? findsOneWidget : findsNothing;
+    const debugUiVisible = AppEnvironment.showsTrainingDebugUi;
+    final expected = debugUiVisible ? findsOneWidget : findsNothing;
     expect(find.byType(Banner), expected);
     expect(find.byTooltip('デバッグコマンド'), expected);
-    expect(find.text('ノーマル鮫太朗（分岐前）'), expected);
-    expect(find.text(controller.currentStage.name), expected);
-    // 通常版にも食事等の可視パラメーターを維持します。
-    expect(find.textContaining('食事'), findsWidgets);
-    if (visible) {
+    expect(find.text('ノーマル鮫太朗（分岐前）'), findsNothing);
+    expect(find.text(controller.currentStage.name), findsNothing);
+    expect(find.byType(TrainingHomeMeter), findsNWidgets(4));
+    expect(find.text('100'), findsOneWidget);
+    expect(find.text('50'), findsNWidgets(2));
+    expect(find.text('0'), findsOneWidget);
+    // 状態ラベル用の予約高を取り除き、立ち絵の下端位置を保ちます。
+    expect(
+      tester.getSize(find.byType(TrainingHomeRoamingCharacter)).height,
+      184,
+    );
+
+    for (final stage in [0, 1, 2, 3, 4]) {
+      controller.stageIndex.value = stage;
+      controller.clearPosition.value = stage == 4 ? 'プロップ' : null;
+      await tester.pump();
+      expect(find.text(controller.currentStage.name), findsNothing);
+      expect(find.text('チュートリアル①（卵）'), findsNothing);
+      expect(find.text('チュートリアル②（幼少）'), findsNothing);
+      expect(find.text('ノーマル鮫太朗（分岐前）'), findsNothing);
+      expect(find.text('プロップ'), findsNothing);
+    }
+
+    if (debugUiVisible) {
       await tester.tap(find.byTooltip('デバッグコマンド'));
       await tester.pump(const Duration(milliseconds: 300));
       expect(find.textContaining('現在：'), findsOneWidget);

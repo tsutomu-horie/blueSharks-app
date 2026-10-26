@@ -790,7 +790,7 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
           child: TrainingHomeRoamingCharacter(
             enabled: canTrain,
             width: 220.w,
-            height: 224.h,
+            height: 184.h,
             travelDistance: 28.w,
             preparationKey: _bodyKey ?? 'normal',
             prepareWalk: (context) =>
@@ -798,23 +798,7 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
                     .precache(context),
             builder: (context, isWalking) => Align(
               alignment: Alignment.bottomCenter,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  if (AppEnvironment.showsTrainingDebugUi)
-                    _buildCharacterBadge(),
-                  _buildCharacterVisual(isWalking: isWalking),
-                  if (AppEnvironment.showsTrainingDebugUi)
-                    Text(
-                      controller.currentStage.name,
-                      style: TextStyle(
-                        fontSize: 10.sp,
-                        color: const Color(0xff0b3a5b),
-                        backgroundColor: Colors.white70,
-                      ),
-                    ),
-                ],
-              ),
+              child: _buildCharacterVisual(isWalking: isWalking),
             ),
           ),
         ),
@@ -902,59 +886,6 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
   Widget? _buildPositionStatic(String position) {
     final frame = SametarohAssets.positionFrameFor(position);
     return frame == null ? null : _buildSuppliedStatic(frame);
-  }
-
-  /// 分岐後の暫定ポジション表示を作成します。
-  Widget _buildCharacterBadge() {
-    final label = controller.stageIndex.value == 0
-        ? 'チュートリアル①（卵）'
-        : controller.stageIndex.value == 1
-            ? 'チュートリアル②（幼少）'
-            : controller.clearPosition.value ??
-                controller.branch ??
-                'ノーマル鮫太朗（分岐前）';
-    final branchColor = switch (controller.branch) {
-      'A フォワード型' => const Color(0xff0ca30c),
-      'B 司令塔型' => const Color(0xff1f6feb),
-      'C バックス型' => const Color(0xffeb6834),
-      _ => const Color(0xff8a8f96),
-    };
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 2.h),
-      decoration: BoxDecoration(
-        color: controller.stageIndex.value < 2
-            ? const Color(0xffb26a00)
-            : branchColor,
-        borderRadius: BorderRadius.circular(5.r),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          color: Colors.white,
-          fontSize: 11.sp,
-          fontWeight: FontWeight.w700,
-        ),
-      ),
-    );
-  }
-
-  /// 分岐後の暫定ポジション表示を作成します。
-  Widget _buildPositionBadge() {
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 2.h),
-      decoration: BoxDecoration(
-        color: const Color(0xff1f6feb),
-        borderRadius: BorderRadius.circular(5.r),
-      ),
-      child: Text(
-        controller.position,
-        style: TextStyle(
-          color: Colors.white,
-          fontSize: 11.sp,
-          fontWeight: FontWeight.w700,
-        ),
-      ),
-    );
   }
 
   /// ⑤ミニゲーム選択画面を開く練習ボタンを作成します。
