@@ -278,6 +278,134 @@ void main() {
     }
   });
 
+  test('ノーマルもホーム待機と全補正アクションの対象になる', () {
+    final home = TrainingHomeCharacterFrameSet.forBodyKey(null);
+    expect(home.bodyKey, 'normal');
+    expect(home.idleFrames.map((frame) => frame.asset),
+        SametarohAssets.normalFrames.map((frame) => frame.asset));
+    for (final action in [
+      TrainingActionType.clean,
+      TrainingActionType.squat,
+      TrainingActionType.work,
+      TrainingActionType.rest
+    ]) {
+      for (final frame in [
+        ...SametarohAssets.careFramesFor(action),
+        SametarohAssets.completionFrameFor(action),
+      ]) {
+        expect(frame.asset, startsWith('assets/images/sametaroh/'));
+        if (frame ==
+            SametarohAssets.completionFrameFor(TrainingActionType.work)) {
+          // Work completion preserves the original whole pose by translation.
+          expect(frame.registrationX, 11);
+        } else {
+          expect(
+              action == TrainingActionType.rest
+                  ? registeredFrameLayers.containsKey(frame.asset)
+                  : SametarohCleanWarp.supports(frame),
+              isTrue,
+              reason: frame.asset);
+        }
+      }
+    }
+  });
+
+  testWidgets('ノーマル休養の頭下の原画濃青輪郭を全コマで直線クリップしない', (tester) async {
+    for (final frame in [
+      ...SametarohAssets.careFramesFor(TrainingActionType.rest),
+      SametarohAssets.completionFrameFor(TrainingActionType.rest),
+    ]) {
+      final original = (await tester.runAsync(() async {
+        final data = await rootBundle.load(frame.asset);
+        final codec = await ui.instantiateImageCodec(data.buffer.asUint8List());
+        final image = (await codec.getNextFrame()).image;
+        final bytes =
+            (await image.toByteData(format: ui.ImageByteFormat.rawRgba))!
+                .buffer
+                .asUint8List();
+        image.dispose();
+        codec.dispose();
+        return bytes;
+      }))!;
+      final image = await _render(tester, frame);
+      final actual = (await tester.runAsync(
+              () => image.toByteData(format: ui.ImageByteFormat.rawRgba)))!
+          .buffer
+          .asUint8List();
+      final dx = ((frame.canvasSize.width - frame.sourceSize.width) / 2 +
+              frame.registrationX)
+          .round();
+      final dy = (frame.canvasSize.height - frame.sourceSize.height).round();
+      var checked = 0;
+      for (var y = 0; y < frame.sourceSize.height; y++) {
+        for (var x = 0; x < frame.sourceSize.width; x++) {
+          final i = (y * frame.sourceSize.width.toInt() + x) * 4;
+          final navy = (original[i] == 41 &&
+                  original[i + 1] == 79 &&
+                  original[i + 2] == 135) ||
+              (original[i] == 24 &&
+                  original[i + 1] == 83 &&
+                  original[i + 2] == 149);
+          if (!navy || original[i + 3] != 255) continue;
+          final target = ((y + dy) * image.width + x + dx) * 4;
+          expect(actual.sublist(target, target + 4), original.sublist(i, i + 4),
+              reason: '${frame.asset} original navy ($x,$y)');
+          checked++;
+        }
+      }
+      expect(checked, greaterThan(100), reason: frame.asset);
+      image.dispose();
+    }
+  });
+
+  testWidgets('ノーマル休養は右下接合部を連続させ補完範囲外の原画RGBAを保持する', (tester) async {
+    final first = SametarohAssets.careFramesFor(TrainingActionType.rest).first;
+    final original = (await tester.runAsync(() async {
+      final asset = await rootBundle.load(first.asset);
+      final codec = await ui.instantiateImageCodec(asset.buffer.asUint8List());
+      final image = (await codec.getNextFrame()).image;
+      final data = (await image.toByteData(format: ui.ImageByteFormat.rawRgba))!
+          .buffer
+          .asUint8List();
+      image.dispose();
+      codec.dispose();
+      return data;
+    }))!;
+    for (final frame in [
+      ...SametarohAssets.careFramesFor(TrainingActionType.rest),
+      SametarohAssets.completionFrameFor(TrainingActionType.rest),
+    ]) {
+      final rendered = await _render(tester, frame);
+      final bytes = (await tester.runAsync(
+              () => rendered.toByteData(format: ui.ImageByteFormat.rawRgba)))!
+          .buffer
+          .asUint8List();
+      var differences = 0;
+      for (var y = 213; y < 266; y++) {
+        for (var x = 384; x < 426; x++) {
+          // Only the explicit furniture joint may change from the supplied PNG.
+          if (x >= 397 && x <= 413 && y >= 239 && y <= 255) continue;
+          final source = (y * 426 + x) * 4;
+          final target = ((y + 34) * rendered.width + x) * 4;
+          for (var c = 0; c < 4; c++) {
+            if (bytes[target + c] != original[source + c]) differences++;
+          }
+        }
+      }
+      expect(differences, 0,
+          reason: '${frame.asset}: original furniture outside the small joint');
+      for (var y = 274; y <= 289; y++) {
+        for (var x = 405; x <= 413; x++) {
+          final pixel = (y * rendered.width + x) * 4;
+          expect(bytes[pixel + 3], 255,
+              reason:
+                  '${frame.asset}: no background visible through joint ($x,$y)');
+        }
+      }
+      rendered.dispose();
+    }
+  });
+
   testWidgets('ホームの透明余白正規化後も全体形の待機足中心を固定する', (tester) async {
     for (final body in <String?>[null, ...SametarohAssets.supportedBodyKeys]) {
       final frames = TrainingHomeCharacterFrameSet.forBodyKey(body);

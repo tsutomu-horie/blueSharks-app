@@ -116,7 +116,33 @@ for asset,r in records.items():
  if action=='rest':
   static,dynamic,ff=bed_masks(a)
   if group not in masks:
-   bs,_,bfill=bed_masks(base);masks[group]=rects(bs);fills[group]=bfill
+   bs,_,bfill=bed_masks(base)
+   if body=='base':
+    # Normal's bottom-right post contains low-alpha transitions between the
+    # two blue furniture colors. Preserve the original furniture-only corner,
+    # including its alpha, rather than dropping pixels by nearest-color labels.
+    yy,xx=np.indices((bh,bw))
+    corner=(xx>=bw*.9)&(yy>=bh*.8)
+    bs |= (base[:,:,3]>0)&corner
+    # Keep the original translucent outer edge except for the explicit
+    # furniture joint below; broad opaque backing would change its silhouette.
+    # The supplied normal bed itself has a triangular open joint. Join only
+    # the front panel to the post (source x397..413 / y239..255), retaining
+    # the original post and all furniture outside this small seam.
+    join=np.zeros((bh,bw),bool)
+    for y in range(239,256):
+     left=np.flatnonzero(base[y,390:406,3]==255)+390
+     right=np.flatnonzero(base[y,406:420,3]==255)+406
+     if len(left) and len(right):join[y,left[-1]+1:right[0]]=True
+    originalCornerFills=[]
+    for color,runs in bfill:
+     mask=np.zeros((bh,bw),bool)
+     for x,y,rw,rh in runs:mask[y:y+rh,x:x+rw]=True
+     mask[corner]=False
+     if color==0xff529cc1:mask|=join
+     originalCornerFills.append((color,rects(mask)))
+    bfill=originalCornerFills
+   masks[group]=rects(bs);fills[group]=bfill
  offsets[group]=offset
  if action=='rest':
   expanded=dynamic.copy()
@@ -124,7 +150,16 @@ for asset,r in records.items():
    expanded |= np.roll(dynamic,(oy,ox),(0,1))
   dynamic=expanded&(a[:,:,3]>0)
   if body not in ('sh','wtb'):
-   dynamic &= np.indices((h,w))[1]<w*.9
+   cut=np.indices((h,w))[1]<w*.9
+   if body=='base':
+    # The normal sleeper's rounded navy head extends past 90% of frame 2.
+    # Preserve its original pixels and mixed-color edge, not a vertical crop.
+    actor=(labels(a)==3)&(a[:,:,3]>200)
+    edge=actor.copy()
+    for oy,ox in ((1,0),(-1,0),(0,1),(0,-1)):
+     edge|=np.roll(actor,(oy,ox),(0,1))
+    cut|=edge&(np.indices((h,w))[0]<h*.75)
+   dynamic &= cut
  entries.append((asset,first,bw,bh,group,rects(dynamic)))
 text='''// Generated clip geometry from unchanged original PNGs; see tool/no67/generate_registration_layers.py.\nimport 'dart:convert';\nimport 'dart:typed_data';\nimport 'package:flutter/material.dart';\n\nclass RegisteredFrameLayers {\n  const RegisteredFrameLayers(this.staticAsset, this.staticSize, this.staticClip, this.dynamicClip, this.fills, this.staticOffset, this.mirrorClip, this.mirrorAnchor);\n  final String staticAsset;\n  final Size staticSize;\n  final List<int> staticClip;\n  final List<int> dynamicClip;\n  final Map<int, List<int>> fills;
   final Offset staticOffset;
