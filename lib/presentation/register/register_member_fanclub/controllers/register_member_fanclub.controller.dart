@@ -5,18 +5,39 @@ import 'package:koto_blue_sharks/app/services/analytics_service.dart';
 import 'package:koto_blue_sharks/app/services/auth_token.dart';
 import 'package:koto_blue_sharks/infrastructure/navigation/routes.dart';
 import 'package:koto_blue_sharks/presentation/main/controllers/main.controller.dart';
+import 'package:koto_blue_sharks/presentation/main/main.screen.dart';
+import 'package:koto_blue_sharks/presentation/register/fan_club_confirmation/fan_club_confirmation.screen.dart';
 import 'package:koto_blue_sharks/utils/my_shared_pref.dart';
 import 'package:koto_blue_sharks/utils/utils.dart';
-import 'package:koto_blue_sharks/presentation/screens.dart';
+import '../../registration_notification_sync.dart';
 
 class RegisterMemberFanclubController extends GetxController {
   final idTextFieldController = TextEditingController();
   final passwordTextFieldController = TextEditingController();
-  final AuthProvider apiProvider = AuthProvider();
+  final AuthProvider apiProvider;
+  final Future<void> Function(String) _saveAccessToken;
+  final String? Function() _readSavedFcmToken;
+  final void Function(BuildContext, Function) _showSuccessDialog;
+  final Future<void> Function(bool isFromHome)? _continueAfterRegistration;
+
+  RegisterMemberFanclubController({
+    AuthProvider? apiProvider,
+    Future<void> Function(String)? saveAccessToken,
+    String? Function()? readSavedFcmToken,
+    void Function(BuildContext, Function)? showSuccessDialog,
+    Future<void> Function(bool isFromHome)? continueAfterRegistration,
+  })  : apiProvider = apiProvider ?? AuthProvider(),
+        _saveAccessToken = saveAccessToken ?? _persistAccessToken,
+        _readSavedFcmToken = readSavedFcmToken ?? MySharedPref.getFcmToken,
+        _showSuccessDialog =
+            showSuccessDialog ?? Utils.showCustomSuccessRegisterDialog,
+        _continueAfterRegistration = continueAfterRegistration;
+
+  static Future<void> _persistAccessToken(String token) =>
+      AuthToken().saveAccessToken(token);
 
   final isConfirmPasswordHidden = true.obs;
   final confirmPasswordController = TextEditingController();
-
 
   var isPasswordHidden = true.obs;
 
@@ -26,7 +47,6 @@ class RegisterMemberFanclubController extends GetxController {
     apiProvider.onInit();
 
     AnalyticsService.logPageView(Routes.REGISTER_MEMBER_FANCLUB);
-
   }
 
   void toggleConfirmPasswordVisibility() {
@@ -37,39 +57,71 @@ class RegisterMemberFanclubController extends GetxController {
     isPasswordHidden.value = !isPasswordHidden.value;
   }
 
-  void onRegister(String otpId, String email, Function showError, Function showSuccess, String playerLink, String playerName, BuildContext context, bool isFromHome) async {
+  void onRegister(
+      String otpId,
+      String email,
+      Function showError,
+      Function showSuccess,
+      String playerLink,
+      String playerName,
+      BuildContext context,
+      bool isFromHome) async {
     print("set wallpaper ${playerLink}");
-    final response = await apiProvider.register(idTextFieldController.text, email, otpId, passwordTextFieldController.text, (String errorText){
+    final response = await apiProvider.register(idTextFieldController.text,
+        email, otpId, passwordTextFieldController.text, (String errorText) {
       Utils.showError(context, "Something wrong", errorText);
     });
 
-    AuthToken storage = AuthToken();
-    await storage.saveAccessToken(response.access_token);
+    await _saveAccessToken(response.access_token);
 
     // WallpaperPreferences wallpaper = WallpaperPreferences();
     // await wallpaper.saveWallpaper(playerName);
     MySharedPref.setWallpaper(playerLink);
     MySharedPref.setWallpaperName(playerName);
 
-    Utils.showCustomSuccessRegisterDialog(context, () {
-      if (!isFromHome) {
-        Get.offAll(() => FanClubConfirmationScreen(
-              email: email,
-              id: idTextFieldController.text,
-              isNotification: true,
-              playerSelected: playerLink,
-              playerSelectedName: playerName,
-              isFromHome: false,
-            ));
-      } else {
-        Get.offAll(() => const MainScreen(initialTab: 2));
+    final successAction = OneShotAsyncAction();
+    _showSuccessDialog(context, () {
+      return successAction.run(() async {
+        await continueAfterBestEffortNotificationSync(
+          isFromHome: isFromHome,
+          sync: () => syncSavedFcmTokenAfterRegistration(
+            isFromHome: isFromHome,
+            readSavedFcmToken: _readSavedFcmToken,
+            updateNotificationToken: (fcmToken) =>
+                apiProvider.updateNotificationToken(fcmToken),
+          ),
+          onSyncIncomplete: (status) {
+            debugPrint(
+              'Home registration notification token sync: ${status.name}',
+            );
+          },
+          continueFlow: () async {
+            final continueAfterRegistration = _continueAfterRegistration;
+            if (continueAfterRegistration != null) {
+              await continueAfterRegistration(isFromHome);
+              return;
+            }
 
-        final mainController = Get.find<MainController>();
-        mainController.refreshUnreadMessageCount();
-      }
+            if (!isFromHome) {
+              Get.offAll(() => FanClubConfirmationScreen(
+                    email: email,
+                    id: idTextFieldController.text,
+                    isNotification: true,
+                    playerSelected: playerLink,
+                    playerSelectedName: playerName,
+                    isFromHome: false,
+                  ));
+            } else {
+              Get.offAll(() => const MainScreen(initialTab: 2));
+
+              final mainController = Get.find<MainController>();
+              mainController.refreshUnreadMessageCount();
+            }
+          },
+        );
+      });
     });
 
     // showSuccess();
   }
-
 }
