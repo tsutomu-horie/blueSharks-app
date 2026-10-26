@@ -30,6 +30,9 @@ class PassRunReturnSprint implements PassRunAssistedMovement {
   static const step = .008;
   static const burstSpeed = 1.0; // usable ranges / second, only while holding
   static const burstAcceleration = 3.5;
+  static const postReturnRecoverySpeedScale = 3.0;
+  static const recoveryTargetBlendSeconds = 2.0;
+  static const recoveryBehindFraction = .18;
   @override
   final double start;
   final double minimum, maximum, normalSpeed, _end;
@@ -42,6 +45,38 @@ class PassRunReturnSprint implements PassRunAssistedMovement {
   late final List<({double y, double v, double a, double distance})> _burst;
   List<({double y, double v, double a, double distance})>? _coast;
   double? _releasedAt;
+  double Function(double)? _recoveryTarget;
+
+  double _recoveryBlendAt(double seconds) {
+    final releasedAt = _releasedAt;
+    if (_recoveryTarget == null || releasedAt == null) return 1;
+    final u =
+        ((seconds - releasedAt) / recoveryTargetBlendSeconds).clamp(0.0, 1.0);
+    return (u * u * (3 - 2 * u)).toDouble();
+  }
+
+  double _recoveryControlAmountAt(double seconds) =>
+      1 - _recoveryBlendAt(seconds);
+
+  double _coastTargetAt(double seconds) {
+    final recoveryTarget = _recoveryTarget;
+    final releasedAt = _releasedAt;
+    if (recoveryTarget == null || releasedAt == null) {
+      return normalPosition(seconds);
+    }
+    final blend = _recoveryBlendAt(seconds);
+    final recovery = recoveryTarget(seconds);
+    return (recovery + (normalPosition(seconds) - recovery) * blend).toDouble();
+  }
+
+  double _coastTargetVelocityAt(double seconds) {
+    if (_recoveryTarget == null) return normalVelocity(seconds);
+    const sample = .002;
+    final releasedAt = _releasedAt ?? seconds;
+    final before = math.max(releasedAt, seconds - sample).toDouble();
+    final after = seconds + sample;
+    return (_coastTargetAt(after) - _coastTargetAt(before)) / (after - before);
+  }
 
   List<({double y, double v, double a, double distance})> _build(
       double at, double y, double v, double a,
@@ -50,8 +85,11 @@ class PassRunReturnSprint implements PassRunAssistedMovement {
     var distance = 0.0;
     for (var i = 1; at + (i - 1) * step < _end; i++) {
       final t = at + (i - 1) * step;
+      final recoveryAmount = _recoveryControlAmountAt(t);
       final edgeDistance = v < 0 ? y - minimum : maximum - y;
-      final desiredAcceleration = sprint ? boostAcceleration : 1.8;
+      final desiredAcceleration = sprint
+          ? boostAcceleration
+          : 1.8 + (boostAcceleration - 1.8) * recoveryAmount;
       final emergency = v * v / (2 * desiredAcceleration) + v.abs() * step >
           edgeDistance * .75;
       final accelerationLimit = emergency ? 12.0 : desiredAcceleration;
@@ -59,9 +97,17 @@ class PassRunReturnSprint implements PassRunAssistedMovement {
       final goal = sprint
           ? (boostTarget?.call(t) ??
               (attackUp ? minimum + margin : maximum - margin))
-          : normalPosition(t);
+          : _coastTargetAt(t);
       final error = goal.clamp(minimum + margin / 4, maximum - margin / 4) - y;
-      final limit = sprint ? boostSpeed : normalSpeed;
+      final limit = sprint
+          ? boostSpeed
+          : normalSpeed *
+              (1 + (postReturnRecoverySpeedScale - 1) * recoveryAmount);
+      final targetVelocity = sprint
+          ? 0.0
+          : recoveryAmount > 0
+              ? _coastTargetVelocityAt(t)
+              : normalVelocity(t);
       // Anticipate the next acceleration response instead of braking only
       // after entering the edge's stopping-distance envelope.
       final projected = y + v * .18 + a * .18 * .18 / 2;
@@ -75,7 +121,7 @@ class PassRunReturnSprint implements PassRunAssistedMovement {
           .6;
       final requested =
           ((error - v * .18 - a * .18 * .18 / 2) * (sprint ? 6.5 : 4) +
-                  (sprint ? 0 : normalVelocity(t)))
+                  targetVelocity)
               .clamp(-limit, limit)
               .clamp(lower, upper);
       final requestedA = emergency && v.abs() > .001
@@ -159,10 +205,14 @@ class PassRunReturnSprint implements PassRunAssistedMovement {
   }
 
   @override
-  void release(double seconds) {
+  void release(
+    double seconds, {
+    double Function(double)? recoveryTarget,
+  }) {
     if (_releasedAt != null) return;
     final state = _sample(seconds);
-    _coast = _build(seconds, state.y, state.v, state.a, sprint: false);
+    _recoveryTarget = recoveryTarget;
     _releasedAt = seconds;
+    _coast = _build(seconds, state.y, state.v, state.a, sprint: false);
   }
 }

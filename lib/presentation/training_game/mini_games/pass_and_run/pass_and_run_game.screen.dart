@@ -952,6 +952,20 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
       (_motion.distanceAt(seconds, runner, outbound: _isOutbound) -
           _motion.distanceAt(movement.start, runner, outbound: _isOutbound));
 
+  /// 返球後だけ、仲間を鮫太郎の後方へ滑らかに寄せて次のパスを作ります。
+  /// 2秒後は元の独立した走行軌道へ戻り、設定された可動域を保ちます。
+  double _mateRecoveryTarget(double seconds) {
+    final span = _motion.geometry.movementRadius * 2;
+    final assisted = _playerAssist;
+    final playerFraction = assisted?.positionAt(seconds) ??
+        (_motion.yAt(seconds, PassRunRunner.player, outbound: _isOutbound) -
+                _motion.geometry.minimum) /
+            span;
+    final behind =
+        PassRunReturnSprint.recoveryBehindFraction * (_isOutbound ? 1 : -1);
+    return (playerFraction + behind).clamp(.025, .975).toDouble();
+  }
+
   /// Help only a prolonged blocked relationship, never align both runners.
   bool _updateMovementAssistance() {
     if (_phase != _PassGamePhase.playing || _isPaused || _turnProgress < 1) {
@@ -1177,7 +1191,10 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
         );
         _passReturnTargetOffset = plan.target;
         _passReturnDuration = plan.duration;
-        _mateSprint?.release(_motionSeconds);
+        _mateSprint?.release(
+          _motionSeconds,
+          recoveryTarget: _mateRecoveryTarget,
+        );
         _returnStartedAt = now;
         _passReadyAt = now.add(plan.duration);
         changed = true;

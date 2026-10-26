@@ -1,4 +1,6 @@
 import 'dart:math' as math;
+import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:koto_blue_sharks/presentation/training_game/models/mini_game_settings.dart';
@@ -888,6 +890,365 @@ void main() {
           'live Widget catch-to-return outbound=$outbound seed3: ${clock.difference(caughtAt).inMilliseconds}ms');
     });
   }
+
+  testWidgets('返球後の回復を両方向で動的確認しpreviewを記録する', (t) async {
+    const sampleStepMs = 8;
+    final sounds = RecordingTrainingGameSound();
+    final segments = <Map<String, Object?>>[];
+    var maximumActorStep = 0.0;
+    var maximumAcceleration = 0.0;
+    final geometricCandidateWaitMs = <bool, int?>{};
+
+    for (final outbound in [true, false]) {
+      if (!outbound) {
+        await t.pumpWidget(const SizedBox());
+        await t.pump();
+      }
+      await start(t, seed: 3, soundService: sounds.service);
+      if (!outbound) {
+        await step(t, 15000);
+        await step(t, 1000);
+      }
+      await step(t, 800);
+      await throwToMate(t, .8);
+      await catchAtMate(t);
+      final caughtAt = clock;
+      final field = t.getRect(find.byKey(const Key('pass-field')));
+      final observations = <({
+        double seconds,
+        Offset player,
+        Offset mate,
+        Offset ball,
+      })>[];
+      final frames = <Map<String, Object?>>[];
+      Offset previousPlayer = t.getCenter(player);
+      Offset previousMate = t.getCenter(mate);
+      Offset? previousPlayerVelocity, previousMateVelocity;
+
+      void capture(int frameIndex) {
+        final playerCenter = t.getCenter(player);
+        final mateCenter = t.getCenter(mate);
+        final ballCenter = t.getCenter(ball);
+        final seconds = clock.difference(caughtAt).inMicroseconds / 1000000;
+        observations.add((
+          seconds: seconds,
+          player: playerCenter - field.topLeft,
+          mate: mateCenter - field.topLeft,
+          ball: ballCenter - field.topLeft,
+        ));
+        if (frameIndex % 12 == 0) {
+          final playerRect = t.getRect(player);
+          final mateRect = t.getRect(mate);
+          final playerLabel =
+              t.getRect(find.byKey(const Key('pass-player-label')));
+          expect(playerRect.overlaps(mateRect), isFalse,
+              reason: 'outbound=$outbound frame=$frameIndex actor overlap');
+          expect(playerLabel.overlaps(mateRect), isFalse,
+              reason: 'outbound=$outbound frame=$frameIndex label overlap');
+          expect(playerRect.top, greaterThanOrEqualTo(field.top));
+          expect(playerRect.bottom, lessThanOrEqualTo(field.bottom));
+          expect(mateRect.top, greaterThanOrEqualTo(field.top));
+          expect(mateRect.bottom, lessThanOrEqualTo(field.bottom));
+        }
+        if (frameIndex > 0) {
+          final playerMove = (playerCenter - previousPlayer).distance;
+          final mateMove = (mateCenter - previousMate).distance;
+          maximumActorStep = math.max(
+            maximumActorStep,
+            math.max(playerMove, mateMove),
+          );
+          final playerVelocity =
+              (playerCenter - previousPlayer) / (sampleStepMs / 1000);
+          final mateVelocity =
+              (mateCenter - previousMate) / (sampleStepMs / 1000);
+          if (previousPlayerVelocity != null && previousMateVelocity != null) {
+            maximumAcceleration = math.max(
+              maximumAcceleration,
+              math.max(
+                (playerVelocity - previousPlayerVelocity!).distance /
+                    (sampleStepMs / 1000),
+                (mateVelocity - previousMateVelocity!).distance /
+                    (sampleStepMs / 1000),
+              ),
+            );
+          }
+          previousPlayerVelocity = playerVelocity;
+          previousMateVelocity = mateVelocity;
+        }
+        previousPlayer = playerCenter;
+        previousMate = mateCenter;
+        if (frameIndex % 6 == 0) {
+          final playerVisual = visual(t, player);
+          final mateVisual = visual(t, mate);
+          frames.add({
+            'ms': (seconds * 1000).round(),
+            'playerX': (playerCenter.dx - field.left) / field.width,
+            'playerY': (playerCenter.dy - field.top) / field.height,
+            'playerAsset': playerVisual.assetPath,
+            'mateX': (mateCenter.dx - field.left) / field.width,
+            'mateY': (mateCenter.dy - field.top) / field.height,
+            'mateAsset': mateVisual.assetPath,
+            'ballX': (ballCenter.dx - field.left) / field.width,
+            'ballY': (ballCenter.dy - field.top) / field.height,
+            'direction': outbound ? 'outbound' : 'inbound',
+          });
+        }
+      }
+
+      capture(0);
+      var frameIndex = 1;
+      for (; frameIndex <= 300 && !visual(t, player).holding; frameIndex++) {
+        await step(t, sampleStepMs);
+        capture(frameIndex);
+      }
+      expect(visual(t, player).holding, isTrue,
+          reason: 'outbound=$outbound return completes');
+      final returnMilliseconds = clock.difference(caughtAt).inMilliseconds;
+      for (var i = 1; i <= 500; i++) {
+        await step(t, sampleStepMs);
+        frameIndex++;
+        capture(frameIndex);
+      }
+
+      final fieldWidth = field.width;
+      final speed =
+          fieldWidth * .5 / (currentSettings.ballHalfFieldTravelMs / 1000);
+      const nominalFlight = .44;
+      int? legalWait;
+      final readySeconds = returnMilliseconds / 1000;
+      for (var i = 0; i < observations.length - 190; i++) {
+        final from = observations[i];
+        if (from.seconds + 1e-9 < readySeconds) continue;
+        var flight = nominalFlight;
+        var mateFuture = from.mate;
+        var futureIndex = i;
+        for (var iteration = 0; iteration < 6; iteration++) {
+          futureIndex = (i + (flight / (sampleStepMs / 1000)).round())
+              .clamp(i + 1, observations.length - 1);
+          mateFuture = observations[futureIndex].mate;
+          flight = Offset(
+                mateFuture.dx - from.ball.dx,
+                mateFuture.dy - from.ball.dy,
+              ).distance /
+              speed;
+        }
+        final deltaY = mateFuture.dy - from.ball.dy;
+        final legal = outbound ? deltaY >= 0 : deltaY <= 0;
+        if (legal) {
+          legalWait = ((from.seconds - readySeconds) * 1000).round();
+          break;
+        }
+      }
+      geometricCandidateWaitMs[outbound] = legalWait;
+      segments.add({
+        'direction': outbound ? 'outbound' : 'inbound',
+        'fieldWidth': field.width,
+        'fieldHeight': field.height,
+        'returnMilliseconds': returnMilliseconds,
+        'geometricCandidateWaitMs': legalWait,
+        'frames': frames,
+      });
+      expect(returnMilliseconds, lessThan(2000),
+          reason: '返球の速いテンポを維持 outbound=$outbound');
+      expect(legalWait, isNotNull,
+          reason: '4秒内に幾何上の候補が見つかる outbound=$outbound');
+      expect(legalWait!, lessThan(4000),
+          reason: '返球完了から幾何上の候補まで outbound=$outbound');
+      expect(
+        observations
+                .skip(observations.length - 100)
+                .map((v) => v.mate.dy)
+                .reduce(math.max) -
+            observations
+                .skip(observations.length - 100)
+                .map((v) => v.mate.dy)
+                .reduce(math.min),
+        greaterThan(2),
+        reason: '回復後も仲間の自然な走行が継続する outbound=$outbound',
+      );
+    }
+    expect(maximumActorStep, lessThan(8));
+    expect(maximumAcceleration, lessThan(4000));
+    final output = File(
+      '${Directory.systemTemp.path}/pass_run_return_recovery_preview.json',
+    );
+    await t.runAsync(() => output.writeAsString(jsonEncode({
+          'seed': 3,
+          'settings': currentSettings.runSpeedScale,
+          'maximumActorStepPxPer8ms': maximumActorStep,
+          'maximumAccelerationPxPerSecondSquared': maximumAcceleration,
+          'geometricCandidateWaitMs': {
+            'outbound': geometricCandidateWaitMs[true],
+            'inbound': geometricCandidateWaitMs[false],
+          },
+          'segments': segments,
+        })));
+    await t.pumpWidget(const SizedBox());
+    await t.pump();
+    await sounds.dispose();
+    // ignore: avoid_print
+    print(
+        'return recovery widget preview: max8ms move=${maximumActorStep.toStringAsFixed(2)}px maxAccel=${maximumAcceleration.toStringAsFixed(0)}px/s2; geometry-only candidate outbound=${geometricCandidateWaitMs[true]}ms inbound=${geometricCandidateWaitMs[false]}ms (not an input success); frames=${segments.map((s) => (s['frames'] as List).length).toList()}');
+  });
+
+  testWidgets('返球後の両方向で合法入力から次の実捕球まで計測する', (t) async {
+    final sounds = RecordingTrainingGameSound();
+    final observationsByDirection = <bool, int>{};
+
+    for (final outbound in [true, false]) {
+      Future<DateTime> playThroughReturn() async {
+        await t.pumpWidget(const SizedBox());
+        await t.pump();
+        await start(t, seed: 3, soundService: sounds.service);
+        if (!outbound) {
+          await step(t, 15000);
+          await step(t, 1000);
+        }
+        final roundStartedAt = clock;
+        await step(t, 800);
+        await throwToMate(t, .8);
+        await catchAtMate(t);
+        final caughtAt = clock;
+        var tick = 0;
+        while (tick < 300 && !visual(t, player).holding) {
+          await step(t, 8);
+          tick++;
+        }
+        expect(visual(t, player).holding, isTrue,
+            reason: '往復の返球が完了 outbound=$outbound');
+        expect(visual(t, mate).holding, isFalse,
+            reason: '仲間は返球後に保持しない outbound=$outbound');
+        expect(clock.difference(caughtAt).inMilliseconds, lessThan(2000));
+        return roundStartedAt;
+      }
+
+      await playThroughReturn();
+      final probeReadyAt = clock;
+      final field = t.getRect(find.byKey(const Key('pass-field')));
+      final probe = <({
+        int waitMs,
+        Offset playerBall,
+        Offset mateCenter,
+      })>[];
+      for (var tick = 0; tick <= 500; tick++) {
+        if (tick > 0) await step(t, 8);
+        if (!visual(t, player).holding) continue;
+        probe.add((
+          waitMs: clock.difference(probeReadyAt).inMilliseconds,
+          playerBall: t.getCenter(ball),
+          mateCenter: t.getCenter(mate),
+        ));
+      }
+      final speed =
+          field.width * .5 / (currentSettings.ballHalfFieldTravelMs / 1000);
+      Offset mateAt(double waitSeconds) {
+        final sample = waitSeconds / .008;
+        final left = sample.floor().clamp(0, probe.length - 1);
+        final right = (left + 1).clamp(0, probe.length - 1);
+        final blend = (sample - left).clamp(0.0, 1.0);
+        return Offset.lerp(
+          probe[left].mateCenter,
+          probe[right].mateCenter,
+          blend,
+        )!;
+      }
+
+      ({int waitMs, Offset aim})? firstLegalCandidate;
+      for (final origin in probe) {
+        var flight = currentSettings.ballHalfFieldTravelMs / 1000;
+        var target = origin.mateCenter;
+        var inRange = true;
+        for (var iteration = 0; iteration < 12; iteration++) {
+          final futureWait = origin.waitMs / 1000 + flight;
+          if (futureWait > probe.last.waitMs / 1000) {
+            inRange = false;
+            break;
+          }
+          target = mateAt(futureWait);
+          flight = (target - origin.playerBall).distance / speed;
+        }
+        if (!inRange) continue;
+        final aim = target - origin.playerBall;
+        final flick = PassFlick(
+          deltaX: aim.dx,
+          deltaY: aim.dy,
+          velocityX: aim.dx * 10,
+          velocityY: aim.dy * 10,
+        );
+        if (!PassAndRunRules.isFlick(flick)) continue;
+        final direction = PassAndRunRules.userPassDirection(
+          flick,
+          outbound: outbound,
+        );
+        if (!PassAndRunRules.isForwardDirection(
+          deltaX: direction.deltaX,
+          deltaY: direction.deltaY,
+          outbound: outbound,
+        )) {
+          firstLegalCandidate = (waitMs: origin.waitMs, aim: aim);
+          break;
+        }
+      }
+      expect(firstLegalCandidate, isNotNull,
+          reason: 'Widgetの実座標・実返球軌道に次の合法候補 outbound=$outbound');
+
+      await playThroughReturn();
+      final replayReadyAt = clock;
+      final candidate = firstLegalCandidate!;
+      for (var elapsed = 0; elapsed < candidate.waitMs; elapsed += 8) {
+        await step(t, 8);
+      }
+      final liveBall = t.getCenter(ball);
+      final liveMate = t.getCenter(mate);
+      final expected = probe
+          .firstWhere((observation) => observation.waitMs == candidate.waitMs);
+      expect((liveBall - expected.playerBall).distance, lessThan(1));
+      expect((liveMate - expected.mateCenter).distance, lessThan(1));
+
+      final flick = PassFlick(
+        deltaX: candidate.aim.dx,
+        deltaY: candidate.aim.dy,
+        velocityX: candidate.aim.dx * 10,
+        velocityY: candidate.aim.dy * 10,
+      );
+      final direction = PassAndRunRules.userPassDirection(
+        flick,
+        outbound: outbound,
+      );
+      expect(
+        PassAndRunRules.isForwardDirection(
+          deltaX: direction.deltaX,
+          deltaY: direction.deltaY,
+          outbound: outbound,
+        ),
+        isFalse,
+      );
+      await t.flingFrom(t.getCenter(player), candidate.aim, 2000);
+      await t.pump();
+      expect(visual(t, player).holding, isFalse,
+          reason: '合法フリックが実パスとして受理される outbound=$outbound');
+      var catchTicks = 0;
+      while (catchTicks < 150 && !visual(t, mate).holding) {
+        await step(t, 8);
+        catchTicks++;
+      }
+      expect(visual(t, mate).holding, isTrue,
+          reason: '返球後の次パスが本番Widgetで捕球される outbound=$outbound');
+      expect(find.textContaining('PASS 2'), findsOneWidget,
+          reason: '次の実パスが得点として確定 outbound=$outbound');
+      final actualWaitMs = clock.difference(replayReadyAt).inMilliseconds;
+      observationsByDirection[outbound] = actualWaitMs;
+      expect(candidate.waitMs, lessThan(4000));
+      expect(actualWaitMs, lessThan(6000));
+      // ignore: avoid_print
+      print(
+          'live Widget next-pass success outbound=$outbound; legal-window wait=${candidate.waitMs}ms; actual successful catch=${actualWaitMs}ms');
+    }
+    expect(observationsByDirection.length, 2);
+    await t.pumpWidget(const SizedBox());
+    await t.pump();
+    await sounds.dispose();
+  });
 
   testWidgets('受球→B保持→合法な返球→Normal保持。停止中は球・脚位相を固定', (t) async {
     await start(t, seed: 3);
