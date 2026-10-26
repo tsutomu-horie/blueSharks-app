@@ -227,7 +227,7 @@ void main() {
     expect(laterRect, staticRect);
   });
 
-  test('全体形のidle／walk素材を同じ可視サイズと足元へ揃える', () {
+  test('全frameが共通canvasを使い、実alpha境界と足元を正確に表す', () {
     for (final bodyKey in <String?>[null, 'pr', 'sh', 'wtb']) {
       final frames = TrainingHomeCharacterFrameSet.forBodyKey(bodyKey);
       expect(
@@ -240,14 +240,22 @@ void main() {
       for (final frame in [...frames.idleFrames, ...frames.walkFrames]) {
         expect(frame.canvasSize, frames.canvasSize, reason: frame.asset);
         expect(
-          frame.visibleBounds.height,
-          closeTo(frames.canvasSize.height, 0.001),
-          reason: frame.asset,
-        );
-        expect(
           frame.visibleBounds.bottom,
           closeTo(frames.canvasSize.height, 0.001),
           reason: frame.asset,
+        );
+        final isShorterNormalIdle =
+            bodyKey == null && frame.asset.endsWith('normal_sametaroh_2.png');
+        expect(
+          frame.visibleBounds.height,
+          closeTo(
+              frames.canvasSize.height - (isShorterNormalIdle ? 1 : 0), 0.001),
+          reason: '${frame.asset}: source alpha height',
+        );
+        expect(
+          frame.visibleBounds.top,
+          closeTo(isShorterNormalIdle ? 1 : 0, 0.001),
+          reason: '${frame.asset}: source alpha top',
         );
         expect(
           frame.visibleBounds.left,

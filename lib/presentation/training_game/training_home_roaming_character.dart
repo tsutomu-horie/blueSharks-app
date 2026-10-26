@@ -238,6 +238,10 @@ class _TrainingHomeWalkTempo extends InheritedWidget {
 
 /// 既存PNGの透明余白を吸収し、idle／walk間で実際の絵の高さと足元を揃えます。
 class TrainingHomeCharacterFrameSet {
+  // Preserve the pre-normalization walk raster inside the shared 161px
+  // external canvas. The legacy-width viewport is centered within it.
+  static const _normalWalkRenderWidth = 2 * 80 * 302 / 301;
+
   TrainingHomeCharacterFrameSet._({
     required this.bodyKey,
     required this.idleFrames,
@@ -344,7 +348,11 @@ class TrainingHomeCharacterFrameSet {
     final targetVisibleHeight =
         inputs.map((item) => item.visibleHeight).reduce(math.max);
     for (final item in inputs) {
-      item.scale = targetVisibleHeight / item.visibleHeight;
+      // Normal idle art already has one shared source scale. Keep it fixed so
+      // a 1px alpha-bounds difference cannot resize the legs between poses.
+      item.scale = bodyKey == 'normal' && item.frame.footAnchorX != null
+          ? 1
+          : targetVisibleHeight / item.visibleHeight;
     }
 
     final normalizedSizes = [
@@ -377,6 +385,11 @@ class TrainingHomeCharacterFrameSet {
     for (var i = 0; i < inputs.length; i++) {
       final input = inputs[i];
       final sourceSize = normalizedSizes[i];
+      final renderCanvasSize = bodyKey == 'normal' && i >= idle.length
+          ? Size(_normalWalkRenderWidth, targetVisibleHeight)
+          : canvasSize;
+      final renderCanvasOffsetX =
+          (canvasSize.width - renderCanvasSize.width) / 2;
       final sourceAlpha = Rect.fromLTRB(
         input.pixels.bounds.left *
             sourceSize.width /
@@ -393,23 +406,23 @@ class TrainingHomeCharacterFrameSet {
       );
       final anchor = input.frame.footAnchorX;
       final imageLeft = anchor == null
-          ? (canvasSize.width - sourceAlpha.width) / 2 - sourceAlpha.left
-          : canvasSize.width / 2 - anchor * input.scale;
+          ? (renderCanvasSize.width - sourceAlpha.width) / 2 - sourceAlpha.left
+          : canvasSize.width / 2 - anchor * input.scale - renderCanvasOffsetX;
+      final imageTop = targetVisibleHeight - sourceAlpha.bottom;
       final visibleBounds = Rect.fromLTWH(
-        imageLeft + sourceAlpha.left,
-        0,
+        renderCanvasOffsetX + imageLeft + sourceAlpha.left,
+        imageTop + sourceAlpha.top,
         sourceAlpha.width,
-        targetVisibleHeight,
+        sourceAlpha.height,
       );
       normalizedFrames.add(
         TrainingHomeCharacterFrame(
           asset: input.frame.asset,
           sourceSize: sourceSize,
           canvasSize: canvasSize,
-          imageOffset: Offset(
-            imageLeft,
-            visibleBounds.bottom - sourceAlpha.bottom,
-          ),
+          renderCanvasSize:
+              renderCanvasSize == canvasSize ? null : renderCanvasSize,
+          imageOffset: Offset(imageLeft, imageTop),
           visibleBounds: visibleBounds,
         ),
       );
@@ -473,6 +486,7 @@ class TrainingHomeCharacterFrame {
     required this.asset,
     required this.sourceSize,
     required this.canvasSize,
+    this.renderCanvasSize,
     required this.imageOffset,
     required this.visibleBounds,
   });
@@ -480,9 +494,14 @@ class TrainingHomeCharacterFrame {
   final String asset;
   final Size sourceSize;
   final Size canvasSize;
+
+  /// Optional centered raster viewport inside the shared canvas.
+  final Size? renderCanvasSize;
+
+  /// Image origin in [renderCanvasSize], or [canvasSize] when it is null.
   final Offset imageOffset;
 
-  /// 正規化キャンバス内で、実際に描かれる不透明部分の範囲です。
+  /// Shared canvas内で、実際に描かれる不透明部分の範囲です。
   final Rect visibleBounds;
 }
 
@@ -532,34 +551,36 @@ class TrainingHomeCharacterFrameImage extends StatelessWidget {
                     frame: frame, semanticLabel: semanticLabel)),
           ));
     }
+    final renderCanvasSize = frame.renderCanvasSize ?? frame.canvasSize;
+    final renderedCanvas = SizedBox(
+      width: renderCanvasSize.width,
+      height: renderCanvasSize.height,
+      child: ClipRect(
+        child: Stack(
+          children: [
+            Positioned(
+              left: frame.imageOffset.dx,
+              top: frame.imageOffset.dy,
+              width: frame.sourceSize.width,
+              height: frame.sourceSize.height,
+              child: Image.asset(
+                frame.asset,
+                fit: BoxFit.fill,
+                gaplessPlayback: true,
+                semanticLabel: semanticLabel,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
     return SizedBox(
       width: width,
       height: height,
       child: FittedBox(
         fit: BoxFit.contain,
         alignment: Alignment.bottomCenter,
-        child: SizedBox(
-          width: frame.canvasSize.width,
-          height: frame.canvasSize.height,
-          child: ClipRect(
-            child: Stack(
-              children: [
-                Positioned(
-                  left: frame.imageOffset.dx,
-                  top: frame.imageOffset.dy,
-                  width: frame.sourceSize.width,
-                  height: frame.sourceSize.height,
-                  child: Image.asset(
-                    frame.asset,
-                    fit: BoxFit.fill,
-                    gaplessPlayback: true,
-                    semanticLabel: semanticLabel,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
+        child: renderedCanvas,
       ),
     );
   }
