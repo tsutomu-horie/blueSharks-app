@@ -8,6 +8,7 @@ import 'sametaroh_clean_warp.dart';
 
 /// 鮫太朗の状態別イラストをまとめたアセット定義です。
 abstract final class SametarohAssets {
+  /// ホーム待機は、全体bboxではなく固定する脚の原画X座標で登録します。
   static const normalFrames = <SametarohFrame>[
     SametarohFrame(
       asset: 'assets/images/sametaroh/normal_sameraroh_1.png',
@@ -17,7 +18,7 @@ abstract final class SametarohAssets {
     ),
     SametarohFrame(
       asset: 'assets/images/sametaroh/normal_sametaroh_2.png',
-      footAnchorX: 87.0,
+      footAnchorX: 87.5,
       sourceSize: Size(166, 323),
       canvasSize: Size(166, 323),
       registrationX: -3.5,
