@@ -310,6 +310,54 @@ void main() {
     }
   });
 
+  testWidgets('ノーマル休養の頭下の原画濃青輪郭を全コマで直線クリップしない', (tester) async {
+    for (final frame in [
+      ...SametarohAssets.careFramesFor(TrainingActionType.rest),
+      SametarohAssets.completionFrameFor(TrainingActionType.rest),
+    ]) {
+      final original = (await tester.runAsync(() async {
+        final data = await rootBundle.load(frame.asset);
+        final codec = await ui.instantiateImageCodec(data.buffer.asUint8List());
+        final image = (await codec.getNextFrame()).image;
+        final bytes =
+            (await image.toByteData(format: ui.ImageByteFormat.rawRgba))!
+                .buffer
+                .asUint8List();
+        image.dispose();
+        codec.dispose();
+        return bytes;
+      }))!;
+      final image = await _render(tester, frame);
+      final actual = (await tester.runAsync(
+              () => image.toByteData(format: ui.ImageByteFormat.rawRgba)))!
+          .buffer
+          .asUint8List();
+      final dx = ((frame.canvasSize.width - frame.sourceSize.width) / 2 +
+              frame.registrationX)
+          .round();
+      final dy = (frame.canvasSize.height - frame.sourceSize.height).round();
+      var checked = 0;
+      for (var y = 0; y < frame.sourceSize.height; y++) {
+        for (var x = 0; x < frame.sourceSize.width; x++) {
+          final i = (y * frame.sourceSize.width.toInt() + x) * 4;
+          final navy = (original[i] == 41 &&
+                  original[i + 1] == 79 &&
+                  original[i + 2] == 135) ||
+              (original[i] == 24 &&
+                  original[i + 1] == 83 &&
+                  original[i + 2] == 149);
+          if (!navy || original[i + 3] != 255) continue;
+          final target = ((y + dy) * image.width + x + dx) * 4;
+          expect(actual.sublist(target, target + 4), original.sublist(i, i + 4),
+              reason: '${frame.asset} original navy ($x,$y)');
+          checked++;
+        }
+      }
+      expect(checked, greaterThan(100), reason: frame.asset);
+      image.dispose();
+    }
+  });
+
   testWidgets('ノーマル休養は右下接合部を連続させ補完範囲外の原画RGBAを保持する', (tester) async {
     final first = SametarohAssets.careFramesFor(TrainingActionType.rest).first;
     final original = (await tester.runAsync(() async {
