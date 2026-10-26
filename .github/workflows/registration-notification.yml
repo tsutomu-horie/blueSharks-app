@@ -1,0 +1,50 @@
+name: Registration notification sync
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/registration-notification.yml'
+      - 'lib/presentation/register/**'
+      - 'lib/app/providers/auth/**'
+      - 'lib/app/services/auth_token.dart'
+      - 'lib/utils/my_shared_pref.dart'
+      - 'test/registration_notification_sync_test.dart'
+      - 'test/register_member_controller_one_shot_test.dart'
+      - 'pubspec.yaml'
+      - 'pubspec.lock'
+
+permissions:
+  contents: read
+
+jobs:
+  registration-notification:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install the validated Flutter SDK
+        shell: bash
+        run: |
+          git clone --depth 1 --branch 3.47.2 https://github.com/flutter/flutter.git "$RUNNER_TEMP/flutter"
+          test "$(git -C "$RUNNER_TEMP/flutter" rev-parse HEAD)" = d3b14c876900e553bc736ca19295fc09e3853e8e
+          echo "$RUNNER_TEMP/flutter/bin" >> "$GITHUB_PATH"
+      - run: flutter pub get --enforce-lockfile
+      - name: Check formatting
+        run: >-
+          dart format --output=none --set-exit-if-changed
+          lib/presentation/register/register_member_fanclub/controllers/register_member_fanclub.controller.dart
+          lib/presentation/register/registration_notification_sync.dart
+          test/registration_notification_sync_test.dart
+          test/register_member_controller_one_shot_test.dart
+      - name: Analyze registration changes
+        run: >-
+          flutter analyze --no-pub --no-fatal-infos
+          lib/presentation/register/register_member_fanclub/controllers/register_member_fanclub.controller.dart
+          lib/presentation/register/registration_notification_sync.dart
+          test/registration_notification_sync_test.dart
+          test/register_member_controller_one_shot_test.dart
+      - name: Test registration with fake providers only
+        run: >-
+          flutter test --no-pub
+          test/registration_notification_sync_test.dart
+          test/register_member_controller_one_shot_test.dart
