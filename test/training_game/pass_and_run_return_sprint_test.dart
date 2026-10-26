@@ -26,6 +26,185 @@ void main() {
       }
     }
   });
+  test('返球後の後方追従は両端と全画面寸法で場内へ滑らかに収束する', () {
+    var maxFramePixels = 0.0;
+    var maxAccelerationPixels = 0.0;
+    var maxRecoveryEndVelocityDelta = 0.0;
+    for (var seed = 0; seed < 32; seed++) {
+      final motion = PassRunMotion(seed: seed);
+      for (final size in [
+        const Size(208, 262),
+        const Size(390, 700),
+        const Size(812, 200),
+      ]) {
+        motion.updateFieldGeometry(size);
+        final geometry = motion.geometry;
+        final span = geometry.movementRadius * 2;
+        double normal(double t) =>
+            (motion.yAt(t, PassRunRunner.companion, outbound: true) -
+                geometry.minimum) /
+            span;
+        double normalVelocity(double t) =>
+            (motion.worldVelocityYAt(t, PassRunRunner.companion,
+                    outbound: true) +
+                motion.runningForwardRate) /
+            span;
+        for (final up in [true, false]) {
+          for (final start in [.02, .98]) {
+            for (final playerFraction in [.025, .5, .975]) {
+              final behind =
+                  PassRunReturnSprint.recoveryBehindFraction * (up ? 1 : -1);
+              final target = (playerFraction + behind).clamp(.025, .975);
+              final sprint = PassRunReturnSprint(
+                start: 0,
+                position: start,
+                velocity: start < .5 ? -.08 : .08,
+                minimum: 0,
+                maximum: 1,
+                attackUp: up,
+                normalPosition: normal,
+                normalVelocity: normalVelocity,
+                end: 5,
+                normalSpeed: .18 * motion.runningSpeedScale / span,
+              )..release(0, recoveryTarget: (_) => target);
+              var previous = sprint.positionAt(0);
+              var previousVelocity = sprint.velocityAt(0);
+              for (var tick = 1; tick <= 400; tick++) {
+                final t = tick * PassRunReturnSprint.step;
+                final current = sprint.positionAt(t);
+                final velocity = sprint.velocityAt(t);
+                final acceleration = sprint.accelerationAt(t);
+                expect(current, inInclusiveRange(0, 1),
+                    reason:
+                        'seed=$seed size=$size up=$up start=$start player=$playerFraction t=$t');
+                maxFramePixels = math.max(
+                  maxFramePixels,
+                  (current - previous).abs() * span * size.height,
+                );
+                maxAccelerationPixels = math.max(
+                  maxAccelerationPixels,
+                  acceleration.abs() * span * size.height,
+                );
+                expect((velocity - previousVelocity).abs(), lessThan(.2));
+                previous = current;
+                previousVelocity = velocity;
+              }
+              final beforeRecoveryEnd = sprint.velocityAt(
+                PassRunReturnSprint.recoveryTargetBlendSeconds - .008,
+              );
+              final afterRecoveryEnd = sprint.velocityAt(
+                PassRunReturnSprint.recoveryTargetBlendSeconds + .008,
+              );
+              maxRecoveryEndVelocityDelta = math.max(
+                maxRecoveryEndVelocityDelta,
+                (afterRecoveryEnd - beforeRecoveryEnd).abs() *
+                    span *
+                    size.height,
+              );
+            }
+          }
+        }
+      }
+    }
+    expect(maxFramePixels, lessThan(8));
+    expect(maxAccelerationPixels, lessThan(4000));
+    expect(maxRecoveryEndVelocityDelta, lessThan(100));
+    // ignore: avoid_print
+    print(
+        'recovery-end velocity delta=${maxRecoveryEndVelocityDelta.toStringAsFixed(1)}px/s; 32 seeds x 3 fields x 2 directions x 2 mate edges x 3 player fractions');
+  });
+  test('通常軌道が回復中に折り返しても速度と位置が連続する', () {
+    var checkedTurns = 0;
+    var maximumStepPixels = 0.0;
+    for (var seed = 0; seed < 32; seed++) {
+      for (final scale in PassRunMotion.supportedMotionScales) {
+        final motion = PassRunMotion(seed: seed, speedScale: scale);
+        for (final size in [
+          const Size(208, 262),
+          const Size(390, 700),
+          const Size(812, 200),
+        ]) {
+          motion.updateFieldGeometry(size);
+          final geometry = motion.geometry;
+          final span = geometry.movementRadius * 2;
+          for (final up in [true, false]) {
+            double normal(double t) =>
+                (motion.yAt(t, PassRunRunner.companion, outbound: up) -
+                    geometry.minimum) /
+                span;
+            double normalVelocity(double t) =>
+                (motion.worldVelocityYAt(t, PassRunRunner.companion,
+                        outbound: up) +
+                    (up ? 1 : -1) * motion.runningForwardRate) /
+                span;
+            double player(double t) =>
+                (motion.yAt(t, PassRunRunner.player, outbound: up) -
+                    geometry.minimum) /
+                span;
+
+            double? reversalAt;
+            var previous = normalVelocity(0);
+            for (var tick = 1; tick <= 1500; tick++) {
+              final time = tick * .01;
+              final velocity = normalVelocity(time);
+              if (previous * velocity < 0) {
+                reversalAt = time;
+                break;
+              }
+              previous = velocity;
+            }
+            expect(reversalAt, isNotNull,
+                reason:
+                    'seed=$seed scale=$scale size=$size up=$up has reversal');
+            final turn = reversalAt!;
+            final releaseAt = math.max(0.0, turn - .5);
+            final behind =
+                PassRunReturnSprint.recoveryBehindFraction * (up ? 1 : -1);
+            final sprint = PassRunReturnSprint(
+              start: releaseAt,
+              position: normal(releaseAt),
+              velocity: normalVelocity(releaseAt),
+              acceleration: (normalVelocity(releaseAt + .001) -
+                      normalVelocity(releaseAt)) /
+                  .001,
+              minimum: 0,
+              maximum: 1,
+              attackUp: up,
+              normalPosition: normal,
+              normalVelocity: normalVelocity,
+              end: releaseAt + 5,
+              normalSpeed: .18 * scale / span,
+            )..release(
+                releaseAt,
+                recoveryTarget: (at) =>
+                    (player(at) + behind).clamp(.025, .975).toDouble(),
+              );
+            var last = sprint.positionAt(releaseAt);
+            for (var tick = 1; tick <= 300; tick++) {
+              final time = releaseAt + tick * PassRunReturnSprint.step;
+              final current = sprint.positionAt(time);
+              expect(current, inInclusiveRange(0, 1),
+                  reason: 'seed=$seed scale=$scale size=$size up=$up t=$time');
+              maximumStepPixels = math.max(
+                maximumStepPixels,
+                (current - last).abs() * span * size.height,
+              );
+              last = current;
+            }
+            final beforeTurn = sprint.velocityAt(turn - .008);
+            final afterTurn = sprint.velocityAt(turn + .008);
+            expect((afterTurn - beforeTurn).abs() * span * size.height,
+                lessThan(100),
+                reason: 'velocity remains continuous through recovery turn');
+            checkedTurns++;
+          }
+        }
+      }
+    }
+    expect(
+        checkedTurns, 32 * PassRunMotion.supportedMotionScales.length * 3 * 2);
+    expect(maximumStepPixels, lessThan(8));
+  });
   test('受球加速と投球後制動は位置・速度が連続し、画面内で通常速度へ戻る', () {
     for (var seed = 0; seed < 32; seed++) {
       final m = PassRunMotion(seed: seed)
