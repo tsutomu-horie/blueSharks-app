@@ -28,6 +28,19 @@ jobs:
           git clone --depth 1 --branch 3.47.2 https://github.com/flutter/flutter.git "$RUNNER_TEMP/flutter"
           test "$(git -C "$RUNNER_TEMP/flutter" rev-parse HEAD)" = d3b14c876900e553bc736ca19295fc09e3853e8e
           echo "$RUNNER_TEMP/flutter/bin" >> "$GITHUB_PATH"
+      - name: Prepare compile-only compatibility for existing imports
+        shell: bash
+        run: |
+          ln -s constant.dart lib/utils/Constant.dart
+          ln -s string+extensions.dart lib/utils/String+extensions.dart
+          cat > lib/firebase_options.dart <<'DART'
+          import 'package:firebase_core/firebase_core.dart';
+          // These mock-only tests must never initialize a real Firebase app.
+          class DefaultFirebaseOptions {
+            static FirebaseOptions get currentPlatform =>
+                throw StateError('Firebase initialization is forbidden in this CI');
+          }
+          DART
       - run: flutter pub get --enforce-lockfile
       - name: Check formatting
         run: >-
