@@ -1881,6 +1881,8 @@ class TrainingGameController extends GetxController
   /// 段階上昇時の進化演出を完了し、育成画面へ戻します。
   void advanceEvolution() {
     if (evolutionStage.value == null) return;
+    final completedFirstTeamReveal = stageIndex.value == stages.length - 1 &&
+        evolutionStage.value == stages.length - 1;
     evolutionStage.value = null;
     // 進化演出中にOS割り込みが発生しても、次へ進んだ時点で
     // チュートリアルのリアルタイム進行を必ず再開します。
@@ -1893,6 +1895,13 @@ class TrainingGameController extends GetxController
     // 最終段階の完了同期へ進みます。
     if (stageIndex.value == stages.length - 1) {
       _advanceMainStageIfNeeded();
+      // 最終段階では、この進化演出が完了フローの一軍紹介も兼ねます。
+      // 確認済みポジション画面へ直接進み、同じ拡大演出を再生しません。
+      if (completedFirstTeamReveal &&
+          ended.value &&
+          clearPosition.value != null) {
+        endingStep.value = 1;
+      }
     }
   }
 

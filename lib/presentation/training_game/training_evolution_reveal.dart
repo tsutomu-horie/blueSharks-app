@@ -11,12 +11,17 @@ class TrainingEvolutionReveal extends StatefulWidget {
     required this.beforeFrame,
     required this.afterFrame,
     this.beforeScale = 0.86,
+    this.afterVisual,
     super.key,
   });
 
   final SametarohFrame beforeFrame;
   final SametarohFrame afterFrame;
   final double beforeScale;
+
+  /// 完了後に使う通常表示と同じレイアウトの最初のフレーム。
+  /// 進化演出の終端と次画面で同じWidgetを使い、寸法と足元を揃えます。
+  final Widget? afterVisual;
 
   @override
   State<TrainingEvolutionReveal> createState() =>
@@ -69,28 +74,36 @@ class _TrainingEvolutionRevealState extends State<TrainingEvolutionReveal>
         final height = math.min(constraints.maxHeight, 390.0).toDouble();
         final imageWidth = width * 0.82;
         final imageHeight = height * 0.9;
+        Widget afterFrameImage() =>
+            widget.afterVisual ??
+            SametarohFrameImage(
+              frame: widget.afterFrame,
+              width: imageWidth,
+              height: imageHeight,
+              alignment: Alignment.bottomCenter,
+              semanticLabel: '鮫太郎（進化後）',
+            );
 
         return SizedBox(
-          width: width,
-          height: height,
+          // 通常表示と同じ親制約を維持する。演出装飾の300×390上限で
+          // afterVisualの250.w等を縮めると「次へ」で再拡大してしまう。
+          width: widget.afterVisual == null ? width : constraints.maxWidth,
+          height: widget.afterVisual == null ? height : constraints.maxHeight,
           child: AnimatedBuilder(
             animation: _animation,
             builder: (context, _) {
               final progress = _animation.value;
               if (_animation.isCompleted) {
-                return SametarohFrameImage(
-                  frame: widget.afterFrame,
-                  width: imageWidth,
-                  height: imageHeight,
-                  alignment: Alignment.bottomCenter,
-                  semanticLabel: '鮫太郎（進化後）',
-                );
+                // SizedBoxは子へtight制約を渡すため、Stackを外して画像を
+                // 直返しすると演出枠いっぱいへ拡大される。演出中と同じ
+                // 中央配置で、最後のtickにscale/translationを変えない。
+                return Center(child: afterFrameImage());
               }
               final fade = Curves.easeInOut.transform(
                 const Interval(0.32, 0.58).transform(progress),
               );
-              final reveal = Curves.easeOutBack.transform(
-                const Interval(0.34, 0.82).transform(progress),
+              final reveal = Curves.easeOutCubic.transform(
+                const Interval(0.18, 0.82).transform(progress),
               );
               final sparkle = math
                   .sin(
@@ -105,6 +118,7 @@ class _TrainingEvolutionRevealState extends State<TrainingEvolutionReveal>
                   Opacity(
                     opacity: 1 - fade,
                     child: Transform.scale(
+                      alignment: Alignment.bottomCenter,
                       scale: widget.beforeScale * (1 - 0.08 * fade),
                       child: SametarohFrameImage(
                         frame: widget.beforeFrame,
@@ -144,14 +158,10 @@ class _TrainingEvolutionRevealState extends State<TrainingEvolutionReveal>
                   Opacity(
                     opacity: fade,
                     child: Transform.scale(
+                      key: const ValueKey('training-evolution-after-scale'),
+                      alignment: Alignment.bottomCenter,
                       scale: 0.62 + 0.38 * reveal,
-                      child: SametarohFrameImage(
-                        frame: widget.afterFrame,
-                        width: imageWidth,
-                        height: imageHeight,
-                        alignment: Alignment.bottomCenter,
-                        semanticLabel: '鮫太郎（進化後）',
-                      ),
+                      child: afterFrameImage(),
                     ),
                   ),
                   Positioned(
