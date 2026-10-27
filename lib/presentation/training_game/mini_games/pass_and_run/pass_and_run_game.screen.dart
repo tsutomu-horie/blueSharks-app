@@ -6,6 +6,7 @@ import 'package:flutter/scheduler.dart';
 import 'package:koto_blue_sharks/app/services/training_game_sound_service.dart';
 
 import '../models/mini_game_result.dart';
+import '../mini_game_result_transition.dart';
 import 'pass_and_run_character_visual.dart';
 import 'pass_and_run_direction_guide.dart';
 import '../../models/training_game_clock.dart';
@@ -71,6 +72,7 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
   static const _passReturnDelay = Duration(milliseconds: 96);
 
   _PassGamePhase _phase = _PassGamePhase.waiting;
+  bool _resultReturned = false;
   final _roundScores = <int>[0, 0];
   final _fieldTick = ValueNotifier<int>(0);
   late final Ticker _fieldTicker;
@@ -1211,6 +1213,8 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
 
   /// ミニゲーム結果を育成画面へ返します。
   void _completeGame() {
+    if (_resultReturned || ModalRoute.of(context)?.isCurrent != true) return;
+    _resultReturned = true;
     Navigator.of(context).pop(
       MiniGameResult.passAndRun(
         outboundScore: _roundScores[0],
@@ -1480,7 +1484,10 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
                     child: PassAndRunBallVisual(geometry: ballGeometry),
                   ),
                 if (_phase == _PassGamePhase.waiting) _buildStartOverlay(),
-                if (_phase == _PassGamePhase.result) _buildResultOverlay(),
+                MiniGameResultTransition(
+                  visible: _phase == _PassGamePhase.result,
+                  child: _buildResultOverlay(),
+                ),
                 if (_isPaused) _buildPauseOverlay(),
               ],
             ),
@@ -1533,37 +1540,35 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
 
   /// 往復の成功回数とメイン画面へ戻る操作を表示します。
   Widget _buildResultOverlay() {
-    return Positioned.fill(
-      child: ColoredBox(
-        color: const Color(0xff153d5b).withValues(alpha: .93),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Text('パス成功', style: TextStyle(color: Colors.white70)),
-            Text(
-              '$_totalScore',
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 82,
-                fontWeight: FontWeight.w900,
-              ),
+    return ColoredBox(
+      color: const Color(0xff153d5b).withValues(alpha: .93),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Text('パス成功', style: TextStyle(color: Colors.white70)),
+          Text(
+            '$_totalScore',
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 82,
+              fontWeight: FontWeight.w900,
             ),
-            const Text(
-              '回',
-              style: TextStyle(color: Colors.white, fontSize: 20),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              '往路 ${_roundScores[0]} ＋ 復路 ${_roundScores[1]}',
-              style: const TextStyle(color: Colors.white),
-            ),
-            const SizedBox(height: 24),
-            ElevatedButton(
-              onPressed: _completeGame,
-              child: const Text('メインへ戻る'),
-            ),
-          ],
-        ),
+          ),
+          const Text(
+            '回',
+            style: TextStyle(color: Colors.white, fontSize: 20),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            '往路 ${_roundScores[0]} ＋ 復路 ${_roundScores[1]}',
+            style: const TextStyle(color: Colors.white),
+          ),
+          const SizedBox(height: 24),
+          ElevatedButton(
+            onPressed: _completeGame,
+            child: const Text('メインへ戻る'),
+          ),
+        ],
       ),
     );
   }
