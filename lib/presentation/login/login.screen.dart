@@ -6,7 +6,6 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'package:koto_blue_sharks/app/views/views/custom_text_view.dart';
 import 'package:koto_blue_sharks/generated/locales.g.dart';
-import 'package:koto_blue_sharks/presentation/main/main.screen.dart';
 import 'package:koto_blue_sharks/utils/app_color.dart';
 import 'package:koto_blue_sharks/presentation/screens.dart';
 
@@ -297,28 +296,48 @@ class LoginScreen extends GetView<LoginController> {
       bottomNavigationBar: Padding(
         padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
         child: Obx(() {
-          return ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: BrandColor.main,
-            ),
-            onPressed: () {
-              if (globalKey.currentState!.validate()) {
-                loginController.login(context, selectedPlayer, selectedPlayerName, isFromHome);
-              }
-            },
-            child: loginController.isLoadingLogin.value
-                ? const SizedBox(
-              width: 24,
-              height: 24,
-              child: CircularProgressIndicator(
-                strokeWidth: 2.0,
-                color: Colors.white, // Spinner color
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              if (loginController.loginErrorMessage.value != null)
+                Semantics(
+                  liveRegion: true,
+                  child: Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: Text(
+                      loginController.loginErrorMessage.value!,
+                      style: TextStyle(color: TextColor.error),
+                    ),
+                  ),
+                ),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: BrandColor.main,
+                ),
+                onPressed: loginController.isLoadingLogin.value
+                    ? null
+                    : () {
+                        if (globalKey.currentState!.validate()) {
+                          loginController.login(context, selectedPlayer,
+                              selectedPlayerName, isFromHome);
+                        }
+                      },
+                child: loginController.isLoadingLogin.value
+                    ? const SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2.0,
+                          color: Colors.white, // Spinner color
+                        ),
+                      )
+                    : CustomTextView(
+                        LocaleKeys.login.tr,
+                        color: BrandColor.content,
+                      ),
               ),
-            )
-                : CustomTextView(
-              LocaleKeys.login.tr,
-              color: BrandColor.content,
-            ),
+            ],
           );
         }),
       ),

@@ -1,7 +1,6 @@
-import 'dart:convert';
+import 'dart:async';
 import 'dart:io';
 
-import 'package:awesome_notifications/awesome_notifications.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
@@ -9,6 +8,8 @@ import 'package:koto_blue_sharks/app/providers/auth/auth_provider.dart';
 import 'package:koto_blue_sharks/firebase_options.dart';
 import 'package:koto_blue_sharks/utils/Constant.dart';
 import 'package:koto_blue_sharks/utils/awesome_notifications_helper.dart';
+import 'package:koto_blue_sharks/app/services/auth_token.dart';
+import 'package:koto_blue_sharks/app/services/notification_token_sync.dart';
 import 'package:koto_blue_sharks/utils/my_shared_pref.dart';
 
 class FcmHelper {
@@ -18,107 +19,74 @@ class FcmHelper {
   // FCM Messaging
   static late FirebaseMessaging messaging;
 
-  /// this function will initialize firebase and fcm instance
+  static Future<void>? _initialization;
+  static bool _ready = false;
+  static final _tokenSync = NotificationTokenSync(
+    currentSession: () => AuthToken.sessionVersion,
+    readToken: () => messaging.getToken(),
+    cacheToken: MySharedPref.setFcmToken,
+    sendToken: (token, session, isActive) async {
+      final response = await AuthProvider().updateNotificationTokenWhileCurrent(
+        token,
+        expectedSessionVersion: session,
+        isActive: isActive,
+      );
+      return response != null && !response.hasError;
+    },
+  );
+
+  /// Startup and registration reuse the same initialization/listener set.
   static Future<void> initFcm() async {
+    await (_initialization ??= _initialize());
+    unawaited(syncForCurrentSession());
+  }
+
+  static Future<void> _initialize() async {
+    AuthToken.addSessionChangeListener((_) => _tokenSync.cancel());
     try {
-      // initialize fcm and firebase core
-      // if (Platform.isAndroid) {
       await Firebase.initializeApp(
         options: DefaultFirebaseOptions.currentPlatform,
-      );
-      // } else {
-      //   AwesomeNotifications().initialize("resource://drawable/notif", [
-      //     NotificationChannel(
-      //         channelGroupKey: 'general_channel_group',
-      //         channelKey: 'general_channel',
-      //         channelName: 'General Notifications',
-      //         channelDescription: 'Notification channel for general notifications',
-      //     )
-      //   ],
-      //   );
-      // }
-      await AwesomeNotificationsHelper.init();
-      await Future.delayed(Duration(seconds: 1));
-
+      ).timeout(const Duration(seconds: 5));
+      await AwesomeNotificationsHelper.init()
+          .timeout(const Duration(seconds: 5));
       messaging = FirebaseMessaging.instance;
-
-      await _setupFcmNotificationSettings();
-      await _generateFcmToken();
-
-      messaging.unsubscribeFromTopic(Constants.topic);
-
-      messaging.subscribeToTopic(Constants.topic).then((_) {
-        debugPrint('Subscribed to topic ${Constants.topic}');
-      });
-
-      // background and foreground handlers
+      await messaging
+          .setForegroundNotificationPresentationOptions(
+            alert: true,
+            sound: true,
+            badge: true,
+          )
+          .timeout(const Duration(seconds: 5));
+      if (Platform.isIOS) {
+        await messaging
+            .requestPermission(
+              alert: true,
+              announcement: false,
+              badge: true,
+              carPlay: false,
+              criticalAlert: false,
+              provisional: false,
+              sound: true,
+            )
+            .timeout(const Duration(seconds: 5));
+      }
+      await messaging
+          .subscribeToTopic(Constants.topic)
+          .timeout(const Duration(seconds: 5));
       FirebaseMessaging.onMessage.listen(_fcmForegroundHandler);
       FirebaseMessaging.onBackgroundMessage(_fcmBackgroundHandler);
-    } catch (error) {
-      // if you are connected to firebase and still get error
-      // check the todo up in the function else ignore the error
-      // or stop fcm service from main.dart class
-      debugPrint("FCM Helper error ${error}");
+      _ready = true;
+    } catch (_) {
+      debugPrint('[fcm-init] deferred');
     }
   }
 
-  ///handle fcm notification settings (sound,badge..etc)
-  static Future<void> _setupFcmNotificationSettings() async {
-    //show notification with sound and badge
-    messaging.setForegroundNotificationPresentationOptions(
-      alert: true,
-      sound: true,
-      badge: true,
-    );
-
-    //NotificationSettings settings
-    if (Platform.isIOS) {
-      NotificationSettings settings = await messaging.requestPermission(
-          alert: true,
-          announcement: false,
-          badge: true,
-          carPlay: false,
-          criticalAlert: false,
-          provisional: false,
-          sound: true);
-
-      debugPrint('User granted permission: ${settings.authorizationStatus}');
-    }
-  }
-
-  /// generate and save fcm token if its not already generated (generate only for 1 time)
-  static Future<void> _generateFcmToken() async {
-    try {
-      var token = await messaging.getToken();
-      if (token != null) {
-        MySharedPref.setFcmToken(token);
-        await _sendFcmTokenToServer();
-      } else {
-        // retry generating token
-        await Future.delayed(const Duration(seconds: 5));
-        await _generateFcmToken();
-      }
-    } catch (error) {
-      debugPrint("error generate fcm $error");
-    }
-  }
-
-  /// this method will be triggered when the app generate fcm
-  /// token successfully
-  static Future<void> _sendFcmTokenToServer() async {
-    var token = MySharedPref.getFcmToken();
-
-    final auth = AuthProvider();
-
-    if (token != null) {
-      try {
-        await auth.updateNotificationToken(token);
-      } catch (error) {
-        // Push-token synchronization is best-effort. A temporary API outage
-        // must not prevent the application from starting.
-        debugPrint('FCM token synchronization deferred: $error');
-      }
-    }
+  /// App/session-owned; route disposal after a successful login does not create
+  /// another listener or cancel the valid session's background synchronization.
+  static Future<void> syncForCurrentSession() async {
+    final outcome =
+        _ready ? await _tokenSync.sync() : NotificationSyncOutcome.deferred;
+    debugPrint('[fcm-sync] ${outcome.name}');
   }
 
   ///handle fcm notification when app is closed/terminated
@@ -126,8 +94,7 @@ class FcmHelper {
   /// https://stackoverflow.com/a/67083337
   @pragma('vm:entry-point')
   static Future<void> _fcmBackgroundHandler(RemoteMessage message) async {
-    debugPrint(
-        'Handling FCM Notification in Background: ${message.notification?.title}');
+    debugPrint('[fcm] background-message');
 
     // AwesomeNotificationsHelper.showNotification(
     //   id: 1,
@@ -139,24 +106,6 @@ class FcmHelper {
 
   //handle fcm notification when app is open
   static Future<void> _fcmForegroundHandler(RemoteMessage message) async {
-    final Map<String, dynamic> jsonMapped = {
-      "notification": message.notification != null
-          ? {
-              "title": message.notification?.title,
-              "body": message.notification?.body,
-              "image": message.notification?.android?.imageUrl,
-            }
-          : null,
-      "data": message.data,
-      "from": message.from,
-      "messageId": message.messageId,
-      "collapseKey": message.collapseKey,
-      "sentTime": message.sentTime?.toIso8601String(),
-    };
-
-    // Use JsonEncoder for a pretty-printed JSON string
-    JsonEncoder encoder = JsonEncoder.withIndent('  ');
-
     if (Platform.isAndroid) {
       AwesomeNotificationsHelper.showNotification(
           id: 1,

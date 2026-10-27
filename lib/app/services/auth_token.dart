@@ -51,14 +51,20 @@ class AuthToken {
       _advanceSessionVersion();
 
   Future<void> saveAccessToken(String token) async {
-    await _serializeMutation(() async {
-      await _advanceSessionVersion();
-      await _storage.write(
-        key: 'accessToken',
-        value: token.replaceAll('"', ''),
-      );
-    });
+    await saveAccessTokenForSession(token);
   }
+
+  // Capture the version inside No13's serialized mutation, not before its queue.
+  Future<int> saveAccessTokenForSession(String token) =>
+      _serializeMutation(() async {
+        await _advanceSessionVersion();
+        final session = _sessionVersion;
+        await _storage.write(
+          key: 'accessToken',
+          value: token.replaceAll('"', ''),
+        );
+        return session;
+      });
 
   Future<String?> getAccessToken() async {
     return _readAccessToken();
@@ -75,9 +81,9 @@ class AuthToken {
     try {
       final accessToken = await _storage.read(key: 'accessToken');
       return accessToken;
-    } on PlatformException catch (e) {
+    } on PlatformException {
       // Workaround for https://github.com/mogol/flutter_secure_storage/issues/43
-      print("get error secure storage ${e}");
+      debugPrint('Auth token storage unavailable');
       await _storage.deleteAll();
       await _advanceSessionVersion();
     }

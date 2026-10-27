@@ -1,9 +1,13 @@
+import 'dart:async';
+import 'dart:io';
+
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:koto_blue_sharks/app/data/models/auth/auth.dart';
 import 'package:koto_blue_sharks/app/data/models/info/notification.dart';
 import 'package:koto_blue_sharks/app/providers/auth/login_response_diagnostics.dart';
 import 'package:koto_blue_sharks/app/services/auth_token.dart';
+import 'package:koto_blue_sharks/app/services/notification_token_sync.dart';
 import 'package:koto_blue_sharks/utils/Constant.dart';
 
 class AuthProvider extends GetConnect {
@@ -12,33 +16,58 @@ class AuthProvider extends GetConnect {
     httpClient.baseUrl = Constants.baseUrlAuthApi;
   }
 
-  Future<Auth> login(String username, String password, Function() onError) async {
-    final url = Uri.parse('login');
-    debugPrint("load ${httpClient.baseUrl}${url.toString()}");
+  Future<Auth> login(
+      String username, String password, Function() onError) async {
+    try {
+      final response = await requestLogin({
+        'email': username,
+        'password': password,
+      }).timeout(const Duration(seconds: 20));
 
-    final Map<String, dynamic> body = {
-      "email": username,
-      "password": password,
-    };
+      final status = response.statusCode;
+      if (status == null || status <= 0) {
+        throw const LoginFailure(LoginFailureKind.network);
+      }
+      if (status == 401 || status == 403 || status == 422) {
+        onError();
+        throw const LoginFailure(LoginFailureKind.rejected);
+      }
+      if (status < 200 || status >= 300) {
+        throw const LoginFailure(LoginFailureKind.server);
+      }
+      final body = response.body;
+      if (body is! Map<String, dynamic> ||
+          body['data'] is! Map<String, dynamic>) {
+        throw const LoginFailure(LoginFailureKind.invalidResponse);
+      }
+      final auth = Auth.fromJson(body['data'] as Map<String, dynamic>);
+      if (auth.access_token.trim().isEmpty) {
+        throw const LoginFailure(LoginFailureKind.invalidResponse);
+      }
+      return auth;
+    } on TimeoutException {
+      throw const LoginFailure(LoginFailureKind.network);
+    } on SocketException {
+      throw const LoginFailure(LoginFailureKind.network);
+    } on FormatException {
+      throw const LoginFailure(LoginFailureKind.invalidResponse);
+    } on TypeError {
+      throw const LoginFailure(LoginFailureKind.invalidResponse);
+    }
+  }
 
-    final response = kDebugMode
-        ? await httpClient.post<dynamic>(
-            url.toString(),
+  @protected
+  Future<Response<dynamic>> requestLogin(Map<String, dynamic> body) {
+    return kDebugMode
+        ? httpClient.post<dynamic>(
+            'login',
             body: body,
             responseInterceptor: (_, __, rawResponse) async {
               debugPrint(loginResponseDiagnosticLine(rawResponse));
-              // Returning null preserves GetX's normal body decoding.
               return null;
             },
           )
-        : await post<dynamic>(url.toString(), body);
-
-    if (response.hasError) {
-      onError();
-      throw Exception('Failed to login: ${response.statusText}');
-    }
-
-    return Auth.fromJson(response.body["data"]);
+        : post<dynamic>('login', body);
   }
 
   Future<Auth> register(String acountId, String email, String otpId, String password, Function(String) onError) async {
@@ -223,40 +252,45 @@ class AuthProvider extends GetConnect {
     return response;
   }
 
-  Future<Response?> updateNotificationToken(String fcm) async {
-    httpClient.baseUrl = Constants.baseUrlAuthApi;
+  static final _notificationSender = NotificationTokenRegistration<Response>(
+    currentSession: () => AuthToken.sessionVersion,
+  );
 
-    final url = Uri.parse('notifications/create-fcm');
-    debugPrint("load ${httpClient.baseUrl}${url.toString()}");
+  // Keep the original signature: No14 and existing mock overrides use it.
+  Future<Response?> updateNotificationToken(String fcm) =>
+      updateNotificationTokenWhileCurrent(fcm,
+          expectedSessionVersion: AuthToken.sessionVersion,
+          isActive: () => true);
 
-    final auth = AuthToken();
-    final token = await auth.getAccessToken();
-
-    if (token != null) {
-      final Map<String, dynamic> body = {
-        "fcm_token": fcm,
-      };
-
-      final headers = {
-        'Authorization': 'Bearer $token',
-        'Content-Type': 'application/json', // Optional, depending on the API
-      };
-
-      final response = await post(
-          url.toString(), body, headers: headers // Send the body in the request
-      );
-
-
-      if (response.hasError) {
-        throw Exception('Failed to send fcm token: ${response.statusText}');
-      }
-
-
-      return response;
-    } else {
-      return null;
-    }
-  }
+  Future<Response?> updateNotificationTokenWhileCurrent(String fcm,
+      {required int expectedSessionVersion,
+      required bool Function() isActive}) =>
+      _notificationSender.send(fcm,
+          expectedSession: expectedSessionVersion,
+          isActive: isActive,
+          operation: (canSend) async {
+            final snapshot = await AuthToken().readSessionSnapshot();
+            final token = snapshot.token;
+            // Snapshot acquisition is serialized with No13's token mutations.
+            // A new session number alone does not mean its write has completed.
+            // Recheck the paired session and lease immediately before post.
+            if (!canSend() ||
+                snapshot.sessionVersion != expectedSessionVersion ||
+                token == null) {
+              return null;
+            }
+            httpClient.baseUrl = Constants.baseUrlAuthApi;
+            final response = await post('notifications/create-fcm', {
+              'fcm_token': fcm,
+            }, headers: {
+              'Authorization': 'Bearer $token',
+              'Content-Type': 'application/json',
+            });
+            if (response.hasError) {
+              throw StateError('Notification synchronization unavailable');
+            }
+            return response;
+          });
 
   Future<List<NotificationItem>> getNotificationList() async {
     httpClient.baseUrl = Constants.baseUrlAuthApi;
@@ -367,4 +401,12 @@ class AuthProvider extends GetConnect {
     return response;
   }
 
+}
+
+// Deliberately contains no response body, credentials, or transport exception.
+enum LoginFailureKind { rejected, network, server, invalidResponse }
+
+class LoginFailure implements Exception {
+  const LoginFailure(this.kind);
+  final LoginFailureKind kind;
 }
