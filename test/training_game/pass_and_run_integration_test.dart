@@ -547,14 +547,13 @@ void main() {
         final v = visual(t, mate);
         final image = t.widget<Image>(find.descendant(
             of: mate, matching: find.byKey(const Key('pass-body-sprite'))));
-        expect((image.image as AssetImage).assetName,
-            v.assetPath.replaceFirst('_hold_', '_free_'));
-        if (v.holding) {
-          final patch = t.widget<Image>(find.descendant(
+        expect((image.image as AssetImage).assetName, v.assetPath);
+        expect(
+          find.descendant(
               of: mate,
-              matching: find.byKey(const Key('pass-held-contact-patch'))));
-          expect((patch.image as AssetImage).assetName, v.assetPath);
-        }
+              matching: find.byKey(const Key('pass-held-contact-patch'))),
+          findsNothing,
+        );
         expect(v.facing, up ? PassRunFacing.back : PassRunFacing.front);
         expect(v.size, 84);
       }
@@ -630,7 +629,7 @@ void main() {
       character: PassRunCharacter.normal,
       frame: visual(t, player).frame,
       facing: PassRunFacing.back,
-      size: 84,
+      size: 84 * visual(t, player).visualScale,
     );
     expect(release.longAxis, heldGeometry.longAxis);
     expect(release.shortAxis, heldGeometry.shortAxis);

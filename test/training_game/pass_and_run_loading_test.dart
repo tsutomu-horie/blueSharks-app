@@ -64,15 +64,14 @@ void main() {
             of: sprite,
             matching: find.byKey(const Key('pass-held-contact-patch')));
         expect(body, findsOneWidget);
-        expect(patch, visual.holding ? findsOneWidget : findsNothing);
-        for (final layer in [body, if (visual.holding) patch]) {
-          final image = t.widget<Image>(layer);
-          expect(image.gaplessPlayback, isTrue);
-          final raw = t.renderObject<RenderImage>(
-              find.descendant(of: layer, matching: find.byType(RawImage)));
-          expect(raw.image, isNotNull,
-              reason: '$key body/contact must survive facing/frame changes');
-        }
+        expect(patch, findsNothing);
+        final image = t.widget<Image>(body);
+        expect((image.image as AssetImage).assetName, visual.assetPath);
+        expect(image.gaplessPlayback, isTrue);
+        final raw = t.renderObject<RenderImage>(
+            find.descendant(of: body, matching: find.byType(RawImage)));
+        expect(raw.image, isNotNull,
+            reason: '$key pose must survive facing/frame changes');
       }
     }
     await t.pumpWidget(const SizedBox());
