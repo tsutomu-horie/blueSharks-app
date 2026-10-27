@@ -34,7 +34,8 @@ class AppEnvironment {
   static const fanClubUrl = '$websiteBaseUrl/fanclub/';
   static const partnerUrl = '$websiteBaseUrl/partner/';
   static const teamUrl = '$websiteBaseUrl/team/';
-  static const wordpressAdminUrl = '$websiteBaseUrl/wp-admin/';
+  // Keep the management destination independent from public site/feed URLs.
+  static const wordpressAdminUrl = 'https://blue-sharks.jp/wp-admin/';
 
   /// mainの通信・SDK初期化より前に検証します。assertには依存しません。
   static void validate() {

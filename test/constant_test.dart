@@ -22,6 +22,9 @@ void main() {
     expect(Constants.partnerUrl, AppEnvironment.partnerUrl);
     expect(Constants.teamUrl, AppEnvironment.teamUrl);
     expect(Constants.wordpressAdminUrl, AppEnvironment.wordpressAdminUrl);
+    // Changing the admin link must not move the public article API.
+    expect(Constants.baseUrl, 'https://blue-sharks.donati.jp/wp-json/wp/v2/');
+    expect(Constants.wordpressAdminUrl, 'https://blue-sharks.jp/wp-admin/');
   });
 
   test(
