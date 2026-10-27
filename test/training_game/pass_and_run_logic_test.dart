@@ -117,6 +117,31 @@ void main() {
       );
     });
 
+    test('40px必須で速度は問わず、速い短距離入力も受け付けない', () {
+      for (final speed in [0.0, 100.0, 1000.0]) {
+        for (final distance in [0.0, 10.0, 24.0, 39.9, 40.0, 50.0]) {
+          expect(
+              PassAndRunRules.isFlick(PassFlick(
+                  deltaX: distance, deltaY: 0, velocityX: speed, velocityY: 0)),
+              distance >= 40);
+        }
+      }
+    });
+    test('方向補助は近い合法方向のみ、前方と逆向きは補正しない', () {
+      final assisted = PassAndRunRules.assistDirection(
+          deltaX: 100, deltaY: 10, targetX: 100, targetY: 20, outbound: true);
+      expect(assisted.deltaY / assisted.deltaX, closeTo(.2, .00001));
+      for (final target in [(100.0, -1.0), (-100.0, 10.0), (100.0, 100.0)]) {
+        expect(
+            PassAndRunRules.assistDirection(
+                deltaX: 100,
+                deltaY: 10,
+                targetX: target.$1,
+                targetY: target.$2,
+                outbound: true),
+            (deltaX: 100.0, deltaY: 10.0));
+      }
+    });
     test('短い入力はフリックとして扱わない', () {
       const shortInput = PassFlick(
         deltaX: 10,

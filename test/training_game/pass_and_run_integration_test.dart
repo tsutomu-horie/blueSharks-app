@@ -233,6 +233,52 @@ void main() {
     clock = DateTime.utc(2026, 10, 20);
   });
 
+  for (final mode in ['queue', 'pause', 'boundary']) {
+    final cancelByPause = mode == 'pause';
+    testWidgets('返球直前の入力予約 $mode', (t) async {
+      await start(t,
+          seed: 3, soundService: RecordingTrainingGameSound().service);
+      await step(t, 800);
+      await throwToMate(t, .8);
+      await catchAtMate(t);
+      var readyToQueue = false;
+      for (var i = 0; i < 400; i++) {
+        await step(t, 8);
+        if (!visual(t, mate).holding &&
+            !visual(t, player).holding &&
+            (t.getCenter(ball) - t.getCenter(player)).distance < 45) {
+          readyToQueue = true;
+          break;
+        }
+      }
+      expect(readyToQueue, isTrue);
+      final towardMate = t.getCenter(mate).dx - t.getCenter(player).dx;
+      if (mode == 'boundary') {
+        final gesture = await t.startGesture(t.getCenter(player));
+        await gesture.moveBy(Offset(towardMate.sign * 60, 30));
+        sync(const Duration(milliseconds: 200));
+        await gesture.up();
+      } else {
+        await t.dragFrom(t.getCenter(player), Offset(towardMate.sign * 60, 30));
+      }
+      await t.pump();
+      expect(visual(t, player).holding, isFalse);
+      if (cancelByPause) {
+        await t.tap(find.byTooltip('一時停止'));
+        await t.pump();
+        await t.tap(find.text('再開'));
+        await t.pump();
+      }
+      var becameHolding = false;
+      for (var i = 0; i < 30; i++) {
+        await step(t, 8);
+        becameHolding = becameHolding || visual(t, player).holding;
+      }
+      expect(becameHolding, cancelByPause, reason: '予約ありは捕球後即発射、停止を挟んだ予約は破棄');
+      await t.pumpWidget(const SizedBox());
+    });
+  }
+
   test('ガイド全体は3.2秒の滑らかな透明往復を共有する', () {
     double opacity(double seconds) => PassRunDirectionGuidePainter(
             center: Offset.zero, attackUp: true, seconds: seconds)
@@ -788,8 +834,9 @@ void main() {
       }
       expect(blocked, greaterThan(0));
       expect(legal, greaterThan(0));
-      expect(maximum, lessThan(15));
-      expect(maxDifference, greaterThan(.1), reason: '長い不可区間に速度補助が実際に働く');
+      expect(maximum, lessThanOrEqualTo(3.7),
+          reason: '補助強化前の3.76秒・4.04秒から不可時間を短縮する');
+      expect(maxDifference, greaterThan(60), reason: '位置を飛ばさず走行ペースで位置関係を改善する');
       // ignore: avoid_print
       print(
           'Widget no-input seed=$seed legal=$legal blocked=$blocked longestBlocked baseline=${baselineMaximum.toStringAsFixed(2)}s assisted=${maximum.toStringAsFixed(2)}s maxPaceDifference=${maxDifference.toStringAsFixed(2)}px');
@@ -855,9 +902,19 @@ void main() {
     });
   }
 
-  for (final outbound in [true, false]) {
-    testWidgets('受球後だけ加速し合法返球を速やかに完了する $outbound', (t) async {
-      await start(t, seed: 3);
+  for (final scenario in [
+    (3, true),
+    (3, false),
+    (7, true),
+    (7, false),
+    (11, true),
+    (11, false),
+    (19, true),
+    (19, false),
+  ]) {
+    final (seed, outbound) = scenario;
+    testWidgets('受球後だけ加速し合法返球を速やかに完了する $seed $outbound', (t) async {
+      await start(t, seed: seed);
       if (!outbound) {
         await step(t, 15000);
         await step(t, 1000);
@@ -891,9 +948,10 @@ void main() {
       expect(visual(t, player).holding, isTrue);
       expect(visual(t, mate).holding, isFalse);
       expect(trail, findsNothing);
+      expect(clock.difference(caughtAt).inMilliseconds, lessThan(1500));
       // ignore: avoid_print
       print(
-          'live Widget catch-to-return outbound=$outbound seed3: ${clock.difference(caughtAt).inMilliseconds}ms');
+          'live Widget catch-to-return outbound=$outbound seed$seed: ${clock.difference(caughtAt).inMilliseconds}ms');
     });
   }
 
@@ -1554,13 +1612,29 @@ void main() {
     await step(t, 800);
     await throwToMate(t, .8);
     await catchAtMate(t);
+    expect(find.byKey(const Key('pass-catch-feedback')), findsOneWidget);
 
     expect(sounds.createdAssetPaths, [
+      'assets/audio/training_game/pass-throw.m4a',
       'assets/audio/training_game/basket-path1.mp3',
     ]);
     expect(sounds.playedAssetPaths, [
+      'assets/audio/training_game/pass-throw.m4a',
       'assets/audio/training_game/basket-path1.mp3',
     ]);
+    for (var i = 0; i < 400 && !visual(t, player).holding; i++) {
+      await step(t, 8);
+    }
+    expect(visual(t, player).holding, isTrue);
+    expect(sounds.playedAssetPaths, [
+      TrainingGameSoundEffect.passThrown.assetPath,
+      TrainingGameSoundEffect.passReceived.assetPath,
+      TrainingGameSoundEffect.passThrown.assetPath,
+      TrainingGameSoundEffect.passReceived.assetPath,
+    ]);
+    await step(t, 100);
+    expect(sounds.playedAssetPaths.length, 4);
+    expect(find.byKey(const Key('pass-catch-feedback')), findsNothing);
   });
 
   testWidgets('No.40失敗フックはcute-sad1を再生する', (t) async {
@@ -1573,9 +1647,11 @@ void main() {
 
     expect(find.textContaining('MISS'), findsOneWidget);
     expect(sounds.createdAssetPaths, [
+      'assets/audio/training_game/pass-throw.m4a',
       'assets/audio/training_game/cute-sad1.mp3',
     ]);
     expect(sounds.playedAssetPaths, [
+      'assets/audio/training_game/pass-throw.m4a',
       'assets/audio/training_game/cute-sad1.mp3',
     ]);
   });

@@ -30,7 +30,7 @@ class PassRunReturnSprint implements PassRunAssistedMovement {
   static const step = .008;
   static const burstSpeed = 1.0; // usable ranges / second, only while holding
   static const burstAcceleration = 3.5;
-  static const postReturnRecoverySpeedScale = 3.0;
+  static const postReturnRecoverySpeedScale = 5.0;
   static const recoveryTargetBlendSeconds = 2.0;
   static const recoveryBehindFraction = .18;
   @override

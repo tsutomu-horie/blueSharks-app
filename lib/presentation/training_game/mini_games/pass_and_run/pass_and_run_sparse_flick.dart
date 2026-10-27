@@ -58,8 +58,7 @@ class PassRunSparseFlick {
     _blocked = true;
   }
 
-  bool get blocked =>
-      _blocked || !_startedWhenReady || (_moves <= 2 && _stationaryMove);
+  bool get blocked => _blocked || !_startedWhenReady || !_insideField;
 
   void block() => _blocked = true;
 

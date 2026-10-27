@@ -45,6 +45,7 @@ void main() {
         TrainingGameSoundEffect.tackleGreat,
         TrainingGameSoundEffect.tacklePerfect,
         TrainingGameSoundEffect.tackleMiss,
+        TrainingGameSoundEffect.passThrown,
       ]);
       expect(
         TrainingGameSoundEffect.values.map((effect) => effect.assetPath),
@@ -61,6 +62,7 @@ void main() {
           'assets/audio/training_game/tackle-great.m4a',
           'assets/audio/training_game/tackle-perfect.m4a',
           'assets/audio/training_game/tackle-miss.m4a',
+          'assets/audio/training_game/pass-throw.m4a',
         ],
       );
     });
