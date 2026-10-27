@@ -29,9 +29,9 @@ void main() {
         expect(cue, findsOneWidget);
         expect(find.textContaining('反対をタップ'), findsNothing);
         await tester.pump(const Duration(milliseconds: 749));
-        expect(find.text('突破された！'), findsNothing);
+        expect(find.byKey(const Key('tackle-feedback-miss')), findsNothing);
         await tester.pump(const Duration(milliseconds: 1));
-        expect(find.text('突破された！'), findsOneWidget);
+        expect(find.byKey(const Key('tackle-feedback-miss')), findsOneWidget);
       });
     }
   }
@@ -52,9 +52,9 @@ void main() {
         () => Future<void>.delayed(const Duration(milliseconds: 800)));
     await tester.pump(const Duration(milliseconds: 165));
     expect(cue, findsOneWidget);
-    await tester.tap(find.text('下をタップ ▼'));
+    await tester.tap(find.byKey(const Key('tackle-tap-down')));
     await tester.pump();
-    expect(find.text('TACKLE!'), findsOneWidget);
+    expect(find.byKey(const Key('tackle-feedback-success')), findsOneWidget);
   });
 
   for (final duringFeint in [false, true]) {
@@ -71,7 +71,7 @@ void main() {
       await tester.tap(find.byTooltip('一時停止'));
       await tester.pump();
       await tester.pump(const Duration(seconds: 2));
-      expect(find.text('突破された！'), findsNothing);
+      expect(find.byKey(const Key('tackle-feedback-miss')), findsNothing);
       expect(find.text('SET 1 / 3'), findsOneWidget);
       await tester.tap(find.text('再開'));
       await tester.pump();
@@ -80,9 +80,9 @@ void main() {
       await tester.pump(const Duration(milliseconds: 165));
       expect(cue, findsOneWidget);
       await tester.pump(const Duration(milliseconds: 749));
-      expect(find.text('突破された！'), findsNothing);
+      expect(find.byKey(const Key('tackle-feedback-miss')), findsNothing);
       await tester.pump(const Duration(milliseconds: 1));
-      expect(find.text('突破された！'), findsOneWidget);
+      expect(find.byKey(const Key('tackle-feedback-miss')), findsOneWidget);
       await tester.pump(const Duration(milliseconds: 650));
       await tester.tap(find.text('SET 1 / 3'));
       await tester.pump();

@@ -52,7 +52,8 @@ void main() {
           if (!early) {
             await tester.pump(const Duration(milliseconds: 1350));
           }
-          await tester.tap(find.text(up ? '上をタップ ▲' : '下をタップ ▼'));
+          await tester
+              .tap(find.byKey(Key(up ? 'tackle-tap-up' : 'tackle-tap-down')));
           await tester.pump();
           expect(attack, findsOneWidget);
           expect(tester.widget<TacklePlayerVisual>(player).attacking, isTrue);
@@ -70,8 +71,13 @@ void main() {
           expect(tester.getSize(attack).height, 72);
           expect(
               tester.getSize(attack).width, closeTo(72 * 615 / 1251, .000001));
-          if (early) expect(find.text('突破された！'), findsOneWidget);
-          final succeeded = find.text('TACKLE!').evaluate().isNotEmpty;
+          if (early)
+            expect(
+                find.byKey(const Key('tackle-feedback-miss')), findsOneWidget);
+          final succeeded = find
+              .byKey(const Key('tackle-feedback-success'))
+              .evaluate()
+              .isNotEmpty;
           await tester.pump(const Duration(milliseconds: 160));
           expect(tester.getSize(player), size);
           debugPrint('TACKLE_METRIC direction=${up ? "up" : "down"} '
@@ -123,9 +129,13 @@ void main() {
         findsOneWidget,
       );
       final tapUp = correct ? actualUp : !actualUp;
-      await tester.tap(find.text(tapUp ? '上をタップ ▲' : '下をタップ ▼'));
+      await tester
+          .tap(find.byKey(Key(tapUp ? 'tackle-tap-up' : 'tackle-tap-down')));
       await tester.pump();
-      expect(find.text(correct ? 'TACKLE!' : '突破された！'), findsOneWidget);
+      expect(
+          find.byKey(Key(
+              correct ? 'tackle-feedback-success' : 'tackle-feedback-miss')),
+          findsOneWidget);
       expect(attack, findsOneWidget);
       await tester.pump(const Duration(milliseconds: 650));
       expect(attack, findsOneWidget);
@@ -192,7 +202,8 @@ void main() {
       '${up ? 'up' : 'down'} attack paints inside clipped field and passes result tap through',
       (tester) async {
         await start(tester);
-        await tester.tap(find.text(up ? '上をタップ ▲' : '下をタップ ▼'));
+        await tester
+            .tap(find.byKey(Key(up ? 'tackle-tap-up' : 'tackle-tap-down')));
         await tester.pump();
         await tester.pump(const Duration(milliseconds: 650));
         final field =

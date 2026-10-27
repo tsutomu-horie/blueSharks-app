@@ -10,7 +10,8 @@ Future<void> start(WidgetTester t, {bool go = true}) async {
   if (go) await t.pump(const Duration(milliseconds: 1100));
 }
 
-Offset lower(WidgetTester t) => t.getCenter(find.text('下をタップ ▼'));
+Offset lower(WidgetTester t) =>
+    t.getCenter(find.byKey(const Key('tackle-tap-down')));
 Future<void> dispose(WidgetTester t) => t.pumpWidget(const SizedBox());
 void main() {
   for (final ms in [749, 750, 751]) {
@@ -19,7 +20,10 @@ void main() {
       await t.pump(Duration(milliseconds: ms));
       final g = await t.startGesture(lower(t));
       await t.pump();
-      expect(find.text(ms < 750 ? 'TACKLE!' : '突破された！'), findsOneWidget);
+      expect(
+          find.byKey(Key(
+              ms < 750 ? 'tackle-feedback-success' : 'tackle-feedback-miss')),
+          findsOneWidget);
       await g.up();
       await dispose(t);
     });
@@ -29,11 +33,11 @@ void main() {
     await t.pump(const Duration(milliseconds: 730));
     final g = await t.startGesture(lower(t));
     await t.pump();
-    expect(find.text('TACKLE!'), findsOneWidget);
+    expect(find.byKey(const Key('tackle-feedback-success')), findsOneWidget);
     await t.pump(const Duration(milliseconds: 30));
     await g.up();
     await t.pump();
-    expect(find.text('TACKLE!'), findsOneWidget);
+    expect(find.byKey(const Key('tackle-feedback-success')), findsOneWidget);
     await dispose(t);
   });
   testWidgets('pre GO down is immediately MISS and cannot become success', (
@@ -43,12 +47,12 @@ void main() {
     await t.pump(const Duration(milliseconds: 1090));
     final g = await t.startGesture(lower(t));
     await t.pump();
-    expect(find.text('突破された！'), findsOneWidget);
+    expect(find.byKey(const Key('tackle-feedback-miss')), findsOneWidget);
     await t.pump(const Duration(milliseconds: 20));
     await g.up();
     await t.pump();
-    expect(find.text('TACKLE!'), findsNothing);
-    expect(find.text('突破された！'), findsOneWidget);
+    expect(find.byKey(const Key('tackle-feedback-success')), findsNothing);
+    expect(find.byKey(const Key('tackle-feedback-miss')), findsOneWidget);
     await dispose(t);
   });
   for (final hold in [10, 100, 600, 1200, 3000]) {
@@ -56,7 +60,7 @@ void main() {
       await start(t);
       final g = await t.startGesture(lower(t));
       await t.pump();
-      expect(find.text('TACKLE!'), findsOneWidget);
+      expect(find.byKey(const Key('tackle-feedback-success')), findsOneWidget);
       await t.pump(Duration(milliseconds: hold));
       await g.up();
       await t.pump();
@@ -73,7 +77,7 @@ void main() {
       await t.tapAt(lower(t));
       await t.pump();
     }
-    expect(find.text('TACKLE!'), findsOneWidget);
+    expect(find.byKey(const Key('tackle-feedback-success')), findsOneWidget);
     expect(find.text('SET 1 / 3'), findsOneWidget);
     await dispose(t);
   });
@@ -89,7 +93,7 @@ void main() {
     await t.tapAt(lower(t));
     await t.pump();
     expect(find.text('SET 2 / 3'), findsOneWidget);
-    expect(find.text('突破された！'), findsNothing);
+    expect(find.byKey(const Key('tackle-feedback-miss')), findsNothing);
     await dispose(t);
   });
   for (final cancelAfter in [20, 800, 1200]) {
@@ -99,12 +103,13 @@ void main() {
         await start(t);
         final g = await t.startGesture(lower(t));
         await t.pump();
-        expect(find.text('TACKLE!'), findsOneWidget);
+        expect(
+            find.byKey(const Key('tackle-feedback-success')), findsOneWidget);
         await t.pump(Duration(milliseconds: cancelAfter));
         await g.cancel();
         await t.pump();
         expect(find.text('SET 1 / 3'), findsOneWidget);
-        expect(find.text('突破された！'), findsNothing);
+        expect(find.byKey(const Key('tackle-feedback-miss')), findsNothing);
         await dispose(t);
       },
     );
@@ -117,7 +122,7 @@ void main() {
     await g.up();
     await t.pump();
     expect(find.text('SET 1 / 3'), findsOneWidget);
-    expect(find.text('突破された！'), findsNothing);
+    expect(find.byKey(const Key('tackle-feedback-miss')), findsNothing);
     await dispose(t);
   });
   testWidgets('two fingers cannot settle or advance twice across result', (
@@ -126,7 +131,7 @@ void main() {
     await start(t);
     final a = await t.startGesture(lower(t), pointer: 1);
     final b = await t.startGesture(
-      t.getCenter(find.text('上をタップ ▲')),
+      t.getCenter(find.byKey(const Key('tackle-tap-up'))),
       pointer: 2,
     );
     await t.pump(const Duration(milliseconds: 1200));
@@ -135,14 +140,15 @@ void main() {
     await a.up();
     await t.pump();
     expect(find.text('SET 1 / 3'), findsOneWidget);
-    expect(find.text('突破された！'), findsNothing);
+    expect(find.byKey(const Key('tackle-feedback-miss')), findsNothing);
     await dispose(t);
   });
   testWidgets('wrong direction immediately misses once', (t) async {
     await start(t);
-    final g = await t.startGesture(t.getCenter(find.text('上をタップ ▲')));
+    final g = await t
+        .startGesture(t.getCenter(find.byKey(const Key('tackle-tap-up'))));
     await t.pump();
-    expect(find.text('突破された！'), findsOneWidget);
+    expect(find.byKey(const Key('tackle-feedback-miss')), findsOneWidget);
     await t.pump(const Duration(milliseconds: 1200));
     await g.up();
     await t.pump();
@@ -164,7 +170,7 @@ void main() {
         t.getCenter(find.byKey(Key(key))) + const Offset(0, 10),
       );
       await t.pump();
-      expect(find.text('TACKLE!'), findsOneWidget);
+      expect(find.byKey(const Key('tackle-feedback-success')), findsOneWidget);
       await g.up();
       await dispose(t);
     });
@@ -179,8 +185,8 @@ void main() {
     await t.pump();
     await g.up();
     await t.pump();
-    expect(find.text('TACKLE!'), findsNothing);
-    expect(find.text('突破された！'), findsNothing);
+    expect(find.byKey(const Key('tackle-feedback-success')), findsNothing);
+    expect(find.byKey(const Key('tackle-feedback-miss')), findsNothing);
     await dispose(t);
   });
   testWidgets(
@@ -237,7 +243,7 @@ void main() {
           await t.tapAt(point());
           await t.pump();
           expect(find.text('SET 2 / 3'), findsOneWidget);
-          expect(find.text('突破された！'), findsNothing);
+          expect(find.byKey(const Key('tackle-feedback-miss')), findsNothing);
           await dispose(t);
         },
       );
