@@ -52,20 +52,17 @@ class AuthProvider extends GetConnect {
       "password": password,
     };
 
-    debugPrint("data send $body");
 
     final response = await post(
       url.toString(), body, // Send the body in the request
     );
 
-    debugPrint("Login successful2 , ${response.body}");
 
     if (response.hasError) {
       onError("${response.statusText}");
       throw Exception('Failed to login: ${response.statusText}');
     }
 
-    debugPrint("Login successful, received data: ${response.body}");
 
     return Auth.fromJson(response.body["data"]);
   }
@@ -84,14 +81,12 @@ class AuthProvider extends GetConnect {
       url.toString(), body, // Send the body in the request
     );
 
-    debugPrint("Login successful2 , ${response.body}");
 
     if (response.hasError) {
       onError();
       throw Exception('Failed to login: ${response.statusText}');
     }
 
-    debugPrint("Login successful, received data: ${response.body}");
 
     return response;
   }
@@ -119,14 +114,12 @@ class AuthProvider extends GetConnect {
       url.toString(), body, headers: headers // Send the body in the request
     );
 
-    debugPrint("Login successful2 , ${response.body}");
 
     if (response.hasError) {
       onError();
       throw Exception('Failed to login: ${response.statusText}');
     }
 
-    debugPrint("Login successful, received data: ${response.body}");
 
     return response;
   }
@@ -155,15 +148,12 @@ class AuthProvider extends GetConnect {
       url.toString(), body, headers: headers // Send the body in the request
     );
 
-    debugPrint("Login successful2 , ${response.body}");
 
     if (response.hasError) {
-      debugPrint("Login successful2 , ${response.body['errors']}");
       onError("${response.body['errors']}", "${response.body['message']}");
       throw Exception('Failed to login: ${response.statusText}');
     }
 
-    debugPrint("Login successful, received data: ${response.body}");
 
     return response;
   }
@@ -181,14 +171,10 @@ class AuthProvider extends GetConnect {
       url.toString(), headers: headers // Send the body in the request
     );
 
-    debugPrint("Login successful2 , ${response.body}");
-
     if (response.hasError) {
       onError();
       throw Exception('Failed to login: ${response.statusText}');
     }
-
-    debugPrint("Login successful, received data: ${response.body}");
 
     return UserData.fromJson(response.body["data"]);
   }
@@ -206,14 +192,10 @@ class AuthProvider extends GetConnect {
         url.toString(), headers: headers // Send the body in the request
     );
 
-    debugPrint("Login successful2 , ${response.body}");
-
     if (response.hasError) {
       onError();
       throw Exception('Failed to login: ${response.statusText}');
     }
-
-    debugPrint("Login successful, received data: ${response.body}");
 
     return UserData.fromJson(response.body["data"]);
   }
@@ -231,14 +213,12 @@ class AuthProvider extends GetConnect {
       url.toString(), headers: headers // Send the body in the request
     );
 
-    debugPrint("Login successful2 , ${response.body}");
 
     if (response.hasError) {
       onError();
       throw Exception('Failed to login: ${response.statusText}');
     }
 
-    debugPrint("Login successful, received data: ${response.body}");
 
     return response;
   }
@@ -266,13 +246,11 @@ class AuthProvider extends GetConnect {
           url.toString(), body, headers: headers // Send the body in the request
       );
 
-      debugPrint("Login successful2 , ${response.body}");
 
       if (response.hasError) {
         throw Exception('Failed to send fcm token: ${response.statusText}');
       }
 
-      debugPrint("Login successful, received data: $response");
 
       return response;
     } else {
@@ -298,13 +276,11 @@ class AuthProvider extends GetConnect {
         url.toString(), headers: headers // Send the body in the request
     );
 
-    debugPrint("Login successful2 , ${response.body}");
 
     if (response.hasError) {
       throw Exception('Failed to send fcm token: ${response.statusText}');
     }
 
-    debugPrint("Login successful, received data: ${response.body}");
 
     return (response.body['data'] as List)
         .map((json) => NotificationItem.fromJson(json as Map<String, dynamic>))
@@ -318,7 +294,6 @@ class AuthProvider extends GetConnect {
 
     final auth = AuthToken();
     final token = await auth.getAccessToken();
-    debugPrint("load ${httpClient.baseUrl}${url.toString()} with $token");
 
     final headers = {
       'Authorization': 'Bearer $token',
@@ -329,13 +304,11 @@ class AuthProvider extends GetConnect {
         url.toString(), headers: headers // Send the body in the request
     );
 
-    debugPrint("Login notifications , ${response.body}");
 
     if (response.hasError) {
       throw Exception('Failed to send fcm token: ${response.statusText}');
     }
 
-    debugPrint("Login successful, received data: ${response.body}");
 
     return (response.body['data']['unread']);
   }
@@ -347,7 +320,6 @@ class AuthProvider extends GetConnect {
 
     final auth = AuthToken();
     final token = await auth.getAccessToken();
-    debugPrint("load ${httpClient.baseUrl}${url.toString()} with $token");
 
     final headers = {
       'Authorization': 'Bearer $token',
@@ -358,25 +330,19 @@ class AuthProvider extends GetConnect {
         url.toString(), null, headers: headers // Send the body in the request
     );
 
-    debugPrint("read notifications , ${response.body}");
 
     if (response.hasError) {
       throw Exception('Failed to send fcm token: ${response.statusText}');
     }
 
-    debugPrint("Login successful, received data: ${response.body}");
 
     return response;
   }
 
-  Future<Response> logoutAccount() async {
+  Future<Response> logoutAccount(String token) async {
     httpClient.baseUrl = Constants.baseUrlAuthApi;
 
     final url = Uri.parse('logout');
-
-    final auth = AuthToken();
-    final token = await auth.getAccessToken();
-    debugPrint("load ${httpClient.baseUrl}${url.toString()} with $token");
 
     final headers = {
       'Authorization': 'Bearer $token',
@@ -387,13 +353,16 @@ class AuthProvider extends GetConnect {
         url.toString(), null, headers: headers // Send the body in the request
     );
 
-    debugPrint("Login notifications , ${response.body}");
+    // A 401 means the bearer token is already invalid, such as after the
+    // server revoked it but the earlier response did not reach the client.
+    // Clearing the stale local session is safe; other errors remain failures.
+    if (response.statusCode == 401) {
+      return response;
+    }
 
     if (response.hasError) {
       throw Exception('Failed to send fcm token: ${response.statusText}');
     }
-
-    debugPrint("Login successful, received data: ${response.body}");
 
     return response;
   }

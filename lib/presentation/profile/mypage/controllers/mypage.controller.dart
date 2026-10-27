@@ -17,8 +17,13 @@ class MypageController extends FanClubConfirmationController {
   final isLogin = false.obs;
   final Rx<UserData?> profileData = Rx<UserData?>(null);
   final isLoading = false.obs;
-  final AuthProvider apiProvider = AuthProvider();
-  final FirebaseAnalytics analytics = FirebaseAnalytics.instance;
+  final isLogoutInProgress = false.obs;
+  Future<void>? _logoutFuture;
+  final AuthProvider apiProvider;
+  late final FirebaseAnalytics analytics = FirebaseAnalytics.instance;
+
+  MypageController({AuthProvider? apiProvider})
+      : apiProvider = apiProvider ?? AuthProvider();
 
 
   @override
@@ -29,25 +34,61 @@ class MypageController extends FanClubConfirmationController {
     getWallpaper();
 
 
-    print("open mypage");
     AnalyticsService.logPageView(Routes.MYPAGE);
   }
 
-  void logout() async {
+  Future<void> logout() {
+    final inFlight = _logoutFuture;
+    if (inFlight != null) return inFlight;
 
-     // await apiProvider.logoutAccount();
+    late final Future<void> pending;
+    pending = _performLogout().whenComplete(() {
+      if (identical(_logoutFuture, pending)) _logoutFuture = null;
+    });
+    _logoutFuture = pending;
+    return pending;
+  }
 
-     final auth = AuthToken();
-     await auth.deleteToken();
+  Future<void> _performLogout() async {
+    isLogoutInProgress.value = true;
+    try {
+      final auth = AuthToken();
+      final snapshot = await auth.readSessionSnapshot();
+      final token = snapshot.token;
+      if (token == null) {
+        if (AuthToken.sessionVersion == snapshot.sessionVersion) {
+          _clearLocalSession();
+        }
+        return;
+      }
 
-     isLogin.value = false;
-     profileData.value = null;
+      await apiProvider.logoutAccount(token);
+      final deleted = await auth.deleteTokenIfMatches(
+        token,
+        snapshot.sessionVersion,
+      );
+      if (deleted &&
+          AuthToken.sessionVersion == snapshot.sessionVersion + 1) {
+        _clearLocalSession();
+      }
+    } finally {
+      isLogoutInProgress.value = false;
+    }
+  }
 
-      onInit();
+  void onAccountDeleted() {
+    _clearLocalSession();
+  }
 
-      final mainController = Get.find<MainController>();
-      mainController.refreshUnreadMessageCount();
+  void handleAccountDeletionResult(Object? result) {
+    if (result == true) onAccountDeleted();
+  }
 
+  void _clearLocalSession() {
+    isLogin.value = false;
+    profileData.value = null;
+    isLoading.value = false;
+    Get.find<MainController>().refreshUnreadMessageCount();
   }
 
   void getToken() async {
@@ -71,14 +112,9 @@ class MypageController extends FanClubConfirmationController {
   }
 
   void getProfile2(String token) async {
-    print("response token = $token");
-    final response = await apiProvider.getProfile(token, (){
-      print("error get profile ");
-    });
+    final response = await apiProvider.getProfile(token, () {});
 
     profileData.value = response;
-
-    print("finish profile ${response}");
     isLoading.value = false;
   }
 
