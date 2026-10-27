@@ -12,6 +12,7 @@ import 'package:koto_blue_sharks/utils/my_shared_pref.dart';
 
 class CaptureProvider extends AuthProvider {
   int posts = 0;
+  int failPosts = 0;
   String? bearer;
   Completer<Response<dynamic>>? holdPost;
   @override
@@ -23,6 +24,7 @@ class CaptureProvider extends AuthProvider {
       dynamic uploadProgress}) async {
     posts++;
     bearer = headers?['Authorization'];
+    if (posts <= failPosts) return Response<T>(statusCode: 503);
     if (holdPost != null) return await holdPost!.future as Response<T>;
     return Response<T>(statusCode: 200);
   }
@@ -45,6 +47,25 @@ void main() {
   });
   tearDown(() {
     messenger.setMockMethodCallHandler(channel, null);
+  });
+
+  test(
+      'registration recovers from a settled HTTP failure using the real sender',
+      () async {
+    messenger.setMockMethodCallHandler(channel, (_) async => 'mock-auth');
+    final provider = CaptureProvider()..failPosts = 1;
+    final worker = NotificationTokenSync(
+      currentSession: () => AuthToken.sessionVersion,
+      retryDelay: Duration.zero,
+      readToken: () async => 'mock-recovery-device',
+      sendToken: (token, session, active) async =>
+          await provider.updateNotificationTokenWhileCurrent(token,
+              expectedSessionVersion: session, isActive: active) !=
+          null,
+    );
+    expect(await worker.sync(), NotificationSyncOutcome.synced);
+    expect(provider.posts, 2);
+    worker.dispose();
   });
 
   test('registration legacy send lease expires during storage read', () async {
