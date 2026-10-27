@@ -57,13 +57,22 @@ void main() {
       await t.pump(const Duration(milliseconds: 16));
       for (final key in ['pass-player', 'pass-mate']) {
         final sprite = find.byKey(ValueKey(key));
-        final image = t.widget<Image>(
-            find.descendant(of: sprite, matching: find.byType(Image)));
-        expect(image.gaplessPlayback, isTrue);
-        final raw = t.renderObject<RenderImage>(
-            find.descendant(of: sprite, matching: find.byType(RawImage)));
-        expect(raw.image, isNotNull,
-            reason: '$key must never disappear on a facing/frame change');
+        final visual = t.widget<PassAndRunCharacterVisual>(sprite);
+        final body = find.descendant(
+            of: sprite, matching: find.byKey(const Key('pass-body-sprite')));
+        final patch = find.descendant(
+            of: sprite,
+            matching: find.byKey(const Key('pass-held-contact-patch')));
+        expect(body, findsOneWidget);
+        expect(patch, visual.holding ? findsOneWidget : findsNothing);
+        for (final layer in [body, if (visual.holding) patch]) {
+          final image = t.widget<Image>(layer);
+          expect(image.gaplessPlayback, isTrue);
+          final raw = t.renderObject<RenderImage>(
+              find.descendant(of: layer, matching: find.byType(RawImage)));
+          expect(raw.image, isNotNull,
+              reason: '$key body/contact must survive facing/frame changes');
+        }
       }
     }
     await t.pumpWidget(const SizedBox());
