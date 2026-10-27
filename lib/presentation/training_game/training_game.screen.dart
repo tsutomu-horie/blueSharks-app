@@ -29,9 +29,12 @@ import 'training_screen_transitions.dart';
 class TrainingGameScreen extends GetView<TrainingGameController> {
   /// 育成ゲーム画面を作成します。
   const TrainingGameScreen(
-      {super.key, this.evolutionSoundFactory = createTrainingEvolutionSound});
+      {super.key,
+      this.evolutionSoundFactory = createTrainingEvolutionSound,
+      this.homeTapSoundFactory = createTrainingHomeTapSound});
 
   final TrainingGameSoundService Function() evolutionSoundFactory;
+  final TrainingGameSoundService Function() homeTapSoundFactory;
 
   String? get _bodyKey => SametarohAssets.bodyKeyForBranch(controller.branch);
 
@@ -894,6 +897,9 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
           right: 0,
           bottom: 126.h,
           child: TrainingHomeRoamingCharacter(
+            soundFactory: homeTapSoundFactory,
+            reactToTap:
+                controller.stageIndex.value >= 1 && !controller.ended.value,
             enabled: canTrain,
             width: 220.w,
             height: 184.h,

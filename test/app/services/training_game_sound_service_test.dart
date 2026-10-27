@@ -46,6 +46,9 @@ void main() {
         TrainingGameSoundEffect.tacklePerfect,
         TrainingGameSoundEffect.tackleMiss,
         TrainingGameSoundEffect.passThrown,
+        TrainingGameSoundEffect.homeTapSoft,
+        TrainingGameSoundEffect.homeTapTouch,
+        TrainingGameSoundEffect.homeTapHappy,
       ]);
       expect(
         TrainingGameSoundEffect.values.map((effect) => effect.assetPath),
@@ -63,6 +66,9 @@ void main() {
           'assets/audio/training_game/tackle-perfect.m4a',
           'assets/audio/training_game/tackle-miss.m4a',
           'assets/audio/training_game/pass-throw.m4a',
+          'assets/audio/training_game/home-tap-soft.m4a',
+          'assets/audio/training_game/home-tap-touch.m4a',
+          'assets/audio/training_game/home-tap-happy.m4a',
         ],
       );
     });
