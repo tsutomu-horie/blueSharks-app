@@ -104,6 +104,52 @@ class _TackleGameScreenState extends State<TackleGameScreen>
   final _attempts = <TackleAttempt>[];
   final _reactionWatch = Stopwatch();
   final _timers = <Timer>[];
+  final _fieldPointers = <int>{};
+  final _bodyPointers = <int>{};
+  bool _advanceTapEligible = false;
+
+  void _recordBodyPointerDown(PointerDownEvent event) {
+    _bodyPointers.add(event.pointer);
+    // 全進行経路で、結果表示後の新しい単指タップだけを使います。
+    _advanceTapEligible = _bodyPointers.length == 1 &&
+        !_isPaused &&
+        _phase == _TacklePhase.attemptResult;
+  }
+
+  void _recordBodyPointerUp(PointerUpEvent event) {
+    _bodyPointers.remove(event.pointer);
+  }
+
+  void _recordBodyPointerCancel(PointerCancelEvent event) {
+    _bodyPointers.remove(event.pointer);
+    _advanceTapEligible = false;
+  }
+
+  bool _fieldTapCanAdvance = false;
+
+  void _handleFieldPointerDown(
+    PointerDownEvent event,
+    TackleDirection direction,
+  ) {
+    _fieldPointers.add(event.pointer);
+    if (_fieldPointers.length != 1) {
+      _fieldTapCanAdvance = false;
+      return;
+    }
+    // 入力に使った指の離指で、結果画面から次セットへ進ませません。
+    _fieldTapCanAdvance = !_isPaused && _phase == _TacklePhase.attemptResult;
+    _handleDirection(direction);
+  }
+
+  void _handleFieldPointerUp(PointerUpEvent event) {
+    _fieldPointers.remove(event.pointer);
+  }
+
+  void _handleFieldPointerCancel(PointerCancelEvent event) {
+    _fieldPointers.remove(event.pointer);
+    _fieldTapCanAdvance = false;
+  }
+
   _TacklePhase _phase = _TacklePhase.waiting;
   Alignment _playerAlignment = const Alignment(-.82, 0);
   Duration _playerDuration = Duration.zero;
@@ -187,6 +233,7 @@ class _TackleGameScreenState extends State<TackleGameScreen>
     _failureAt = null;
     _failureFrom = null;
     _cancelTimers();
+    _fieldTapCanAdvance = false;
     _phaseStartedAt = TrainingGameClock.now();
     final nextSetNumber =
         (_attempts.length + 1).clamp(1, _settings.setCount).toInt();
@@ -323,6 +370,7 @@ class _TackleGameScreenState extends State<TackleGameScreen>
       return;
     }
     _cancelTimers();
+    _fieldTapCanAdvance = false;
     _reactionWatch.stop();
     final result =
         attempt ?? TackleAttempt(isCorrect: false, settings: _settings);
@@ -460,11 +508,15 @@ class _TackleGameScreenState extends State<TackleGameScreen>
 
   /// 次セット、または全セット後の総合結果へ進みます。
   void _advanceAfterAttempt() {
-    if (_phase != _TacklePhase.attemptResult || !_canAdvanceAfterAttempt) {
+    if (_phase != _TacklePhase.attemptResult ||
+        !_canAdvanceAfterAttempt ||
+        _fieldPointers.isNotEmpty ||
+        !_advanceTapEligible) {
       return;
     }
     // 同じタップや重複したコールバックで、2セット進まないようにします。
     _canAdvanceAfterAttempt = false;
+    _advanceTapEligible = false;
     if (_attempts.length >= _settings.setCount) {
       setState(() => _phase = _TacklePhase.gameResult);
       _playSound(TrainingGameSoundEffect.resultDisplayed);
@@ -572,23 +624,29 @@ class _TackleGameScreenState extends State<TackleGameScreen>
             ),
         ],
       ),
-      body: SafeArea(
-        child: GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          // 判定表示後は、下部パネル以外を含む画面全体のタップで次セットへ進めます。
-          onTap: _phase == _TacklePhase.attemptResult
-              ? _advanceAfterAttempt
-              : null,
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              children: [
-                _buildHeader(),
-                const SizedBox(height: 12),
-                Expanded(child: _buildField()),
-                const SizedBox(height: 12),
-                _buildBottomPanel(),
-              ],
+      body: Listener(
+        behavior: HitTestBehavior.opaque,
+        onPointerDown: _recordBodyPointerDown,
+        onPointerUp: _recordBodyPointerUp,
+        onPointerCancel: _recordBodyPointerCancel,
+        child: SafeArea(
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            // 判定表示後は、下部パネル以外を含む画面全体のタップで次セットへ進めます。
+            onTap: _phase == _TacklePhase.attemptResult
+                ? _advanceAfterAttempt
+                : null,
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                children: [
+                  _buildHeader(),
+                  const SizedBox(height: 12),
+                  Expanded(child: _buildField()),
+                  const SizedBox(height: 12),
+                  _buildBottomPanel(),
+                ],
+              ),
             ),
           ),
         ),
@@ -630,27 +688,43 @@ class _TackleGameScreenState extends State<TackleGameScreen>
             child: Column(
               children: [
                 Expanded(
-                  child: GestureDetector(
+                  child: Listener(
                     behavior: HitTestBehavior.opaque,
-                    onTap: () => _handleFieldTap(TackleDirection.up),
-                    child: const Align(
-                      alignment: Alignment.topLeft,
-                      child: Padding(
-                        padding: EdgeInsets.all(12),
-                        child: Text('上をタップ ▲'),
+                    onPointerDown: (event) =>
+                        _handleFieldPointerDown(event, TackleDirection.up),
+                    onPointerUp: _handleFieldPointerUp,
+                    onPointerCancel: _handleFieldPointerCancel,
+                    child: GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onTapCancel: () => _fieldTapCanAdvance = false,
+                      onTap: _handleFieldTap,
+                      child: const Align(
+                        alignment: Alignment.topLeft,
+                        child: Padding(
+                          padding: EdgeInsets.all(12),
+                          child: Text('上をタップ ▲'),
+                        ),
                       ),
                     ),
                   ),
                 ),
                 Expanded(
-                  child: GestureDetector(
+                  child: Listener(
                     behavior: HitTestBehavior.opaque,
-                    onTap: () => _handleFieldTap(TackleDirection.down),
-                    child: const Align(
-                      alignment: Alignment.bottomLeft,
-                      child: Padding(
-                        padding: EdgeInsets.all(12),
-                        child: Text('下をタップ ▼'),
+                    onPointerDown: (event) =>
+                        _handleFieldPointerDown(event, TackleDirection.down),
+                    onPointerUp: _handleFieldPointerUp,
+                    onPointerCancel: _handleFieldPointerCancel,
+                    child: GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onTapCancel: () => _fieldTapCanAdvance = false,
+                      onTap: _handleFieldTap,
+                      child: const Align(
+                        alignment: Alignment.bottomLeft,
+                        child: Padding(
+                          padding: EdgeInsets.all(12),
+                          child: Text('下をタップ ▼'),
+                        ),
                       ),
                     ),
                   ),
@@ -711,13 +785,11 @@ class _TackleGameScreenState extends State<TackleGameScreen>
     );
   }
 
-  /// 入力中は上下判定、判定表示中は次セットへの進行としてフィールドタップを処理します。
-  void _handleFieldTap(TackleDirection direction) {
-    if (_phase == _TacklePhase.attemptResult) {
-      _advanceAfterAttempt();
-      return;
-    }
-    _handleDirection(direction);
+  /// 判定表示後に新しく始まったタップだけで、次セットへ進みます。
+  void _handleFieldTap() {
+    if (!_fieldTapCanAdvance) return;
+    _fieldTapCanAdvance = false;
+    _advanceAfterAttempt();
   }
 
   /// タックル成立または相手の突破を、決着フェーズとしてフィールド上に表示します。
