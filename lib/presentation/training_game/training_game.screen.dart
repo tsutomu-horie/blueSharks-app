@@ -28,7 +28,10 @@ import 'training_screen_transitions.dart';
 /// 参照HTMLのスマートフォン画面部分だけをアプリ用に再現します。
 class TrainingGameScreen extends GetView<TrainingGameController> {
   /// 育成ゲーム画面を作成します。
-  const TrainingGameScreen({super.key});
+  const TrainingGameScreen(
+      {super.key, this.evolutionSoundFactory = createTrainingEvolutionSound});
+
+  final TrainingGameSoundService Function() evolutionSoundFactory;
 
   String? get _bodyKey => SametarohAssets.bodyKeyForBranch(controller.branch);
 
@@ -265,7 +268,10 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
                 key: const ValueKey('training-evolution-2'),
                 beforeFrame: SametarohAssets.newbornFrame,
                 afterFrame: currentBodyFrame,
-                beforeScale: 0.62,
+                beforeScale: 1,
+                beforeSize: Size(128.w, 184.h),
+                afterSize: Size(128.w, 184.h),
+                soundFactory: evolutionSoundFactory,
                 afterVisual: _buildEvolutionHomeFirstFrame(_bodyKey),
               ),
             3 => TrainingEvolutionReveal(
@@ -273,7 +279,10 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
                 beforeFrame: SametarohAssets.normalFrames.first,
                 afterFrame: currentBodyFrame,
                 // 分岐未確定時も通常形を保ち、成長の差はサイズで見せます。
-                beforeScale: 0.7,
+                beforeScale: 1,
+                beforeSize: Size(128.w, 184.h),
+                afterSize: Size(128.w, 184.h),
+                soundFactory: evolutionSoundFactory,
                 afterVisual: _buildEvolutionHomeFirstFrame(_bodyKey),
               ),
             _ => _buildSuppliedStatic(currentBodyFrame),
@@ -309,7 +318,13 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
       afterVisual: confirmedFirstTeamFrame == null
           ? _buildEvolutionHomeFirstFrame(_bodyKey)
           : _buildPositionStatic(controller.position),
-      beforeScale: confirmedFirstTeamFrame == null ? 0.7 : 0.82,
+      beforeScale: 1,
+      beforeSize: Size(128.w, 184.h),
+      afterSize: confirmedFirstTeamFrame == null
+          ? Size(128.w, 184.h)
+          : Size(250.w, 250.h),
+      firstTeam: true,
+      soundFactory: evolutionSoundFactory,
     );
   }
 
@@ -643,7 +658,21 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
     Widget? visualWidget,
     bool guardRapidTap = false,
   }) {
+    final evolution =
+        visualWidget is TrainingEvolutionReveal ? visualWidget : null;
+    final pageDuration = evolution == null
+        ? const Duration(milliseconds: 900)
+        : TrainingEvolutionReveal.pageDuration(evolution.firstTeam);
+    final seconds = pageDuration.inMilliseconds / 1000;
+    final hold = evolution?.firstTeam == true ? .3 : 0.0;
     return TrainingEndingEntrance(
+        duration: pageDuration,
+        soundFactory: evolution?.soundFactory,
+        soundEffect: evolution == null
+            ? null
+            : evolution.firstTeam
+                ? TrainingGameSoundEffect.evolutionFirstTeam
+                : TrainingGameSoundEffect.evolutionNormal,
         key: ValueKey(
             'ending-entrance-${controller.evolutionStage.value}-${controller.endingStep.value}-$title'),
         builder: (context, animation) => Padding(
@@ -654,7 +683,8 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
                     alignment: Alignment.centerLeft,
                     child: TrainingEndingItem(
                         animation: animation,
-                        start: .2,
+                        start: evolution == null ? .2 : (1.75 + hold) / seconds,
+                        span: evolution == null ? .3 : .3 / seconds,
                         child: Text(title,
                             style: TextStyle(
                                 fontSize: 22.sp, fontWeight: FontWeight.w700))),
@@ -668,21 +698,23 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
                         color: const Color(0xffe2e5e8),
                         borderRadius: BorderRadius.circular(12.r),
                       ),
-                      child: TrainingEndingItem(
-                          animation: animation,
-                          start: 0,
-                          child: visualWidget ??
-                              Text(visual,
-                                  textAlign: TextAlign.center,
-                                  style:
-                                      TextStyle(fontSize: 30.sp, height: 1.5))),
+                      child: evolution?.drivenBy(animation, pageDuration) ??
+                          TrainingEndingItem(
+                              animation: animation,
+                              start: 0,
+                              child: visualWidget ??
+                                  Text(visual,
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(
+                                          fontSize: 30.sp, height: 1.5))),
                     ),
                   ),
                   if (message != null) ...[
                     SizedBox(height: 16.h),
                     TrainingEndingItem(
                         animation: animation,
-                        start: .45,
+                        start: evolution == null ? .45 : (1.9 + hold) / seconds,
+                        span: evolution == null ? .3 : .3 / seconds,
                         child: Text(message,
                             textAlign: TextAlign.center,
                             style: TextStyle(
@@ -694,7 +726,8 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
                     height: 52.h,
                     child: TrainingEndingItem(
                         animation: animation,
-                        start: .7,
+                        start: evolution == null ? .7 : (2.1 + hold) / seconds,
+                        span: evolution == null ? .3 : .3 / seconds,
                         child: guardRapidTap
                             ? _EndingStepAdvanceButton(
                                 label: buttonLabel,

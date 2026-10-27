@@ -33,3 +33,7 @@ class _RecordingEffectPlayer implements TrainingGameEffectPlayer {
   @override
   Future<void> dispose() async {}
 }
+
+/// Widget tests render evolution without initializing a native audio device.
+TrainingGameSoundService silentTrainingGameSound() =>
+    RecordingTrainingGameSound().service;

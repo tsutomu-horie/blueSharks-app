@@ -1,3 +1,4 @@
+import 'recording_training_game_sound.dart';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -35,7 +36,9 @@ class _EvolutionFixtureController extends TrainingGameController {
 
 Widget _host() => ScreenUtilInit(
       designSize: const Size(375, 812),
-      builder: (_, __) => const MaterialApp(home: TrainingGameScreen()),
+      builder: (_, __) => const MaterialApp(
+          home: TrainingGameScreen(
+              evolutionSoundFactory: silentTrainingGameSound)),
     );
 
 Future<void> _preload(
@@ -108,6 +111,7 @@ void main() {
     final after = SametarohAssets.positionFrameFor('ウイング')!;
 
     await tester.pumpWidget(_host());
+    await tester.pump();
     await _preload(tester, [before, after]);
 
     expect(find.text('進化'), findsOneWidget);
@@ -122,15 +126,18 @@ void main() {
     expect(_opacity(tester, after), 0);
 
     await tester.pump(const Duration(milliseconds: 650));
-    expect(_opacity(tester, before), lessThan(1));
-    expect(_opacity(tester, after), greaterThan(0));
+    expect(_opacity(tester, before), 1);
+    expect(_opacity(tester, after), 0);
+    await tester.pump(const Duration(milliseconds: 450));
+    expect(_opacity(tester, before), 0);
+    expect(_opacity(tester, after), 1);
     await tester.pump(const Duration(seconds: 2));
     expect(_opacity(tester, before), 0);
     expect(_opacity(tester, after), 1);
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('通常ルートの2→3は進化後画像の拡大が遅れず始まる', (tester) async {
+  testWidgets('通常ルートの2→3は集光後に進化後画像が現れる', (tester) async {
     // stageIndex=3 / evolutionStage=3 is the controller state after the
     // normal server transition from stage 2; do not pre-cache the next-body
     // image so this exercises the ordinary first-entry route.
@@ -143,6 +150,7 @@ void main() {
     final after = SametarohAssets.idleFramesForBodyKey('pr').first;
 
     await tester.pumpWidget(_host());
+    await tester.pump();
     expect(
       find.byKey(const ValueKey('training-evolution-3')),
       findsOneWidget,
@@ -153,7 +161,7 @@ void main() {
     expect(reveal.beforeFrame.asset, before.asset);
     expect(reveal.afterFrame.asset, after.asset);
 
-    await tester.pump(const Duration(milliseconds: 700));
+    await tester.pump(const Duration(milliseconds: 1100));
     final scale = tester
         .widget<Transform>(
           find.byKey(const ValueKey('training-evolution-after-scale')),
@@ -189,6 +197,7 @@ void main() {
             : SametarohAssets.normalFrames.first;
 
         await tester.pumpWidget(_host());
+        await tester.pump();
         await _preload(tester, [
           before,
           SametarohAssets.idleFramesForBodyKey(bodyKey).first,
@@ -223,8 +232,9 @@ void main() {
             .transform
             .entry(0, 0);
         measurements.add(_screenGeometryRow('1250ms', at1250, scaleAt1250));
-        expect(scaleAt1250, greaterThanOrEqualTo(scaleAt1200));
-        expect(scaleAt1250, lessThanOrEqualTo(1));
+        expect(scaleAt1250, lessThanOrEqualTo(scaleAt1200));
+        expect(scaleAt1250, greaterThanOrEqualTo(1));
+        expect(scaleAt1250, lessThanOrEqualTo(1.045));
         expect(at1250.width / at1200.width, lessThanOrEqualTo(1.02));
         expect(at1250.height / at1200.height, lessThanOrEqualTo(1.02));
 
@@ -254,6 +264,8 @@ void main() {
         expect(completedRect.height, closeTo(lastRevealRect.height, 0.01));
         expect(completedRect.left, closeTo(lastRevealRect.left, 0.01));
         expect(completedRect.top, closeTo(lastRevealRect.top, 0.01));
+
+        await tester.pump(const Duration(milliseconds: 1000));
 
         await tester.tap(find.text('次へ'));
         await tester.pump();
@@ -293,6 +305,7 @@ void main() {
     final after = SametarohAssets.positionFrameFor('ウイング')!;
 
     await tester.pumpWidget(_host());
+    await tester.pump();
     await _preload(tester, [before, after]);
 
     expect(find.text('進化'), findsOneWidget);
@@ -316,8 +329,9 @@ void main() {
         )
         .transform
         .entry(0, 0);
-    expect(scaleAt1250, greaterThanOrEqualTo(scaleAt1200));
-    expect(scaleAt1250, lessThanOrEqualTo(1));
+    expect(scaleAt1250, lessThanOrEqualTo(scaleAt1200));
+    expect(scaleAt1250, greaterThanOrEqualTo(1));
+    expect(scaleAt1250, lessThanOrEqualTo(1.045));
     expect(at1250.width / at1200.width, lessThanOrEqualTo(1.02));
     expect(at1250.height / at1200.height, lessThanOrEqualTo(1.02));
 
@@ -342,6 +356,8 @@ void main() {
     expect(completedRect.height, closeTo(lastRevealRect.height, 0.01));
     expect(completedRect.left, closeTo(lastRevealRect.left, 0.01));
     expect(completedRect.top, closeTo(lastRevealRect.top, 0.01));
+
+    await tester.pump(const Duration(milliseconds: 1000));
 
     await tester.tap(find.text('次へ'));
     await tester.pump();
@@ -390,6 +406,7 @@ void main() {
         Get.put<TrainingGameController>(controller);
         final after = SametarohAssets.positionFrameFor(position)!;
         await tester.pumpWidget(_host());
+        await tester.pump();
         await _preload(tester, [after]);
         await tester.pump(const Duration(milliseconds: 1699));
         final target = _sametarohFrameImage(after.asset);
@@ -404,6 +421,7 @@ void main() {
         ]) {
           expect(delta.abs(), lessThanOrEqualTo(1));
         }
+        await tester.pump(const Duration(milliseconds: 1000));
         await tester.tap(find.text('次へ'));
         await tester.pump();
         await tester.pump(const Duration(milliseconds: 900));
@@ -429,10 +447,12 @@ void main() {
     final after = SametarohAssets.positionFrameFor('ウイング')!;
 
     await tester.pumpWidget(_host());
+    await tester.pump();
     await _preload(tester, [before, after]);
     await tester.pump(const Duration(seconds: 2));
 
     expect(find.byType(TrainingEvolutionReveal), findsOneWidget);
+    await tester.pump(const Duration(milliseconds: 1000));
     await tester.tap(find.text('次へ'));
     // 同一frame内の連打で次の終了画面まで飛ばさない。
     await tester.tap(find.text('次へ'));
@@ -456,6 +476,7 @@ void main() {
     final after = SametarohAssets.positionFrameFor('ウイング')!;
 
     await tester.pumpWidget(_host());
+    await tester.pump();
     await _preload(tester, [before, after]);
 
     expect(find.text('ついに、一軍の舞台へ！'), findsOneWidget);
@@ -485,6 +506,7 @@ void main() {
       Get.put<TrainingGameController>(controller);
 
       await tester.pumpWidget(_host());
+      await tester.pump();
       await _preload(
         tester,
         [SametarohAssets.idleFramesForBodyKey('pr').first],
@@ -507,6 +529,7 @@ void main() {
     Get.put<TrainingGameController>(controller);
 
     await tester.pumpWidget(_host());
+    await tester.pump();
     await _preload(
       tester,
       [SametarohAssets.idleFramesForBodyKey('pr').first],
@@ -530,6 +553,7 @@ void main() {
     final after = SametarohAssets.positionFrameFor('ウイング')!;
 
     await tester.pumpWidget(_host());
+    await tester.pump();
     await _preload(tester, [before, after]);
 
     expect(find.text('進化'), findsOneWidget);
@@ -545,6 +569,8 @@ void main() {
     expect(_opacity(tester, before), 0);
     expect(_opacity(tester, after), 1);
 
+    await tester.pump(const Duration(milliseconds: 1000));
+
     await tester.tap(find.text('次へ'));
     await tester.pump();
     expect(controller.endingStep.value, 1);
@@ -557,6 +583,7 @@ void main() {
     expect(find.text('ポジション確定'), findsOneWidget);
 
     await tester.pump(const Duration(milliseconds: 550));
+    await tester.pump(const Duration(milliseconds: 1000));
     await tester.tap(find.text('次へ'));
     await tester.pump();
     expect(controller.endingStep.value, 2);
@@ -573,6 +600,7 @@ void main() {
     Get.put<TrainingGameController>(controller);
 
     await tester.pumpWidget(_host());
+    await tester.pump();
     await _preload(
       tester,
       [

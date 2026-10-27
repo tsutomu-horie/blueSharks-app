@@ -109,6 +109,9 @@ void main() {
           beforeFrame: sequence.before,
           afterFrame: sequence.after,
           afterVisual: afterVisual,
+          afterSize: afterVisual is SametarohFrameImage
+              ? Size(afterVisual.width, afterVisual.height)
+              : const Size(128, 184),
         )),
       );
       await tester.pump();

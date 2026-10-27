@@ -82,6 +82,7 @@ void main() {
           beforeFrame: SametarohAssets.normalFrames.first,
           afterFrame: SametarohAssets.idleFramesForBodyKey(body).first,
           afterVisual: _homeTarget(body)(_targetKey),
+          afterSize: const Size(128, 184),
         ));
     await tester.pumpWidget(reveal('pr'));
     await tester.pump(const Duration(milliseconds: 900));
@@ -119,6 +120,7 @@ void main() {
       beforeFrame: SametarohAssets.normalFrames.first,
       afterFrame: SametarohAssets.idleFramesForBodyKey('pr').first,
       afterVisual: _homeTarget('pr')(_targetKey),
+      afterSize: const Size(128, 184),
     )));
     await tester.pump(const Duration(milliseconds: 900));
     final before = tester.getRect(find.byKey(_targetKey));
@@ -144,6 +146,7 @@ void main() {
         beforeFrame: SametarohAssets.normalFrames.first,
         afterFrame: SametarohAssets.idleFramesForBodyKey(body).first,
         afterVisual: _homeTarget(body)(_targetKey),
+        afterSize: const Size(128, 184),
       )));
       await tester.pump(const Duration(milliseconds: 500));
       expect(find.byType(TrainingEvolutionReveal), findsOneWidget);
@@ -248,6 +251,9 @@ void main() {
             beforeFrame: scenario.before,
             afterFrame: scenario.after,
             afterVisual: afterVisual,
+            afterSize: afterVisual is SametarohFrameImage
+                ? Size(afterVisual.width, afterVisual.height)
+                : const Size(128, 184),
           ),
         ),
       );

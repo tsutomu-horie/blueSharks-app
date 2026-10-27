@@ -23,11 +23,23 @@ enum TrainingGameSoundEffect {
 
   /// お世話でパラメーターが回復した時。
   parameterRecovered,
+
+  /// 承認済みの進化プレビューと同じ溜め音・お披露目音です。
+  evolutionNormal,
+  evolutionFirstTeam,
 }
 
 extension TrainingGameSoundEffectAsset on TrainingGameSoundEffect {
   /// 効果音ラボから取得したアプリ内素材のパスです。
   String get assetPath => switch (this) {
+        // 効果音ラボ: battle/magic-statusup1（頭0.7秒）を0.45秒から、
+        // button/decision37またはdecision21を1.05秒から合成した承認済み音源。
+        // https://soundeffect-lab.info/sound/battle/
+        // https://soundeffect-lab.info/sound/button/
+        TrainingGameSoundEffect.evolutionNormal =>
+          'assets/audio/training_game/evolution-normal.m4a',
+        TrainingGameSoundEffect.evolutionFirstTeam =>
+          'assets/audio/training_game/evolution-first-team.m4a',
         // 出典: https://soundeffect-lab.info/sound/button/ （ゲージ回復3）
         TrainingGameSoundEffect.parameterRecovered =>
           'assets/audio/training_game/gauge-recovery3.mp3',
@@ -49,7 +61,9 @@ class TrainingGameSoundService {
   TrainingGameSoundService({
     TrainingGameEffectPlayer Function(String assetPath)? createPlayer,
     Future<void> Function()? configureAudioSession,
-  })  : _createPlayer = createPlayer ?? _JustAudioEffectPlayer.new,
+    double volume = .72,
+  })  : _createPlayer = createPlayer ??
+            ((assetPath) => _JustAudioEffectPlayer(assetPath, volume)),
         _configureAudioSession =
             configureAudioSession ?? _configureMiniGameAudioSession;
 
@@ -58,14 +72,22 @@ class TrainingGameSoundService {
   final _players = <TrainingGameSoundEffect, TrainingGameEffectPlayer>{};
   Future<void>? _audioSessionConfiguration;
   bool _disposed = false;
+  bool _paused = false;
+  final _pendingEffects = <TrainingGameSoundEffect>{};
+  final _inFlightEffects = <TrainingGameSoundEffect>{};
+  final _playFinished = <TrainingGameSoundEffect, Completer<void>>{};
 
   /// 指定された承認済み効果音を再生します。
   /// 音声再生の失敗でゲーム操作を止めないよう、プレイヤーエラーを抑止します。
   Future<void> play(TrainingGameSoundEffect effect) async {
-    if (_disposed) return;
+    if (_disposed || !_inFlightEffects.add(effect)) return;
+    _pendingEffects.add(effect);
+    final finished = Completer<void>();
+    _playFinished[effect] = finished;
     try {
       await _ensureAudioSessionConfigured();
-      if (_disposed) return;
+      if (_disposed || _paused) return;
+      _pendingEffects.remove(effect);
       final player = _players.putIfAbsent(
         effect,
         () => _createPlayer(effect.assetPath),
@@ -73,6 +95,26 @@ class TrainingGameSoundService {
       await player.play();
     } on Object {
       // 音声デバイスやプラットフォームプラグインの状態はゲーム進行に影響させません。
+      _pendingEffects.remove(effect);
+    } finally {
+      _inFlightEffects.remove(effect);
+      _playFinished.remove(effect);
+      finished.complete();
+    }
+  }
+
+  /// 読み込み完了後に映像と同時に再生できるよう事前準備します。
+  Future<bool> prepare(TrainingGameSoundEffect effect) async {
+    if (_disposed) return false;
+    try {
+      await _ensureAudioSessionConfigured();
+      if (_disposed) return false;
+      final player =
+          _players.putIfAbsent(effect, () => _createPlayer(effect.assetPath));
+      if (player is TrainingGamePreparableEffectPlayer) await player.prepare();
+      return !_disposed;
+    } on Object {
+      return false;
     }
   }
 
@@ -95,11 +137,42 @@ class TrainingGameSoundService {
     }
   }
 
+  Future<void> pause() async {
+    _paused = true;
+    for (final player in _players.values.toList()) {
+      if (player is TrainingGameResumableEffectPlayer) {
+        try {
+          await player.pause();
+        } on Object {/* 音声失敗で進行を止めません。 */}
+      }
+    }
+  }
+
+  Future<void> resume() async {
+    if (_disposed) return;
+    _paused = false;
+    for (final entry in _players.entries.toList()) {
+      final starting = _playFinished[entry.key];
+      if (starting != null) await starting.future;
+      if (_disposed || _paused) return;
+      final player = entry.value;
+      if (player is TrainingGameResumableEffectPlayer) {
+        try {
+          await player.resume();
+        } on Object {/* 音声失敗で進行を止めません。 */}
+      }
+    }
+    for (final effect in _pendingEffects.toList()) {
+      if (!_inFlightEffects.contains(effect)) unawaited(play(effect));
+    }
+  }
+
   /// テストなど、サービスの所有者が明示的に閉じる場合にプレイヤーを解放します。
   Future<void> dispose() async {
     if (_disposed) return;
     _disposed = true;
-    await Future.wait(_players.values.map((player) => player.dispose()));
+    await Future.wait(_players.values
+        .map((player) => player.dispose().catchError((Object _) {})));
     _players.clear();
   }
 }
@@ -113,24 +186,72 @@ abstract interface class TrainingGameEffectPlayer {
   Future<void> dispose();
 }
 
-class _JustAudioEffectPlayer implements TrainingGameEffectPlayer {
-  _JustAudioEffectPlayer(String assetPath) {
+abstract interface class TrainingGameResumableEffectPlayer
+    implements TrainingGameEffectPlayer {
+  Future<void> pause();
+  Future<void> resume();
+}
+
+abstract interface class TrainingGamePreparableEffectPlayer
+    implements TrainingGameEffectPlayer {
+  Future<void> prepare();
+}
+
+class _JustAudioEffectPlayer
+    implements
+        TrainingGameResumableEffectPlayer,
+        TrainingGamePreparableEffectPlayer {
+  _JustAudioEffectPlayer(String assetPath, double volume) {
     _assetLoaded =
-        _player.setAsset(assetPath).then((_) => _player.setVolume(.72));
+        _player.setAsset(assetPath).then((_) => _player.setVolume(volume));
   }
 
   final AudioPlayer _player = AudioPlayer();
   late final Future<void> _assetLoaded;
+  bool _paused = false;
+  bool _disposed = false;
+  bool _starting = false;
+
+  @override
+  Future<void> prepare() => _assetLoaded;
 
   @override
   Future<void> play() async {
+    _starting = true;
     await _assetLoaded;
+    if (_disposed) return;
     await _player.seek(Duration.zero);
-    unawaited(_player.play().catchError((Object _) {}));
+    _starting = false;
+    if (!_paused && !_disposed) {
+      unawaited(_player.play().catchError((Object _) {}));
+    }
   }
 
   @override
-  Future<void> dispose() => _player.dispose();
+  Future<void> pause() async {
+    _paused = true;
+    await _assetLoaded;
+    if (!_disposed) await _player.pause();
+  }
+
+  @override
+  Future<void> resume() async {
+    _paused = false;
+    await _assetLoaded;
+    if (!_paused &&
+        !_disposed &&
+        !_starting &&
+        !_player.playing &&
+        _player.processingState != ProcessingState.completed) {
+      unawaited(_player.play().catchError((Object _) {}));
+    }
+  }
+
+  @override
+  Future<void> dispose() async {
+    _disposed = true;
+    await _player.dispose();
+  }
 }
 
 Future<void> _configureMiniGameAudioSession() async {
@@ -139,3 +260,7 @@ Future<void> _configureMiniGameAudioSession() async {
   final session = await AudioSession.instance;
   await session.configure(trainingGameAudioSessionConfiguration);
 }
+
+/// 合成済みの進化音は承認プレビューの音量をそのまま使います。
+TrainingGameSoundService createTrainingEvolutionSound() =>
+    TrainingGameSoundService(volume: 1);
