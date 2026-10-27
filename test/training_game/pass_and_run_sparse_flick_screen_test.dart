@@ -6,9 +6,12 @@ import 'recording_training_game_sound.dart';
 
 void main() {
   for (final c in [
-    ('outside-move', 1, 80.0, 16, 1, false, false, false),
-    ('field-outside-release', 1, 80.0, 16, 1, false, false, false),
-    ('outside-release', 1, 80.0, 16, 1, false, false, false),
+    ('outside-move', 1, 80.0, 16, 1, false, false, true),
+    ('field-outside-release', 1, 80.0, 16, 1, false, false, true),
+    ('outside-release', 1, 80.0, 16, 1, false, false, true),
+    ('outside-start', 1, 80.0, 16, 1, false, false, false),
+    ('outside-short', 1, 20.0, 16, 1, false, false, false),
+    ('outside-return', 2, 120.0, 32, 1, false, false, true),
     ('outside-second', 1, 80.0, 16, 1, false, true, false),
     ('outside-second-first', 1, 80.0, 16, 1, false, true, false),
     ('waiting-overlay', 1, 80.0, 16, 1, false, false, false),
@@ -66,7 +69,13 @@ void main() {
       final field = t.getRect(find.byKey(const Key('pass-field')));
       final start = c.$1 == 'outside-move'
           ? Offset(field.right - 40, field.center.dy)
-          : field.center;
+          : c.$1 == 'outside-short'
+              ? Offset(field.right - 10, field.center.dy)
+              : c.$1 == 'outside-return'
+                  ? Offset(field.right - 60, field.center.dy)
+                  : c.$1 == 'outside-start'
+                      ? Offset(field.center.dx, field.top - 10)
+                      : field.center;
       final g = await t.createGesture(pointer: 1);
       final second = await t.createGesture(pointer: 2);
       final secondPosition = c.$1.startsWith('outside-second')
@@ -82,7 +91,14 @@ void main() {
       }
       for (var i = 1; i <= c.$2; i++) {
         await g.moveTo(
-            start + Offset(c.$1 == 'stationary' ? c.$3 : c.$3 * i / c.$2, 0),
+            start +
+                Offset(
+                    c.$1 == 'outside-return'
+                        ? (i == 1 ? 120 : 50)
+                        : c.$1 == 'stationary'
+                            ? c.$3
+                            : c.$3 * i / c.$2,
+                    0),
             timeStamp: Duration(
                 microseconds: c.$1 == 'raw-three-sdk-gap'
                     ? [1000, 50000, 99000][i - 1]
