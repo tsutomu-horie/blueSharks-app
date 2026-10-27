@@ -22,7 +22,7 @@ class WordPressScreen extends GetView<WordPressController> {
       backgroundColor: _pageBackground,
       body: LayoutBuilder(
         builder: (context, constraints) {
-          final pageWidth = math.max(constraints.maxWidth, 1280.0);
+          final pageWidth = math.max(constraints.maxWidth, 600.0);
           return SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: SizedBox(
@@ -57,42 +57,68 @@ class _WordPressContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Container(
-          height: 64,
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            border: Border(bottom: BorderSide(color: _border)),
-          ),
-          padding: const EdgeInsets.symmetric(horizontal: 34),
-          child: Row(
-            children: [
-              const Text(
-                'WordPress / ホームゲーム記事（外部管理）',
-                style: TextStyle(
-                  color: _text,
-                  fontSize: 24,
-                  fontWeight: FontWeight.w800,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isCompact = constraints.maxWidth < 820;
+        return Column(
+          children: [
+            Container(
+              height: 64,
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                border: Border(bottom: BorderSide(color: _border)),
+              ),
+              padding: EdgeInsets.symmetric(horizontal: isCompact ? 20 : 34),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      'WordPress / ホームゲーム記事（外部管理）',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: _text,
+                        fontSize: isCompact ? 18 : 24,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Text(
+                    '管理者01',
+                    style: TextStyle(
+                      color: Colors.blueGrey.shade700,
+                      fontSize: isCompact ? 11 : 13,
+                    ),
+                  ),
+                  const SizedBox(width: 5),
+                  Icon(
+                    Icons.keyboard_arrow_down,
+                    size: 17,
+                    color: Colors.blueGrey.shade700,
+                  ),
+                ],
+              ),
+            ),
+            Expanded(
+              child: SingleChildScrollView(
+                padding: EdgeInsets.fromLTRB(
+                  isCompact ? 18 : 30,
+                  isCompact ? 20 : 29,
+                  isCompact ? 18 : 30,
+                  36,
+                ),
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 960),
+                    child: _WordPressPanel(controller: controller),
+                  ),
                 ),
               ),
-              const Spacer(),
-              Text(
-                '管理者01',
-                style: TextStyle(color: Colors.blueGrey.shade700, fontSize: 13),
-              ),
-              const SizedBox(width: 5),
-              Icon(Icons.keyboard_arrow_down, size: 17, color: Colors.blueGrey.shade700),
-            ],
-          ),
-        ),
-        Expanded(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(30, 29, 30, 36),
-            child: _WordPressPanel(controller: controller),
-          ),
-        ),
-      ],
+            ),
+          ],
+        );
+      },
     );
   }
 }
@@ -104,32 +130,38 @@ class _WordPressPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border.all(color: _border),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      padding: const EdgeInsets.fromLTRB(31, 27, 31, 20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isCompact = constraints.maxWidth < 760;
+        return Container(
+          width: double.infinity,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            border: Border.all(color: _border),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          padding: EdgeInsets.fromLTRB(
+            isCompact ? 20 : 31,
+            isCompact ? 21 : 27,
+            isCompact ? 20 : 31,
+            isCompact ? 18 : 20,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Expanded(
-                flex: 56,
-                child: _ExternalSystemDescription(controller: controller),
+              Align(
+                alignment: Alignment.topCenter,
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 800),
+                  child: _ExternalSystemDescription(controller: controller),
+                ),
               ),
-              const SizedBox(width: 31),
-              const Expanded(flex: 39, child: _IntegrationRules()),
+              const SizedBox(height: 24),
+              const _WordPressWarning(),
             ],
           ),
-          const SizedBox(height: 24),
-          const _WordPressWarning(),
-        ],
-      ),
+        );
+      },
     );
   }
 }
@@ -154,7 +186,8 @@ class _ExternalSystemDescription extends StatelessWidget {
           ),
           child: const Text(
             '外部システム',
-            style: TextStyle(color: _blue, fontSize: 11, fontWeight: FontWeight.w700),
+            style: TextStyle(
+                color: _blue, fontSize: 11, fontWeight: FontWeight.w700),
           ),
         ),
         const SizedBox(height: 28),
@@ -178,24 +211,35 @@ class _ExternalSystemDescription extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 29),
-        SizedBox(
-          width: 322,
-          height: 39,
-          child: ElevatedButton.icon(
-            onPressed: controller.canOpenWordPressAdmin
-                ? () => _confirmAndOpenExternal(context, controller.wordpressAdminUri)
-                : null,
-            icon: const Icon(Icons.open_in_new, size: 16),
-            label: const Text('WordPress管理画面を開く'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: _blue,
-              foregroundColor: Colors.white,
-              disabledBackgroundColor: Colors.blueGrey.shade200,
-              elevation: 0,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(7)),
-              textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
-            ),
-          ),
+        LayoutBuilder(
+          builder: (context, constraints) {
+            return SizedBox(
+              width: math.min(322.0, constraints.maxWidth),
+              height: 39,
+              child: ElevatedButton.icon(
+                onPressed: controller.canOpenWordPressAdmin
+                    ? () => _confirmAndOpenExternal(
+                        context, controller.wordpressAdminUri)
+                    : null,
+                icon: const Icon(Icons.open_in_new, size: 16),
+                label: const Text('WordPress管理画面を開く'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: _blue,
+                  foregroundColor: Colors.white,
+                  disabledBackgroundColor: Colors.blueGrey.shade200,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(7)),
+                  textStyle: const TextStyle(
+                    fontFamily: 'Inter',
+                    fontFamilyFallback: ['LINESeedJP'],
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            );
+          },
         ),
       ],
     );
@@ -232,65 +276,6 @@ class _ExternalSystemDescription extends StatelessWidget {
   }
 }
 
-class _IntegrationRules extends StatelessWidget {
-  const _IntegrationRules();
-
-  static const _rules = [
-    '公開済み記事のみ取得',
-    'WordPress表示順を採用',
-    '初回・復帰・Pullで更新',
-    'タイムアウト約30秒 / 再試行2回',
-    '外部URLは確認後ブラウザ起動',
-  ];
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: const Color(0xFFF5F7FA),
-        border: Border.all(color: const Color(0xFFE1E7EF)),
-        borderRadius: BorderRadius.circular(7),
-      ),
-      padding: const EdgeInsets.fromLTRB(26, 21, 22, 20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'アプリ連携仕様',
-            style: TextStyle(color: _text, fontSize: 18, fontWeight: FontWeight.w800),
-          ),
-          const SizedBox(height: 18),
-          ..._rules.map(
-            (rule) => Padding(
-              padding: const EdgeInsets.only(bottom: 17),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    '✓',
-                    style: TextStyle(color: _text, fontSize: 14, fontWeight: FontWeight.w800),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      rule,
-                      style: const TextStyle(
-                        color: _text,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 class _WordPressWarning extends StatelessWidget {
   const _WordPressWarning();
 
@@ -305,7 +290,10 @@ class _WordPressWarning extends StatelessWidget {
       ),
       child: const Text(
         '要確認：表示対象期間、全ユーザー公開、詳細画面で許可するURL / ドメイン。',
-        style: TextStyle(color: Color(0xFFCF202A), fontSize: 11, fontWeight: FontWeight.w700),
+        style: TextStyle(
+            color: Color(0xFFCF202A),
+            fontSize: 11,
+            fontWeight: FontWeight.w700),
       ),
     );
   }
