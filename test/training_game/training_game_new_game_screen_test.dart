@@ -1,3 +1,5 @@
+import 'recording_training_game_sound.dart';
+import 'package:koto_blue_sharks/app/services/training_game_sound_service.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -20,7 +22,8 @@ class _Provider extends TrainingGameProvider {
   Completer<void>? gate;
 
   @override
-  Future<Map<String, dynamic>?> fetchCurrent({int? expectedSessionVersion}) async {
+  Future<Map<String, dynamic>?> fetchCurrent(
+      {int? expectedSessionVersion}) async {
     return null;
   }
 
@@ -34,7 +37,12 @@ class _Provider extends TrainingGameProvider {
     starts++;
     await gate?.future;
     if (fail) throw StateError('offline');
-    return {'id': 1, 'cycle_no': 1, 'stage_code': stageCode, 'status': 'playing'};
+    return {
+      'id': 1,
+      'cycle_no': 1,
+      'stage_code': stageCode,
+      'status': 'playing'
+    };
   }
 }
 
@@ -53,7 +61,10 @@ void main() {
   });
 
   Future<void> host(WidgetTester tester, _Provider provider,
-      {Size size = const Size(375, 812), bool reducedMotion = false}) async {
+      {Size size = const Size(375, 812),
+      bool reducedMotion = false,
+      TrainingGameSoundService Function() soundFactory =
+          silentTrainingGameSound}) async {
     TrainingGameProvider.registerPendingSync(Future<void>.value());
     tester.view.physicalSize = size;
     tester.view.devicePixelRatio = 1;
@@ -77,14 +88,17 @@ void main() {
       designSize: const Size(375, 812),
       builder: (_, __) => GetMaterialApp(
         builder: (context, child) => MediaQuery(
-          data: MediaQuery.of(context).copyWith(disableAnimations: reducedMotion),
+          data:
+              MediaQuery.of(context).copyWith(disableAnimations: reducedMotion),
           child: child!,
         ),
-        home: const TrainingGameNewGameScreen(),
+        home: TrainingGameNewGameScreen(soundFactory: soundFactory),
         getPages: [
-          GetPage(name: Routes.TRAINING_GAME, page: () => Scaffold(
-            body: Text('育成:${(Get.arguments as Map)['stage_code']}'),
-          )),
+          GetPage(
+              name: Routes.TRAINING_GAME,
+              page: () => Scaffold(
+                    body: Text('育成:${(Get.arguments as Map)['stage_code']}'),
+                  )),
         ],
       ),
     ));
@@ -145,7 +159,8 @@ void main() {
 
   testWidgets('失敗後は幼体を表示したまま接続を再試行できる', (tester) async {
     final provider = _Provider()..fail = true;
-    await host(tester, provider);
+    final sound = RecordingTrainingGameSound();
+    await host(tester, provider, soundFactory: () => sound.service);
     await tester.tap(find.text('はじめる'));
     await tester.pump();
     await tester.pump(TrainingHatchingScene.duration);
@@ -158,6 +173,8 @@ void main() {
     await tester.pumpAndSettle();
     expect(provider.starts, 2);
     expect(find.text('育成:child'), findsOneWidget);
+    expect(
+        sound.playedAssetPaths, [TrainingGameSoundEffect.hatching.assetPath]);
   });
 
   testWidgets('小さい端末でもスクロールで開始でき、レイアウト例外がない', (tester) async {
@@ -204,9 +221,13 @@ void main() {
   });
 
   test('孵化原画2枚と幼体が標準AssetBundleに含まれている', () async {
-    final assets = (await AssetManifest.loadFromAssetBundle(rootBundle)).listAssets();
-    for (final path in [TrainingHatchingScene.eggAsset,
-      TrainingHatchingScene.silhouetteAsset, SametarohAssets.newbornFrame.asset]) {
+    final assets =
+        (await AssetManifest.loadFromAssetBundle(rootBundle)).listAssets();
+    for (final path in [
+      TrainingHatchingScene.eggAsset,
+      TrainingHatchingScene.silhouetteAsset,
+      SametarohAssets.newbornFrame.asset
+    ]) {
       expect(assets, contains(path));
       expect((await rootBundle.load(path)).lengthInBytes, greaterThan(0));
     }
