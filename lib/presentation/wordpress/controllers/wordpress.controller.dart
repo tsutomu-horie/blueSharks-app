@@ -11,7 +11,7 @@ class WordPressController extends GetxController {
 
   bool get canOpenWordPressAdmin {
     final uri = wordpressAdminUri;
-    return (uri.scheme == 'https' || uri.scheme == 'http') &&
+    return uri.scheme == 'https' &&
         _allowedHosts.contains(uri.host.toLowerCase());
   }
 }

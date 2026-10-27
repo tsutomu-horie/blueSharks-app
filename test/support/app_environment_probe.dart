@@ -56,7 +56,7 @@ void main() {
           'fanClub': 'https://blue-sharks.donati.jp/fanclub/',
           'partner': 'https://blue-sharks.donati.jp/partner/',
           'team': 'https://blue-sharks.donati.jp/team/',
-          'wordpressAdmin': 'https://blue-sharks.donati.jp/wp-admin/',
+          'wordpressAdmin': 'https://blue-sharks.jp/wp-admin/',
         }
       : <String, String>{
           'auth': AppEnvironment.usesLocalServices
@@ -70,7 +70,7 @@ void main() {
           'fanClub': 'https://blue-sharks.donati.jp/fanclub/',
           'partner': 'https://blue-sharks.donati.jp/partner/',
           'team': 'https://blue-sharks.donati.jp/team/',
-          'wordpressAdmin': 'https://blue-sharks.donati.jp/wp-admin/',
+          'wordpressAdmin': 'https://blue-sharks.jp/wp-admin/',
         };
   for (final entry in expected.entries) {
     check(entry.key, actual[entry.key], entry.value);
