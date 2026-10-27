@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:koto_blue_sharks/presentation/training_game/models/current_decay_policy.dart';
 import 'package:koto_blue_sharks/presentation/training_game/models/training_game_models.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_test/flutter_test.dart' as flutter_test;
 import 'package:get/get.dart';
 import 'package:koto_blue_sharks/app/providers/training_game/training_game_provider.dart';
 import 'package:koto_blue_sharks/presentation/training_game/controllers/training_game.controller.dart';
@@ -12,18 +13,37 @@ import 'package:koto_blue_sharks/utils/my_shared_pref.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
-  setUp(() async {
+  final widgetScenarios = <_WidgetScenario>[];
+  void testWidgets(
+      String description, Future<void> Function(WidgetTester) run) {
+    widgetScenarios.add(_WidgetScenario(description, run));
+  }
+
+  Future<void> resetFixture() async {
     SharedPreferences.setMockInitialValues({});
     await MySharedPref.init();
+    Get.reset();
     Get.testMode = true;
     TrainingGameProvider.registerPendingSync(Future.value());
-  });
+  }
+
   Future<TrainingGameController> open(WidgetTester t, P p) async {
     TrainingGameProvider.registerPendingSync(Future<void>.value());
-    Get.routing.args = p.state();
-    final c = TrainingGameController(serverProvider: p, serverElapsedSinceSyncSeconds:p.useFakeClock?()=>p.fakeElapsed:null);
+    final initialState = p.state();
+    Get.routing.args = initialState;
+    expect(Get.arguments, initialState);
+    final c = TrainingGameController(
+        serverProvider: p,
+        serverElapsedSinceSyncSeconds:
+            p.useFakeClock ? () => p.fakeElapsed : null);
     c.onInit();
-    await t.pump();
+    for (var attempt = 0;
+        attempt < 100 && !c.isServerStateReady.value;
+        attempt++) {
+      await t.pump(const Duration(milliseconds: 1));
+    }
+    expect(c.isServerStateReady.value, true,
+        reason: c.serverErrorMessage.value);
     expect(c.stageIndex.value, p.stage == 'child' ? 1 : 2);
     return c;
   }
@@ -189,8 +209,8 @@ void main() {
     Get.routing.args = null;
   });
   test('shared PHP policy crossing100 fractions floor and perstage', () {
-    final raw =
-        jsonDecode(File('test/fixtures/no84/policy-fixture.json').readAsStringSync());
+    final raw = jsonDecode(
+        File('test/fixtures/no84/policy-fixture.json').readAsStringSync());
     final p = CurrentDecayPolicy.parse(raw)!;
     expect(p.after('training', 'cleanliness', 102, 3600, 10),
         closeTo(101.4, 1e-8));
@@ -227,6 +247,66 @@ void main() {
     c.onClose();
     await t.pump();
     Get.routing.args = null;
+  });
+  testWidgets('foreground decay uses play floor separately from offline floor',
+      (t) async {
+    final p = P()..playFloor = 0;
+    p.values['cleanliness'] = 10.05;
+    final c = await open(t, p);
+    expect((p.policy as Map)['floor'], 10);
+    c.tickTutorialTimer();
+    expect(c.meters['清潔'], closeTo(9.95, 1e-8));
+    c.onClose();
+    await t.pump();
+    Get.routing.args = null;
+  });
+  testWidgets('missing play floor falls back to zero on later restore',
+      (t) async {
+    final p = P()..playFloor = 10;
+    p.values['cleanliness'] = 10.05;
+    final c = await open(t, p);
+    c.tickTutorialTimer();
+    expect(c.meters['清潔'], 10);
+
+    p.includePlayFloor = false;
+    p.values['cleanliness'] = 10.05;
+    await c.refreshDecaySettings();
+    c.tickTutorialTimer();
+    expect(c.meters['清潔'], closeTo(9.95, 1e-8));
+    c.onClose();
+    await t.pump();
+    Get.routing.args = null;
+  });
+  testWidgets('out of range play floor is clamped to safe limits', (t) async {
+    final low = P()..playFloor = -5;
+    low.values['cleanliness'] = .05;
+    final lowController = await open(t, low);
+    lowController.tickTutorialTimer();
+    expect(lowController.meters['清潔'], 0);
+    lowController.onClose();
+    await t.pump();
+    Get.routing.args = null;
+
+    final high = P()..playFloor = 101;
+    high.values['cleanliness'] = 100.05;
+    final highController = await open(t, high);
+    highController.tickTutorialTimer();
+    expect(highController.meters['清潔'], 100);
+    highController.onClose();
+    await t.pump();
+    Get.routing.args = null;
+  });
+  testWidgets('malformed play floor falls back to zero', (t) async {
+    for (final invalid in ['10', double.infinity, double.nan]) {
+      final p = P()..playFloor = invalid;
+      p.values['cleanliness'] = 10.05;
+      final c = await open(t, p);
+      c.tickTutorialTimer();
+      expect(c.meters['清潔'], closeTo(9.95, 1e-8));
+      c.onClose();
+      await t.pump();
+      Get.routing.args = null;
+    }
   });
   testWidgets('refresh failure pauses rather than fixed fallback', (t) async {
     final p = P();
@@ -274,9 +354,9 @@ void main() {
   test('1260 production PHP calculator cases match app', () {
     final policy = CurrentDecayPolicy.parse(jsonDecode(
         File('test/fixtures/no84/policy-fixture.json').readAsStringSync()))!;
-    final rows =
-        jsonDecode(File('test/fixtures/no84/parity-fixture.json').readAsStringSync())
-            as List;
+    final rows = jsonDecode(
+            File('test/fixtures/no84/parity-fixture.json').readAsStringSync())
+        as List;
     expect(rows.length, 1260);
     for (final row in rows) {
       expect(
@@ -287,49 +367,187 @@ void main() {
     }
   });
   testWidgets('review saved work100 remainder01 meets100', (t) async {
-    final p=P()..stage='training';p.values['work']=100;p.remainders={'work':.1};p.stageProgress={'required_work_value':100,'next_stage_code':'growth'};
-    final c=await open(t,p);expect(c.meters['仕事'],closeTo(99.9,1e-8));c.perform(TrainingActionType.meal);await t.pump();await t.pump();expect(p.stage,'growth');c.onClose();await t.pump();Get.routing.args=null;
+    final p = P()..stage = 'training';
+    p.values['work'] = 100;
+    p.remainders = {'work': .1};
+    p.stageProgress = {'required_work_value': 100, 'next_stage_code': 'growth'};
+    final c = await open(t, p);
+    expect(c.meters['仕事'], closeTo(99.9, 1e-8));
+    c.perform(TrainingActionType.meal);
+    await t.pump();
+    await t.pump();
+    expect(p.stage, 'growth');
+    c.onClose();
+    await t.pump();
+    Get.routing.args = null;
   });
-  for(final hours in [2,48]){
-  testWidgets('review chronological zero hours [$hours]',(t) async {
-    final p=P()..stage='training';final policy=p.policy as Map;policy['floor']=0;policy['rates']['training']={'hunger':0,'cleanliness':0,'condition':2.1,'work':0};p.values['condition']=3;p.values['work']=100;
-    final c=await open(t,p);c.advanceTime(hours);expect(c.ended.value,false);await t.pump();await t.pump();await c.syncNow();await t.pump();final local=jsonDecode(MySharedPref.getTrainingGameLocalState()!);expect(local['zero_hours']['体調'],hours-1);c.onClose();await t.pump();Get.routing.args=null;
-  });}
-  testWidgets('review chronological cared day',(t) async {
-    final p=P()..stage='training';final policy=p.policy as Map;policy['floor']=0;policy['rates']['training']={'hunger':0,'cleanliness':0,'condition':2.1,'work':0};p.values['condition']=25;p.values['work']=100;
-    final c=await open(t,p);c.advanceTime(48);expect(c.daysInStage.value,1);c.onClose();await t.pump();Get.routing.args=null;
+  for (final hours in [2, 48]) {
+    testWidgets('review chronological zero hours [$hours]', (t) async {
+      final p = P()..stage = 'training';
+      final policy = p.policy as Map;
+      policy['floor'] = 0;
+      policy['rates']['training'] = {
+        'hunger': 0,
+        'cleanliness': 0,
+        'condition': 2.1,
+        'work': 0
+      };
+      p.values['condition'] = 3;
+      p.values['work'] = 100;
+      final c = await open(t, p);
+      c.advanceTime(hours);
+      expect(c.ended.value, false);
+      await t.pump();
+      await t.pump();
+      await c.syncNow();
+      await t.pump();
+      final local = jsonDecode(MySharedPref.getTrainingGameLocalState()!);
+      expect(local['zero_hours']['体調'], hours - 1);
+      c.onClose();
+      await t.pump();
+      Get.routing.args = null;
+    });
+  }
+  testWidgets('review chronological cared day', (t) async {
+    final p = P()..stage = 'training';
+    final policy = p.policy as Map;
+    policy['floor'] = 0;
+    policy['rates']['training'] = {
+      'hunger': 0,
+      'cleanliness': 0,
+      'condition': 2.1,
+      'work': 0
+    };
+    p.values['condition'] = 25;
+    p.values['work'] = 100;
+    final c = await open(t, p);
+    c.advanceTime(48);
+    expect(c.daysInStage.value, 1);
+    c.onClose();
+    await t.pump();
+    Get.routing.args = null;
   });
 
-  testWidgets('review active multi-hour history and timed growth',(t) async {
-    final p=P()..stage='training'..useFakeClock=true;final policy=p.policy as Map;policy['floor']=0;policy['rates']['training']={'hunger':0,'cleanliness':0,'condition':2.1,'work':0};p.values['condition']=3;p.values['work']=100;
-    final c=await open(t,p);p.fakeElapsed=7200;await t.pump(const Duration(seconds:1));await t.pump();expect(c.elapsedHours.value,2);expect(p.stage,'training');expect(c.ended.value,false);await c.syncNow();await t.pump();expect(jsonDecode(MySharedPref.getTrainingGameLocalState()!)['zero_hours']['体調'],1);c.onClose();await t.pump();Get.routing.args=null;
+  testWidgets('review active multi-hour history and timed growth', (t) async {
+    final p = P()
+      ..stage = 'training'
+      ..useFakeClock = true;
+    final policy = p.policy as Map;
+    policy['floor'] = 0;
+    policy['rates']['training'] = {
+      'hunger': 0,
+      'cleanliness': 0,
+      'condition': 2.1,
+      'work': 0
+    };
+    p.values['condition'] = 3;
+    p.values['work'] = 100;
+    final c = await open(t, p);
+    p.fakeElapsed = 7200;
+    await t.pump(const Duration(seconds: 1));
+    await t.pump();
+    expect(c.elapsedHours.value, 2);
+    expect(p.stage, 'training');
+    expect(c.ended.value, false);
+    await c.syncNow();
+    await t.pump();
+    expect(
+        jsonDecode(MySharedPref.getTrainingGameLocalState()!)['zero_hours']
+            ['体調'],
+        1);
+    c.onClose();
+    await t.pump();
+    Get.routing.args = null;
   });
 
-  testWidgets('review chronological timed stage48 not24',(t)async{
-    final p=P()..stage='training';(p.policy as Map)['rates']['training']={'hunger':0,'cleanliness':0,'condition':0,'work':0};p.values['work']=100;p.stageProgress={'required_elapsed_hours':48,'next_stage_code':'growth'};
-    final c=await open(t,p);c.advanceTime(48);expect(c.elapsedHours.value,48);for(var i=0;i<20 && p.stage!='growth';i++)await t.pump();expect(p.stage,'growth',reason:c.logs.join('|')+' '+c.serverErrorMessage.value+' '+c.syncStatusMessage.value);c.onClose();await t.pump();Get.routing.args=null;
+  testWidgets('review chronological timed stage48 not24', (t) async {
+    final p = P()..stage = 'training';
+    (p.policy as Map)['rates']['training'] = {
+      'hunger': 0,
+      'cleanliness': 0,
+      'condition': 0,
+      'work': 0
+    };
+    p.values['work'] = 100;
+    p.stageProgress = {
+      'required_elapsed_hours': 48,
+      'next_stage_code': 'growth'
+    };
+    final c = await open(t, p);
+    c.advanceTime(48);
+    expect(c.elapsedHours.value, 48);
+    for (var i = 0; i < 20 && p.stage != 'growth'; i++) {
+      await t.pump();
+    }
+    expect(p.stage, 'growth',
+        reason:
+            '${c.logs.join('|')} ${c.serverErrorMessage.value} ${c.syncStatusMessage.value}');
+    c.onClose();
+    await t.pump();
+    Get.routing.args = null;
   });
 
-  testWidgets('review long interval retains single settlement cap',(t)async{
-    final p=P()..stage='training';final policy=p.policy as Map;policy['floor']=0;policy['rates']['training']={'hunger':0,'cleanliness':0,'condition':2.1,'work':0};p.values['condition']=100;p.values['work']=100;
-    final c=await open(t,p);c.advanceTime(48);expect(c.meters['体調'],closeTo(74.8,1e-8));c.onClose();await t.pump();Get.routing.args=null;
+  testWidgets('review long interval retains single settlement cap', (t) async {
+    final p = P()..stage = 'training';
+    final policy = p.policy as Map;
+    policy['floor'] = 0;
+    policy['rates']['training'] = {
+      'hunger': 0,
+      'cleanliness': 0,
+      'condition': 2.1,
+      'work': 0
+    };
+    p.values['condition'] = 100;
+    p.values['work'] = 100;
+    final c = await open(t, p);
+    c.advanceTime(48);
+    expect(c.meters['体調'], closeTo(74.8, 1e-8));
+    c.onClose();
+    await t.pump();
+    Get.routing.args = null;
   });
-  testWidgets('review zero limit reaches48 on hour49',(t)async{
-    final p=P()..stage='training';final policy=p.policy as Map;policy['floor']=0;policy['rates']['training']={'hunger':0,'cleanliness':0,'condition':2.1,'work':0};p.values['condition']=3;p.values['work']=100;
-    final c=await open(t,p);c.advanceTime(49);expect(c.ended.value,true);expect(c.elapsedHours.value,49);c.onClose();await t.pump();Get.routing.args=null;
+  testWidgets('review zero limit reaches48 on hour49', (t) async {
+    final p = P()..stage = 'training';
+    final policy = p.policy as Map;
+    policy['floor'] = 0;
+    policy['rates']['training'] = {
+      'hunger': 0,
+      'cleanliness': 0,
+      'condition': 2.1,
+      'work': 0
+    };
+    p.values['condition'] = 3;
+    p.values['work'] = 100;
+    final c = await open(t, p);
+    c.advanceTime(49);
+    expect(c.ended.value, true);
+    expect(c.elapsedHours.value, 49);
+    c.onClose();
+    await t.pump();
+    Get.routing.args = null;
   });
 
+  flutter_test.testWidgets('No84 controller integration scenarios', (t) async {
+    for (final scenario in widgetScenarios) {
+      await resetFixture();
+      debugPrint('Running No84 fixture: ${scenario.description}');
+      await scenario.run(t);
+    }
+  });
 }
 
 class P extends TrainingGameProvider {
   String stage = 'child';
-  bool useFakeClock=false;int fakeElapsed=0;
+  bool useFakeClock = false;
+  int fakeElapsed = 0;
   int elapsed = 0, fetches = 0;
   bool includePolicy = true, failFetch = false;
+  bool includePlayFloor = true;
+  Object? playFloor = 0;
   Map<String, num> remainders = {};
-  Map<String,dynamic>? stageProgress;
-  Object? policy =
-      jsonDecode(File('test/fixtures/no84/policy-fixture.json').readAsStringSync());
+  Map<String, dynamic>? stageProgress;
+  Object? policy = jsonDecode(
+      File('test/fixtures/no84/policy-fixture.json').readAsStringSync());
   Map<String, double> values = {
     'hunger': 100,
     'cleanliness': 75,
@@ -345,7 +563,8 @@ class P extends TrainingGameProvider {
         'started_at': '2026-10-27T00:00:00Z',
         'elapsed_seconds': elapsed,
         'work_available': false,
-        if(stageProgress!=null)'stage_progress':stageProgress,
+        if (stageProgress != null) 'stage_progress': stageProgress,
+        if (includePlayFloor) 'play_floor': playFloor,
         'actions_today': 0,
         if (includePolicy) 'decay_policy': policy,
         'decay_remainders': remainders,
@@ -401,4 +620,11 @@ class P extends TrainingGameProvider {
     values = Map.from(parameters);
     return state();
   }
+}
+
+class _WidgetScenario {
+  const _WidgetScenario(this.description, this.run);
+
+  final String description;
+  final Future<void> Function(WidgetTester) run;
 }
