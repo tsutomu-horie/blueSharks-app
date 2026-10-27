@@ -1,6 +1,14 @@
 import 'dart:async';
 
+import 'package:audio_session/audio_session.dart';
+import 'package:flutter/foundation.dart';
 import 'package:just_audio/just_audio.dart';
+
+/// ミニゲームの短い効果音向け。iOSの消音スイッチに従い、他アプリの音声と共存します。
+@visibleForTesting
+const trainingGameAudioSessionConfiguration = AudioSessionConfiguration(
+  avAudioSessionCategory: AVAudioSessionCategory.ambient,
+);
 
 /// No.40でユーザーが採用した効果音だけを表します。
 enum TrainingGameSoundEffect {
@@ -31,13 +39,18 @@ class TrainingGameSoundService {
   /// アプリ内で共有する既定サービスです。
   static final instance = TrainingGameSoundService();
 
-  /// プレイヤーを差し替えられるので、テストでは音声プラグインを使いません。
+  /// プレイヤーとセッション設定を差し替えられるので、テストでは音声プラグインを使いません。
   TrainingGameSoundService({
     TrainingGameEffectPlayer Function(String assetPath)? createPlayer,
-  }) : _createPlayer = createPlayer ?? _JustAudioEffectPlayer.new;
+    Future<void> Function()? configureAudioSession,
+  })  : _createPlayer = createPlayer ?? _JustAudioEffectPlayer.new,
+        _configureAudioSession =
+            configureAudioSession ?? _configureMiniGameAudioSession;
 
   final TrainingGameEffectPlayer Function(String assetPath) _createPlayer;
+  final Future<void> Function() _configureAudioSession;
   final _players = <TrainingGameSoundEffect, TrainingGameEffectPlayer>{};
+  Future<void>? _audioSessionConfiguration;
   bool _disposed = false;
 
   /// 指定された承認済み効果音を再生します。
@@ -45,6 +58,8 @@ class TrainingGameSoundService {
   Future<void> play(TrainingGameSoundEffect effect) async {
     if (_disposed) return;
     try {
+      await _ensureAudioSessionConfigured();
+      if (_disposed) return;
       final player = _players.putIfAbsent(
         effect,
         () => _createPlayer(effect.assetPath),
@@ -52,6 +67,25 @@ class TrainingGameSoundService {
       await player.play();
     } on Object {
       // 音声デバイスやプラットフォームプラグインの状態はゲーム進行に影響させません。
+    }
+  }
+
+  Future<void> _ensureAudioSessionConfigured() async {
+    final configured = _audioSessionConfiguration;
+    if (configured != null) {
+      await configured;
+      return;
+    }
+
+    final pending = _configureAudioSession();
+    _audioSessionConfiguration = pending;
+    try {
+      await pending;
+    } on Object {
+      if (identical(_audioSessionConfiguration, pending)) {
+        _audioSessionConfiguration = null;
+      }
+      rethrow;
     }
   }
 
@@ -91,4 +125,11 @@ class _JustAudioEffectPlayer implements TrainingGameEffectPlayer {
 
   @override
   Future<void> dispose() => _player.dispose();
+}
+
+Future<void> _configureMiniGameAudioSession() async {
+  if (kIsWeb || defaultTargetPlatform != TargetPlatform.iOS) return;
+
+  final session = await AudioSession.instance;
+  await session.configure(trainingGameAudioSessionConfiguration);
 }

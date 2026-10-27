@@ -43,6 +43,7 @@ dependencies:
   json_annotation: ^4.9.0
   freezed_annotation: ^2.4.1
   intl: ^0.20.3
+  audio_session: ^0.2.4
   just_audio: ^0.10.6
   shimmer: ^4.0.0
   flutter_html: ^3.0.0-beta.2
