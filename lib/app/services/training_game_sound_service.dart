@@ -27,11 +27,19 @@ enum TrainingGameSoundEffect {
   /// 承認済みの進化プレビューと同じ溜め音・お披露目音です。
   evolutionNormal,
   evolutionFirstTeam,
+
+  /// 孵化A案の上昇する溜め音と誕生のきらめき。
+  hatching,
 }
 
 extension TrainingGameSoundEffectAsset on TrainingGameSoundEffect {
   /// 効果音ラボから取得したアプリ内素材のパスです。
   String get assetPath => switch (this) {
+        // 効果音ラボ: magic-statusup2を0.65秒、cute-pose1を2.5秒から合成。
+        // https://soundeffect-lab.info/sound/battle/
+        // https://soundeffect-lab.info/sound/anime/
+        TrainingGameSoundEffect.hatching =>
+          'assets/audio/training_game/hatching-charge.m4a',
         // 効果音ラボ: battle/magic-statusup1（頭0.7秒）を0.45秒から、
         // button/decision37またはdecision21を1.05秒から合成した承認済み音源。
         // https://soundeffect-lab.info/sound/battle/
@@ -263,4 +271,8 @@ Future<void> _configureMiniGameAudioSession() async {
 
 /// 合成済みの進化音は承認プレビューの音量をそのまま使います。
 TrainingGameSoundService createTrainingEvolutionSound() =>
+    TrainingGameSoundService(volume: 1);
+
+/// 孵化A案の合成済み音源を、承認プレビューと同じ音量で再生します。
+TrainingGameSoundService createTrainingHatchingSound() =>
     TrainingGameSoundService(volume: 1);

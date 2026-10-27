@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:koto_blue_sharks/app/services/training_game_sound_service.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:koto_blue_sharks/app/services/auth_token.dart';
@@ -202,7 +203,10 @@ class _TrainingGameLaunchScreenState extends State<TrainingGameLaunchScreen> {
 
 /// 新しい出会いと孵化演出を表示し、保存成功後に幼体の育成へ進みます。
 class TrainingGameNewGameScreen extends StatefulWidget {
-  const TrainingGameNewGameScreen({super.key});
+  const TrainingGameNewGameScreen(
+      {super.key, this.soundFactory = createTrainingHatchingSound});
+
+  final TrainingGameSoundService Function() soundFactory;
 
   @override
   State<TrainingGameNewGameScreen> createState() =>
@@ -309,6 +313,7 @@ class _TrainingGameNewGameScreenState extends State<TrainingGameNewGameScreen>
                               TrainingHatchingScene(
                                 key: ValueKey(_sceneGeneration),
                                 isPlaying: _hatching,
+                                soundFactory: widget.soundFactory,
                                 onCompleted: _onHatched,
                                 onLoadFailed: _onSceneLoadFailed,
                               ),

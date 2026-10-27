@@ -1,4 +1,7 @@
+import 'dart:async';
 import 'dart:math' as math;
+
+import 'package:koto_blue_sharks/app/services/training_game_sound_service.dart';
 
 import 'package:flutter/material.dart';
 
@@ -11,15 +14,18 @@ class TrainingHatchingScene extends StatefulWidget {
     required this.isPlaying,
     required this.onCompleted,
     this.onLoadFailed,
+    this.soundFactory,
   });
 
   static const eggAsset = 'assets/images/training_game/hatching/egg_1.png';
-  static const silhouetteAsset = 'assets/images/training_game/hatching/egg_2.png';
+  static const silhouetteAsset =
+      'assets/images/training_game/hatching/egg_2.png';
   static const duration = Duration(milliseconds: 4200);
 
   final bool isPlaying;
   final VoidCallback onCompleted;
   final VoidCallback? onLoadFailed;
+  final TrainingGameSoundService Function()? soundFactory;
 
   @override
   State<TrainingHatchingScene> createState() => _TrainingHatchingSceneState();
@@ -32,6 +38,10 @@ class _TrainingHatchingSceneState extends State<TrainingHatchingScene>
   bool _foreground = true;
   bool _assetsReady = false;
   bool _preloading = false;
+  bool _soundReady = false;
+  bool _started = false;
+  bool _soundPaused = false;
+  TrainingGameSoundService? _sound;
 
   @override
   void initState() {
@@ -42,8 +52,7 @@ class _TrainingHatchingSceneState extends State<TrainingHatchingScene>
     _animation = AnimationController(
       vsync: this,
       duration: TrainingHatchingScene.duration,
-    )
-      ..addStatusListener((status) {
+    )..addStatusListener((status) {
         if (status == AnimationStatus.completed && !_completed) {
           _completed = true;
           widget.onCompleted();
@@ -58,7 +67,8 @@ class _TrainingHatchingSceneState extends State<TrainingHatchingScene>
       _preloading = true;
       // デコードを待ってから進め、初回表示でも卵の揺れを見逃しません。
       var loadFailed = false;
-      void onImageError(Object error, StackTrace? stackTrace) => loadFailed = true;
+      void onImageError(Object error, StackTrace? stackTrace) =>
+          loadFailed = true;
       Future.wait([
         precacheImage(const AssetImage(TrainingHatchingScene.eggAsset), context,
             onError: onImageError),
@@ -74,23 +84,72 @@ class _TrainingHatchingSceneState extends State<TrainingHatchingScene>
           return;
         }
         _assetsReady = true;
-        _play();
+        unawaited(_prepareSound());
       });
+    } else if (_assetsReady) {
+      _play();
     }
+  }
+
+  Future<void> _prepareSound() async {
+    final reduceMotion = MediaQuery.disableAnimationsOf(context);
+    final sound = reduceMotion ? null : widget.soundFactory?.call();
+    _sound = sound;
+    final loaded = sound == null ||
+        await sound
+            .prepare(TrainingGameSoundEffect.hatching)
+            .timeout(const Duration(milliseconds: 600), onTimeout: () => false);
+    if (!mounted) return;
+    if (!loaded) {
+      unawaited(sound.dispose());
+      _sound = null;
+    }
+    _soundReady = true;
+    _play();
   }
 
   @override
   void didUpdateWidget(covariant TrainingHatchingScene oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.isPlaying && !oldWidget.isPlaying) _play();
+    if (!widget.isPlaying && oldWidget.isPlaying) _pause();
   }
 
   void _play() {
-    if (!_assetsReady || !widget.isPlaying || !_foreground || _completed) return;
-    _animation.duration = MediaQuery.disableAnimationsOf(context)
+    if (!_assetsReady ||
+        !_soundReady ||
+        !widget.isPlaying ||
+        !_foreground ||
+        _completed) {
+      return;
+    }
+    final reduceMotion = MediaQuery.disableAnimationsOf(context);
+    _animation.duration = reduceMotion
         ? const Duration(milliseconds: 450)
         : TrainingHatchingScene.duration;
-    _animation.forward();
+    if (reduceMotion) {
+      unawaited(_sound?.dispose());
+      _sound = null;
+    }
+    if (!_started) {
+      _started = true;
+      _animation.forward();
+      unawaited(_sound?.play(TrainingGameSoundEffect.hatching));
+    } else if (!_animation.isAnimating) {
+      _animation.forward();
+      if (_soundPaused) {
+        _soundPaused = false;
+        unawaited(_sound?.resume());
+      }
+    }
+  }
+
+  void _pause() {
+    _animation.stop(canceled: false);
+    if (_started) {
+      _soundPaused = true;
+      unawaited(_sound?.pause());
+    }
   }
 
   @override
@@ -99,7 +158,7 @@ class _TrainingHatchingSceneState extends State<TrainingHatchingScene>
     if (_foreground) {
       _play();
     } else {
-      _animation.stop();
+      _pause();
     }
   }
 
@@ -107,6 +166,7 @@ class _TrainingHatchingSceneState extends State<TrainingHatchingScene>
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     _animation.dispose();
+    unawaited(_sound?.dispose());
     super.dispose();
   }
 
@@ -118,8 +178,7 @@ class _TrainingHatchingSceneState extends State<TrainingHatchingScene>
         final t = _animation.value;
         final reveal = ((t - .57) / .24).clamp(0.0, 1.0).toDouble();
         final emerge = Curves.easeOutBack.transform(reveal);
-        final shellOpacity =
-            1.0 - ((t - .52) / .13).clamp(0.0, 1.0).toDouble();
+        final shellOpacity = 1.0 - ((t - .52) / .13).clamp(0.0, 1.0).toDouble();
         final pulse = math.sin(((t - .42) / .36).clamp(0.0, 1.0) * math.pi);
         final shaking = t > .08 && t < .57;
         final shake = shaking ? math.sin(t * math.pi * 34) * .075 : 0.0;
@@ -158,7 +217,8 @@ class _TrainingHatchingSceneState extends State<TrainingHatchingScene>
                           width: 100 + reveal * 10,
                           height: 13,
                           decoration: BoxDecoration(
-                            color: const Color(0xff245e78).withValues(alpha: .14),
+                            color:
+                                const Color(0xff245e78).withValues(alpha: .14),
                             borderRadius: BorderRadius.circular(50),
                           ),
                         ),
@@ -243,9 +303,7 @@ class _TrainingHatchingSceneState extends State<TrainingHatchingScene>
             ),
             const SizedBox(height: 12),
             Text(
-              reveal > .5
-                  ? '小さな一歩から、一緒に育っていこう。'
-                  : '新しい出会いが、ここからはじまります。',
+              reveal > .5 ? '小さな一歩から、一緒に育っていこう。' : '新しい出会いが、ここからはじまります。',
               textAlign: TextAlign.center,
               style: const TextStyle(color: Color(0xff496d80), fontSize: 13),
             ),
