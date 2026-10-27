@@ -37,6 +37,9 @@ enum TrainingGameSoundEffect {
   tackleGreat,
   tacklePerfect,
   tackleMiss,
+
+  /// ボールが手を離れた時の短い風切り音。
+  passThrown,
 }
 
 extension TrainingGameSoundEffectAsset on TrainingGameSoundEffect {
@@ -71,6 +74,10 @@ extension TrainingGameSoundEffectAsset on TrainingGameSoundEffect {
         // 出典: https://soundeffect-lab.info/sound/button/ （ゲージ回復3）
         TrainingGameSoundEffect.parameterRecovered =>
           'assets/audio/training_game/gauge-recovery3.mp3',
+        // 効果音ラボ「パンチ素振り」の頭0.22秒を減音・フェード。
+        // https://soundeffect-lab.info/sound/battle/
+        TrainingGameSoundEffect.passThrown =>
+          'assets/audio/training_game/pass-throw.m4a',
         TrainingGameSoundEffect.passReceived =>
           'assets/audio/training_game/basket-path1.mp3',
         TrainingGameSoundEffect.passFailed =>

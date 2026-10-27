@@ -10,7 +10,7 @@ void main() {
         final horizon = round + PassRunMotion.maxForecastSeconds;
         final room = math.max(0.0,
             PassRunMotion.trajectoryProfileHorizonSeconds / scale - horizon);
-        final target = math.min(1.12, 1 + room / (horizon * 1.25));
+        final target = math.min(1.35, 1 + room / (horizon * 1.25));
         for (final release in [null, .07, .21, .35, .49, .63]) {
           final movement = PassRunPaceAssist(
               start: 0,
@@ -22,7 +22,7 @@ void main() {
           expect(movement.phaseAt(horizon) * scale,
               lessThanOrEqualTo(PassRunMotion.trajectoryProfileHorizonSeconds));
           for (var i = 0; i <= 1000; i++) {
-            expect(movement.rateAt(i * .001), inInclusiveRange(.85, 1.15));
+            expect(movement.rateAt(i * .001), inInclusiveRange(.6, 1.4));
           }
         }
       }
@@ -39,7 +39,7 @@ void main() {
         start: 0,
         normalPosition: position,
         normalVelocity: velocity,
-        targetRate: .88,
+        targetRate: .65,
         attackUp: true);
     for (var i = 1; i <= 20; i++) {
       final t = i * .4;
@@ -62,7 +62,7 @@ void main() {
         lessThanOrEqualTo(PassRunMotion.trajectoryProfileHorizonSeconds));
   });
 
-  for (final rate in [.88, 1.12]) {
+  for (final rate in [.65, .88, 1.12, 1.35]) {
     test('速度補助$rateでも元軌道の順序・位置を保持し解除でC2接続', () {
       double position(double t) => .5 + .4 * math.sin(t * .7);
       double velocity(double t) => .28 * math.cos(t * .7);
@@ -79,7 +79,8 @@ void main() {
         final t = 2 + i * .001;
         expect(a.phaseAt(t), greaterThanOrEqualTo(phase));
         expect(a.positionAt(t), closeTo(position(a.phaseAt(t)), 1e-12));
-        expect(a.rateAt(t), inInclusiveRange(.88, 1.12));
+        expect(a.rateAt(t),
+            inInclusiveRange(math.min(rate, 1), math.max(rate, 1)));
         phase = a.phaseAt(t);
       }
       final p = a.positionAt(2.31),

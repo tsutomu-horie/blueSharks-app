@@ -77,7 +77,7 @@ void main() {
     }
     for (final flick in [
       const PassFlick(deltaX: 23, deltaY: -.1, velocityX: 500, velocityY: 0),
-      const PassFlick(deltaX: 100, deltaY: -.1, velocityX: 399, velocityY: 0),
+      const PassFlick(deltaX: 39, deltaY: -.1, velocityX: 399, velocityY: 0),
       const PassFlick(deltaX: 0, deltaY: -100, velocityX: 0, velocityY: 500),
     ]) {
       expect(

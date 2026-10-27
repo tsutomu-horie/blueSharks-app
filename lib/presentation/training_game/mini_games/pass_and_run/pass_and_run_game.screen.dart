@@ -2,12 +2,14 @@ import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:koto_blue_sharks/app/services/training_game_sound_service.dart';
 
 import '../models/mini_game_result.dart';
 import '../mini_game_result_transition.dart';
 import 'pass_and_run_character_visual.dart';
+import 'pass_and_run_catch_feedback.dart';
 import 'pass_and_run_direction_guide.dart';
 import '../../models/training_game_clock.dart';
 import '../../models/mini_game_settings.dart';
@@ -63,9 +65,22 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
   Duration get _turnDuration =>
       Duration(milliseconds: _settings.laneSwapDurationMs);
 
+  TrainingGameSoundService? _ownedSoundService;
+
+  void _stopOwnedSounds() {
+    final sound = _ownedSoundService;
+    _ownedSoundService = null;
+    if (sound != null) unawaited(sound.dispose());
+  }
+
   void _playSound(TrainingGameSoundEffect effect) {
+    if (!mounted || _isPaused || ModalRoute.of(context)?.isCurrent != true) {
+      return;
+    }
     unawaited(
-      (widget.soundService ?? TrainingGameSoundService.instance).play(effect),
+      (widget.soundService ??
+              (_ownedSoundService ??= TrainingGameSoundService()))
+          .play(effect),
     );
   }
 
@@ -162,6 +177,24 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
         (_passReadyAt == null || !_now().isBefore(_passReadyAt!));
   }
 
+  DateTime? _catchFeedbackStartedAt;
+  PassFlick? _queuedFlick;
+
+  bool get _canQueuePass {
+    final ready = _passReadyAt;
+    return _phase == _PassGamePhase.playing &&
+        !_isPaused &&
+        !_isPenalized &&
+        _returnStartedAt != null &&
+        ready != null &&
+        ready.isAfter(_now()) &&
+        ready.difference(_now()) <= const Duration(milliseconds: 180) &&
+        _roundStartedAt != null &&
+        ready.isBefore(_roundStartedAt!.add(_roundDuration));
+  }
+
+  bool get _acceptsPassInput => _canPass || _canQueuePass;
+
   int get _totalScore => _roundScores.fold(0, (sum, score) => sum + score);
 
   @override
@@ -234,6 +267,7 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
 
   @override
   void dispose() {
+    _stopOwnedSounds();
     WidgetsBinding.instance.removeObserver(this);
     for (final image in _pinnedImages) {
       image.stream.removeListener(image.listener);
@@ -275,6 +309,8 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
 
   /// 現在の片道ラウンドを開始します。
   void _startRound({Duration carryPenalty = Duration.zero}) {
+    _queuedFlick = null;
+    _catchFeedbackStartedAt = null;
     _clockTimer?.cancel();
     _mateSprint = null;
     _playerAssist = null;
@@ -415,7 +451,8 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
 
   /// フリック開始位置を記録します。
   void _handlePanStart(DragStartDetails details) {
-    if (!_canPass) return;
+    _updatePassCycle(_now());
+    if (!_acceptsPassInput) return;
     setState(() {
       // 指を置いた位置を丸の始点として表示し、フリックの起点を明確にします。
       _dragStart = details.localPosition;
@@ -434,11 +471,12 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
 
   /// 指を離した時点でフリックを受け取り、ボールの移動を開始します。
   void _handlePanEnd(DragEndDetails details) {
+    _updatePassCycle(_now());
     final start = _dragStart;
     final current = _dragCurrent;
     _dragStart = null;
     _dragCurrent = null;
-    if (!_canPass ||
+    if (!_acceptsPassInput ||
         _sparseFlick.blocked ||
         start == null ||
         current == null ||
@@ -460,7 +498,17 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
       setState(() {});
       return;
     }
-    final direction = PassAndRunRules.userPassDirection(
+    if (_canQueuePass) {
+      _queuedFlick = flick;
+      setState(() {});
+      return;
+    }
+    _launchPass(flick);
+  }
+
+  void _launchPass(PassFlick flick) {
+    if (!_canPass || _fieldSize.isEmpty) return;
+    var direction = PassAndRunRules.userPassDirection(
       flick,
       outbound: _isOutbound,
     );
@@ -479,6 +527,22 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
       });
       return;
     }
+    final speed =
+        _fieldSize.width * .5 / (_passArrivalDuration.inMicroseconds / 1000000);
+    var target = _mateOffset;
+    for (var i = 0; i < 3; i++) {
+      final flight =
+          (target - _playerBallOffsetAt(_playerOffset)).distance / speed;
+      target = _mateOffsetAt(_motionSeconds + flight);
+    }
+    final aim = target - _playerBallOffsetAt(_playerOffset);
+    direction = PassAndRunRules.assistDirection(
+      deltaX: direction.deltaX,
+      deltaY: direction.deltaY,
+      targetX: aim.dx,
+      targetY: aim.dy,
+      outbound: _isOutbound,
+    );
     _isForwardPass = false;
     _isBallLost = false;
     _returnStartedAt = null;
@@ -496,6 +560,7 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
     // 成否は発射時には決めず、移動中にボールと仲間が衝突した時点で確定します。
     final now = _now();
     _playerAssist?.release(_motionSeconds);
+    _playSound(TrainingGameSoundEffect.passThrown);
     _passInFlight = true;
     _passScoreConfirmed = false;
     _isBallLost = false;
@@ -509,8 +574,8 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
       _motionSeconds,
     );
     _passTargetOffset = _flickExitOffset(
-      start: start,
-      current: start + Offset(direction.deltaX, direction.deltaY),
+      start: Offset.zero,
+      current: Offset(direction.deltaX, direction.deltaY),
     );
     _passReturnStartOffset = null;
     _passReturnTargetOffset = null;
@@ -943,6 +1008,7 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
       : _passReturnStartOffset ?? _mateOffset;
 
   void _clearPassCycle() {
+    _queuedFlick = null;
     _passInFlight = false;
     _passScoreConfirmed = false;
     _pendingPassRoundIndex = null;
@@ -1016,8 +1082,9 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
       return false;
     }
     _blockedSince ??= t;
-    if (t - _blockedSince! < (mateCarrier ? .25 : .65) ||
-        (_lastPaceDecisionAt != null && t - _lastPaceDecisionAt! < .35)) {
+    if (t - _blockedSince! < (mateCarrier ? .25 : .20) ||
+        (_lastPaceDecisionAt != null &&
+            t - _lastPaceDecisionAt! < (mateCarrier ? .35 : .25))) {
       return false;
     }
     final previous = _playerAssist;
@@ -1049,7 +1116,7 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
     // Reserve 25% for a smooth rate transition's small overshoot. Preserve
     // the existing random profile instead of regenerating it with a new horizon.
     final maximumRate = math.min(
-      1.12,
+      mateCarrier ? 1.12 : 1.35,
       1 + phaseRoom / (forecastSeconds * 1.25),
     );
     final mateMovement = _mateSprint;
@@ -1062,7 +1129,7 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
     var bestCost = double.infinity;
     // Choose only a pace, never a position or a new route. Reevaluate slowly
     // because the independent random path may turn while an assist is active.
-    for (final rate in [1.0, maximumRate, .88]) {
+    for (final rate in [1.0, maximumRate, mateCarrier ? .88 : .65]) {
       final candidate = PassRunPaceAssist(
         start: t,
         normalPosition: base,
@@ -1098,7 +1165,8 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
   ({Offset target, Duration duration}) _returnPlan(Offset origin) {
     final speed = _fieldSize.width *
         .5 /
-        (_passArrivalDuration.inMicroseconds / Duration.microsecondsPerSecond);
+        (_passArrivalDuration.inMicroseconds / Duration.microsecondsPerSecond) *
+        1.35;
     final seconds = _motionSeconds;
     var low = 0.0;
     var high = (_fieldSize.width + _fieldSize.height + 224) / speed;
@@ -1138,6 +1206,7 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
       final caughtGeometry = _ballGeometry;
       _catchBallDisplacement = caughtBall - _mateBallOffset;
       _catchBallGeometry = caughtGeometry;
+      _catchFeedbackStartedAt = now;
       _roundScores[_roundIndex]++;
       _passScoreConfirmed = true;
       _lastPassSucceeded = true;
@@ -1239,6 +1308,7 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
           _motionSeconds,
           recoveryTarget: _mateRecoveryTarget,
         );
+        _playSound(TrainingGameSoundEffect.passThrown);
         _returnStartedAt = now;
         _passReadyAt = now.add(plan.duration);
         changed = true;
@@ -1247,7 +1317,11 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
     if (_returnStartedAt != null &&
         _passReadyAt != null &&
         !now.isBefore(_passReadyAt!)) {
+      _playSound(TrainingGameSoundEffect.passReceived);
+      final queued = _queuedFlick;
+      _queuedFlick = null;
       _clearPassCycle();
+      if (queued != null) _launchPass(queued);
       changed = true;
     }
     return changed;
@@ -1273,6 +1347,11 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
       _finishRound();
       if (_phase != _PassGamePhase.playing) return;
     }
+    _catchFeedbackStartedAt = null;
+    _queuedFlick = null;
+    _dragStart = null;
+    _dragCurrent = null;
+    _sparseFlick.block();
     // 次のticker前に返球期限を越えても、完了状態を保存して停止します。
     _updatePassCycle(now);
     _pausedRoundRemaining =
@@ -1295,6 +1374,7 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
     _clockTimer?.cancel();
     _fieldTicker.stop();
     setState(() => _isPaused = true);
+    _stopOwnedSounds();
   }
 
   /// 一時停止前の残り時間と入力待ちを復元します。
@@ -1325,11 +1405,13 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
   Widget build(BuildContext context) => Listener(
         behavior: HitTestBehavior.translucent,
         onPointerDown: (event) {
+          if (!_isPaused) _updatePassCycle(_now());
           final box =
               _fieldInputKey.currentContext?.findRenderObject() as RenderBox?;
           final bounds =
               box == null ? null : box.localToGlobal(Offset.zero) & box.size;
-          _sparseFlick.down(event, fieldBounds: bounds, ready: _canPass);
+          _sparseFlick.down(event,
+              fieldBounds: bounds, ready: _acceptsPassInput);
         },
         onPointerMove: _sparseFlick.move,
         onPointerUp: _sparseFlick.up,
@@ -1416,6 +1498,7 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
         return GestureDetector(
           key: const Key('pass-field'),
           behavior: HitTestBehavior.opaque,
+          dragStartBehavior: DragStartBehavior.down,
           onPanStart: _handlePanStart,
           onPanUpdate: _handlePanUpdate,
           onPanEnd: _handlePanEnd,
@@ -1431,7 +1514,21 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
             child: Stack(
               children: [
                 Positioned.fill(
-                  child: Container(color: const Color(0xff79ba63)),
+                  child: const DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.centerLeft,
+                        end: Alignment.centerRight,
+                        colors: [
+                          Color(0xff73b33c),
+                          Color(0xff83bd42),
+                          Color(0xff83bd42),
+                          Color(0xff73b33c),
+                        ],
+                        stops: [0, .25, .75, 1],
+                      ),
+                    ),
+                  ),
                 ),
                 Positioned(
                   left: constraints.maxWidth * .25 - 2,
@@ -1549,6 +1646,23 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
                     left: ball.dx - ballGeometry.extent / 2,
                     top: ball.dy - ballGeometry.extent / 2,
                     child: PassAndRunBallVisual(geometry: ballGeometry),
+                  ),
+                if (_phase == _PassGamePhase.playing &&
+                    !_isPaused &&
+                    _catchFeedbackStartedAt != null &&
+                    _now().difference(_catchFeedbackStartedAt!).inMilliseconds <
+                        660)
+                  Positioned.fill(
+                    child: IgnorePointer(
+                      child: PassRunCatchFeedback(
+                        progress: _now()
+                                .difference(_catchFeedbackStartedAt!)
+                                .inMicroseconds /
+                            660000,
+                        receiver: mate,
+                        reducedMotion: MediaQuery.disableAnimationsOf(context),
+                      ),
+                    ),
                   ),
                 if (_phase == _PassGamePhase.waiting) _buildStartOverlay(),
                 MiniGameResultTransition(

@@ -37,10 +37,7 @@ abstract final class PassAndRunRules {
   static const standardPassDuration = Duration(milliseconds: 440);
 
   /// フリックとして扱う最低移動距離です。
-  static const minimumDistance = 24.0;
-
-  /// フリックとして扱う最低速度です。
-  static const minimumVelocity = 400.0;
+  static const minimumDistance = 40.0;
 
   /// 表示上のボール半径です。
   static const ballCollisionRadius = 15.0;
@@ -50,7 +47,9 @@ abstract final class PassAndRunRules {
 
   /// 入力が成立するフリックかを返します。
   static bool isFlick(PassFlick flick) {
-    return flick.distance >= minimumDistance && flick.speed >= minimumVelocity;
+    return flick.deltaX.isFinite &&
+        flick.deltaY.isFinite &&
+        flick.distance >= minimumDistance;
   }
 
   /// 真横付近の前方へのブレだけを吸収する。合法な後方の狙いは変えない。
@@ -69,6 +68,37 @@ abstract final class PassAndRunRules {
           outbound: outbound,
         );
     return (deltaX: flick.deltaX, deltaY: snap ? 0 : flick.deltaY);
+  }
+
+  /// 狙いから12度以内の合法な受け手だけを補助します。
+  static ({double deltaX, double deltaY}) assistDirection({
+    required double deltaX,
+    required double deltaY,
+    required double targetX,
+    required double targetY,
+    required bool outbound,
+  }) {
+    final original = (deltaX: deltaX, deltaY: deltaY);
+    if (isForwardDirection(
+            deltaX: deltaX, deltaY: deltaY, outbound: outbound) ||
+        isForwardDirection(
+            deltaX: targetX, deltaY: targetY, outbound: outbound)) {
+      return original;
+    }
+    final length = math.sqrt(deltaX * deltaX + deltaY * deltaY);
+    final targetLength = math.sqrt(targetX * targetX + targetY * targetY);
+    if (length == 0 || targetLength == 0 || !targetLength.isFinite) {
+      return original;
+    }
+    final cosine =
+        (deltaX * targetX + deltaY * targetY) / (length * targetLength);
+    if (cosine < math.cos(12 * math.pi / 180)) {
+      return original;
+    }
+    return (
+      deltaX: targetX / targetLength * length,
+      deltaY: targetY / targetLength * length
+    );
   }
 
   /// 前方は相手側デッドボールライン方向です（往路は上、復路は下）。
