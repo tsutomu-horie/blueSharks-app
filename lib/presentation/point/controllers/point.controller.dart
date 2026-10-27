@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:get/get.dart';
 import 'package:koto_blue_sharks/app/data/models/point/point_models.dart';
 import 'package:koto_blue_sharks/app/providers/point/api_point_repository.dart';
@@ -36,66 +38,116 @@ class PointController extends GetxController {
   String? _pendingExchangeRewardId;
   Future<void>? _initialization;
   int _activeLoadCount = 0;
+  bool _disposed = false;
+
+  bool _current(int version) =>
+      !_disposed && version == AuthToken.sessionVersion;
+
+  void _sessionChanged(int version) {
+    _initialization = null;
+    _activeLoadCount = 0;
+    isLoading.value = false;
+    isProcessing.value = false;
+    isAuthenticated.value = null;
+    account.value = null;
+    expiringLots.clear();
+    transactions.clear();
+    rewards.clear();
+    ranking.value = null;
+    qrToken.value = null;
+    selectedReward.value = null;
+    selectedTransaction.value = null;
+    selectedExchange.value = null;
+    errorMessage.value = null;
+    qrFailureCode.value = null;
+    qrResult.value = PointQrResult.idle;
+    _transactionRequestId = null;
+    _rewardRequestId = null;
+    _exchangeRequestId = null;
+    _pendingExchangeKey = null;
+    _pendingExchangeRewardId = null;
+    // Session listeners run before token storage changes. Queue the read, but
+    // never await it from the listener (which would deadlock token mutation).
+    unawaited(initialize());
+  }
+
+  @override
+  void onClose() {
+    _disposed = true;
+    AuthToken.removeSessionChangeListener(_sessionChanged);
+    super.onClose();
+  }
 
   @override
   void onInit() {
     super.onInit();
+    AuthToken.addSessionChangeListener(_sessionChanged);
     initialize();
   }
 
   Future<void> initialize() {
-    return _initialization ??= _initialize().whenComplete(() {
-      _initialization = null;
+    if (_disposed) return Future<void>.value();
+    final version = AuthToken.sessionVersion;
+    return _initialization ??= _initialize(version).whenComplete(() {
+      if (_current(version)) _initialization = null;
     });
   }
 
-  Future<void> _initialize() async {
-    final token = await AuthToken().getAccessToken();
-    isAuthenticated.value = token != null;
-    if (token != null) {
+  Future<void> _initialize(int version) async {
+    final snapshot = await AuthToken().readSessionSnapshot();
+    if (!_current(version) || snapshot.sessionVersion != version) return;
+    isAuthenticated.value = snapshot.token != null;
+    if (snapshot.token != null) {
       await loadOverview();
     }
   }
 
   Future<void> loadOverview() async {
-    await _run(() async {
+    await _run((current) async {
       final results = await Future.wait([
         repository.getAccount(),
         repository.getExpiringLots(),
       ]);
+      if (!current()) return;
       account.value = results[0] as PointAccount;
       expiringLots.assignAll(results[1] as List<PointLot>);
     });
   }
 
   Future<void> loadQr() async {
-    await _run(() async {
-      qrToken.value = await repository.getQrToken();
+    await _run((current) async {
+      final token = await repository.getQrToken();
+      if (!current()) return;
+      qrToken.value = token;
       qrResult.value = PointQrResult.idle;
       qrFailureCode.value = null;
     });
   }
 
   Future<void> reissueQr() async {
-    await _run(() async {
-      qrToken.value = await repository.reissueQrToken();
+    await _run((current) async {
+      final token = await repository.reissueQrToken();
+      if (!current()) return;
+      qrToken.value = token;
       qrResult.value = PointQrResult.idle;
       qrFailureCode.value = null;
     });
   }
 
   Future<void> loadTransactions() async {
-    await _run(() async {
-      transactions.assignAll(await repository.getTransactions());
+    await _run((current) async {
+      final items = await repository.getTransactions();
+      if (!current()) return;
+      transactions.assignAll(items);
     });
   }
 
   Future<void> loadTransaction(String id) async {
     _transactionRequestId = id;
     selectedTransaction.value = null;
-    await _run(() async {
+    await _run((current) async {
       final transaction = await repository.getTransaction(id);
-      if (_transactionRequestId != id) {
+      if (!current() || _transactionRequestId != id) {
         return;
       }
       selectedTransaction.value = transaction;
@@ -107,15 +159,21 @@ class PointController extends GetxController {
       rankingType.value = type;
       ranking.value = null;
     }
-    await _run(() async {
-      ranking.value = await repository.getRanking(rankingType.value);
+    await _run((current) async {
+      final result = await repository.getRanking(rankingType.value);
+      if (!current()) return;
+      ranking.value = result;
     });
   }
 
   Future<void> loadRewards() async {
-    await _run(() async {
-      rewards.assignAll(await repository.getRewards());
-      account.value = await repository.getAccount();
+    await _run((current) async {
+      final items = await repository.getRewards();
+      if (!current()) return;
+      final balance = await repository.getAccount();
+      if (!current()) return;
+      rewards.assignAll(items);
+      account.value = balance;
     });
   }
 
@@ -126,12 +184,12 @@ class PointController extends GetxController {
       _pendingExchangeRewardId = id;
     }
     selectedReward.value = null;
-    await _run(() async {
+    await _run((current) async {
       final results = await Future.wait([
         repository.getReward(id),
         repository.getAccount(),
       ]);
-      if (_rewardRequestId != id) {
+      if (!current() || _rewardRequestId != id) {
         return;
       }
       selectedReward.value = results[0] as PointReward;
@@ -140,38 +198,47 @@ class PointController extends GetxController {
   }
 
   Future<bool> exchangeSelectedReward() async {
+    final version = AuthToken.sessionVersion;
     final reward = selectedReward.value;
-    if (reward == null) return false;
+    if (reward == null || _disposed) return false;
     isProcessing.value = true;
     errorMessage.value = null;
     try {
       _pendingExchangeKey ??=
           'exchange-${reward.id}-${DateTime.now().microsecondsSinceEpoch}';
-      selectedExchange.value = await repository.exchangeReward(
+      final exchange = await repository.exchangeReward(
         reward.id,
         idempotencyKey: _pendingExchangeKey!,
       );
+      if (!_current(version)) return false;
+      selectedExchange.value = exchange;
       _pendingExchangeKey = null;
-      account.value = await repository.getAccount();
-      transactions.assignAll(await repository.getTransactions());
+      final balance = await repository.getAccount();
+      if (!_current(version)) return false;
+      account.value = balance;
+      final items = await repository.getTransactions();
+      if (!_current(version)) return false;
+      transactions.assignAll(items);
       return true;
     } on PointOperationException catch (error) {
-      errorMessage.value = error.message;
+      if (_current(version)) errorMessage.value = error.message;
       return false;
     } catch (_) {
-      errorMessage.value = '交換処理に失敗しました。もう一度お試しください。';
+      if (_current(version)) {
+        errorMessage.value = '交換処理に失敗しました。もう一度お試しください。';
+      }
       return false;
     } finally {
-      isProcessing.value = false;
+      if (_current(version)) isProcessing.value = false;
     }
   }
 
   Future<void> loadExchange(String id) async {
     _exchangeRequestId = id;
     selectedExchange.value = null;
-    await _run(() async {
+    await _run((current) async {
       final exchange = await repository.getExchange(id);
-      if (_exchangeRequestId != id) {
+      if (!current() || _exchangeRequestId != id) {
         return;
       }
       selectedExchange.value = exchange;
@@ -207,19 +274,26 @@ class PointController extends GetxController {
     }).toList();
   }
 
-  Future<void> _run(Future<void> Function() action) async {
+  Future<void> _run(Future<void> Function(bool Function()) action) async {
+    final version = AuthToken.sessionVersion;
+    if (!_current(version)) return;
+    bool current() => _current(version);
     _activeLoadCount += 1;
     isLoading.value = true;
     errorMessage.value = null;
     try {
-      await action();
+      await action(current);
     } on PointOperationException catch (error) {
-      errorMessage.value = error.message;
+      if (current()) errorMessage.value = error.message;
     } catch (_) {
-      errorMessage.value = 'データを取得できませんでした。再読み込みしてください。';
+      if (current()) {
+        errorMessage.value = 'データを取得できませんでした。再読み込みしてください。';
+      }
     } finally {
-      _activeLoadCount -= 1;
-      isLoading.value = _activeLoadCount > 0;
+      if (current()) {
+        _activeLoadCount -= 1;
+        isLoading.value = _activeLoadCount > 0;
+      }
     }
   }
 }
