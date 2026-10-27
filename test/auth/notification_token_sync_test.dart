@@ -57,6 +57,68 @@ void main() {
     worker.dispose();
   });
 
+  testWidgets('failed registration retries and succeeds without a saved token',
+      (tester) async {
+    var reads = 0;
+    var sends = 0;
+    final worker = NotificationTokenSync(
+      currentSession: () => 1,
+      readToken: () async => ++reads == 1 ? null : 'fresh-device',
+      sendToken: (_, __, ___) async => ++sends == 2,
+    );
+    final result = worker.sync();
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
+    await tester.pump(const Duration(seconds: 1));
+    expect(await result, NotificationSyncOutcome.synced);
+    expect(reads, 3);
+    expect(sends, 2);
+    worker.dispose();
+  });
+
+  testWidgets('settled token acquisition error retries with a fresh read',
+      (tester) async {
+    var reads = 0;
+    var sends = 0;
+    final worker = NotificationTokenSync(
+      currentSession: () => 1,
+      readToken: () async {
+        if (++reads == 1) throw StateError('native unavailable');
+        return 'fresh-device';
+      },
+      sendToken: (_, __, ___) async {
+        sends++;
+        return true;
+      },
+    );
+    final result = worker.sync();
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
+    expect(await result, NotificationSyncOutcome.synced);
+    expect(reads, 2);
+    expect(sends, 1);
+    worker.dispose();
+  });
+
+  testWidgets('settled send failures stop at the retry limit', (tester) async {
+    var sends = 0;
+    final worker = NotificationTokenSync(
+      currentSession: () => 1,
+      readToken: () async => 'fresh-device',
+      sendToken: (_, __, ___) async {
+        sends++;
+        return false;
+      },
+    );
+    final result = worker.sync();
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
+    await tester.pump(const Duration(seconds: 1));
+    expect(await result, NotificationSyncOutcome.deferred);
+    expect(sends, 3);
+    worker.dispose();
+  });
+
   testWidgets('pending read times out once and late token has no send',
       (tester) async {
     final lateToken = Completer<String?>();

@@ -99,7 +99,17 @@ class NotificationTokenSync {
         if (!active()) {
           return NotificationSyncOutcome.cancelled;
         }
-        final token = await _step(readToken(), signal);
+        String? token;
+        try {
+          token = await _step(readToken(), signal);
+        } on TimeoutException {
+          rethrow;
+        } on _Cancelled {
+          rethrow;
+        } catch (_) {
+          // Native token acquisition can fail before APNs is ready.
+          // Retry only after that attempt has actually settled.
+        }
         if (!active()) {
           return NotificationSyncOutcome.cancelled;
         }
@@ -119,11 +129,13 @@ class NotificationTokenSync {
           if (!active()) {
             return NotificationSyncOutcome.cancelled;
           }
-          final outcome = sent
-              ? NotificationSyncOutcome.synced
-              : NotificationSyncOutcome.deferred;
-          _attempts[token] = outcome;
-          return outcome;
+          if (sent) {
+            _attempts[token] = NotificationSyncOutcome.synced;
+            return NotificationSyncOutcome.synced;
+          }
+          // Only a settled failure is retried. A timeout keeps the marker,
+          // because the original operation may still be in flight.
+          _attempts.remove(token);
         }
         if (attempt + 1 < maxAttempts) {
           await _step(Future<void>.delayed(retryDelay), signal);
@@ -170,12 +182,26 @@ class NotificationTokenRegistration<T> {
       _attempts.clear();
       _session = expectedSession;
     }
-    return _attempts.putIfAbsent(
-        token, () => _send(expectedSession, isActive, operation));
+    return _attempts.putIfAbsent(token, () {
+      var retryable = false;
+      late final Future<T?> pending;
+      pending = _send(expectedSession, isActive, operation, () {
+        retryable = true;
+      }).then((value) {
+        if (retryable && identical(_attempts[token], pending)) {
+          _attempts.remove(token);
+        }
+        return value;
+      });
+      return pending;
+    });
   }
 
-  Future<T?> _send(int session, bool Function() isActive,
-      Future<T?> Function(bool Function()) operation) async {
+  Future<T?> _send(
+      int session,
+      bool Function() isActive,
+      Future<T?> Function(bool Function()) operation,
+      void Function() onSettledFailure) async {
     var open = true;
     final watch = Stopwatch()..start();
     bool canSend() =>
@@ -185,9 +211,12 @@ class NotificationTokenRegistration<T> {
         isActive();
     try {
       if (!canSend()) return null;
-      return await Future<T?>.sync(() => operation(canSend))
+      final result = await Future<T?>.sync(() => operation(canSend))
           .timeout(deadline, onTimeout: () => null);
+      if (result == null && canSend()) onSettledFailure();
+      return result;
     } catch (_) {
+      if (canSend()) onSettledFailure();
       return null;
     } finally {
       open = false;

@@ -6,6 +6,7 @@ import 'package:get/get.dart';
 import 'package:koto_blue_sharks/app/data/models/auth/auth.dart';
 import 'package:koto_blue_sharks/app/providers/auth/auth_provider.dart';
 import 'package:koto_blue_sharks/utils/my_shared_pref.dart';
+import 'package:koto_blue_sharks/app/services/notification_token_sync.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:koto_blue_sharks/presentation/register/register_member_fanclub/controllers/register_member_fanclub.controller.dart';
@@ -40,9 +41,13 @@ void main() {
           expect(token, 'mock-access-token');
           events.add('save-auth');
         },
-        readSavedFcmToken: () {
+        syncNotifications: () async {
           events.add('read-fcm');
-          return 'mock-fcm-token';
+          final response =
+              await provider.updateNotificationToken('mock-fcm-token');
+          return response == null
+              ? NotificationSyncOutcome.deferred
+              : NotificationSyncOutcome.synced;
         },
         showSuccessDialog: (_, callback) {
           events.add('show-dialog');
@@ -111,7 +116,10 @@ void main() {
       final controller = RegisterMemberFanclubController(
         apiProvider: provider,
         saveAccessToken: (_) async => events.add('save-auth'),
-        readSavedFcmToken: () => 'mock-fcm-token',
+        syncNotifications: () async {
+          await provider.updateNotificationToken('mock-fcm-token');
+          return NotificationSyncOutcome.synced;
+        },
         showSuccessDialog: (_, callback) {
           successTap = callback as Future<void> Function();
           dialogShown.complete();
@@ -158,9 +166,13 @@ void main() {
       final controller = RegisterMemberFanclubController(
         apiProvider: provider,
         saveAccessToken: (_) async => events.add('save-auth'),
-        readSavedFcmToken: () {
+        syncNotifications: () async {
           events.add('read-fcm');
-          return 'mock-fcm-token';
+          final response =
+              await provider.updateNotificationToken('mock-fcm-token');
+          return response == null
+              ? NotificationSyncOutcome.deferred
+              : NotificationSyncOutcome.synced;
         },
         showSuccessDialog: (_, callback) {
           successTap = callback as Future<void> Function();

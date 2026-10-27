@@ -21,6 +21,7 @@ class FcmHelper {
 
   static Future<void>? _initialization;
   static bool _ready = false;
+  static bool _sessionListenerAdded = false;
   static final _tokenSync = NotificationTokenSync(
     currentSession: () => AuthToken.sessionVersion,
     readToken: () => messaging.getToken(),
@@ -41,8 +42,17 @@ class FcmHelper {
     unawaited(syncForCurrentSession());
   }
 
+  /// Registration must acquire a current token even when startup had none.
+  static Future<NotificationSyncOutcome> syncAfterRegistration() async {
+    await (_initialization ??= _initialize());
+    return _ready ? _tokenSync.sync() : NotificationSyncOutcome.deferred;
+  }
+
   static Future<void> _initialize() async {
-    AuthToken.addSessionChangeListener((_) => _tokenSync.cancel());
+    if (!_sessionListenerAdded) {
+      AuthToken.addSessionChangeListener((_) => _tokenSync.cancel());
+      _sessionListenerAdded = true;
+    }
     try {
       await Firebase.initializeApp(
         options: DefaultFirebaseOptions.currentPlatform,
@@ -77,6 +87,7 @@ class FcmHelper {
       FirebaseMessaging.onBackgroundMessage(_fcmBackgroundHandler);
       _ready = true;
     } catch (_) {
+      _initialization = null;
       debugPrint('[fcm-init] deferred');
     }
   }
