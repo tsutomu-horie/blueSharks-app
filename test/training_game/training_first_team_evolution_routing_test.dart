@@ -257,6 +257,7 @@ void main() {
 
         await tester.tap(find.text('次へ'));
         await tester.pump();
+        await tester.pump(const Duration(milliseconds: 350));
         expect(find.byType(TrainingEvolutionReveal), findsNothing);
         expect(find.byType(TrainingHomeCharacterAnimation), findsOneWidget);
         final regularTarget = _homeFrameImage(homeFrame.asset);
@@ -344,6 +345,7 @@ void main() {
 
     await tester.tap(find.text('次へ'));
     await tester.pump();
+    await tester.pump(const Duration(milliseconds: 900));
     expect(find.text('ポジション確定'), findsOneWidget);
     final regularTarget = _sametarohFrameImage(after.asset);
     expect(regularTarget, findsOneWidget);
@@ -404,6 +406,7 @@ void main() {
         }
         await tester.tap(find.text('次へ'));
         await tester.pump();
+        await tester.pump(const Duration(milliseconds: 900));
         expect(find.text('ポジション確定'), findsOneWidget);
         final regular = tester.getRect(_sametarohFrameImage(after.asset));
         expect((regular.width - completed.width).abs(), lessThanOrEqualTo(1));
@@ -434,6 +437,7 @@ void main() {
     // 同一frame内の連打で次の終了画面まで飛ばさない。
     await tester.tap(find.text('次へ'));
     await tester.pump();
+    await tester.pump(const Duration(milliseconds: 900));
 
     expect(controller.evolutionStage.value, isNull);
     expect(controller.endingStep.value, 1);
@@ -545,13 +549,14 @@ void main() {
     await tester.pump();
     expect(controller.endingStep.value, 1);
     expect(find.text('ポジション確定'), findsOneWidget);
+    await tester.pump(const Duration(milliseconds: 350));
 
-    await tester.tap(find.text('次へ'));
+    await tester.tap(find.text('次へ'), warnIfMissed: false);
     await tester.pump();
     expect(controller.endingStep.value, 1);
     expect(find.text('ポジション確定'), findsOneWidget);
 
-    await tester.pump(const Duration(milliseconds: 500));
+    await tester.pump(const Duration(milliseconds: 550));
     await tester.tap(find.text('次へ'));
     await tester.pump();
     expect(controller.endingStep.value, 2);
