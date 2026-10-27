@@ -956,13 +956,11 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
                 type != TrainingActionType.tackle &&
                 type != TrainingActionType.passAndRun
             : true;
-    final squatRequirementMet =
-        ['食事', '清潔', '体調'].every((name) => controller.meters[name]! >= 50);
     final enabled = !controller.ended.value &&
         tutorialActionAllowed &&
         controller.canPerform(type) &&
         !(type == TrainingActionType.squat &&
-            (controller.stageIndex.value < 1 || !squatRequirementMet)) &&
+            controller.stageIndex.value < 1) &&
         !(type == TrainingActionType.work && controller.stageIndex.value < 2);
     return TrainingHomeCareButton(
       key: ValueKey('training-home-care-${type.name}'),
@@ -982,6 +980,16 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
     BuildContext context,
     TrainingActionType type,
   ) async {
+    if (type == TrainingActionType.squat) {
+      final requirementMessage = controller.squatRequirementMessage;
+      if (requirementMessage != null) {
+        final messenger = ScaffoldMessenger.of(context)
+          ..clearSnackBars()
+          ..removeCurrentSnackBar();
+        messenger.showSnackBar(SnackBar(content: Text(requirementMessage)));
+        return;
+      }
+    }
     // 幼体から保持された古いcallbackでも、仕事の照会・画面を開きません。
     if (controller.stageIndex.value < 2 && type == TrainingActionType.work) {
       return;
@@ -1029,6 +1037,9 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
         return;
       }
     }
+    final finishSquat =
+        type == TrainingActionType.squat ? controller.beginSquatScene() : null;
+    if (type == TrainingActionType.squat && finishSquat == null) return;
     bool? completed;
     try {
       completed = await Navigator.of(context).push<bool>(
@@ -1043,8 +1054,10 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
       );
     } finally {
       if (type == TrainingActionType.work) controller.finishWorkPreparation();
+      finishSquat?.call(completed == true);
     }
-    if (completed == true) controller.perform(type);
+    if (completed == true && type != TrainingActionType.squat)
+      controller.perform(type);
   }
 
   /// 集約したデバッグコマンドを表示します。

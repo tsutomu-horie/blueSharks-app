@@ -48,6 +48,57 @@ void main() {
     expect(controller.evolutionStage.value, 4);
   });
 
+  test('筋トレは各50未満ならControllerが案内して同期しない', () async {
+    final provider = _FirstTeamTransitionProvider(meterValue: 49);
+    Get.routing.args = provider.state('training');
+    final controller = TrainingGameController(
+      serverProvider: provider,
+      writePendingActions: (_) async => true,
+      clearPendingActions: () async => true,
+      archivePendingActions: (_) async => true,
+    );
+    addTearDown(() {
+      controller.onClose();
+      Get.routing.args = null;
+    });
+    controller.onInit();
+    await Future<void>.delayed(Duration.zero);
+    expect(controller.isServerStateReady.value, isTrue);
+
+    controller.perform(TrainingActionType.squat);
+    await TrainingGameProvider.waitForPendingSync();
+
+    expect(provider.syncedActionCodes, isEmpty);
+    expect(
+      controller.logs.first,
+      '食事・清潔・体調が50未満です。'
+      'ごはん・掃除・休養で50以上に整えてから筋トレしましょう。',
+    );
+  });
+
+  test('各50ちょうどならControllerの既存筋トレ同期経路を通る', () async {
+    final provider = _FirstTeamTransitionProvider(meterValue: 50);
+    Get.routing.args = provider.state('training');
+    final controller = TrainingGameController(
+      serverProvider: provider,
+      writePendingActions: (_) async => true,
+      clearPendingActions: () async => true,
+      archivePendingActions: (_) async => true,
+    );
+    addTearDown(() {
+      controller.onClose();
+      Get.routing.args = null;
+    });
+    controller.onInit();
+    await Future<void>.delayed(Duration.zero);
+    expect(controller.isServerStateReady.value, isTrue);
+
+    controller.perform(TrainingActionType.squat);
+    await TrainingGameProvider.waitForPendingSync();
+
+    expect(provider.syncedActionCodes, ['training']);
+  });
+
   test('進化演出中のOS割り込み後も、次へ進むと16倍速の時間が再開する', () {
     final controller = TrainingGameController();
     controller.isServerStateReady.value = true;
@@ -78,6 +129,9 @@ void main() {
 }
 
 class _FirstTeamTransitionProvider extends TrainingGameProvider {
+  _FirstTeamTransitionProvider({this.meterValue = 80});
+
+  final double meterValue;
   final syncedStageCodes = <String>[];
   final syncedActionCodes = <String?>[];
 
@@ -94,9 +148,9 @@ class _FirstTeamTransitionProvider extends TrainingGameProvider {
         'branch_code': null,
         'position_code': null,
         'parameters': {
-          'hunger': 80.0,
-          'cleanliness': 80.0,
-          'condition': 80.0,
+          'hunger': meterValue,
+          'cleanliness': meterValue,
+          'condition': meterValue,
           'work': 80.0,
           'tendency_fw': 0.0,
           'tendency_command': 0.0,

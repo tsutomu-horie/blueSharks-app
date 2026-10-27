@@ -14,6 +14,7 @@ import '../mini_games/models/mini_game_result.dart';
 import '../models/training_action_gate.dart';
 import '../models/mini_game_settings.dart';
 import '../models/training_game_models.dart';
+import '../models/training_workout_requirement.dart';
 
 enum TrainingSyncStatus {
   idle,
@@ -335,12 +336,34 @@ class TrainingGameController extends GetxController
             clearPendingActions ?? MySharedPref.clearTrainingGamePendingActions,
         _archivePendingActions = archivePendingActions ??
             MySharedPref.archiveTrainingGamePendingActions {
+    _squatStageSubscription = stageIndex.listen((_) => _squatSceneGeneration++);
     _ownedSessionVersion = AuthToken.sessionVersion;
     AuthToken.addSessionChangeListener(_handleAuthSessionChanged);
   }
-  int? _serverPlayerId;
-  int? _serverCycleNo;
-  DateTime? _serverGameStartedAt;
+  // 育成の識別値が元に戻っても、進行中のお世話の権限は復活させません。
+  int _squatSceneGeneration = 0;
+  late final StreamSubscription<int> _squatStageSubscription;
+  int? _playerId;
+  int? get _serverPlayerId => _playerId;
+  set _serverPlayerId(int? value) {
+    if (_playerId != value) _squatSceneGeneration++;
+    _playerId = value;
+  }
+
+  int? _cycleNo;
+  int? get _serverCycleNo => _cycleNo;
+  set _serverCycleNo(int? value) {
+    if (_cycleNo != value) _squatSceneGeneration++;
+    _cycleNo = value;
+  }
+
+  DateTime? _gameStartedAt;
+  DateTime? get _serverGameStartedAt => _gameStartedAt;
+  set _serverGameStartedAt(DateTime? value) {
+    if (_gameStartedAt != value) _squatSceneGeneration++;
+    _gameStartedAt = value;
+  }
+
   int _serverLockVersion = 0;
   double? _serverRequiredWorkValue;
   int? _serverRequiredElapsedHours;
@@ -1517,6 +1540,10 @@ class TrainingGameController extends GetxController
     return !_isMiniGamePreparationPending && _canPerformAction(type);
   }
 
+  /// 筋トレ前に不足している状態があれば、表示用の案内を返します。
+  String? get squatRequirementMessage =>
+      TrainingWorkoutRequirement.messageFor(meters);
+
   bool _canPerformAction(TrainingActionType type) {
     cooldownTick.value;
     if (debugPositionBusy.value ||
@@ -1709,6 +1736,7 @@ class TrainingGameController extends GetxController
   void onClose() {
     // 破棄後は待機中の再送を止め、新しい同期要求を作らないよう先に無効化します。
     _isDisposed = true;
+    _squatStageSubscription.cancel();
     AuthToken.removeSessionChangeListener(_handleAuthSessionChanged);
     _cancelRetryWait();
     WidgetsBinding.instance.removeObserver(this);
@@ -3245,8 +3273,52 @@ class TrainingGameController extends GetxController
     perform(type, miniGameResult: result);
   }
 
+  bool _squatScenePending = false;
+  bool _squatCompletionAuthorized = false;
+
+  /// 開始条件を満たした同じ画面操作に限り、一度だけ完了を受け付けます。
+  void Function(bool)? beginSquatScene() {
+    if (!_ownsSession(_ownedSessionVersion) ||
+        !isServerStateReady.value ||
+        ended.value ||
+        evolutionStage.value != null ||
+        _squatScenePending ||
+        squatRequirementMessage != null ||
+        stageIndex.value < 1 ||
+        !canPerform(TrainingActionType.squat)) return null;
+    _squatScenePending = true;
+    final session = _ownedSessionVersion;
+    final player = _serverPlayerId;
+    final cycle = _serverCycleNo;
+    final startedAt = _serverGameStartedAt;
+    final stage = stageIndex.value;
+    final generation = _squatSceneGeneration;
+    var consumed = false;
+    return (completed) {
+      if (consumed) return;
+      consumed = true;
+      _squatScenePending = false;
+      if (!completed ||
+          generation != _squatSceneGeneration ||
+          !_ownsSession(session) ||
+          player != _serverPlayerId ||
+          cycle != _serverCycleNo ||
+          !_sameGameInstance(startedAt, _serverGameStartedAt) ||
+          stage != stageIndex.value) return;
+      _squatCompletionAuthorized = true;
+      try {
+        perform(TrainingActionType.squat);
+      } finally {
+        _squatCompletionAuthorized = false;
+      }
+    };
+  }
+
   /// 指定した行動を実行し、メーターと傾向値を更新します。
   void perform(TrainingActionType type, {MiniGameResult? miniGameResult}) {
+    if (type == TrainingActionType.squat &&
+        _squatScenePending &&
+        !_squatCompletionAuthorized) return;
     if (_isMiniGamePreparationPending ||
         ended.value ||
         evolutionStage.value != null ||
@@ -3298,6 +3370,13 @@ class TrainingGameController extends GetxController
     if (type == TrainingActionType.squat && stageIndex.value < 1) {
       logs.insert(0, '幼少段階から筋トレを始められます。');
       return;
+    }
+    if (type == TrainingActionType.squat && !_squatCompletionAuthorized) {
+      final requirementMessage = squatRequirementMessage;
+      if (requirementMessage != null) {
+        logs.insert(0, requirementMessage);
+        return;
+      }
     }
     if (type == TrainingActionType.work && !canWorkToday) {
       logs.insert(0, '仕事は1日1回までです。');
@@ -3734,7 +3813,8 @@ class TrainingGameController extends GetxController
         type != TrainingActionType.rest) return false;
     if (stageIndex.value == 1 &&
         type == TrainingActionType.squat &&
-        !['食事', '清潔', '体調'].every((name) => meters[name]! >= 50)) {
+        !_squatCompletionAuthorized &&
+        !TrainingWorkoutRequirement.isMet(meters)) {
       return false;
     }
 

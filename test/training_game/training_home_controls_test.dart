@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import 'package:koto_blue_sharks/app/views/views/environment_badge.dart';
 import 'package:koto_blue_sharks/presentation/training_game/controllers/training_game.controller.dart';
 import 'package:koto_blue_sharks/presentation/training_game/models/training_game_models.dart';
+import 'package:koto_blue_sharks/presentation/training_game/training_game_care_action.screen.dart';
 import 'package:koto_blue_sharks/presentation/training_game/training_game.screen.dart';
 import 'package:koto_blue_sharks/presentation/training_game/training_home_background.dart';
 import 'package:koto_blue_sharks/presentation/training_game/training_home_controls.dart';
@@ -210,6 +211,47 @@ void main() {
     await tester.pumpWidget(const SizedBox());
     semantics.dispose();
   });
+
+  testWidgets('筋トレ条件未達ならタップで不足項目を案内し、連打しても実行しない', (tester) async {
+    tester.view.physicalSize = const Size(375, 812);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    Get.testMode = true;
+    addTearDown(Get.reset);
+    final controller = HomeControlsFixture()
+      ..stageIndex.value = 1
+      ..isServerStateReady.value = true
+      ..meters['食事'] = 49
+      ..meters['清潔'] = 50
+      ..meters['体調'] = 49;
+    Get.put<TrainingGameController>(controller);
+    await tester.pumpWidget(homeControlsHost());
+    await tester.pump();
+
+    const message = '食事・体調が50未満です。ごはん・休養で50以上に整えてから筋トレしましょう。';
+    final squatButton = find.descendant(
+      of: find.byKey(const ValueKey('training-home-care-squat')),
+      matching: find.byType(TextButton),
+    );
+    expect(tester.widget<TextButton>(squatButton).onPressed, isNotNull);
+
+    for (var i = 0; i < 3; i++) {
+      await tester.tap(squatButton);
+      await tester.pump();
+    }
+
+    expect(find.text(message), findsOneWidget);
+    expect(find.byType(TrainingGameCareActionScreen), findsNothing);
+    expect(controller.meters['食事'], 49);
+    expect(controller.meters['清潔'], 50);
+    expect(controller.meters['体調'], 49);
+    expect(controller.trainingCount.value, 0);
+    expect(controller.actionsToday.value, 0);
+    expect(tester.takeException(), isNull);
+    await tester.pumpWidget(const SizedBox());
+  });
+
   testWidgets('ゲージの既存色境界と100超過50を維持', (tester) async {
     const red = Color(0xffd03b3b),
         orange = Color(0xffeda100),
