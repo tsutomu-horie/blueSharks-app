@@ -1,0 +1,84 @@
+name: Login feedback and session-safe notifications
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/login-feedback.yml'
+      - 'lib/presentation/login/**'
+      - 'lib/app/providers/auth/**'
+      - 'lib/app/services/auth_token.dart'
+      - 'lib/app/services/notification_token_sync.dart'
+      - 'lib/utils/fcm_helper.dart'
+      - 'test/auth/**'
+      - 'test/registration_notification_sync_test.dart'
+      - 'test/register_member_controller_one_shot_test.dart'
+      - 'pubspec.yaml'
+      - 'pubspec.lock'
+
+permissions:
+  contents: read
+
+jobs:
+  login-feedback:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install the validated Flutter SDK
+        shell: bash
+        run: |
+          git clone --depth 1 --branch 3.47.2 https://github.com/flutter/flutter.git "$RUNNER_TEMP/flutter"
+          test "$(git -C "$RUNNER_TEMP/flutter" rev-parse HEAD)" = d3b14c876900e553bc736ca19295fc09e3853e8e
+          echo "$RUNNER_TEMP/flutter/bin" >> "$GITHUB_PATH"
+      - name: Prepare compile-only compatibility for existing imports
+        shell: bash
+        run: |
+          ln -s constant.dart lib/utils/Constant.dart
+          ln -s string+extensions.dart lib/utils/String+extensions.dart
+          cat > lib/firebase_options.dart <<'DART'
+          import 'package:firebase_core/firebase_core.dart';
+          // These mock-only tests must never initialize a real Firebase app.
+          class DefaultFirebaseOptions {
+            static FirebaseOptions get currentPlatform =>
+                throw StateError('Firebase initialization is forbidden in this CI');
+          }
+          DART
+      - run: flutter pub get --enforce-lockfile
+      # Provider/Screen retain pre-existing whole-file formatting differences.
+      - name: Check formatting of clean changed files
+        run: >-
+          dart format --output=none --set-exit-if-changed
+          lib/app/services/auth_token.dart
+          lib/app/services/notification_token_sync.dart
+          lib/utils/fcm_helper.dart
+          lib/presentation/login/controllers/login.controller.dart
+          test/auth/login_feedback_test.dart
+          test/auth/notification_token_sync_test.dart
+          test/auth/notification_session_guard_test.dart
+          test/auth/notification_integration_test.dart
+      - name: Analyze changed Dart files
+        run: >-
+          flutter analyze --no-pub --no-fatal-infos
+          lib/app/providers/auth/auth_provider.dart
+          lib/app/services/auth_token.dart
+          lib/app/services/notification_token_sync.dart
+          lib/utils/fcm_helper.dart
+          lib/presentation/login/controllers/login.controller.dart
+          lib/presentation/login/login.screen.dart
+          test/auth/login_feedback_test.dart
+          test/auth/notification_token_sync_test.dart
+          test/auth/notification_session_guard_test.dart
+          test/auth/notification_integration_test.dart
+      - name: Test login, notification leases, logout and registration with mocks
+        run: >-
+          flutter test --no-pub --concurrency=1
+          test/auth/login_feedback_test.dart
+          test/auth/notification_token_sync_test.dart
+          test/auth/notification_session_guard_test.dart
+          test/auth/notification_integration_test.dart
+          test/auth/logout_contract_test.dart
+          test/auth/delete_account_flow_test.dart
+          test/registration_notification_sync_test.dart
+          test/register_member_controller_one_shot_test.dart
+      - name: Check diagnostic metadata privacy offline
+        run: dart run test/auth/login_response_diagnostics_check.dart
