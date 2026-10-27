@@ -7,11 +7,14 @@ class TacklePlayerVisual extends StatelessWidget {
   const TacklePlayerVisual({
     required this.attacking,
     this.downward = false,
+    this.visualScale = 1.0,
     super.key,
   });
 
   final bool attacking;
   final bool downward;
+  final double visualScale;
+  static const candidateVisualScale = 1.15;
 
   // Frozen transparent extraction, 615 x 1251 native pixels.
   // Foot anchor is the mean center of the two feet in the bottom four rows.
@@ -31,9 +34,12 @@ class TacklePlayerVisual extends StatelessWidget {
         // used by AnimatedAlign, including inherited text metrics.
         Opacity(
           opacity: attacking ? 0 : 1,
-          child: const MiniGameCharacterAsset(
-            pose: MiniGameCharacterPose.rightRest,
-            fontSize: height,
+          child: Transform.scale(
+            scale: visualScale,
+            child: const MiniGameCharacterAsset(
+              pose: MiniGameCharacterPose.rightRest,
+              fontSize: height,
+            ),
           ),
         ),
         if (attacking)
@@ -46,16 +52,24 @@ class TacklePlayerVisual extends StatelessWidget {
                 maxHeight: height,
                 child: Transform.translate(
                   offset: const Offset((.5 - attackFootAnchorX) * width, 0),
-                  child: Transform.flip(
-                    flipY: downward,
-                    child: Image.asset(
-                      attackAssetPath,
-                      key: const Key('tackle-player-attack'),
-                      width: width,
-                      height: height,
-                      fit: BoxFit.contain,
-                      filterQuality: FilterQuality.low,
-                      excludeFromSemantics: true,
+                  child: Transform.scale(
+                    scale: visualScale,
+                    // Preserve the calibrated arm contact pixel after Y flip.
+                    alignment: Alignment(
+                      2 * 607 / 615 - 1,
+                      (downward ? -1 : 1) * (2 * 455 / 1251 - 1),
+                    ),
+                    child: Transform.flip(
+                      flipY: downward,
+                      child: Image.asset(
+                        attackAssetPath,
+                        key: const Key('tackle-player-attack'),
+                        width: width,
+                        height: height,
+                        fit: BoxFit.contain,
+                        filterQuality: FilterQuality.low,
+                        excludeFromSemantics: true,
+                      ),
                     ),
                   ),
                 ),

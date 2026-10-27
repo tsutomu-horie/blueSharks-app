@@ -744,6 +744,7 @@ class _TackleGameScreenState extends State<TackleGameScreen>
               key: _contactPlayerKey,
               child: TacklePlayerVisual(
                 key: const Key('tackle-player'),
+                visualScale: TacklePlayerVisual.candidateVisualScale,
                 attacking: _attemptSucceeded == true || _playerAlignment.y != 0,
                 downward: _attemptSucceeded == true
                     ? _actualDirection == TackleDirection.down
