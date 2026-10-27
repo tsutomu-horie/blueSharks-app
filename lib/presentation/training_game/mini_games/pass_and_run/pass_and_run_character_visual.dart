@@ -76,12 +76,13 @@ class PassAndRunCharacterVisual extends StatelessWidget {
     required int frame,
     required PassRunFacing facing,
     required double size,
-  }) => heldBallGeometry(
-    character: character,
-    frame: frame,
-    facing: facing,
-    size: size,
-  ).offset;
+  }) =>
+      heldBallGeometry(
+        character: character,
+        frame: frame,
+        facing: facing,
+        size: size,
+      ).offset;
 
   @override
   Widget build(BuildContext context) {
@@ -93,10 +94,10 @@ class PassAndRunCharacterVisual extends StatelessWidget {
     );
     final freeAsset = assetPath.replaceFirst('_hold_', '_free_');
     Widget heldBall() => Positioned(
-      left: size / 2 + geometry.offset.dx - geometry.extent / 2,
-      top: size / 2 + geometry.offset.dy - geometry.extent / 2,
-      child: PassAndRunBallVisual(geometry: geometry),
-    );
+          left: size / 2 + geometry.offset.dx - geometry.extent / 2,
+          top: size / 2 + geometry.offset.dy - geometry.extent / 2,
+          child: PassAndRunBallVisual(geometry: geometry),
+        );
     return IgnorePointer(
       child: SizedBox(
         width: size,

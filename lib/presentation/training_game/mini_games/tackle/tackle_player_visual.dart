@@ -52,15 +52,15 @@ class TacklePlayerVisual extends StatelessWidget {
                 maxHeight: height,
                 child: Transform.translate(
                   offset: const Offset((.5 - attackFootAnchorX) * width, 0),
-                  child: Transform.flip(
-                    flipY: downward,
-                    child: Transform.scale(
-                      scale: visualScale,
-                      // Preserve the calibrated arm contact pixel before Y flip.
-                      alignment: const Alignment(
-                        2 * 607 / 615 - 1,
-                        2 * 455 / 1251 - 1,
-                      ),
+                  child: Transform.scale(
+                    scale: visualScale,
+                    // Preserve the calibrated arm contact pixel after Y flip.
+                    alignment: Alignment(
+                      2 * 607 / 615 - 1,
+                      (downward ? -1 : 1) * (2 * 455 / 1251 - 1),
+                    ),
+                    child: Transform.flip(
+                      flipY: downward,
                       child: Image.asset(
                         attackAssetPath,
                         key: const Key('tackle-player-attack'),

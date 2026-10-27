@@ -377,8 +377,12 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
               (_motion.geometry.movementRadius * 2);
       final playerAssist = _playerAssist;
       if (playerAssist != null) {
-        _outboundPlayerDistanceDelta = _distanceCorrection(playerAssist,
-            _playerAssistDistanceBase, PassRunRunner.player, endSeconds);
+        _outboundPlayerDistanceDelta = _distanceCorrection(
+          playerAssist,
+          _playerAssistDistanceBase,
+          PassRunRunner.player,
+          endSeconds,
+        );
       }
       final sprint = _mateSprint;
       if (sprint != null) {
@@ -657,10 +661,7 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
     final outboundDistance = (kind == PassRunCharacter.companion
             ? _outboundMateDistanceDelta
             : _outboundPlayerDistanceDelta) +
-        _motion.distanceAt(
-          _roundDuration.inMicroseconds / 1000000,
-          runner,
-        );
+        _motion.distanceAt(_roundDuration.inMicroseconds / 1000000, runner);
     var distance = _isOutbound
         ? _motion.distanceAt(seconds, runner)
         : outboundDistance +
@@ -671,12 +672,13 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
         kind == PassRunCharacter.companion ? _mateSprint : _playerAssist;
     if (sprint != null && seconds >= sprint.start) {
       distance += _distanceCorrection(
-          sprint,
-          kind == PassRunCharacter.companion
-              ? _mateSprintDistanceBase
-              : _playerAssistDistanceBase,
-          runner,
-          seconds);
+        sprint,
+        kind == PassRunCharacter.companion
+            ? _mateSprintDistanceBase
+            : _playerAssistDistanceBase,
+        runner,
+        seconds,
+      );
     }
     return (distance * 45).floor() % 2;
   }
@@ -942,8 +944,12 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
     _returnReleaseGeometry = null;
   }
 
-  double _distanceCorrection(PassRunAssistedMovement movement, double previous,
-          PassRunRunner runner, double seconds) =>
+  double _distanceCorrection(
+    PassRunAssistedMovement movement,
+    double previous,
+    PassRunRunner runner,
+    double seconds,
+  ) =>
       previous +
       _motion.runningForwardRate * (seconds - movement.start) +
       _motion.geometry.movementRadius *
@@ -983,7 +989,10 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
         ? _returnPlan(_mateBallOffset).target - _mateBallOffset
         : _mateOffset - _playerOffset;
     final blocked = PassAndRunRules.isForwardDirection(
-        deltaX: direction.dx, deltaY: direction.dy, outbound: _isOutbound);
+      deltaX: direction.dx,
+      deltaY: direction.dy,
+      outbound: _isOutbound,
+    );
     if (!blocked) {
       _blockedSince = null;
       _playerAssist?.release(t);
@@ -1006,20 +1015,26 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
         (_motion.geometry.movementRadius * 2);
     if (previous != null) {
       _playerAssistDistanceBase = _distanceCorrection(
-          previous, _playerAssistDistanceBase, PassRunRunner.player, t);
+        previous,
+        _playerAssistDistanceBase,
+        PassRunRunner.player,
+        t,
+      );
     }
 
     final forecastSeconds =
         _motion.roundSeconds + PassRunMotion.maxForecastSeconds;
     final phaseRoom = math.max(
-        0.0,
-        PassRunMotion.trajectoryProfileHorizonSeconds /
-                _settings.runSpeedScale -
-            forecastSeconds);
+      0.0,
+      PassRunMotion.trajectoryProfileHorizonSeconds / _settings.runSpeedScale -
+          forecastSeconds,
+    );
     // Reserve 25% for a smooth rate transition's small overshoot. Preserve
     // the existing random profile instead of regenerating it with a new horizon.
-    final maximumRate =
-        math.min(1.12, 1 + phaseRoom / (forecastSeconds * 1.25));
+    final maximumRate = math.min(
+      1.12,
+      1 + phaseRoom / (forecastSeconds * 1.25),
+    );
     final mateMovement = _mateSprint;
     double mateAt(double at) =>
         mateMovement?.positionAt(at) ??
@@ -1032,12 +1047,13 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
     // because the independent random path may turn while an assist is active.
     for (final rate in [1.0, maximumRate, .88]) {
       final candidate = PassRunPaceAssist(
-          start: t,
-          normalPosition: base,
-          normalVelocity: velocity,
-          targetRate: rate,
-          attackUp: up,
-          previous: previous);
+        start: t,
+        normalPosition: base,
+        normalVelocity: velocity,
+        targetRate: rate,
+        attackUp: up,
+        previous: previous,
+      );
       var firstLegal = 3.05, deficit = 0.0;
       for (var tick = 1; tick <= 60; tick++) {
         final ahead = tick * .05;
@@ -1121,8 +1137,11 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
               _motion.geometry.minimum) /
           (_motion.geometry.movementRadius * 2);
       double baseVelocity(double t) =>
-          (_motion.worldVelocityYAt(t, PassRunRunner.companion,
-                  outbound: outbound) +
+          (_motion.worldVelocityYAt(
+                t,
+                PassRunRunner.companion,
+                outbound: outbound,
+              ) +
               (outbound ? 1 : -1) * _motion.runningForwardRate) /
           (_motion.geometry.movementRadius * 2);
       if (previousSprint != null) {
@@ -1131,11 +1150,16 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
                 _motion.geometry.movementRadius *
                     2 *
                     previousSprint.distanceSinceStart(seconds) -
-                (_motion.distanceAt(seconds, PassRunRunner.companion,
-                        outbound: outbound) -
+                (_motion.distanceAt(
+                      seconds,
+                      PassRunRunner.companion,
+                      outbound: outbound,
+                    ) -
                     _motion.distanceAt(
-                        previousSprint.start, PassRunRunner.companion,
-                        outbound: outbound));
+                      previousSprint.start,
+                      PassRunRunner.companion,
+                      outbound: outbound,
+                    ));
       }
       _mateSprint = PassRunReturnSprint(
         start: seconds,
@@ -1174,7 +1198,10 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
       // Freeze the receiver's coast BEFORE fixing the flight endpoint.
       // An assisted forecast must never change after the ball has launched.
       if (!PassAndRunRules.isForwardDirection(
-          deltaX: direction.dx, deltaY: direction.dy, outbound: _isOutbound)) {
+        deltaX: direction.dx,
+        deltaY: direction.dy,
+        outbound: _isOutbound,
+      )) {
         _playerAssist?.release(_motionSeconds);
         plan = _returnPlan(origin);
         direction = plan.target - origin;
