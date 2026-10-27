@@ -233,6 +233,7 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
                 beforeFrame: SametarohAssets.newbornFrame,
                 afterFrame: currentBodyFrame,
                 beforeScale: 0.62,
+                afterVisual: _buildEvolutionHomeFirstFrame(_bodyKey),
               ),
             3 => TrainingEvolutionReveal(
                 key: const ValueKey('training-evolution-3'),
@@ -240,6 +241,7 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
                 afterFrame: currentBodyFrame,
                 // 分岐未確定時も通常形を保ち、成長の差はサイズで見せます。
                 beforeScale: 0.7,
+                afterVisual: _buildEvolutionHomeFirstFrame(_bodyKey),
               ),
             _ => _buildSuppliedStatic(currentBodyFrame),
           };
@@ -271,7 +273,22 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
       beforeFrame: currentBodyFrame,
       // 未確定時は推測ユニフォームを避け、現在の姿で成長演出します。
       afterFrame: confirmedFirstTeamFrame ?? currentBodyFrame,
+      afterVisual: confirmedFirstTeamFrame == null
+          ? _buildEvolutionHomeFirstFrame(_bodyKey)
+          : _buildPositionStatic(controller.position),
       beforeScale: confirmedFirstTeamFrame == null ? 0.7 : 0.82,
+    );
+  }
+
+  /// 進化演出の終端を、育成ホームが最初に描くidleフレームと同じ寸法で描きます。
+  Widget _buildEvolutionHomeFirstFrame(String? bodyKey) {
+    final frame =
+        TrainingHomeCharacterFrameSet.forBodyKey(bodyKey).idleFrames.first;
+    return TrainingHomeCharacterFrameImage(
+      frame: frame,
+      width: 128.w,
+      height: 184.h,
+      semanticLabel: '鮫太朗',
     );
   }
 

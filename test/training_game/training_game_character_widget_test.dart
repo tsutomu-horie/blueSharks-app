@@ -48,8 +48,18 @@ double _evolutionAssetOpacity(WidgetTester tester, SametarohFrame frame) {
           (widget.image as AssetImage).assetName == frame.asset,
     ),
   );
-  if (image.evaluate().isEmpty) return 0;
-  final opacity = find.ancestor(of: image, matching: find.byType(Opacity));
+  // WTB等の登録済みidleはImage.assetではなく専用描画Widgetを使う。
+  final renderedFrame = image.evaluate().isNotEmpty
+      ? image
+      : find.descendant(
+          of: find.byType(TrainingEvolutionReveal),
+          matching: find.byWidgetPredicate((widget) =>
+              widget is TrainingHomeCharacterFrameImage &&
+              widget.frame.asset == frame.asset),
+        );
+  if (renderedFrame.evaluate().isEmpty) return 0;
+  final opacity =
+      find.ancestor(of: renderedFrame, matching: find.byType(Opacity));
   return opacity.evaluate().isEmpty
       ? 1
       : tester.widget<Opacity>(opacity.first).opacity;
