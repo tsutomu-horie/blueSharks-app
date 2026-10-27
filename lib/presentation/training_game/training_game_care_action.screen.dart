@@ -287,7 +287,7 @@ class _CareActionPresentation {
           fit: BoxFit.contain,
           illustrationLabel: '食事中',
           progressLabel: '食事中…',
-          description: 'しっかり食べて、食事メーターを回復します。',
+          description: 'おいしく食べて、おなかいっぱい！',
         ),
       TrainingActionType.clean => _CareActionPresentation(
           title: '掃除',
@@ -300,7 +300,7 @@ class _CareActionPresentation {
           fit: BoxFit.contain,
           illustrationLabel: '掃除中',
           progressLabel: '掃除中…',
-          description: 'お部屋をきれいにして、清潔メーターを回復します。',
+          description: 'お部屋がきれいになって、気分すっきり！',
         ),
       TrainingActionType.rest => _CareActionPresentation(
           title: '休養',
@@ -313,7 +313,7 @@ class _CareActionPresentation {
           fit: BoxFit.contain,
           illustrationLabel: '休養・ケア中',
           progressLabel: 'ケア中…',
-          description: 'ゆっくり休んで、体調メーターを回復します。',
+          description: 'ゆっくり休んで、また元気に！',
         ),
       TrainingActionType.squat => _CareActionPresentation(
           title: '筋トレ',
