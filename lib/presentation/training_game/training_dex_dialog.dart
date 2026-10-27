@@ -92,8 +92,8 @@ class TrainingDexDialog extends StatelessWidget {
 
   /// シミュレータHTMLの図鑑カードと同じ構成でポジションを表示します。
   Widget _buildDexCard(_DexPosition position, bool unlocked) {
-    final frame =
-        unlocked ? SametarohAssets.positionFrameFor(position.name) : null;
+    // 未解放の進化先も元の姿をシルエットで示すため、常に同じ素材を使います。
+    final frame = SametarohAssets.positionFrameFor(position.name);
     final borderColor =
         unlocked ? const Color(0xff1f6feb) : const Color(0xffdfe4ea);
     final backgroundColor =
@@ -152,12 +152,28 @@ class TrainingDexDialog extends StatelessWidget {
             if (frame != null)
               Align(
                 alignment: Alignment.center,
-                child: SametarohFrameImage(
-                  alignment: Alignment.bottomCenter,
-                  frame: frame,
-                  width: 48,
-                  height: 64,
-                ),
+                child: unlocked
+                    ? SametarohFrameImage(
+                        alignment: Alignment.bottomCenter,
+                        frame: frame,
+                        width: 48,
+                        height: 64,
+                      )
+                    : ColorFiltered(
+                        colorFilter: const ColorFilter.mode(
+                          Color(0xffc5cbd2),
+                          BlendMode.srcIn,
+                        ),
+                        child: Opacity(
+                          opacity: .72,
+                          child: SametarohFrameImage(
+                            alignment: Alignment.bottomCenter,
+                            frame: frame,
+                            width: 48,
+                            height: 64,
+                          ),
+                        ),
+                      ),
               ),
             SizedBox(height: 5),
             _buildDexDetail('役割', position.role),
