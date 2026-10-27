@@ -1,28 +1,42 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:googleapis/driveactivity/v2.dart';
 import 'package:http/http.dart' as http;
-import 'package:intl/intl.dart';
 import 'package:koto_blue_sharks/app/services/analytics_service.dart';
 import 'package:koto_blue_sharks/generated/locales.g.dart';
 import 'package:koto_blue_sharks/infrastructure/navigation/routes.dart';
 import 'package:syncfusion_flutter_calendar/calendar.dart';
 
+typedef CalendarHttpGet = Future<http.Response> Function(Uri uri);
+
 class CalendarScreenController extends GetxController {
+  CalendarScreenController({CalendarHttpGet? httpGet})
+      : _httpGet = httpGet ?? http.get;
+
+  final CalendarHttpGet _httpGet;
   // final String publicCalendarAllSchedulue = 'bluesharksrugby.official@gmail.com'; // Replace with your public calendar ID
-  final String publicCalendarIdGameSchedulue = 'bluesharksrugby.official@gmail.com'; // Replace with your public calendar ID
-  final String publicCalendarIdAll = 'bluesharksrugby.official2@gmail.com'; // Replace with your public calendar ID
-  final String publicCalendarIdEvent = 'bluesharksrugby.official3@gmail.com'; // Replace with your public calendar ID
-  final String publicCalendarIdPlayerBirthday = 'bluesharksrugby.official4@gmail.com'; // Replace with your public calendar ID
-  final String apiKey = 'AIzaSyAJMnARaJbvTrp5s9opMyyjFbZVVj0d0xY'; // Replace with your Google API Key
+  final String publicCalendarIdGameSchedulue =
+      'bluesharksrugby.official@gmail.com'; // Replace with your public calendar ID
+  final String publicCalendarIdAll =
+      'bluesharksrugby.official2@gmail.com'; // Replace with your public calendar ID
+  final String publicCalendarIdEvent =
+      'bluesharksrugby.official3@gmail.com'; // Replace with your public calendar ID
+  final String publicCalendarIdPlayerBirthday =
+      'bluesharksrugby.official4@gmail.com'; // Replace with your public calendar ID
+  final String apiKey =
+      'AIzaSyAJMnARaJbvTrp5s9opMyyjFbZVVj0d0xY'; // Replace with your Google API Key
   RxList<CalendarEvent> publicEvents = <CalendarEvent>[].obs;
   final selectedYear = LocaleKeys.all.tr.obs;
 
   final Rx<DateTime> minDate = DateTime.now().obs;
   final Rx<DateTime> maxDate = DateTime.now().obs;
 
-  final List<String> filterEvent = [ LocaleKeys.all.tr, LocaleKeys.game_schedule.tr, LocaleKeys.event.tr, LocaleKeys.player_birthday.tr];
+  final List<String> filterEvent = [
+    LocaleKeys.all.tr,
+    LocaleKeys.game_schedule.tr,
+    LocaleKeys.event.tr,
+    LocaleKeys.player_birthday.tr
+  ];
 
   var calendarView = CalendarView.month.obs;
 
@@ -56,50 +70,15 @@ class CalendarScreenController extends GetxController {
   }
 
 // Modified fetch method that returns List<CalendarEvent>
-  Future<List<CalendarEvent>> fetchCalendarEvents(DateTime minDate, DateTime maxDate, String selectedId) async {
-    List<CalendarEvent> events = [];
-
+  Future<List<CalendarEvent>> fetchCalendarEvents(
+      DateTime minDate, DateTime maxDate, String selectedId) async {
     try {
-      final url = Uri.parse(
-        'https://www.googleapis.com/calendar/v3/calendars/$selectedId/events?key=$apiKey'
-            '&timeMin=${minDate.toUtc().toIso8601String()}&timeMax=${maxDate.toUtc().toIso8601String()}',
-      );
-
-      final response = await http.get(url);
-
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        final List<dynamic> eventItems = data['items'];
-
-        events = eventItems.map((eventData) {
-          final isAllDayEvent = eventData['start']['date'] != null;
-
-          // Parse start & end time
-          DateTime startDate = DateTime.parse(eventData['start']['dateTime'] ?? eventData['start']['date']);
-          DateTime endDate = DateTime.parse(eventData['end']['dateTime'] ?? eventData['end']['date']);
-
-          if (isAllDayEvent) {
-            endDate = endDate.subtract(const Duration(days: 1));
-          }
-
-          // 🛠 Fix: Ensure a minimum duration of 30 minutes if the event has no duration
-          if (startDate.isAtSameMomentAs(endDate)) {
-            endDate = startDate.add(const Duration(hours: 23, minutes: 58)); // Set default duration
-          }
-
-          return CalendarEvent(
-            title: eventData['summary'] ?? 'No Title',
-            start: startDate,
-            end: endDate,
-            description: eventData['description'] ?? '',
-          );
-        }).toList();
-      }
+      final items = await _fetchCalendarItems(minDate, maxDate, selectedId);
+      return _mapCalendarEvents(items);
     } catch (e) {
-      debugPrint("Error fetching calendar events: $e");
+      debugPrint('Error fetching calendar events: $e');
+      return [];
     }
-
-    return events;
   }
 
   List<String> parseCategories(String title, String description) {
@@ -115,6 +94,7 @@ class CalendarScreenController extends GetxController {
 
     onChangeFilter(minDate.value, maxDate.value);
   }
+
   void changeDisplay(DateTime _minDate, DateTime _maxDate) {
     minDate.value = _minDate;
     maxDate.value = _maxDate;
@@ -151,53 +131,99 @@ class CalendarScreenController extends GetxController {
     }
   }
 
-
-  Future<void> fetchPublicEvents(DateTime minDate, DateTime maxDate, String selectedId) async {
-    debugPrint("finish fetch with data ${minDate} - ${maxDate}");
-
+  Future<void> fetchPublicEvents(
+      DateTime minDate, DateTime maxDate, String selectedId) async {
     try {
-      final url = Uri.parse(
-        'https://www.googleapis.com/calendar/v3/calendars/$selectedId/events?key=$apiKey'
-            '&timeMin=${minDate.toUtc().toIso8601String()}&timeMax=${maxDate.toUtc().toIso8601String()}',
-      );
-
-      final response = await http.get(url);
-
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        final List<dynamic> events = data['items'];
-
-        debugPrint("get data\n ${data}");
-        // Map the event data to your CalendarEvent model
-        final fetchedEvents = events.map((eventData) {
-          final isAllDayEvent = eventData['start']['date'] != null;
-
-          DateTime startDate = DateTime.parse(eventData['start']['dateTime'] ?? eventData['start']['date']);
-          DateTime endDate = DateTime.parse(eventData['end']['dateTime'] ?? eventData['end']['date']);
-
-          if (isAllDayEvent) {
-            endDate = endDate.subtract(const Duration(days: 1));
-          }
-
-          debugPrint("summary ${eventData['summary']}");
-          return CalendarEvent(
-            title: eventData['summary'] ?? 'No Title',
-            start: startDate,
-            end: endDate,
-            description: eventData['description'] ?? '',
-          );
-        }).toList();
-
-        debugPrint("finish fetch with data ${fetchedEvents}");
-        publicEvents.assignAll(fetchedEvents);
-      } else {
-        debugPrint('Failed to fetch events. Status code: ${response.statusCode}');
-      }
+      final items = await _fetchCalendarItems(minDate, maxDate, selectedId);
+      publicEvents.assignAll(_mapCalendarEvents(items));
     } catch (e) {
-      debugPrint("Error fetching public calendar events: $e");
+      debugPrint('Error fetching public calendar events: $e');
     }
   }
 
+  Future<List<dynamic>> _fetchCalendarItems(
+      DateTime minDate, DateTime maxDate, String selectedId) async {
+    final endpoint = Uri.parse(
+        'https://www.googleapis.com/calendar/v3/calendars/$selectedId/events');
+    final baseQuery = <String, String>{
+      'key': apiKey,
+      'timeMin': minDate.toUtc().toIso8601String(),
+      'timeMax': maxDate.toUtc().toIso8601String(),
+      'singleEvents': 'true',
+      'orderBy': 'startTime',
+      'maxResults': '250',
+    };
+    final seenPageTokens = <String>{};
+    final allItems = <dynamic>[];
+    String? pageToken;
+
+    while (true) {
+      final query = <String, String>{
+        ...baseQuery,
+        if (pageToken != null) 'pageToken': pageToken,
+      };
+      final response = await _httpGet(endpoint.replace(queryParameters: query));
+      if (response.statusCode != 200) {
+        throw FormatException(
+            'Calendar API returned HTTP ${response.statusCode}.');
+      }
+
+      final decoded = json.decode(response.body);
+      if (decoded is! Map<String, dynamic>) {
+        throw const FormatException('Invalid calendar response.');
+      }
+      final items = decoded['items'];
+      if (items != null && items is! List) {
+        throw const FormatException('Invalid calendar items.');
+      }
+      if (items is List) allItems.addAll(items);
+
+      final nextPageToken = decoded['nextPageToken'];
+      if (nextPageToken == null || nextPageToken == '') break;
+      if (nextPageToken is! String || !seenPageTokens.add(nextPageToken)) {
+        throw const FormatException('Invalid or repeated calendar page token.');
+      }
+      pageToken = nextPageToken;
+    }
+
+    return allItems;
+  }
+
+  List<CalendarEvent> _mapCalendarEvents(List<dynamic> eventItems) {
+    return eventItems.map((eventData) {
+      if (eventData is! Map<String, dynamic>) {
+        throw const FormatException('Invalid calendar event.');
+      }
+      final start = eventData['start'];
+      final end = eventData['end'];
+      if (start is! Map<String, dynamic> || end is! Map<String, dynamic>) {
+        throw const FormatException('Missing calendar event dates.');
+      }
+
+      final isAllDayEvent = start['date'] != null;
+      final rawStart = start['dateTime'] ?? start['date'];
+      final rawEnd = end['dateTime'] ?? end['date'];
+      if (rawStart is! String || rawEnd is! String) {
+        throw const FormatException('Invalid calendar event dates.');
+      }
+      final startDate = DateTime.parse(rawStart);
+      var endDate = DateTime.parse(rawEnd);
+
+      if (isAllDayEvent) {
+        endDate = endDate.subtract(const Duration(days: 1));
+      }
+      if (startDate.isAtSameMomentAs(endDate)) {
+        endDate = startDate.add(const Duration(hours: 23, minutes: 58));
+      }
+
+      return CalendarEvent(
+        title: eventData['summary'] as String? ?? 'No Title',
+        start: startDate,
+        end: endDate,
+        description: eventData['description'] as String? ?? '',
+      );
+    }).toList();
+  }
 }
 
 class CalendarEvent {

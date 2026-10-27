@@ -11,6 +11,7 @@ import 'package:koto_blue_sharks/app/views/views/custom_text_view.dart';
 import 'package:koto_blue_sharks/app/views/views/default_header_title_view.dart';
 import 'package:koto_blue_sharks/generated/locales.g.dart';
 import 'package:koto_blue_sharks/presentation/menu/match/match_detail/controllers/match_detail.controller.dart';
+import 'package:koto_blue_sharks/presentation/menu/match/match_detail/match_member_count_header.dart';
 import 'package:koto_blue_sharks/utils/app_color.dart';
 import 'package:koto_blue_sharks/utils/date_formatter.dart';
 import 'package:koto_blue_sharks/utils/match+extensions.dart';
@@ -1065,29 +1066,9 @@ class _NativeMatchDetailScreen extends GetView<MatchDetailController> {
           if (startingMember != null)
             Column(
               children: [
-                Row(
-                  children: [
-                    SizedBox(
-                      width: 16.w,
-                    ),
-                    Container(
-                      padding:
-                          EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
-                      decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(12.r),
-                          color: BrandColor.main),
-                      child: CustomTextView(
-                        "Starting ${startingMember.length}",
-                        style: TextStyle(
-                          fontSize: 14.sp,
-                          color: TextColor.inverse,
-                        ),
-                      ),
-                    ),
-                    SizedBox(
-                      width: 16.w,
-                    ),
-                  ],
+                MatchMemberCountHeader(
+                  label: 'Starting',
+                  count: startingMember.length,
                 ),
                 Padding(
                   padding:
@@ -1181,29 +1162,9 @@ class _NativeMatchDetailScreen extends GetView<MatchDetailController> {
           if (reserveMember != null)
             Column(
               children: [
-                Row(
-                  children: [
-                    SizedBox(
-                      width: 16.w,
-                    ),
-                    Container(
-                      padding:
-                          EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
-                      decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(12.r),
-                          color: BrandColor.main),
-                      child: CustomTextView(
-                        "Starting ${reserveMember.length}",
-                        style: TextStyle(
-                          fontSize: 14.sp,
-                          color: TextColor.inverse,
-                        ),
-                      ),
-                    ),
-                    SizedBox(
-                      width: 16.w,
-                    ),
-                  ],
+                MatchMemberCountHeader(
+                  label: 'Reserves',
+                  count: reserveMember.length,
                 ),
                 Padding(
                   padding:
