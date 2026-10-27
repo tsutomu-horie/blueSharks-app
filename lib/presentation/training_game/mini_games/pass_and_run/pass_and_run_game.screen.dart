@@ -11,6 +11,7 @@ import 'pass_and_run_direction_guide.dart';
 import '../../models/training_game_clock.dart';
 import '../../models/mini_game_settings.dart';
 import 'pass_and_run_logic.dart';
+import 'pass_and_run_sparse_flick.dart';
 import 'pass_and_run_motion.dart';
 import 'pass_and_run_return_sprint.dart';
 import 'pass_and_run_pace_assist.dart';
@@ -106,6 +107,8 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
   PassRunBallGeometry? _releaseBallGeometry;
   double? _releaseCollisionRadius;
   PassRunBallGeometry? _returnReleaseGeometry;
+  final _sparseFlick = PassRunSparseFlick();
+  final _fieldInputKey = GlobalKey();
   Offset? _dragStart;
   Offset? _dragCurrent;
   Size _fieldSize = Size.zero;
@@ -429,18 +432,22 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
     final current = _dragCurrent;
     _dragStart = null;
     _dragCurrent = null;
-    if (!_canPass || start == null || current == null || _fieldSize.isEmpty) {
+    if (!_canPass ||
+        _sparseFlick.blocked ||
+        start == null ||
+        current == null ||
+        _fieldSize.isEmpty) {
       // フリックが成立しない場合も、表示中の操作ガイドは即時に消します。
       setState(() {});
       return;
     }
     final velocity = details.velocity.pixelsPerSecond;
-    final flick = PassFlick(
+    final flick = _sparseFlick.resolve(PassFlick(
       deltaX: current.dx - start.dx,
       deltaY: current.dy - start.dy,
       velocityX: velocity.dx,
       velocityY: velocity.dy,
-    );
+    ));
     // 短い指のブレはミス扱いにせず、そのまま入力を待ちます。
     if (!PassAndRunRules.isFlick(flick)) {
       // 短いドラッグは発射せず、操作ガイドだけを消して次の入力を待ちます。
@@ -1276,7 +1283,22 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) => Listener(
+        behavior: HitTestBehavior.translucent,
+        onPointerDown: (event) {
+          final box =
+              _fieldInputKey.currentContext?.findRenderObject() as RenderBox?;
+          final bounds =
+              box == null ? null : box.localToGlobal(Offset.zero) & box.size;
+          _sparseFlick.down(event, fieldBounds: bounds, ready: _canPass);
+        },
+        onPointerMove: _sparseFlick.move,
+        onPointerUp: _sparseFlick.up,
+        onPointerCancel: _sparseFlick.cancel,
+        child: _buildGame(context),
+      );
+
+  Widget _buildGame(BuildContext context) {
     final remainingSeconds = (_remainingMilliseconds / 1000).clamp(
       0,
       _motion.roundSeconds,
@@ -1339,6 +1361,7 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
   /// 2本の縦レーンと並走する2人を表示します。
   Widget _buildField() {
     return LayoutBuilder(
+      key: _fieldInputKey,
       builder: (context, constraints) {
         _fieldSize = constraints.biggest;
         _motion.updateFieldGeometry(_fieldSize);
@@ -1357,6 +1380,13 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
           onPanStart: _handlePanStart,
           onPanUpdate: _handlePanUpdate,
           onPanEnd: _handlePanEnd,
+          onPanCancel: () {
+            _sparseFlick.block();
+            setState(() {
+              _dragStart = null;
+              _dragCurrent = null;
+            });
+          },
           child: ClipRRect(
             borderRadius: BorderRadius.circular(16),
             child: Stack(
