@@ -1495,8 +1495,9 @@ void main() {
               await step(t, 1000);
             }
             expect(find.textContaining('PASS 0'), findsOneWidget);
-            await t.flingFrom(
-                t.getCenter(player), Offset(outbound ? -120 : 120, 0), 2000);
+            // 入力は画面内に保ち、球だけを仲間と逆方向へ投げる。
+            await t.flingFrom(t.getCenter(find.byKey(const Key('pass-field'))),
+                Offset(outbound ? -60 : 60, 0), 2000);
             await t.pump();
             for (var i = 0;
                 i < 200 && find.textContaining('MISS').evaluate().isEmpty;
@@ -1566,7 +1567,8 @@ void main() {
     await t.tap(find.text('再開'));
     await t.pump();
     expect(visual(t, player).holding, isTrue);
-    await t.flingFrom(t.getCenter(player), const Offset(-100, 0), 2000);
+    await t.flingFrom(t.getCenter(find.byKey(const Key('pass-field'))),
+        const Offset(-60, 0), 2000);
     await t.pump();
     expect(trail, findsOneWidget);
   });
@@ -1641,7 +1643,8 @@ void main() {
     final sounds = RecordingTrainingGameSound();
     addTearDown(sounds.dispose);
     await start(t, soundService: sounds.service);
-    await t.flingFrom(t.getCenter(player), const Offset(-100, 0), 2000);
+    await t.flingFrom(t.getCenter(find.byKey(const Key('pass-field'))),
+        const Offset(-60, 0), 2000);
     await t.pump();
     await step(t, 500);
 
