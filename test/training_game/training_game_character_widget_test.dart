@@ -381,6 +381,7 @@ void main() {
       controller.evolutionStage.value = stage;
       await tester.pumpWidget(host(const TrainingGameScreen()));
       await tester.pump();
+      await tester.pump(const Duration(milliseconds: 900));
 
       expect(find.text('進化'), findsOneWidget);
       expect(find.text(growthMessage),
@@ -720,6 +721,7 @@ void main() {
       expect(animation.frameSet.walkFrames.first.asset, move.first.asset);
       controller.evolutionStage.value = 3;
       await tester.pump();
+      await tester.pump(const Duration(milliseconds: 350));
       if (entry.value == null) {
         expect(shownAsset(tester), idle.first.asset);
       } else {
@@ -731,6 +733,7 @@ void main() {
       controller.clearPosition.value = 'プロップ';
       controller.endingStep.value = 2;
       await tester.pump();
+      await tester.pump(const Duration(milliseconds: 350));
       await preload(tester, move);
       expect(shownAsset(tester), move.first.asset);
       expect(tester.takeException(), isNull, reason: '${entry.key}');
@@ -886,6 +889,7 @@ void main() {
     controller.ended.value = false;
     controller.clearPosition.value = null;
     await tester.pump();
+    await tester.pump(const Duration(milliseconds: 350));
     await preload(tester, SametarohAssets.normalFrames);
     await tester.tap(find.byKey(const ValueKey('training-home-dex')));
     await tester.pump();

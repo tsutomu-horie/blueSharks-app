@@ -23,6 +23,7 @@ import 'training_sync_indicator.dart';
 import 'training_debug_menu.dart';
 import 'training_evolution_reveal.dart';
 import 'training_dex_dialog.dart';
+import 'training_screen_transitions.dart';
 
 /// 参照HTMLのスマートフォン画面部分だけをアプリ用に再現します。
 class TrainingGameScreen extends GetView<TrainingGameController> {
@@ -77,9 +78,39 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
                   : controller.serverErrorMessage.value.isEmpty
                       ? const Center(child: CircularProgressIndicator())
                       : _buildConnectionError();
+              final pageKey = !controller.isServerStateReady.value
+                  ? 'connection'
+                  : shouldShowEvolution
+                      ? 'evolution-${controller.evolutionStage.value}'
+                      : controller.ended.value
+                          ? 'ending-${controller.endingStep.value}'
+                          : 'home';
+              final reduceMotion = MediaQuery.disableAnimationsOf(context);
               return Stack(
                 children: [
-                  content,
+                  AnimatedSwitcher(
+                    duration: reduceMotion
+                        ? Duration.zero
+                        : const Duration(milliseconds: 300),
+                    switchInCurve: Curves.easeOutCubic,
+                    switchOutCurve: Curves.easeInCubic,
+                    transitionBuilder: (child, animation) => FadeTransition(
+                      opacity: animation,
+                      child: AnimatedBuilder(
+                        animation: animation,
+                        child: child,
+                        builder: (context, child) {
+                          final leaving =
+                              animation.status == AnimationStatus.reverse;
+                          return IgnorePointer(
+                              ignoring: leaving,
+                              child: ExcludeSemantics(
+                                  excluding: leaving, child: child!));
+                        },
+                      ),
+                    ),
+                    child: KeyedSubtree(key: ValueKey(pageKey), child: content),
+                  ),
                   if (controller.isReturningHome.value)
                     _buildReturningHomeOverlay(),
                 ],
@@ -612,53 +643,71 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
     Widget? visualWidget,
     bool guardRapidTap = false,
   }) {
-    return Padding(
-      padding: EdgeInsets.all(20.w),
-      child: Column(
-        children: [
-          Align(
-            alignment: Alignment.centerLeft,
-            child: Text(title,
-                style: TextStyle(fontSize: 22.sp, fontWeight: FontWeight.w700)),
-          ),
-          SizedBox(height: 18.h),
-          Expanded(
-            child: Container(
-              width: double.infinity,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: const Color(0xffe2e5e8),
-                borderRadius: BorderRadius.circular(12.r),
-              ),
-              child: visualWidget ??
-                  Text(visual,
-                      textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: 30.sp, height: 1.5)),
-            ),
-          ),
-          if (message != null) ...[
-            SizedBox(height: 16.h),
-            Text(message,
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w700)),
-          ],
-          SizedBox(height: 20.h),
-          SizedBox(
-            width: double.infinity,
-            height: 52.h,
-            child: guardRapidTap
-                ? _EndingStepAdvanceButton(
-                    label: buttonLabel,
-                    onPressed: onPressed,
-                  )
-                : ElevatedButton(
-                    onPressed: onPressed,
-                    child: Text(buttonLabel),
+    return TrainingEndingEntrance(
+        key: ValueKey(
+            'ending-entrance-${controller.evolutionStage.value}-${controller.endingStep.value}-$title'),
+        builder: (context, animation) => Padding(
+              padding: EdgeInsets.all(20.w),
+              child: Column(
+                children: [
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: TrainingEndingItem(
+                        animation: animation,
+                        start: .2,
+                        child: Text(title,
+                            style: TextStyle(
+                                fontSize: 22.sp, fontWeight: FontWeight.w700))),
                   ),
-          ),
-        ],
-      ),
-    );
+                  SizedBox(height: 18.h),
+                  Expanded(
+                    child: Container(
+                      width: double.infinity,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: const Color(0xffe2e5e8),
+                        borderRadius: BorderRadius.circular(12.r),
+                      ),
+                      child: TrainingEndingItem(
+                          animation: animation,
+                          start: 0,
+                          child: visualWidget ??
+                              Text(visual,
+                                  textAlign: TextAlign.center,
+                                  style:
+                                      TextStyle(fontSize: 30.sp, height: 1.5))),
+                    ),
+                  ),
+                  if (message != null) ...[
+                    SizedBox(height: 16.h),
+                    TrainingEndingItem(
+                        animation: animation,
+                        start: .45,
+                        child: Text(message,
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                                fontSize: 16.sp, fontWeight: FontWeight.w700))),
+                  ],
+                  SizedBox(height: 20.h),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 52.h,
+                    child: TrainingEndingItem(
+                        animation: animation,
+                        start: .7,
+                        child: guardRapidTap
+                            ? _EndingStepAdvanceButton(
+                                label: buttonLabel,
+                                onPressed: onPressed,
+                              )
+                            : ElevatedButton(
+                                onPressed: onPressed,
+                                child: Text(buttonLabel),
+                              )),
+                  ),
+                ],
+              ),
+            ));
   }
 
   /// パラメータと退出ボタン、検証環境限定の開発操作を表示します。
@@ -1067,16 +1116,18 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
     final feedbackBefore = controller.careFeedbackVersion.value;
     bool? completed;
     try {
-      completed = await Navigator.of(context).push<bool>(
-        MaterialPageRoute(
-          builder: (_) => TrainingGameCareActionScreen(
-            actionType: type,
-            bodyKey: controller.stageIndex.value == 1
-                ? SametarohAssets.childBodyKey
-                : _bodyKey,
-          ),
+      final route = TrainingCareRoute<bool>(
+        reduceMotion: MediaQuery.disableAnimationsOf(context),
+        builder: (_) => TrainingGameCareActionScreen(
+          actionType: type,
+          bodyKey: controller.stageIndex.value == 1
+              ? SametarohAssets.childBodyKey
+              : _bodyKey,
         ),
       );
+      completed = await Navigator.of(context).push<bool>(route);
+      // popの結果は退場開始時に届くため、ホームが現れるまで効果反映を待ちます。
+      await route.completed;
     } finally {
       if (type == TrainingActionType.work) controller.finishWorkPreparation();
       finishSquat?.call(completed == true);
