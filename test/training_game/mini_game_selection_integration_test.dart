@@ -106,6 +106,7 @@ void main() {
     expect(entry().onPressed, isNotNull);
     controller.ended.value = true;
     await tester.pump();
+    await tester.pump(const Duration(milliseconds: 350));
     expect(find.text('練習 / MG'), findsNothing);
     await tester.pumpWidget(const SizedBox());
   });
