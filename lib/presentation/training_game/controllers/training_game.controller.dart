@@ -15,6 +15,7 @@ import '../models/training_action_gate.dart';
 import '../models/mini_game_settings.dart';
 import '../models/training_game_models.dart';
 import '../models/training_workout_requirement.dart';
+import '../models/current_decay_policy.dart';
 
 enum TrainingSyncStatus {
   idle,
@@ -323,13 +324,17 @@ class TrainingGameController extends GetxController
   Timer? _retryWaitTimer;
   Completer<bool>? _retryWaitCompleter;
   final TrainingGameProvider _serverProvider;
+  final int Function() _serverElapsedSinceSyncSeconds;
+  int? _mainEvaluationElapsedSeconds;
 
   TrainingGameController({
     TrainingGameProvider? serverProvider,
+    int Function()? serverElapsedSinceSyncSeconds,
     Future<bool> Function(String)? writePendingActions,
     Future<bool> Function()? clearPendingActions,
     Future<bool> Function(String)? archivePendingActions,
-  })  : _serverProvider = serverProvider ?? TrainingGameProvider(),
+  })  : _serverElapsedSinceSyncSeconds = serverElapsedSinceSyncSeconds ?? (() => ServerTimeClock.instance.elapsedSinceSync.inSeconds),
+        _serverProvider = serverProvider ?? TrainingGameProvider(),
         _writePendingActions =
             writePendingActions ?? MySharedPref.setTrainingGamePendingActions,
         _clearPendingActions =
@@ -369,6 +374,11 @@ class TrainingGameController extends GetxController
   int? _serverRequiredElapsedHours;
   String? _serverNextStageCode;
   int _playFloor = 0;
+  CurrentDecayPolicy? _currentDecayPolicy;
+  bool _hasDecayContract = false;
+  int _decayRefreshTicks = 0;
+  bool _decayRefreshRunning = false;
+  int? _policyLastElapsedSeconds;
 
   /// 現在の段階定義を返します。
   TrainingStageDefinition get currentStage => stages[stageIndex.value];
@@ -1684,6 +1694,7 @@ class TrainingGameController extends GetxController
         _advanceActiveMainProgress();
         _updateElapsedTimeFromStart();
         _mainClockTick.value++;
+        if (_hasDecayContract && ++_decayRefreshTicks >= 60) unawaited(refreshDecaySettings());
       }
     });
   }
@@ -1867,6 +1878,9 @@ class TrainingGameController extends GetxController
     evolutionStage.value = null;
     _elapsedTimeOffsetSeconds = 0;
     _activeMainProgressBaseSeconds = null;
+    _currentDecayPolicy = null;
+    _hasDecayContract = false;
+    _policyLastElapsedSeconds = null;
     _processedActiveMainHours = 0;
     _waitingForServerRestore = false;
     _restoreLocalCountersOnNextServerState = true;
@@ -2010,6 +2024,20 @@ class TrainingGameController extends GetxController
       // オフライン中の精算はサーバー状態の再取得へ一元化し、端末側の二重減衰を防ぎます。
       unawaited(_restoreServerState());
     }
+  }
+
+  /// Refresh current admin rates and canonical values together, at most once/minute.
+  Future<void> refreshDecaySettings() async {
+    if (!_hasDecayContract || _decayRefreshRunning || _isAppInBackground ||
+        !isServerStateReady.value || ended.value || evolutionStage.value != null ||
+        _pendingStageIndex != null || _syncRunning || pendingSyncActionCount > 0 ||
+        _debugTimeSavePending || debugPositionBusy.value ||
+        syncStatus.value != TrainingSyncStatus.idle) return;
+    _decayRefreshRunning = true;
+    _decayRefreshTicks = 0;
+    _waitingForServerRestore = true;
+    try { await _restoreServerState(); }
+    finally { _decayRefreshRunning = false; }
   }
 
   /// サーバーに保存された育成状態を復元します。
@@ -2177,7 +2205,10 @@ class TrainingGameController extends GetxController
         serverStageIndex < _pendingStageIndex!) {
       return false;
     }
+    _hasDecayContract = data.containsKey('decay_policy');
+    _currentDecayPolicy = CurrentDecayPolicy.parse(data['decay_policy']);
     _restoreServerClock(data, restoreDebugElapsed: restoreDebugElapsed);
+    _policyLastElapsedSeconds = _currentServerElapsedSeconds;
     _restoreWorkAvailability(data);
     _restoreStageProgress(data);
     if (serverStageIndex != null) {
@@ -2191,12 +2222,12 @@ class TrainingGameController extends GetxController
     }
     _serverBranchCode.value = data['branch_code'] as String?;
     _serverPositionCode.value = data['position_code'] as String?;
-    if (_waitingForServerRestore ||
+    if ((_waitingForServerRestore && !_decayRefreshRunning) ||
         _activeMainProgressBaseSeconds == null ||
         previousStageIndex != stageIndex.value) {
       _resetActiveMainProgressBaseline();
-      _waitingForServerRestore = false;
     }
+    _waitingForServerRestore = false;
     final parameters = data['parameters'];
     if (parameters is Map) {
       const displayMap = {
@@ -2219,7 +2250,9 @@ class TrainingGameController extends GetxController
         final tendencyName = tendencyMap[entry.key];
         // サーバー値も画面・次回同期で仕様範囲を超えないよう正規化します。
         if (displayName != null) {
-          meters[displayName] = value.clamp(0, 150).toDouble();
+          final remainders = data['decay_remainders'];
+          final remainder = _currentDecayPolicy != null && remainders is Map ? (remainders[entry.key] as num?)?.toDouble() ?? 0 : 0.0;
+          meters[displayName] = (value - remainder.clamp(0, .999999)).clamp(0, 150).toDouble();
         }
         if (tendencyName != null) {
           trends[tendencyName] = value.clamp(0, 100).toDouble();
@@ -3630,16 +3663,21 @@ class TrainingGameController extends GetxController
     _markLocalStateChanged();
     final previousDay = day.value;
     // デバッグ加算分も表示用の経過時間へ反映し、内部進行と時計を一致させます。
+    if (_hasDecayContract) _advanceActiveMainProgress();
     _elapsedTimeOffsetSeconds += minutes * 60;
     unawaited(MySharedPref.setTrainingGameDebugElapsedSeconds(
         _elapsedTimeOffsetSeconds));
     // デバッグ指定分だけを明示的に反映し、端末時計との差分は使いません。
-    final elapsedHours = minutes ~/ 60;
-    for (var index = 0; index < elapsedHours; index++) {
-      _tickMainHour();
-      if (ended.value || evolutionStage.value != null) break;
+    if (_hasDecayContract) {
+      _advanceActiveMainProgress();
+    } else {
+      final elapsedHours = minutes ~/ 60;
+      for (var index = 0; index < elapsedHours; index++) {
+        _tickMainHour();
+        if (ended.value || evolutionStage.value != null) break;
+      }
+      _markActiveMainProgressAsProcessed();
     }
-    _markActiveMainProgressAsProcessed();
     _updateElapsedTimeFromStart();
     _mainClockTick.value++;
     logs.insert(0, '${minutes}分経過。メーターが自然に減少しました。');
@@ -3766,6 +3804,17 @@ class TrainingGameController extends GetxController
     }
   }
 
+  void _applyCurrentDecay(int seconds) {
+    final policy = _currentDecayPolicy;
+    if (policy == null) return;
+    final stage = ['egg','child','training','growth','first_team'][stageIndex.value];
+    if (!policy.rates.containsKey(stage)) return;
+    const names = {'hunger':'食事','cleanliness':'清潔','condition':'体調','work':'仕事'};
+    names.forEach((key, name) {
+      meters[name] = policy.after(stage, key, meters[name]!, seconds, policy.floor);
+    });
+  }
+
   /// メーターを範囲内に収めて更新します。
   void _changeMeter(String name, double amount) {
     _markLocalStateChanged();
@@ -3874,7 +3923,11 @@ class TrainingGameController extends GetxController
     final decay = stageIndex.value == 0
         ? {'清潔': .7, '体調': .7}
         : {'食事': .2, '清潔': .2, '体調': .2};
-    decay.forEach((name, amount) => _changeMeter(name, -amount * seconds));
+    if (_hasDecayContract) {
+      _applyCurrentDecay(seconds);
+    } else {
+      decay.forEach((name, amount) => _changeMeter(name, -amount * seconds));
+    }
     secondsInStage.value += seconds;
     totalElapsedSeconds.value += seconds;
     for (final name in decay.keys) {
@@ -3919,13 +3972,19 @@ class TrainingGameController extends GetxController
   }
 
   /// 本編を1時間進め、日単位の進行条件を更新します。
-  void _tickMainHour() {
+  void _tickMainHour({bool applyDecay = true}) {
     elapsedHours.value++;
     totalElapsedSeconds.value += Duration.secondsPerHour;
+    if (applyDecay) {
+      if (_hasDecayContract) {
+        _applyCurrentDecay(3600);
+      } else {
     _changeMeter('食事', meters['食事']! > 100 ? -8.4 : -4.2);
     _changeMeter('清潔', meters['清潔']! > 100 ? -2.8 : -1.4);
     _changeMeter('体調', meters['体調']! > 100 ? -4.2 : -2.1);
     _changeMeter('仕事', meters['仕事']! > 100 ? -8.4 : -4.2);
+      }
+    }
     _zeroHours.updateAll((name, hours) => meters[name]! <= 0 ? hours + 1 : 0);
     _dayCared = _dayCared ||
         ['食事', '清潔', '体調', '仕事'].every((name) => meters[name]! >= 20);
@@ -3950,22 +4009,37 @@ class TrainingGameController extends GetxController
         _waitingForServerRestore) {
       return;
     }
-    _activeMainProgressBaseSeconds ??= _currentServerElapsedSeconds;
-    final elapsedSeconds =
-        _currentServerElapsedSeconds - _activeMainProgressBaseSeconds!;
-    final targetHours = elapsedSeconds < 0 ? 0 : elapsedSeconds ~/ 3600;
+    final now = _currentServerElapsedSeconds;
+    _activeMainProgressBaseSeconds ??= now;
+    var last = _policyLastElapsedSeconds ?? now;
+    var decayBudget = _currentDecayPolicy?.elapsedCapSeconds ?? 0;
+    final base = _activeMainProgressBaseSeconds!;
+    final targetHours = max(0, (now - base) ~/ 3600);
     while (_processedActiveMainHours < targetHours) {
+      final boundary = base + (_processedActiveMainHours + 1) * 3600;
+      if (_currentDecayPolicy != null && boundary > last) {
+        final seconds = min(boundary - last, decayBudget);
+        if (seconds > 0) _applyCurrentDecay(seconds);
+        decayBudget -= seconds;
+        last = boundary;
+      }
       _processedActiveMainHours++;
-      _tickActiveMainHour();
-      if (ended.value || evolutionStage.value != null) break;
+      _mainEvaluationElapsedSeconds = boundary;
+      try { _tickActiveMainHour(); } finally { _mainEvaluationElapsedSeconds = null; }
+      if (ended.value || evolutionStage.value != null || _pendingStageIndex != null) {
+        _policyLastElapsedSeconds = last;
+        return;
+      }
     }
+    if (_currentDecayPolicy != null && now > last && decayBudget > 0) _applyCurrentDecay(min(now - last, decayBudget));
+    _policyLastElapsedSeconds = now;
   }
 
   /// 本編1時間分の表示・日次判定を進めます。
   void _tickActiveMainHour() {
     // 画面表示中の自然減衰はサーバー時刻から算出した時間単位で表示へ反映し、
     // バックグラウンド／復帰時はサーバー精算結果で補正します。
-    _tickMainHour();
+    _tickMainHour(applyDecay: !_hasDecayContract);
   }
 
   /// デバッグで手動加算した時間を、実時間処理済みとして扱います。
@@ -3983,15 +4057,15 @@ class TrainingGameController extends GetxController
   }
 
   int get _currentServerElapsedSeconds =>
-      _serverElapsedSeconds +
+      _mainEvaluationElapsedSeconds ?? (_serverElapsedSeconds +
       _elapsedTimeOffsetSeconds +
-      ServerTimeClock.instance.elapsedSinceSync.inSeconds;
+      _serverElapsedSinceSyncSeconds());
 
   /// サーバー応答の経過時間とデバッグ加算だけを、画面時計へ反映します。
   void _updateElapsedTimeFromStart() {
     mainElapsedSeconds.value = _serverElapsedSeconds +
         _elapsedTimeOffsetSeconds +
-        ServerTimeClock.instance.elapsedSinceSync.inSeconds;
+        _serverElapsedSinceSyncSeconds();
   }
 
   /// チュートリアルの倍速設定を時計へ反映します。
@@ -4045,8 +4119,12 @@ class TrainingGameController extends GetxController
       _serverRequiredWorkValue != null || _serverRequiredElapsedHours != null;
 
   bool _serverStageConditionReady() {
+    // The API stores ceil(continuous value): integer value minus carried remainder.
+    final workForCondition = _currentDecayPolicy == null
+        ? meters['仕事']!
+        : (meters['仕事']! - 1e-9).ceilToDouble();
     final workReady = _serverRequiredWorkValue == null ||
-        meters['仕事']! >= _serverRequiredWorkValue!;
+        workForCondition >= _serverRequiredWorkValue!;
     final elapsedHours = _currentServerElapsedSeconds ~/ 3600;
     final elapsedReady = _serverRequiredElapsedHours == null ||
         elapsedHours >= _serverRequiredElapsedHours!;
