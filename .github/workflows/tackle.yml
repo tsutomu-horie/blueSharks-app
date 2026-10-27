@@ -46,6 +46,7 @@ jobs:
           test/training_game/mini_game_start_settings_test.dart
           test/training_game/training_game_sync_queue_test.dart
           test/training_game/training_work_debug_day_test.dart
+          test/training_game/training_over_state_test.dart
       - name: Analyze affected code
         run: >-
           flutter analyze --no-pub --no-fatal-infos
@@ -71,6 +72,7 @@ jobs:
           test/training_game/mini_game_start_settings_test.dart
           test/training_game/training_game_sync_queue_test.dart
           test/training_game/training_work_debug_day_test.dart
+          test/training_game/training_over_state_test.dart
       - name: Test tackle and sync compatibility
         run: >-
           flutter test --no-pub --reporter expanded
@@ -90,6 +92,7 @@ jobs:
           test/training_game/mini_game_start_settings_test.dart
           test/training_game/training_game_sync_queue_test.dart
           test/training_game/training_work_debug_day_test.dart
+          test/training_game/training_over_state_test.dart
           test/training_game/mini_game_widget_test.dart
 
       - name: Check training debug visibility in test and production
