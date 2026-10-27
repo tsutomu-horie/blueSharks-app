@@ -37,6 +37,8 @@ void main() {
         TrainingGameSoundEffect.passFailed,
         TrainingGameSoundEffect.resultDisplayed,
         TrainingGameSoundEffect.parameterRecovered,
+        TrainingGameSoundEffect.evolutionNormal,
+        TrainingGameSoundEffect.evolutionFirstTeam,
       ]);
       expect(
         TrainingGameSoundEffect.values.map((effect) => effect.assetPath),
@@ -45,6 +47,8 @@ void main() {
           'assets/audio/training_game/cute-sad1.mp3',
           'assets/audio/training_game/sceneswitch1.mp3',
           'assets/audio/training_game/gauge-recovery3.mp3',
+          'assets/audio/training_game/evolution-normal.m4a',
+          'assets/audio/training_game/evolution-first-team.m4a',
         ],
       );
     });

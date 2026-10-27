@@ -1,3 +1,4 @@
+import 'recording_training_game_sound.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -33,7 +34,8 @@ void main() {
       builder: (_, __) => MaterialApp(
         debugShowCheckedModeBanner: false,
         builder: (_, child) => EnvironmentBadge(child: child!),
-        home: const TrainingGameScreen(),
+        home: const TrainingGameScreen(
+            evolutionSoundFactory: silentTrainingGameSound),
       ),
     ));
     await tester.pump();

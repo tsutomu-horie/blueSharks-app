@@ -1,3 +1,5 @@
+import 'dart:async';
+import 'package:koto_blue_sharks/app/services/training_game_sound_service.dart';
 import 'package:flutter/material.dart';
 
 /// お世話画面を短いフェードと小さな移動でホームにつなぎます。
@@ -30,7 +32,16 @@ class TrainingCareRoute<T> extends PageRouteBuilder<T> {
 
 /// 完了画面の各要素で共有する、一度だけ進む登場アニメーションです。
 class TrainingEndingEntrance extends StatefulWidget {
-  const TrainingEndingEntrance({super.key, required this.builder});
+  const TrainingEndingEntrance(
+      {super.key,
+      required this.builder,
+      this.duration = const Duration(milliseconds: 900),
+      this.soundFactory,
+      this.soundEffect});
+
+  final Duration duration;
+  final TrainingGameSoundService Function()? soundFactory;
+  final TrainingGameSoundEffect? soundEffect;
 
   final Widget Function(BuildContext context, Animation<double> animation)
       builder;
@@ -40,12 +51,68 @@ class TrainingEndingEntrance extends StatefulWidget {
 }
 
 class _TrainingEndingEntranceState extends State<TrainingEndingEntrance>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, WidgetsBindingObserver {
   late final AnimationController _animation = AnimationController(
     vsync: this,
-    duration: const Duration(milliseconds: 900),
+    duration: widget.duration,
   );
   bool _started = false;
+  bool _active = true;
+  bool _preparing = false;
+  bool _ready = false;
+  TrainingGameSoundService? _sound;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    final lifecycle = WidgetsBinding.instance.lifecycleState;
+    _active = lifecycle == null || lifecycle == AppLifecycleState.resumed;
+  }
+
+  Future<void> _start() async {
+    if (_started || _preparing || !_active) return;
+    if (!_ready) {
+      _preparing = true;
+      final sound = widget.soundFactory?.call();
+      _sound = sound;
+      var loaded = true;
+      if (sound != null && widget.soundEffect != null) {
+        loaded = await sound
+            .prepare(widget.soundEffect!)
+            .timeout(const Duration(milliseconds: 600), onTimeout: () => false);
+      }
+      if (!mounted) return;
+      _preparing = false;
+      _ready = true;
+      if (!loaded) {
+        unawaited(sound?.dispose());
+        _sound = null;
+      }
+    }
+    if (!_active || _started) return;
+    _started = true;
+    _animation.forward();
+    if (widget.soundEffect != null) {
+      unawaited(_sound?.play(widget.soundEffect!));
+    }
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    _active = state == AppLifecycleState.resumed;
+    if (_active) {
+      if (!_started) {
+        unawaited(_start());
+      } else {
+        if (!_animation.isCompleted) _animation.forward();
+        unawaited(_sound?.resume());
+      }
+    } else {
+      _animation.stop(canceled: false);
+      if (_started) unawaited(_sound?.pause());
+    }
+  }
 
   @override
   void didChangeDependencies() {
@@ -53,14 +120,17 @@ class _TrainingEndingEntranceState extends State<TrainingEndingEntrance>
     if (MediaQuery.disableAnimationsOf(context)) {
       _animation.value = 1;
       _started = true;
-    } else if (!_started) {
-      _started = true;
-      _animation.forward();
+      unawaited(_sound?.dispose());
+      _sound = null;
+    } else {
+      unawaited(_start());
     }
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    unawaited(_sound?.dispose());
     _animation.dispose();
     super.dispose();
   }
@@ -75,11 +145,13 @@ class TrainingEndingItem extends StatelessWidget {
     super.key,
     required this.animation,
     required this.start,
+    this.span = .3,
     required this.child,
   });
 
   final Animation<double> animation;
   final double start;
+  final double span;
   final Widget child;
 
   @override
@@ -87,8 +159,10 @@ class TrainingEndingItem extends StatelessWidget {
         animation: animation,
         child: child,
         builder: (context, child) {
-          final progress = Curves.easeOutCubic
-              .transform(((animation.value - start) / .3).clamp(0.0, 1.0));
+          final progress = animation.isCompleted
+              ? 1.0
+              : Curves.easeOutCubic.transform(
+                  ((animation.value - start) / span).clamp(0.0, 1.0));
           return IgnorePointer(
             ignoring: progress < 1,
             child: ExcludeSemantics(

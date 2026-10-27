@@ -1,3 +1,4 @@
+import 'recording_training_game_sound.dart';
 import 'prepare_grounded_frames.dart';
 import 'dart:async';
 
@@ -194,7 +195,8 @@ void main() {
       controller.isServerStateReady.value = true;
       controller.stageIndex.value = 1;
       Get.put<TrainingGameController>(controller);
-      await tester.pumpWidget(host(const TrainingGameScreen()));
+      await tester.pumpWidget(host(const TrainingGameScreen(
+          evolutionSoundFactory: silentTrainingGameSound)));
       await preload(tester, [SametarohAssets.newbornFrame]);
 
       final background = find.byType(TrainingHomeBackground);
@@ -379,9 +381,10 @@ void main() {
     for (final stage in [1, 2, 3, 4]) {
       controller.stageIndex.value = stage;
       controller.evolutionStage.value = stage;
-      await tester.pumpWidget(host(const TrainingGameScreen()));
+      await tester.pumpWidget(host(const TrainingGameScreen(
+          evolutionSoundFactory: silentTrainingGameSound)));
       await tester.pump();
-      await tester.pump(const Duration(milliseconds: 900));
+      await tester.pump(const Duration(milliseconds: 2700));
 
       expect(find.text('進化'), findsOneWidget);
       expect(find.text(growthMessage),
@@ -409,7 +412,8 @@ void main() {
     final before = SametarohAssets.newbornFrame;
     final after = SametarohAssets.normalFrames.first;
 
-    await tester.pumpWidget(host(const TrainingGameScreen()));
+    await tester.pumpWidget(host(const TrainingGameScreen(
+        evolutionSoundFactory: silentTrainingGameSound)));
     await preload(tester, [before, after]);
     expect(_evolutionAssetOpacity(tester, before), 1);
     expect(_evolutionAssetOpacity(tester, after), 0);
@@ -431,7 +435,8 @@ void main() {
     Get.put<TrainingGameController>(controller);
     final before = SametarohAssets.normalFrames.first;
     final after = SametarohAssets.idleFramesForBodyKey('pr').first;
-    const screen = TrainingGameScreen();
+    const screen =
+        TrainingGameScreen(evolutionSoundFactory: silentTrainingGameSound);
 
     await tester.pumpWidget(host(screen));
     await preload(tester, [before, after]);
@@ -478,7 +483,8 @@ void main() {
     final before = SametarohAssets.idleFramesForBodyKey('pr').first;
     final after = SametarohAssets.positionFrameFor('プロップ')!;
 
-    await tester.pumpWidget(host(const TrainingGameScreen()));
+    await tester.pumpWidget(host(const TrainingGameScreen(
+        evolutionSoundFactory: silentTrainingGameSound)));
     await preload(tester, [before, after]);
     expect(find.byKey(const ValueKey('training-evolution-4')), findsOneWidget);
     expect(_evolutionAssetOpacity(tester, before), 1);
@@ -506,7 +512,8 @@ void main() {
     final existingBody = SametarohAssets.idleFramesForBodyKey('pr').first;
     final prop = SametarohAssets.positionFrameFor('プロップ')!;
 
-    await tester.pumpWidget(host(const TrainingGameScreen()));
+    await tester.pumpWidget(host(const TrainingGameScreen(
+        evolutionSoundFactory: silentTrainingGameSound)));
     await preload(tester, [existingBody, prop]);
     expect(find.byKey(const ValueKey('training-evolution-4')), findsOneWidget);
     expect(
@@ -535,7 +542,8 @@ void main() {
     final controller = _DisplayFixtureController();
     controller.isServerStateReady.value = true;
     Get.put<TrainingGameController>(controller);
-    await tester.pumpWidget(host(const TrainingGameScreen()));
+    await tester.pumpWidget(host(const TrainingGameScreen(
+        evolutionSoundFactory: silentTrainingGameSound)));
     expect(find.text('🥚'), findsOneWidget);
     controller.stageIndex.value = 1;
     await tester.pump();
@@ -557,7 +565,8 @@ void main() {
     controller.stageIndex.value = 1;
     controller.meters.updateAll((key, value) => 100);
     Get.put<TrainingGameController>(controller);
-    await tester.pumpWidget(host(const TrainingGameScreen()));
+    await tester.pumpWidget(host(const TrainingGameScreen(
+        evolutionSoundFactory: silentTrainingGameSound)));
     await preload(tester, [
       SametarohAssets.newbornFrame,
       ...SametarohAssets.childCareFrames.values,
@@ -614,7 +623,8 @@ void main() {
     controller.isServerStateReady.value = true;
     controller.stageIndex.value = 2;
     Get.put<TrainingGameController>(controller);
-    await tester.pumpWidget(host(const TrainingGameScreen()));
+    await tester.pumpWidget(host(const TrainingGameScreen(
+        evolutionSoundFactory: silentTrainingGameSound)));
     final oldWork = tester
         .widget<TextButton>(find.widgetWithText(TextButton, '仕事'))
         .onPressed!;
@@ -638,7 +648,8 @@ void main() {
     controller.stageIndex.value = 2;
     controller.workPreparationGate = Completer<bool>();
     Get.put<TrainingGameController>(controller);
-    await tester.pumpWidget(host(const TrainingGameScreen()));
+    await tester.pumpWidget(host(const TrainingGameScreen(
+        evolutionSoundFactory: silentTrainingGameSound)));
     await preload(tester,
         [SametarohAssets.newbornFrame, ...SametarohAssets.normalFrames]);
     await tester.tap(find.widgetWithText(TextButton, '仕事'));
@@ -681,7 +692,8 @@ void main() {
       controller.clearPosition.value = position;
       controller.endingStep.value = 1;
       Get.put<TrainingGameController>(controller);
-      await tester.pumpWidget(host(const TrainingGameScreen()));
+      await tester.pumpWidget(host(const TrainingGameScreen(
+          evolutionSoundFactory: silentTrainingGameSound)));
       final frame = SametarohAssets.positionFrameFor(position);
       expect(frame, isNotNull, reason: position);
       await preload(tester, [frame!]);
@@ -709,7 +721,8 @@ void main() {
       controller.isServerStateReady.value = true;
       controller.stageIndex.value = 3;
       Get.put<TrainingGameController>(controller);
-      await tester.pumpWidget(host(const TrainingGameScreen()));
+      await tester.pumpWidget(host(const TrainingGameScreen(
+          evolutionSoundFactory: silentTrainingGameSound)));
       final idle = SametarohAssets.idleFramesForBodyKey(entry.value);
       final move = SametarohAssets.journeyFramesForBodyKey(entry.value);
       await preload(tester, [...idle, ...move]);
@@ -771,7 +784,8 @@ void main() {
       controller.stageIndex.value = 3;
       controller.meters.updateAll((key, value) => 100);
       Get.put<TrainingGameController>(controller);
-      await tester.pumpWidget(host(const TrainingGameScreen()));
+      await tester.pumpWidget(host(const TrainingGameScreen(
+          evolutionSoundFactory: silentTrainingGameSound)));
       await preload(tester, [
         ...SametarohAssets.idleFramesForBodyKey(entry.value),
         for (final action in actions)
@@ -843,7 +857,8 @@ void main() {
       controller.ended.value = true;
       controller.endingStep.value = 2;
       Get.put<TrainingGameController>(controller);
-      await tester.pumpWidget(host(const TrainingGameScreen()));
+      await tester.pumpWidget(host(const TrainingGameScreen(
+          evolutionSoundFactory: silentTrainingGameSound)));
       if (stage == 0) {
         expect(find.text('🥚\n引退'), findsOneWidget);
         expect(find.byType(Image), findsNothing);
@@ -883,7 +898,8 @@ void main() {
     controller.endingStep.value = 3;
     controller.unlockedPositions.assignAll(['prop']);
     Get.put<TrainingGameController>(controller);
-    await tester.pumpWidget(host(const TrainingGameScreen()));
+    await tester.pumpWidget(host(const TrainingGameScreen(
+        evolutionSoundFactory: silentTrainingGameSound)));
     await preload(tester, [prop]);
     expect(propImage(), findsOneWidget);
     controller.ended.value = false;
@@ -939,7 +955,8 @@ void main() {
         controller.dexRefreshGate = Completer<void>();
       }
       Get.put<TrainingGameController>(controller);
-      await tester.pumpWidget(host(const TrainingGameScreen()));
+      await tester.pumpWidget(host(const TrainingGameScreen(
+          evolutionSoundFactory: silentTrainingGameSound)));
       await preload(tester, SametarohAssets.normalFrames);
       await preload(
           tester,
@@ -1004,7 +1021,8 @@ void main() {
       controller.clearPosition.value = 'ウイング';
       controller.endingStep.value = 3;
       Get.put<TrainingGameController>(controller);
-      await tester.pumpWidget(host(const TrainingGameScreen()));
+      await tester.pumpWidget(host(const TrainingGameScreen(
+          evolutionSoundFactory: silentTrainingGameSound)));
       await preloadTrainingHomeBackground(tester);
       await preload(
         tester,
