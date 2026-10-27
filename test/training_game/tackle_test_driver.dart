@@ -1,3 +1,4 @@
+import 'recording_training_game_sound.dart';
 import 'dart:math';
 import 'package:koto_blue_sharks/presentation/training_game/mini_games/tackle/tackle_game.screen.dart';
 
@@ -7,6 +8,7 @@ TackleGameScreen tackleTestScreen({
   int approachMs = 1350,
 }) =>
     TackleGameScreen(
+        feedbackSoundFactory: silentTrainingGameSound,
         random: FixedTackleRandom(
             hasFeint: hasFeint, downward: downward, approachMs: approachMs));
 

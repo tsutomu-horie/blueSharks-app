@@ -1345,7 +1345,7 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
     return Scaffold(
       backgroundColor: const Color(0xffe9f4e5),
       appBar: AppBar(
-        title: const Text('② パス＆ラン'),
+        title: const Text('パス＆ラン'),
         backgroundColor: const Color(0xff153d5b),
         foregroundColor: Colors.white,
         actions: [

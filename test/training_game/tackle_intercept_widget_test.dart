@@ -49,9 +49,11 @@ void main() {
           same(tester.getCenter(b), center(route.sample(110), bs));
           await tester.pump(Duration(milliseconds: tapMs));
           final beforeB = tester.getCenter(b), beforeP = tester.getCenter(p);
-          await tester.tap(find.text(down ? '下をタップ ▼' : '上をタップ ▲'));
+          await tester
+              .tap(find.byKey(Key(down ? 'tackle-tap-down' : 'tackle-tap-up')));
           await tester.pump();
-          expect(find.text('TACKLE!'), findsOneWidget);
+          expect(
+              find.byKey(const Key('tackle-feedback-success')), findsOneWidget);
           same(tester.getCenter(b), beforeB);
           same(tester.getCenter(p), beforeP);
           final contact = TackleRunningTrajectory.contactTime(
@@ -103,14 +105,14 @@ void main() {
       if (feint) {
         await tester.pump(const Duration(milliseconds: 164));
         expect(cue, findsNothing);
-        expect(find.text('突破された！'), findsNothing);
+        expect(find.byKey(const Key('tackle-feedback-miss')), findsNothing);
         await tester.pump(const Duration(milliseconds: 1));
       }
       expect(cue, findsOneWidget);
       await tester.pump(const Duration(milliseconds: 749));
-      expect(find.text('突破された！'), findsNothing);
+      expect(find.byKey(const Key('tackle-feedback-miss')), findsNothing);
       await tester.pump(const Duration(milliseconds: 1));
-      expect(find.text('突破された！'), findsOneWidget);
+      expect(find.byKey(const Key('tackle-feedback-miss')), findsOneWidget);
       same(tester.getCenter(p), resting);
       final before = tester.getCenter(b);
       await tester.pump(const Duration(milliseconds: 520));
@@ -126,7 +128,7 @@ void main() {
       expect(find.text('SET 1 / 3'), findsOneWidget);
       await tester.pump(const Duration(milliseconds: 1));
       expect(find.text('>> タップして次へ <<'), findsOneWidget);
-      expect(find.textContaining('MISS'), findsOneWidget);
+      expect(find.text('MISS'), findsOneWidget);
       expect(find.text('MISS　突破された！'), findsOneWidget);
       expect(find.textContaining('早すぎた'), findsNothing);
       expect(find.textContaining('時間切れ'), findsNothing);
@@ -142,9 +144,9 @@ void main() {
     await tester.pump(const Duration(milliseconds: 1350));
     await tester.pump(const Duration(milliseconds: 80));
     expect(cue, findsNothing);
-    await tester.tap(find.text('上をタップ ▲'));
+    await tester.tap(find.byKey(const Key('tackle-tap-up')));
     await tester.pump();
-    expect(find.text('突破された！'), findsOneWidget);
+    expect(find.byKey(const Key('tackle-feedback-miss')), findsOneWidget);
     await tester.pump(const Duration(milliseconds: 520));
     final parent = tester.widget<AnimatedAlign>(
         find.ancestor(of: b, matching: find.byType(AnimatedAlign)));
@@ -164,7 +166,8 @@ void main() {
       await tester.tap(find.text('スタート'));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 500));
-      await tester.tap(find.text(down ? '下をタップ ▼' : '上をタップ ▲'));
+      await tester
+          .tap(find.byKey(Key(down ? 'tackle-tap-down' : 'tackle-tap-up')));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 650));
       expect(find.text('MISS　突破された！'), findsOneWidget);
@@ -189,9 +192,9 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 1350));
     await tester.pump(const Duration(milliseconds: 200));
-    await tester.tap(find.text('上をタップ ▲'));
+    await tester.tap(find.byKey(const Key('tackle-tap-up')));
     await tester.pump();
-    expect(find.text('突破された！'), findsOneWidget);
+    expect(find.byKey(const Key('tackle-feedback-miss')), findsOneWidget);
     await tester.pump(const Duration(milliseconds: 520));
     final parent = tester.widget<AnimatedAlign>(
         find.ancestor(of: b, matching: find.byType(AnimatedAlign)));
@@ -204,14 +207,14 @@ void main() {
     await tester.tap(find.text('スタート'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 1350));
-    await tester.tap(find.text('下をタップ ▼'));
+    await tester.tap(find.byKey(const Key('tackle-tap-down')));
     await tester.pump();
     for (var i = 0; i < 3; i++) {
-      await tester.tap(find.text('上をタップ ▲'));
-      await tester.tap(find.text('下をタップ ▼'));
+      await tester.tap(find.byKey(const Key('tackle-tap-up')));
+      await tester.tap(find.byKey(const Key('tackle-tap-down')));
       await tester.pump();
     }
-    expect(find.text('TACKLE!'), findsOneWidget);
+    expect(find.byKey(const Key('tackle-feedback-success')), findsOneWidget);
     expect(find.text('SET 1 / 3'), findsOneWidget);
     await tester.pump(const Duration(milliseconds: 649));
     expect(find.text('>> タップして次へ <<'), findsNothing);

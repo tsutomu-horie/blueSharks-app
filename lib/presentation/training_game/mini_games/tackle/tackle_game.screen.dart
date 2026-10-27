@@ -13,6 +13,8 @@ import 'tackle_contact_geometry.dart';
 import 'tackle_running_trajectory.dart';
 import 'tackle_trial_plan.dart';
 import 'tackle_game_logic.dart';
+import 'tackle_pitch_background.dart';
+import 'tackle_attempt_feedback.dart';
 import '../../models/training_game_clock.dart';
 
 enum _TacklePhase {
@@ -32,6 +34,8 @@ class TackleGameScreen extends StatefulWidget {
     super.key,
     this.random,
     this.soundService,
+    this.feedbackSoundFactory = createTackleFeedbackSound,
+    this.reactionWatchFactory = Stopwatch.new,
     this.settings = const TackleSettings(),
   });
 
@@ -43,6 +47,13 @@ class TackleGameScreen extends StatefulWidget {
   @visibleForTesting
   final TrainingGameSoundService? soundService;
 
+  /// 判定音は画面が所有し、中断・破棄時に停止します。
+  final TrainingGameSoundService Function() feedbackSoundFactory;
+
+  /// ランク境界と音の選択を実時間に依存せず検証する差し替え点です。
+  @visibleForTesting
+  final Stopwatch Function() reactionWatchFactory;
+
   @override
   State<TackleGameScreen> createState() => _TackleGameScreenState();
 }
@@ -53,6 +64,69 @@ class _TackleGameScreenState extends State<TackleGameScreen>
     unawaited(
       (widget.soundService ?? TrainingGameSoundService.instance).play(effect),
     );
+  }
+
+  static const _feedbackEffects = {
+    'OK': TrainingGameSoundEffect.tackleOk,
+    'GOOD': TrainingGameSoundEffect.tackleGood,
+    'GREAT': TrainingGameSoundEffect.tackleGreat,
+    'PERFECT': TrainingGameSoundEffect.tacklePerfect,
+    'MISS': TrainingGameSoundEffect.tackleMiss,
+  };
+  TrainingGameSoundService? _feedbackSounds;
+  final _readyFeedbackEffects = <TrainingGameSoundEffect>{};
+  int _feedbackGeneration = 0;
+  bool _feedbackSoundAllowed = false;
+  bool _feedbackStarted = false;
+
+  void _prepareFeedbackSounds() {
+    if (!_feedbackStarted ||
+        _feedbackSounds != null ||
+        _phase == _TacklePhase.gameResult) {
+      return;
+    }
+    final service = widget.feedbackSoundFactory();
+    _feedbackSounds = service;
+    final generation = ++_feedbackGeneration;
+    for (final effect in _feedbackEffects.values) {
+      unawaited(service
+          .prepare(effect)
+          .timeout(const Duration(milliseconds: 600), onTimeout: () => false)
+          .then((ready) {
+        if (mounted && generation == _feedbackGeneration && ready) {
+          _readyFeedbackEffects.add(effect);
+        }
+      }));
+    }
+  }
+
+  void _stopFeedbackSounds() {
+    _feedbackSoundAllowed = false;
+    _feedbackGeneration++;
+    _readyFeedbackEffects.clear();
+    final service = _feedbackSounds;
+    _feedbackSounds = null;
+    unawaited(service?.dispose());
+  }
+
+  void _scheduleFeedbackSound(TackleAttempt result) {
+    final effect = _feedbackEffects[result.rank]!;
+    final attempt = _attempts.length;
+    final state = WidgetsBinding.instance.lifecycleState;
+    _feedbackSoundAllowed = state == null || state == AppLifecycleState.resumed;
+    final delay =
+        result.isCorrect ? _playerDuration : const Duration(milliseconds: 80);
+    _timers.add(Timer(delay, () {
+      if (!mounted ||
+          !_feedbackSoundAllowed ||
+          _attempts.length != attempt ||
+          _phase != _TacklePhase.resolution ||
+          !_readyFeedbackEffects.contains(effect) ||
+          ModalRoute.of(context)?.isCurrent == false) {
+        return;
+      }
+      unawaited(_feedbackSounds?.play(effect));
+    }));
   }
 
   final _contactFieldKey = GlobalKey();
@@ -103,7 +177,7 @@ class _TackleGameScreenState extends State<TackleGameScreen>
   late final Random _random;
   late TackleTrialPlan _trialPlan;
   final _attempts = <TackleAttempt>[];
-  final _reactionWatch = Stopwatch();
+  late final Stopwatch _reactionWatch;
   final _timers = <Timer>[];
   final _fieldPointers = <int>{};
   final _bodyPointers = <int>{};
@@ -161,6 +235,7 @@ class _TackleGameScreenState extends State<TackleGameScreen>
   TackleDirection _actualDirection = TackleDirection.up;
   TackleAttempt? _latestAttempt;
   bool? _attemptSucceeded;
+  TackleDirection? _lastTappedDirection;
   DateTime? _phaseStartedAt;
   Duration? _pausedDelay;
   bool _isPaused = false;
@@ -182,6 +257,7 @@ class _TackleGameScreenState extends State<TackleGameScreen>
   @override
   void initState() {
     super.initState();
+    _reactionWatch = widget.reactionWatchFactory();
     _settings = widget.settings;
     _random = widget.random ?? Random();
     WidgetsBinding.instance.addObserver(this);
@@ -205,21 +281,25 @@ class _TackleGameScreenState extends State<TackleGameScreen>
     }
     _reactionWatch.stop();
     _runningClock.dispose();
+    _stopFeedbackSounds();
     super.dispose();
   }
 
   /// OS割り込み中は反応計測と接近待ちを一時停止します。
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.inactive ||
-        state == AppLifecycleState.paused ||
-        state == AppLifecycleState.detached) {
+    if (state != AppLifecycleState.resumed) {
+      _stopFeedbackSounds();
       _pauseGame();
+    } else if (state == AppLifecycleState.resumed) {
+      _prepareFeedbackSounds();
     }
   }
 
   /// ゲーム開始または次セットの接近演出を開始します。
   void _startAttempt() {
+    _feedbackStarted = true;
+    _prepareFeedbackSounds();
     _trialPlan = TackleTrialPlan.draw(_random);
     _actualDirection = _trialPlan.actualDirection;
     _inputClockStarted = false;
@@ -243,6 +323,7 @@ class _TackleGameScreenState extends State<TackleGameScreen>
       _displayedSetNumber = nextSetNumber;
       _latestAttempt = null;
       _attemptSucceeded = null;
+      _lastTappedDirection = null;
       _canAdvanceAfterAttempt = false;
       _phase = _TacklePhase.approach;
       _isPaused = false;
@@ -395,6 +476,7 @@ class _TackleGameScreenState extends State<TackleGameScreen>
       _attempts.add(result);
       _latestAttempt = result;
       _attemptSucceeded = success;
+      _lastTappedDirection = tappedDirection;
       _canAdvanceAfterAttempt = false;
       _phase = _TacklePhase.resolution;
       if (success && contact != null) {
@@ -431,6 +513,7 @@ class _TackleGameScreenState extends State<TackleGameScreen>
               opponentExitDirection == TackleDirection.up ? -.58 : .58,
             );
     });
+    _scheduleFeedbackSound(result);
     // 決着演出を確認してから、ユーザーが次セットへ進める判定画面を表示します。
     _timers.add(
       Timer(const Duration(milliseconds: 650), () {
@@ -509,17 +592,19 @@ class _TackleGameScreenState extends State<TackleGameScreen>
   }
 
   /// 次セット、または全セット後の総合結果へ進みます。
-  void _advanceAfterAttempt() {
+  void _advanceAfterAttempt({bool fromSemantics = false}) {
     if (_phase != _TacklePhase.attemptResult ||
         !_canAdvanceAfterAttempt ||
         _fieldPointers.isNotEmpty ||
-        !_advanceTapEligible) {
+        (!fromSemantics && !_advanceTapEligible) ||
+        (fromSemantics && _bodyPointers.isNotEmpty)) {
       return;
     }
     // 同じタップや重複したコールバックで、2セット進まないようにします。
     _canAdvanceAfterAttempt = false;
     _advanceTapEligible = false;
     if (_attempts.length >= _settings.setCount) {
+      _stopFeedbackSounds();
       setState(() => _phase = _TacklePhase.gameResult);
       _playSound(TrainingGameSoundEffect.resultDisplayed);
       return;
@@ -563,6 +648,7 @@ class _TackleGameScreenState extends State<TackleGameScreen>
             _phase != _TacklePhase.input)) {
       return;
     }
+    _stopFeedbackSounds();
     final elapsed = _phaseStartedAt == null
         ? Duration.zero
         : TrainingGameClock.now().difference(_phaseStartedAt!);
@@ -585,6 +671,7 @@ class _TackleGameScreenState extends State<TackleGameScreen>
   /// 一時停止前のフェーズと残り時間からゲームを再開します。
   void _resumeGame() {
     if (!_isPaused || _pausedDelay == null) return;
+    _prepareFeedbackSounds();
     if (_restartInputOnResume) {
       _restartInputOnResume = false;
       _startAttempt();
@@ -614,7 +701,7 @@ class _TackleGameScreenState extends State<TackleGameScreen>
     return Scaffold(
       backgroundColor: const Color(0xffe8f3e8),
       appBar: AppBar(
-        title: const Text('① タックル'),
+        title: const Text('タックル'),
         backgroundColor: const Color(0xff123d28),
         foregroundColor: Colors.white,
         actions: [
@@ -680,62 +767,17 @@ class _TackleGameScreenState extends State<TackleGameScreen>
       child: Stack(
         children: [
           Positioned.fill(
-            child: Column(
-              children: [
-                Expanded(child: Container(color: const Color(0xffb9df9c))),
-                Container(height: 4, color: Colors.white70),
-                Expanded(child: Container(color: const Color(0xff8fca70))),
-              ],
-            ),
-          ),
+              child: CustomPaint(
+                  painter: TacklePitchPainter(
+                      zoom: 14, quarterTurns: 1, longitudinalOffsetMeters: 5))),
+          const Positioned.fill(
+              child: IgnorePointer(
+                  child: CustomPaint(painter: TackleInputDividerPainter()))),
           Positioned.fill(
-            child: Column(
-              children: [
-                Expanded(
-                  child: Listener(
-                    behavior: HitTestBehavior.opaque,
-                    onPointerDown: (event) =>
-                        _handleFieldPointerDown(event, TackleDirection.up),
-                    onPointerUp: _handleFieldPointerUp,
-                    onPointerCancel: _handleFieldPointerCancel,
-                    child: GestureDetector(
-                      behavior: HitTestBehavior.opaque,
-                      onTapCancel: () => _fieldTapCanAdvance = false,
-                      onTap: _handleFieldTap,
-                      child: const Align(
-                        alignment: Alignment.topLeft,
-                        child: Padding(
-                          padding: EdgeInsets.all(12),
-                          child: Text('上をタップ ▲'),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-                Expanded(
-                  child: Listener(
-                    behavior: HitTestBehavior.opaque,
-                    onPointerDown: (event) =>
-                        _handleFieldPointerDown(event, TackleDirection.down),
-                    onPointerUp: _handleFieldPointerUp,
-                    onPointerCancel: _handleFieldPointerCancel,
-                    child: GestureDetector(
-                      behavior: HitTestBehavior.opaque,
-                      onTapCancel: () => _fieldTapCanAdvance = false,
-                      onTap: _handleFieldTap,
-                      child: const Align(
-                        alignment: Alignment.bottomLeft,
-                        child: Padding(
-                          padding: EdgeInsets.all(12),
-                          child: Text('下をタップ ▼'),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
+              child: Column(children: [
+            Expanded(child: _buildInputTarget(TackleDirection.up)),
+            Expanded(child: _buildInputTarget(TackleDirection.down)),
+          ])),
           AnimatedAlign(
             duration: _successAt == null ? _playerDuration : Duration.zero,
             curve: Curves.easeOut,
@@ -775,7 +817,7 @@ class _TackleGameScreenState extends State<TackleGameScreen>
               ),
             ),
           ),
-          if (_phase == _TacklePhase.resolution) _buildResolutionOverlay(),
+          if (_attemptSucceeded != null) _buildResolutionOverlay(),
           if (_phase == _TacklePhase.waiting)
             _buildOverlay(
               title: 'タックル練習',
@@ -802,33 +844,68 @@ class _TackleGameScreenState extends State<TackleGameScreen>
 
   /// タックル成立または相手の突破を、決着フェーズとしてフィールド上に表示します。
   Widget _buildResolutionOverlay() {
-    final succeeded = _attemptSucceeded ?? false;
-    return Positioned.fill(
-      child: IgnorePointer(
-        child: Center(
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              color: (succeeded
-                      ? const Color(0xff14532d)
-                      : const Color(0xff991b1b))
-                  .withValues(alpha: .88),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-              child: Text(
-                succeeded ? 'TACKLE!' : '突破された！',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 26,
-                  fontWeight: FontWeight.w900,
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
+    final succeeded = _attemptSucceeded == true;
+    return Positioned.fill(child: LayoutBuilder(builder: (context, bounds) {
+      final object = _contactPlayerKey.currentContext?.findRenderObject();
+      final box = object is RenderBox && object.hasSize ? object : null;
+      final target = _successPlayerTo;
+      final point = target == null || box == null
+          ? Offset(bounds.maxWidth * .3, bounds.maxHeight * .5)
+          : Offset(
+              bounds.maxWidth / 2 +
+                  target.x * (bounds.maxWidth - box.size.width) / 2 +
+                  18,
+              bounds.maxHeight / 2 +
+                  target.y * (bounds.maxHeight - box.size.height) / 2 -
+                  5);
+      return TackleAttemptFeedback(
+          key: ValueKey('tackle-feedback-${_attempts.length}'),
+          rank: _latestAttempt!.rank,
+          succeeded: succeeded,
+          contactPoint: point,
+          impactDelay:
+              succeeded ? _playerDuration : const Duration(milliseconds: 80));
+    }));
+  }
+
+  Widget _buildInputTarget(TackleDirection direction) {
+    final up = direction == TackleDirection.up;
+    final attemptAtBuild = _setNumber;
+    final resultAtBuild = _phase == _TacklePhase.attemptResult;
+    final enabled = !_isPaused &&
+        (_phase == _TacklePhase.approach ||
+            _phase == _TacklePhase.feint ||
+            _phase == _TacklePhase.input ||
+            _phase == _TacklePhase.attemptResult);
+    return Semantics(
+        key: ValueKey(up ? 'tackle-tap-up' : 'tackle-tap-down'),
+        label: up ? '上方向へタックル' : '下方向へタックル',
+        button: true,
+        enabled: enabled,
+        onTap: !enabled
+            ? null
+            : () {
+                if (_setNumber != attemptAtBuild) return;
+                if (resultAtBuild) {
+                  _advanceAfterAttempt(fromSemantics: true);
+                } else {
+                  _handleDirection(direction);
+                }
+              },
+        child: Listener(
+            behavior: HitTestBehavior.opaque,
+            onPointerDown: (event) => _handleFieldPointerDown(event, direction),
+            onPointerUp: _handleFieldPointerUp,
+            onPointerCancel: _handleFieldPointerCancel,
+            child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                excludeFromSemantics: true,
+                onTapCancel: () => _fieldTapCanAdvance = false,
+                onTap: _handleFieldTap,
+                child: TackleInputGuide(
+                    up: up,
+                    tapped: _lastTappedDirection == direction,
+                    attempt: _attempts.length))));
   }
 
   /// スタート待ちに使用する半透明オーバーレイを作成します。

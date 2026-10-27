@@ -40,6 +40,11 @@ void main() {
         TrainingGameSoundEffect.evolutionNormal,
         TrainingGameSoundEffect.evolutionFirstTeam,
         TrainingGameSoundEffect.hatching,
+        TrainingGameSoundEffect.tackleOk,
+        TrainingGameSoundEffect.tackleGood,
+        TrainingGameSoundEffect.tackleGreat,
+        TrainingGameSoundEffect.tacklePerfect,
+        TrainingGameSoundEffect.tackleMiss,
       ]);
       expect(
         TrainingGameSoundEffect.values.map((effect) => effect.assetPath),
@@ -51,6 +56,11 @@ void main() {
           'assets/audio/training_game/evolution-normal.m4a',
           'assets/audio/training_game/evolution-first-team.m4a',
           'assets/audio/training_game/hatching-charge.m4a',
+          'assets/audio/training_game/tackle-ok.m4a',
+          'assets/audio/training_game/tackle-good.m4a',
+          'assets/audio/training_game/tackle-great.m4a',
+          'assets/audio/training_game/tackle-perfect.m4a',
+          'assets/audio/training_game/tackle-miss.m4a',
         ],
       );
     });

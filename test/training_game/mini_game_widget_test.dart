@@ -65,17 +65,14 @@ void main() {
 
   testWidgets('タックルの上下入力領域を同じ高さで表示する', (tester) async {
     await tester.pumpWidget(
-      const MaterialApp(home: TackleGameScreen()),
+      const MaterialApp(
+          home: TackleGameScreen(
+        feedbackSoundFactory: silentTrainingGameSound,
+      )),
     );
 
-    final upperDetector = find.ancestor(
-      of: find.text('上をタップ ▲'),
-      matching: find.byType(GestureDetector),
-    );
-    final lowerDetector = find.ancestor(
-      of: find.text('下をタップ ▼'),
-      matching: find.byType(GestureDetector),
-    );
+    final upperDetector = find.byKey(const Key('tackle-tap-up'));
+    final lowerDetector = find.byKey(const Key('tackle-tap-down'));
 
     expect(tester.getSize(upperDetector.first).height,
         tester.getSize(lowerDetector.first).height);
@@ -83,35 +80,47 @@ void main() {
 
   testWidgets('タックルは成否に応じた決着演出を表示する', (tester) async {
     await tester.pumpWidget(
-      const MaterialApp(home: TackleGameScreen()),
+      const MaterialApp(
+          home: TackleGameScreen(
+        feedbackSoundFactory: silentTrainingGameSound,
+      )),
     );
     await readyPass(tester);
     await tester.tap(find.text('スタート'));
     await advance(tester, const Duration(milliseconds: 1400));
-    await tester.tap(find.text('上をタップ ▲'));
+    await tester.tap(find.byKey(const Key('tackle-tap-up')));
     await tester.pump();
 
-    final settled = find.text('TACKLE!').evaluate().isNotEmpty ||
-        find.text('突破された！').evaluate().isNotEmpty;
+    final settled = find
+            .byKey(const Key('tackle-feedback-success'))
+            .evaluate()
+            .isNotEmpty ||
+        find.byKey(const Key('tackle-feedback-miss')).evaluate().isNotEmpty;
     expect(settled, isTrue);
   });
 
   testWidgets('タックルは判定開始前のタップをお手つきMISSにする', (tester) async {
     await tester.pumpWidget(
-      const MaterialApp(home: TackleGameScreen()),
+      const MaterialApp(
+          home: TackleGameScreen(
+        feedbackSoundFactory: silentTrainingGameSound,
+      )),
     );
     await readyPass(tester);
     await tester.tap(find.text('スタート'));
     await tester.pump();
-    await tester.tap(find.text('上をタップ ▲'));
+    await tester.tap(find.byKey(const Key('tackle-tap-up')));
     await tester.pump();
 
-    expect(find.text('突破された！'), findsOneWidget);
+    expect(find.byKey(const Key('tackle-feedback-miss')), findsOneWidget);
   });
 
   testWidgets('タックルは成否に関係なくタップ方向へ鮫太朗を移動する', (tester) async {
     await tester.pumpWidget(
-      const MaterialApp(home: TackleGameScreen()),
+      const MaterialApp(
+          home: TackleGameScreen(
+        feedbackSoundFactory: silentTrainingGameSound,
+      )),
     );
     await readyPass(tester);
     await tester.tap(find.text('スタート'));
@@ -119,7 +128,7 @@ void main() {
 
     final beforeTap =
         tester.getCenter(find.byKey(const Key('tackle-player'))).dy;
-    await tester.tap(find.text('上をタップ ▲'));
+    await tester.tap(find.byKey(const Key('tackle-tap-up')));
     await tester.pump();
     await advance(tester, const Duration(milliseconds: 160));
 
@@ -129,12 +138,15 @@ void main() {
 
   testWidgets('タックルの判定表示は画面上部のタップでも次セットへ進む', (tester) async {
     await tester.pumpWidget(
-      const MaterialApp(home: TackleGameScreen()),
+      const MaterialApp(
+          home: TackleGameScreen(
+        feedbackSoundFactory: silentTrainingGameSound,
+      )),
     );
     await readyPass(tester);
     await tester.tap(find.text('スタート'));
     await tester.pump();
-    await tester.tap(find.text('上をタップ ▲'));
+    await tester.tap(find.byKey(const Key('tackle-tap-up')));
     await advance(tester, const Duration(milliseconds: 650));
 
     await tester.tap(find.text('SET 1 / 3'));
@@ -286,6 +298,7 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         home: TackleGameScreen(
+          feedbackSoundFactory: silentTrainingGameSound,
           random: Random(5),
           settings: const TackleSettings(setCount: 1),
           soundService: sounds.service,
@@ -295,7 +308,7 @@ void main() {
     await tester.tap(find.text('スタート'));
     await tester.pump();
     await advance(tester, const Duration(milliseconds: 1400));
-    await tester.tap(find.text('上をタップ ▲'));
+    await tester.tap(find.byKey(const Key('tackle-tap-up')));
     await tester.pump();
     await advance(tester, const Duration(milliseconds: 650));
 

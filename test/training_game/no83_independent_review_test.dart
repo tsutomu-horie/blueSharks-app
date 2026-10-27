@@ -1,3 +1,4 @@
+import 'recording_training_game_sound.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:koto_blue_sharks/presentation/training_game/mini_games/models/mini_game_result.dart';
@@ -20,6 +21,7 @@ void main() {
       final game = pass
           ? PassAndRunGameScreen(now: () => now)
           : const TackleGameScreen(
+              feedbackSoundFactory: silentTrainingGameSound,
               settings: TackleSettings(
                   setCount: 1, snapshotToken: 'mock-review-token'));
       final future = nav.currentState!
@@ -46,7 +48,7 @@ void main() {
         now = now.add(const Duration(milliseconds: 16100));
         await t.pump(const Duration(milliseconds: 16100));
       } else {
-        await t.tap(find.text('上をタップ ▲'));
+        await t.tap(find.byKey(const Key('tackle-tap-up')));
         await t.pump(const Duration(milliseconds: 650));
         await t.tap(find.text('SET 1 / 1'));
         await t.pump();

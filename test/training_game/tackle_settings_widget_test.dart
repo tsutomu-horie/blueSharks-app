@@ -1,3 +1,4 @@
+import 'recording_training_game_sound.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:koto_blue_sharks/presentation/training_game/models/mini_game_settings.dart';
@@ -11,6 +12,7 @@ void main() {
       addTearDown(() => tester.pumpWidget(const SizedBox.shrink()));
       await tester.pumpWidget(MaterialApp(
         home: TackleGameScreen(
+          feedbackSoundFactory: silentTrainingGameSound,
           settings: TackleSettings(inputLimitMs: limitMs),
         ),
       ));
@@ -29,6 +31,7 @@ void main() {
     );
     Widget screen(TackleSettings settings) => MaterialApp(
           home: TackleGameScreen(
+            feedbackSoundFactory: silentTrainingGameSound,
             key: const Key('settings-session'),
             random: random,
             settings: settings,
@@ -50,8 +53,8 @@ void main() {
     await tester.pump(const Duration(milliseconds: 1100));
     expect(find.byKey(const Key('tackle-input-cue')), findsOneWidget);
     await tester.pump(const Duration(milliseconds: 399));
-    expect(find.text('突破された！'), findsNothing);
+    expect(find.byKey(const Key('tackle-feedback-miss')), findsNothing);
     await tester.pump(const Duration(milliseconds: 1));
-    expect(find.text('突破された！'), findsOneWidget);
+    expect(find.byKey(const Key('tackle-feedback-miss')), findsOneWidget);
   });
 }

@@ -60,6 +60,8 @@ jobs:
           test/training_game/tackle_opponent_visual_test.dart
           test/training_game/tackle_contact_geometry_test.dart
           test/training_game/tackle_running_trajectory_test.dart
+          test/training_game/tackle_feedback_test.dart
+          test/training_game/tackle_feedback_sound_test.dart
           test/training_game/tackle_intercept_widget_test.dart
           test/training_game/tackle_result_transport_test.dart
           test/training_game/tackle_trial_plan_test.dart
@@ -81,6 +83,8 @@ jobs:
           test/training_game/tackle_opponent_visual_test.dart
           test/training_game/tackle_contact_geometry_test.dart
           test/training_game/tackle_running_trajectory_test.dart
+          test/training_game/tackle_feedback_test.dart
+          test/training_game/tackle_feedback_sound_test.dart
           test/training_game/tackle_intercept_widget_test.dart
           test/training_game/tackle_result_transport_test.dart
           test/training_game/tackle_trial_plan_test.dart
@@ -111,3 +115,11 @@ jobs:
         run: |
           flutter analyze --no-pub --no-fatal-infos lib/presentation/training_game/training_game_flow.screen.dart test/training_game/training_game_launch_test.dart
           flutter test --no-pub test/training_game/training_game_launch_test.dart test/training_game/training_game_new_game_screen_test.dart
+      - name: Check pitch and feedback formatting
+        run: >-
+          dart format --output=none --set-exit-if-changed
+          lib/presentation/training_game/mini_games/tackle/tackle_game.screen.dart
+          lib/presentation/training_game/mini_games/tackle/tackle_pitch_background.dart
+          lib/presentation/training_game/mini_games/tackle/tackle_attempt_feedback.dart
+          test/training_game/tackle_feedback_test.dart
+          test/training_game/tackle_feedback_sound_test.dart

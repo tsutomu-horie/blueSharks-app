@@ -30,11 +30,31 @@ enum TrainingGameSoundEffect {
 
   /// 孵化A案の上昇する溜め音と誕生のきらめき。
   hatching,
+
+  /// 承認済みのタックル判定SE（接触時に1回再生）。
+  tackleOk,
+  tackleGood,
+  tackleGreat,
+  tacklePerfect,
+  tackleMiss,
 }
 
 extension TrainingGameSoundEffectAsset on TrainingGameSoundEffect {
   /// 効果音ラボから取得したアプリ内素材のパスです。
   String get assetPath => switch (this) {
+        // 効果音ラボの決定34/22/37/21、しょげるを承認済みの長さ・音量へ加工。
+        // https://soundeffect-lab.info/sound/button/
+        // https://soundeffect-lab.info/sound/anime/
+        TrainingGameSoundEffect.tackleOk =>
+          'assets/audio/training_game/tackle-ok.m4a',
+        TrainingGameSoundEffect.tackleGood =>
+          'assets/audio/training_game/tackle-good.m4a',
+        TrainingGameSoundEffect.tackleGreat =>
+          'assets/audio/training_game/tackle-great.m4a',
+        TrainingGameSoundEffect.tacklePerfect =>
+          'assets/audio/training_game/tackle-perfect.m4a',
+        TrainingGameSoundEffect.tackleMiss =>
+          'assets/audio/training_game/tackle-miss.m4a',
         // 効果音ラボ: magic-statusup2を0.65秒、cute-pose1を2.5秒から合成。
         // https://soundeffect-lab.info/sound/battle/
         // https://soundeffect-lab.info/sound/anime/
@@ -275,4 +295,8 @@ TrainingGameSoundService createTrainingEvolutionSound() =>
 
 /// 孵化A案の合成済み音源を、承認プレビューと同じ音量で再生します。
 TrainingGameSoundService createTrainingHatchingSound() =>
+    TrainingGameSoundService(volume: 1);
+
+/// 判定音は承認プレビューと同じ合成済み音量を使います。
+TrainingGameSoundService createTackleFeedbackSound() =>
     TrainingGameSoundService(volume: 1);
