@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:koto_blue_sharks/presentation/training_game/sametaroh_asset.dart';
 import 'package:koto_blue_sharks/presentation/training_game/training_dex_dialog.dart';
 
 void main() {
@@ -41,6 +42,8 @@ void main() {
     expect(find.textContaining('0/10 登録'), findsOneWidget);
     expect(find.text('🔒 未解放'), findsNWidgets(10));
     expect(find.text('✅ 登録済み'), findsNothing);
+    expect(find.byType(SametarohFrameImage), findsNWidgets(10));
+    expect(find.byType(ColorFiltered), findsNWidgets(10));
     await tester.scrollUntilVisible(find.text('フルバック'), 250,
         scrollable: find.byType(Scrollable).last);
     expect(find.text('フルバック').hitTestable(), findsOneWidget);
@@ -55,7 +58,8 @@ void main() {
     expect(find.textContaining('1/10 登録'), findsOneWidget);
     expect(find.text('✅ 登録済み'), findsOneWidget);
     expect(find.text('🔒 未解放'), findsNWidgets(9));
-    expect(find.byType(Image), findsOneWidget);
+    expect(find.byType(SametarohFrameImage), findsNWidgets(10));
+    expect(find.byType(ColorFiltered), findsNWidgets(9));
     expect(tester.takeException(), isNull);
   });
 

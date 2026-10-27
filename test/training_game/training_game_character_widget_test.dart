@@ -130,6 +130,8 @@ class _DisplayFixtureController extends TrainingGameController {
   final String? fixtureBranch;
   final callbackTrace = <String>[];
   Completer<bool>? workPreparationGate;
+  Completer<void>? dexRefreshGate;
+  Object? dexRefreshFailure;
   // 表示fixtureは基底onInitの実API・周期clock起動を意図的に省きます。
   @override
   // ignore: must_call_super
@@ -157,8 +159,11 @@ class _DisplayFixtureController extends TrainingGameController {
   void perform(TrainingActionType type, {MiniGameResult? miniGameResult}) =>
       callbackTrace.add('perform:${type.name}');
   @override
-  Future<void> refreshUnlockedPositions() async {
+  Future<void> refreshUnlockedPositions() {
     callbackTrace.add('refreshUnlockedPositions');
+    final failure = dexRefreshFailure;
+    if (failure != null) return Future<void>.error(failure);
+    return dexRefreshGate?.future ?? Future<void>.value();
   }
 
   // Ahemテストfontによる既存headerの幅を表示素材の検証へ混ぜません。
@@ -900,6 +905,74 @@ void main() {
     expect(controller.callbackTrace, ['refreshUnlockedPositions']);
     expect(tester.takeException(), isNull);
   });
+
+  for (final failure in [false, true]) {
+    testWidgets(
+        failure ? '図鑑取得失敗時も直近の到達状態と未到達シルエットを維持する' : '図鑑読み込み中も未到達の進化先をシルエット表示する',
+        (tester) async {
+      configurePhone(tester);
+      addTearDown(Get.reset);
+      Get.testMode = true;
+      const positions = [
+        'プロップ',
+        'フッカー',
+        'ロック',
+        'フランカー',
+        'ナンバーエイト',
+        'スクラムハーフ',
+        'スタンドオフ',
+        'ウイング',
+        'センター',
+        'フルバック',
+      ];
+      final controller = _DisplayFixtureController();
+      controller.isServerStateReady.value = true;
+      controller.stageIndex.value = 3;
+      if (failure) {
+        controller.unlockedPositions.assignAll(['prop']);
+        controller.dexRefreshFailure = StateError('fixture failure');
+      } else {
+        controller.dexRefreshGate = Completer<void>();
+      }
+      Get.put<TrainingGameController>(controller);
+      await tester.pumpWidget(host(const TrainingGameScreen()));
+      await preload(tester, SametarohAssets.normalFrames);
+      await preload(
+          tester,
+          positions.map(
+            (position) => SametarohAssets.positionFrameFor(position)!,
+          ));
+      await tester.tap(find.byKey(const ValueKey('training-home-dex')));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+
+      final dialog = find.byType(TrainingDexDialog);
+      expect(dialog, findsOneWidget);
+      expect(
+        find.descendant(of: dialog, matching: find.byType(SametarohFrameImage)),
+        findsNWidgets(10),
+      );
+      expect(
+        find.descendant(of: dialog, matching: find.byType(ColorFiltered)),
+        findsNWidgets(failure ? 9 : 10),
+      );
+      expect(
+        find.text('✅ 登録済み'),
+        failure ? findsOneWidget : findsNothing,
+      );
+      expect(find.text('🔒 未解放'), findsNWidgets(failure ? 9 : 10));
+      expect(controller.callbackTrace, ['refreshUnlockedPositions']);
+      if (!failure) {
+        expect(controller.dexRefreshGate!.isCompleted, isFalse);
+        controller.dexRefreshGate!.complete();
+        await tester.pump();
+      } else {
+        expect(find.textContaining('1/10 登録'), findsOneWidget);
+        expect(tester.takeException(), isNull);
+      }
+    });
+  }
+
   for (final size in [const Size(375, 812), const Size(320, 568)]) {
     testWidgets('完了後図鑑は屋外背景の2列5行で到達状態を反映する $size', (tester) async {
       tester.view.physicalSize = size;
