@@ -2427,9 +2427,11 @@ class TrainingGameController extends GetxController
       _serverNextStageCode = null;
     }
     final playFloor = data['play_floor'];
-    if (playFloor is num) {
-      _playFloor = playFloor.toInt().clamp(0, 100).toInt();
-    }
+    // Older API payloads may omit this field; use the existing play-time
+    // default instead of inheriting a stale value from an earlier response.
+    _playFloor = playFloor is num && playFloor.isFinite
+        ? playFloor.clamp(0, 100).toInt()
+        : 0;
   }
 
   /// サーバーが返す終了状態をローカル表示へ反映します。
@@ -3831,7 +3833,13 @@ class TrainingGameController extends GetxController
     if (!policy.rates.containsKey(stage)) return;
     const names = {'hunger':'食事','cleanliness':'清潔','condition':'体調','work':'仕事'};
     names.forEach((key, name) {
-      meters[name] = policy.after(stage, key, meters[name]!, seconds, policy.floor);
+      meters[name] = policy.after(
+        stage,
+        key,
+        meters[name]!,
+        seconds,
+        _playFloor.toDouble(),
+      );
     });
   }
 
