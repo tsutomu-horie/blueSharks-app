@@ -31,10 +31,9 @@ void main() {
         final point = box.localToGlobal(
           Offset(box.size.width * 607 / 615, box.size.height * 455 / 1251),
         );
-        final height =
-            (box.localToGlobal(Offset(0, box.size.height)) -
-                    box.localToGlobal(Offset.zero))
-                .distance;
+        final height = (box.localToGlobal(Offset(0, box.size.height)) -
+                box.localToGlobal(Offset.zero))
+            .distance;
         expect(height, closeTo(72 * scale, .001));
         if (scale == 1) {
           baseline = t.getSize(find.byKey(const Key('player')));
@@ -47,9 +46,8 @@ void main() {
     });
   }
   testWidgets(
-    'P&R paint grows while box and held-ball coordinates stay fixed',
+    'P&R selected full pose and held-ball coordinates share the visual scale',
     (t) async {
-      Rect? ball;
       Size? size;
       for (final scale in [1.0, 1.15]) {
         await t.pumpWidget(
@@ -70,10 +68,11 @@ void main() {
         );
         await t.pumpAndSettle();
         final image = find.byWidgetPredicate(
-          (w) =>
-              w is Image &&
-              w.image is AssetImage &&
-              (w.image as AssetImage).assetName.contains("_free_"),
+          (w) => w is Image && w.key == const Key('pass-body-sprite'),
+        );
+        expect(
+          (t.widget<Image>(image).image as AssetImage).assetName,
+          contains('_hold_'),
         );
         final b = t.renderObject<RenderBox>(image);
         expect(
@@ -82,12 +81,28 @@ void main() {
           closeTo(84 * scale, .001),
         );
         if (scale == 1) {
-          ball = t.getRect(find.byKey(const Key('ball')));
           size = t.getSize(find.byKey(const Key('player')));
         } else {
-          expect(t.getRect(find.byKey(const Key('ball'))), ball);
           expect(t.getSize(find.byKey(const Key('player'))), size);
         }
+        final geometry = PassAndRunCharacterVisual.heldBallGeometry(
+          character: PassRunCharacter.normal,
+          frame: 0,
+          facing: PassRunFacing.front,
+          size: 84 * scale,
+        );
+        final scaledBall = t.getRect(find.byKey(const Key('ball')));
+        final scaledActor = t.getRect(find.byKey(const Key('player')));
+        expect(scaledBall.width, closeTo(geometry.extent, .001));
+        expect(scaledBall.height, closeTo(geometry.extent, .001));
+        expect(
+          scaledBall.center.dx - scaledActor.center.dx,
+          closeTo(geometry.offset.dx, .001),
+        );
+        expect(
+          scaledBall.center.dy - scaledActor.center.dy,
+          closeTo(geometry.offset.dy, .001),
+        );
       }
     },
   );

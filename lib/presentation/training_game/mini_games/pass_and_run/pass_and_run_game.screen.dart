@@ -659,6 +659,14 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
         math.min(_fieldSize.height * .4, _fieldSize.width * .5),
       );
 
+  double get _characterVisualScale {
+    if (_characterSize <= 0) return 1;
+    return math.min(
+      PassAndRunCharacterVisual.candidateVisualScale,
+      (_characterSize / 2 + 2) / (_characterSize * 51 / 112),
+    );
+  }
+
   double get _floorOffset =>
       _motion.runningForwardRate *
       _fieldSize.height *
@@ -699,7 +707,7 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
           character: kind,
           frame: _frameAt(seconds, kind),
           facing: direction,
-          size: _characterSize,
+          size: _characterSize * _characterVisualScale,
         );
     return PassRunBallGeometry.lerp(
       geometry(facing.from),
@@ -1487,10 +1495,7 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
                     frame: _frameAt(_motionSeconds, PassRunCharacter.normal),
                     facing: _spriteFacing(PassRunCharacter.normal),
                     size: actorSize,
-                    visualScale: math.min(
-                      PassAndRunCharacterVisual.candidateVisualScale,
-                      (actorSize / 2 + 2) / (actorSize * 51 / 112),
-                    ),
+                    visualScale: _characterVisualScale,
                     ballKey: const Key('pass-ball'),
                   ),
                 ),
@@ -1534,10 +1539,7 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
                     frame: _frameAt(_motionSeconds, PassRunCharacter.companion),
                     facing: _spriteFacing(PassRunCharacter.companion),
                     size: actorSize,
-                    visualScale: math.min(
-                      PassAndRunCharacterVisual.candidateVisualScale,
-                      (actorSize / 2 + 2) / (actorSize * 51 / 112),
-                    ),
+                    visualScale: _characterVisualScale,
                     ballKey: const Key('pass-ball'),
                   ),
                 ),

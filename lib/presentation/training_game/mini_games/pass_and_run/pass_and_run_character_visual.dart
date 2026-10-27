@@ -7,7 +7,7 @@ import 'pass_and_run_motion.dart';
 enum PassRunCharacter { normal, companion }
 
 /// 承認済みの保持／非保持だけを使う、2コマのパス＆ラン表示です。
-/// 判定中心を胴体に置き、同じ脚位相の持ち替えで全身を動かしません。
+/// 保持状態に合う全身画像を一枚だけ表示します。
 class PassAndRunCharacterVisual extends StatelessWidget {
   const PassAndRunCharacterVisual({
     required this.character,
@@ -90,40 +90,8 @@ class PassAndRunCharacterVisual extends StatelessWidget {
       character: character,
       frame: frame,
       facing: facing,
-      size: size,
+      size: size * visualScale,
     );
-    final freeAsset = assetPath.replaceFirst('_hold_', '_free_');
-    // Keep the original ball and hand pixels at their calibrated size/position.
-    // The surrounding free-pose body alone receives the visual enlargement.
-    final patchOrigin = Offset(size / 2, size / 2) +
-        geometry.offset -
-        Offset(geometry.extent / 2, geometry.extent / 2);
-    Widget heldBall() => Positioned(
-          left: patchOrigin.dx,
-          top: patchOrigin.dy,
-          width: geometry.extent,
-          height: geometry.extent,
-          child: ClipRect(
-            child: OverflowBox(
-              alignment: Alignment.topLeft,
-              minWidth: size,
-              maxWidth: size,
-              minHeight: size,
-              maxHeight: size,
-              child: Transform.translate(
-                offset: -patchOrigin,
-                child: Image.asset(assetPath,
-                    key: const Key('pass-held-contact-patch'),
-                    width: size,
-                    height: size,
-                    fit: BoxFit.contain,
-                    gaplessPlayback: true,
-                    filterQuality: FilterQuality.medium,
-                    excludeFromSemantics: true),
-              ),
-            ),
-          ),
-        );
     return IgnorePointer(
       child: SizedBox(
         width: size,
@@ -134,7 +102,7 @@ class PassAndRunCharacterVisual extends StatelessWidget {
             Transform.scale(
               scale: visualScale,
               child: Image.asset(
-                freeAsset,
+                assetPath,
                 key: const Key('pass-body-sprite'),
                 gaplessPlayback: true,
                 width: size,
@@ -144,8 +112,7 @@ class PassAndRunCharacterVisual extends StatelessWidget {
                 excludeFromSemantics: true,
               ),
             ),
-            if (holding) heldBall(),
-            // 保持球の画素と手の接点は原画のまま、座標と径を拡大から分離する。
+            // 保持球の読み上げ位置も、保持ポーズと同じ倍率で配置します。
             if (holding)
               Positioned(
                 left: size / 2 + geometry.offset.dx - geometry.extent / 2,

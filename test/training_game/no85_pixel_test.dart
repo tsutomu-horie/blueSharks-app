@@ -66,7 +66,7 @@ void main() {
               character: PassRunCharacter.normal,
               frame: frame,
               facing: facing,
-              size: size,
+              size: size * PassAndRunCharacterVisual.candidateVisualScale,
             );
             final flight = await pixels(
               Stack(
