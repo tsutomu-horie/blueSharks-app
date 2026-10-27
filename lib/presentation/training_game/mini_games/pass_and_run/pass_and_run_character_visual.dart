@@ -16,6 +16,7 @@ class PassAndRunCharacterVisual extends StatelessWidget {
     required this.facing,
     required this.size,
     this.ballKey,
+    this.visualScale = 1.0,
     super.key,
   });
 
@@ -40,6 +41,8 @@ class PassAndRunCharacterVisual extends StatelessWidget {
   final PassRunFacing facing;
   final double size;
   final Key? ballKey;
+  final double visualScale;
+  static const candidateVisualScale = 1.15;
 
   String get assetPath {
     final name = character == PassRunCharacter.normal ? 'normal' : 'mate';
@@ -73,13 +76,12 @@ class PassAndRunCharacterVisual extends StatelessWidget {
     required int frame,
     required PassRunFacing facing,
     required double size,
-  }) =>
-      heldBallGeometry(
-        character: character,
-        frame: frame,
-        facing: facing,
-        size: size,
-      ).offset;
+  }) => heldBallGeometry(
+    character: character,
+    frame: frame,
+    facing: facing,
+    size: size,
+  ).offset;
 
   @override
   Widget build(BuildContext context) {
@@ -89,22 +91,34 @@ class PassAndRunCharacterVisual extends StatelessWidget {
       facing: facing,
       size: size,
     );
+    final freeAsset = assetPath.replaceFirst('_hold_', '_free_');
+    Widget heldBall() => Positioned(
+      left: size / 2 + geometry.offset.dx - geometry.extent / 2,
+      top: size / 2 + geometry.offset.dy - geometry.extent / 2,
+      child: PassAndRunBallVisual(geometry: geometry),
+    );
     return IgnorePointer(
       child: SizedBox(
         width: size,
         height: size,
         child: Stack(
+          clipBehavior: Clip.none,
           children: [
-            Image.asset(
-              assetPath,
-              gaplessPlayback: true,
-              width: size,
-              height: size,
-              fit: BoxFit.contain,
-              filterQuality: FilterQuality.medium,
-              excludeFromSemantics: true,
+            if (holding && facing == PassRunFacing.back) heldBall(),
+            Transform.scale(
+              scale: visualScale,
+              child: Image.asset(
+                freeAsset,
+                gaplessPlayback: true,
+                width: size,
+                height: size,
+                fit: BoxFit.contain,
+                filterQuality: FilterQuality.medium,
+                excludeFromSemantics: true,
+              ),
             ),
-            // 球そのものは保持画像内にあり、ここでは位置と状態だけを表す。
+            if (holding && facing == PassRunFacing.front) heldBall(),
+            // 保持球も飛翔球と同じ描画を使い、座標と径を拡大から分離する。
             if (holding)
               Positioned(
                 left: size / 2 + geometry.offset.dx - geometry.extent / 2,

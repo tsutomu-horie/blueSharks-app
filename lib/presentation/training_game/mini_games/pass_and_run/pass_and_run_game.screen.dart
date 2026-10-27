@@ -1426,6 +1426,10 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
                     frame: _frameAt(_motionSeconds, PassRunCharacter.normal),
                     facing: _spriteFacing(PassRunCharacter.normal),
                     size: actorSize,
+                    visualScale: math.min(
+                      PassAndRunCharacterVisual.candidateVisualScale,
+                      (actorSize / 2 + 2) / (actorSize * 51 / 112),
+                    ),
                     ballKey: const Key('pass-ball'),
                   ),
                 ),
@@ -1469,6 +1473,10 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
                     frame: _frameAt(_motionSeconds, PassRunCharacter.companion),
                     facing: _spriteFacing(PassRunCharacter.companion),
                     size: actorSize,
+                    visualScale: math.min(
+                      PassAndRunCharacterVisual.candidateVisualScale,
+                      (actorSize / 2 + 2) / (actorSize * 51 / 112),
+                    ),
                     ballKey: const Key('pass-ball'),
                   ),
                 ),
