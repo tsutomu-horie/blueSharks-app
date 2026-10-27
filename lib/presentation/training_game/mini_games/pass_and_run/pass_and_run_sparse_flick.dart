@@ -10,8 +10,7 @@ class PassRunSparseFlick {
   PointerMoveEvent? _lastMove;
   PointerUpEvent? _up;
   int _moves = 0;
-  Rect? _fieldBounds;
-  bool _insideField = false;
+  bool _startedInsideField = false;
   bool _startedWhenReady = false;
   bool _blocked = false;
   bool _stationaryMove = false;
@@ -20,8 +19,8 @@ class PassRunSparseFlick {
       {required Rect? fieldBounds, required bool ready}) {
     if (_pointers.isEmpty) {
       _down = event;
-      _fieldBounds = fieldBounds;
-      _insideField = fieldBounds?.contains(event.position) ?? false;
+      // コート内で始めた操作は、指が外へ出てもリリースまで追跡する。
+      _startedInsideField = fieldBounds?.contains(event.position) ?? false;
       _startedWhenReady = ready;
       _lastMove = null;
       _up = null;
@@ -36,8 +35,6 @@ class PassRunSparseFlick {
 
   void move(PointerMoveEvent event) {
     if (event.pointer != _down?.pointer) return;
-    _insideField =
-        _insideField && (_fieldBounds?.contains(event.position) ?? false);
     _stationaryMove =
         event.position == (_lastMove?.position ?? _down!.position);
     _lastMove = event;
@@ -48,8 +45,6 @@ class PassRunSparseFlick {
     _pointers.remove(event.pointer);
     if (event.pointer == _down?.pointer) {
       _up = event;
-      _insideField =
-          _insideField && (_fieldBounds?.contains(event.position) ?? false);
     }
   }
 
@@ -58,7 +53,7 @@ class PassRunSparseFlick {
     _blocked = true;
   }
 
-  bool get blocked => _blocked || !_startedWhenReady || !_insideField;
+  bool get blocked => _blocked || !_startedWhenReady || !_startedInsideField;
 
   void block() => _blocked = true;
 
@@ -66,7 +61,7 @@ class PassRunSparseFlick {
     final down = _down, move = _lastMove, up = _up;
     // raw move数はSDKの有効サンプル数ではない。SDKはdown等を含む履歴を
     // 時間窓・連続性で絞り込むため、1～2moveは保守的な補完対象の上限。
-    if (!_insideField ||
+    if (!_startedInsideField ||
         original.speed != 0 ||
         _blocked ||
         _stationaryMove ||
