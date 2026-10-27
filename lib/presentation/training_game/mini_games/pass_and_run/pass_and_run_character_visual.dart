@@ -93,10 +93,36 @@ class PassAndRunCharacterVisual extends StatelessWidget {
       size: size,
     );
     final freeAsset = assetPath.replaceFirst('_hold_', '_free_');
+    // Keep the original ball and hand pixels at their calibrated size/position.
+    // The surrounding free-pose body alone receives the visual enlargement.
+    final patchOrigin = Offset(size / 2, size / 2) +
+        geometry.offset -
+        Offset(geometry.extent / 2, geometry.extent / 2);
     Widget heldBall() => Positioned(
-          left: size / 2 + geometry.offset.dx - geometry.extent / 2,
-          top: size / 2 + geometry.offset.dy - geometry.extent / 2,
-          child: PassAndRunBallVisual(geometry: geometry),
+          left: patchOrigin.dx,
+          top: patchOrigin.dy,
+          width: geometry.extent,
+          height: geometry.extent,
+          child: ClipRect(
+            child: OverflowBox(
+              alignment: Alignment.topLeft,
+              minWidth: size,
+              maxWidth: size,
+              minHeight: size,
+              maxHeight: size,
+              child: Transform.translate(
+                offset: -patchOrigin,
+                child: Image.asset(assetPath,
+                    key: const Key('pass-held-contact-patch'),
+                    width: size,
+                    height: size,
+                    fit: BoxFit.contain,
+                    gaplessPlayback: true,
+                    filterQuality: FilterQuality.medium,
+                    excludeFromSemantics: true),
+              ),
+            ),
+          ),
         );
     return IgnorePointer(
       child: SizedBox(
@@ -105,11 +131,11 @@ class PassAndRunCharacterVisual extends StatelessWidget {
         child: Stack(
           clipBehavior: Clip.none,
           children: [
-            if (holding && facing == PassRunFacing.back) heldBall(),
             Transform.scale(
               scale: visualScale,
               child: Image.asset(
                 freeAsset,
+                key: const Key('pass-body-sprite'),
                 gaplessPlayback: true,
                 width: size,
                 height: size,
@@ -118,8 +144,8 @@ class PassAndRunCharacterVisual extends StatelessWidget {
                 excludeFromSemantics: true,
               ),
             ),
-            if (holding && facing == PassRunFacing.front) heldBall(),
-            // 保持球も飛翔球と同じ描画を使い、座標と径を拡大から分離する。
+            if (holding) heldBall(),
+            // 保持球の画素と手の接点は原画のまま、座標と径を拡大から分離する。
             if (holding)
               Positioned(
                 left: size / 2 + geometry.offset.dx - geometry.extent / 2,
