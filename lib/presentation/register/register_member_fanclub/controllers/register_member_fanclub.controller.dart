@@ -8,6 +8,8 @@ import 'package:koto_blue_sharks/presentation/main/controllers/main.controller.d
 import 'package:koto_blue_sharks/presentation/main/main.screen.dart';
 import 'package:koto_blue_sharks/presentation/register/fan_club_confirmation/fan_club_confirmation.screen.dart';
 import 'package:koto_blue_sharks/utils/my_shared_pref.dart';
+import 'package:koto_blue_sharks/utils/fcm_helper.dart';
+import 'package:koto_blue_sharks/app/services/notification_token_sync.dart';
 import 'package:koto_blue_sharks/utils/utils.dart';
 import '../../registration_notification_sync.dart';
 
@@ -16,19 +18,20 @@ class RegisterMemberFanclubController extends GetxController {
   final passwordTextFieldController = TextEditingController();
   final AuthProvider apiProvider;
   final Future<void> Function(String) _saveAccessToken;
-  final String? Function() _readSavedFcmToken;
+  final Future<NotificationSyncOutcome> Function() _syncNotifications;
   final void Function(BuildContext, Function) _showSuccessDialog;
   final Future<void> Function(bool isFromHome)? _continueAfterRegistration;
 
   RegisterMemberFanclubController({
     AuthProvider? apiProvider,
     Future<void> Function(String)? saveAccessToken,
-    String? Function()? readSavedFcmToken,
+    Future<NotificationSyncOutcome> Function()? syncNotifications,
     void Function(BuildContext, Function)? showSuccessDialog,
     Future<void> Function(bool isFromHome)? continueAfterRegistration,
   })  : apiProvider = apiProvider ?? AuthProvider(),
         _saveAccessToken = saveAccessToken ?? _persistAccessToken,
-        _readSavedFcmToken = readSavedFcmToken ?? MySharedPref.getFcmToken,
+        _syncNotifications =
+            syncNotifications ?? FcmHelper.syncAfterRegistration,
         _showSuccessDialog =
             showSuccessDialog ?? Utils.showCustomSuccessRegisterDialog,
         _continueAfterRegistration = continueAfterRegistration;
@@ -84,12 +87,10 @@ class RegisterMemberFanclubController extends GetxController {
       return successAction.run(() async {
         await continueAfterBestEffortNotificationSync(
           isFromHome: isFromHome,
-          sync: () => syncSavedFcmTokenAfterRegistration(
-            isFromHome: isFromHome,
-            readSavedFcmToken: _readSavedFcmToken,
-            updateNotificationToken: (fcmToken) =>
-                apiProvider.updateNotificationToken(fcmToken),
-          ),
+          sync: () async =>
+              await _syncNotifications() == NotificationSyncOutcome.synced
+                  ? RegistrationNotificationTokenSyncStatus.synced
+                  : RegistrationNotificationTokenSyncStatus.failed,
           onSyncIncomplete: (status) {
             debugPrint(
               'Home registration notification token sync: ${status.name}',
