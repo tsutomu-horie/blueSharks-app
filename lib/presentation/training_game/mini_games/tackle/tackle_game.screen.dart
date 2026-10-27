@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:koto_blue_sharks/app/services/training_game_sound_service.dart';
 
 import '../models/mini_game_result.dart';
+import '../mini_game_result_transition.dart';
 import '../../models/mini_game_settings.dart';
 import 'tackle_player_visual.dart';
 import 'tackle_opponent_visual.dart';
@@ -105,6 +106,7 @@ class _TackleGameScreenState extends State<TackleGameScreen>
   final _reactionWatch = Stopwatch();
   final _timers = <Timer>[];
   _TacklePhase _phase = _TacklePhase.waiting;
+  bool _resultReturned = false;
   Alignment _playerAlignment = const Alignment(-.82, 0);
   Duration _playerDuration = Duration.zero;
   Alignment _opponentAlignment = const Alignment(1.25, 0);
@@ -475,6 +477,8 @@ class _TackleGameScreenState extends State<TackleGameScreen>
 
   /// ミニゲーム結果を育成画面へ返します。
   void _completeGame() {
+    if (_resultReturned || ModalRoute.of(context)?.isCurrent != true) return;
+    _resultReturned = true;
     final successCount = TackleRules.successCount(
       _attempts,
       settings: _settings,
@@ -704,7 +708,10 @@ class _TackleGameScreenState extends State<TackleGameScreen>
               buttonLabel: 'スタート',
               onPressed: _startAttempt,
             ),
-          if (_phase == _TacklePhase.gameResult) _buildResultOverlay(),
+          MiniGameResultTransition(
+            visible: _phase == _TacklePhase.gameResult,
+            child: _buildResultOverlay(),
+          ),
           if (_isPaused) _buildPauseOverlay(),
         ],
       ),
@@ -792,35 +799,33 @@ class _TackleGameScreenState extends State<TackleGameScreen>
     final averageLabel = average == null
         ? '―'
         : '${(average.inMicroseconds / Duration.microsecondsPerSecond).toStringAsFixed(2)}秒';
-    return Positioned.fill(
-      child: ColoredBox(
-        color: const Color(0xff123d28).withValues(alpha: .92),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Text('総合ランク', style: TextStyle(color: Colors.white70)),
-            Text(
-              rank,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 88,
-                fontWeight: FontWeight.w900,
-              ),
+    return ColoredBox(
+      color: const Color(0xff123d28).withValues(alpha: .92),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Text('総合ランク', style: TextStyle(color: Colors.white70)),
+          Text(
+            rank,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 88,
+              fontWeight: FontWeight.w900,
             ),
-            Text(
-              '判定平均 $averageLabel　成功 $successCount/${_settings.setCount}',
-              style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.w700,
-              ),
+          ),
+          Text(
+            '判定平均 $averageLabel　成功 $successCount/${_settings.setCount}',
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w700,
             ),
-            const SizedBox(height: 24),
-            ElevatedButton(
-              onPressed: _completeGame,
-              child: const Text('メインへ戻る'),
-            ),
-          ],
-        ),
+          ),
+          const SizedBox(height: 24),
+          ElevatedButton(
+            onPressed: _completeGame,
+            child: const Text('メインへ戻る'),
+          ),
+        ],
       ),
     );
   }
