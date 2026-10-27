@@ -68,14 +68,8 @@ void main() {
       const MaterialApp(home: TackleGameScreen()),
     );
 
-    final upperDetector = find.ancestor(
-      of: find.text('上をタップ ▲'),
-      matching: find.byType(GestureDetector),
-    );
-    final lowerDetector = find.ancestor(
-      of: find.text('下をタップ ▼'),
-      matching: find.byType(GestureDetector),
-    );
+    final upperDetector = find.byKey(const Key('tackle-tap-up'));
+    final lowerDetector = find.byKey(const Key('tackle-tap-down'));
 
     expect(tester.getSize(upperDetector.first).height,
         tester.getSize(lowerDetector.first).height);
@@ -88,11 +82,14 @@ void main() {
     await readyPass(tester);
     await tester.tap(find.text('スタート'));
     await advance(tester, const Duration(milliseconds: 1400));
-    await tester.tap(find.text('上をタップ ▲'));
+    await tester.tap(find.byKey(const Key('tackle-tap-up')));
     await tester.pump();
 
-    final settled = find.text('TACKLE!').evaluate().isNotEmpty ||
-        find.text('突破された！').evaluate().isNotEmpty;
+    final settled = find
+            .byKey(const Key('tackle-feedback-success'))
+            .evaluate()
+            .isNotEmpty ||
+        find.byKey(const Key('tackle-feedback-miss')).evaluate().isNotEmpty;
     expect(settled, isTrue);
   });
 
@@ -103,10 +100,10 @@ void main() {
     await readyPass(tester);
     await tester.tap(find.text('スタート'));
     await tester.pump();
-    await tester.tap(find.text('上をタップ ▲'));
+    await tester.tap(find.byKey(const Key('tackle-tap-up')));
     await tester.pump();
 
-    expect(find.text('突破された！'), findsOneWidget);
+    expect(find.byKey(const Key('tackle-feedback-miss')), findsOneWidget);
   });
 
   testWidgets('タックルは成否に関係なくタップ方向へ鮫太朗を移動する', (tester) async {
@@ -119,7 +116,7 @@ void main() {
 
     final beforeTap =
         tester.getCenter(find.byKey(const Key('tackle-player'))).dy;
-    await tester.tap(find.text('上をタップ ▲'));
+    await tester.tap(find.byKey(const Key('tackle-tap-up')));
     await tester.pump();
     await advance(tester, const Duration(milliseconds: 160));
 
@@ -134,7 +131,7 @@ void main() {
     await readyPass(tester);
     await tester.tap(find.text('スタート'));
     await tester.pump();
-    await tester.tap(find.text('上をタップ ▲'));
+    await tester.tap(find.byKey(const Key('tackle-tap-up')));
     await advance(tester, const Duration(milliseconds: 650));
 
     await tester.tap(find.text('SET 1 / 3'));
@@ -295,7 +292,7 @@ void main() {
     await tester.tap(find.text('スタート'));
     await tester.pump();
     await advance(tester, const Duration(milliseconds: 1400));
-    await tester.tap(find.text('上をタップ ▲'));
+    await tester.tap(find.byKey(const Key('tackle-tap-up')));
     await tester.pump();
     await advance(tester, const Duration(milliseconds: 650));
 

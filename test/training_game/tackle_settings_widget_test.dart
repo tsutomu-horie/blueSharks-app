@@ -50,8 +50,8 @@ void main() {
     await tester.pump(const Duration(milliseconds: 1100));
     expect(find.byKey(const Key('tackle-input-cue')), findsOneWidget);
     await tester.pump(const Duration(milliseconds: 399));
-    expect(find.text('突破された！'), findsNothing);
+    expect(find.byKey(const Key('tackle-feedback-miss')), findsNothing);
     await tester.pump(const Duration(milliseconds: 1));
-    expect(find.text('突破された！'), findsOneWidget);
+    expect(find.byKey(const Key('tackle-feedback-miss')), findsOneWidget);
   });
 }

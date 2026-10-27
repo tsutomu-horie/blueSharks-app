@@ -46,7 +46,7 @@ void main() {
         now = now.add(const Duration(milliseconds: 16100));
         await t.pump(const Duration(milliseconds: 16100));
       } else {
-        await t.tap(find.text('上をタップ ▲'));
+        await t.tap(find.byKey(const Key('tackle-tap-up')));
         await t.pump(const Duration(milliseconds: 650));
         await t.tap(find.text('SET 1 / 1'));
         await t.pump();
