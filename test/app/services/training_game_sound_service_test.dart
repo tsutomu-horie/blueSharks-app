@@ -31,11 +31,12 @@ void main() {
   });
 
   group('TrainingGameSoundEffect', () {
-    test('contains only the three approved No.40 effects', () {
+    test('maps the game effects to bundled assets', () {
       expect(TrainingGameSoundEffect.values, [
         TrainingGameSoundEffect.passReceived,
         TrainingGameSoundEffect.passFailed,
         TrainingGameSoundEffect.resultDisplayed,
+        TrainingGameSoundEffect.parameterRecovered,
       ]);
       expect(
         TrainingGameSoundEffect.values.map((effect) => effect.assetPath),
@@ -43,6 +44,7 @@ void main() {
           'assets/audio/training_game/basket-path1.mp3',
           'assets/audio/training_game/cute-sad1.mp3',
           'assets/audio/training_game/sceneswitch1.mp3',
+          'assets/audio/training_game/gauge-recovery3.mp3',
         ],
       );
     });

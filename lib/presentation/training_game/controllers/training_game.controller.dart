@@ -3364,8 +3364,28 @@ class TrainingGameController extends GetxController
     };
   }
 
+  /// お世話による実際の増減だけを表示する、永続化しない演出情報です。
+  final careFeedback = <String, double>{}.obs;
+  final careFeedbackVersion = 0.obs;
+
   /// 指定した行動を実行し、メーターと傾向値を更新します。
   void perform(TrainingActionType type, {MiniGameResult? miniGameResult}) {
+    final before = Map<String, double>.from(meters);
+    _performAction(type, miniGameResult: miniGameResult);
+    if (type == TrainingActionType.tackle ||
+        type == TrainingActionType.passAndRun) return;
+    final changes = <String, double>{
+      for (final entry in meters.entries)
+        if ((entry.value - before[entry.key]!).abs() >= .01)
+          entry.key: entry.value - before[entry.key]!,
+    };
+    if (changes.isEmpty) return;
+    careFeedback.assignAll(changes);
+    careFeedbackVersion.value++;
+  }
+
+  void _performAction(TrainingActionType type,
+      {MiniGameResult? miniGameResult}) {
     if (type == TrainingActionType.squat &&
         _squatScenePending &&
         !_squatCompletionAuthorized) return;

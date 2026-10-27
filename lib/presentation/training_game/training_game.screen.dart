@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'package:koto_blue_sharks/app/services/training_game_sound_service.dart';
+
 import 'package:koto_blue_sharks/utils/app_environment.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -780,7 +782,12 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
   Widget _buildMeter(MapEntry<String, double> entry) => DefaultTextStyle.merge(
         style: const TextStyle(
             fontFamily: 'LINESeedJP', color: TrainingHomeStyle.navy),
-        child: TrainingHomeMeter(name: entry.key, value: entry.value),
+        child: TrainingHomeMeter(
+          name: entry.key,
+          value: entry.value,
+          feedbackVersion: controller.careFeedbackVersion.value,
+          delta: controller.careFeedback[entry.key] ?? 0,
+        ),
       );
 
   /// 支給屋外背景・図鑑・キャラクター・練習ボタンを配置します。
@@ -1057,6 +1064,7 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
     final finishSquat =
         type == TrainingActionType.squat ? controller.beginSquatScene() : null;
     if (type == TrainingActionType.squat && finishSquat == null) return;
+    final feedbackBefore = controller.careFeedbackVersion.value;
     bool? completed;
     try {
       completed = await Navigator.of(context).push<bool>(
@@ -1073,8 +1081,15 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
       if (type == TrainingActionType.work) controller.finishWorkPreparation();
       finishSquat?.call(completed == true);
     }
-    if (completed == true && type != TrainingActionType.squat)
+    if (completed == true && type != TrainingActionType.squat) {
       controller.perform(type);
+    }
+    if (context.mounted &&
+        controller.careFeedbackVersion.value != feedbackBefore &&
+        controller.careFeedback.values.any((delta) => delta > 0)) {
+      unawaited(TrainingGameSoundService.instance
+          .play(TrainingGameSoundEffect.parameterRecovered));
+    }
   }
 
   /// 集約したデバッグコマンドを表示します。
