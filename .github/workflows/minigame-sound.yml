@@ -1,0 +1,63 @@
+name: Mini-game sound silent switch
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/minigame-sound.yml'
+      - 'lib/app/services/training_game_sound_service.dart'
+      - 'test/app/services/training_game_sound_service_test.dart'
+      - 'pubspec.yaml'
+      - 'pubspec.lock'
+
+permissions:
+  contents: read
+
+jobs:
+  minigame-sound:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Install the validated Flutter SDK
+        shell: bash
+        run: |
+          git clone --depth 1 --branch 3.47.2 https://github.com/flutter/flutter.git "$RUNNER_TEMP/flutter"
+          test "$(git -C "$RUNNER_TEMP/flutter" rev-parse HEAD)" = d3b14c876900e553bc736ca19295fc09e3853e8e
+          echo "$RUNNER_TEMP/flutter/bin" >> "$GITHUB_PATH"
+      - name: Resolve locked dependencies
+        run: flutter pub get --enforce-lockfile
+      # Collect all focused results, then fail the job if any check failed.
+      - name: Check formatting
+        id: format
+        continue-on-error: true
+        run: >-
+          dart format --output=none --set-exit-if-changed
+          lib/app/services/training_game_sound_service.dart
+          test/app/services/training_game_sound_service_test.dart
+      - name: Analyze sound service and tests
+        id: analyze
+        continue-on-error: true
+        run: >-
+          flutter analyze --no-pub --no-fatal-infos
+          lib/app/services/training_game_sound_service.dart
+          test/app/services/training_game_sound_service_test.dart
+      # These tests import only the sound service, use fake players and never boot the app.
+      # Linux mocks cannot verify audible output or the physical iOS silent switch.
+      - name: Test sound service with fake players
+        id: tests
+        continue-on-error: true
+        run: >-
+          flutter test --no-pub --concurrency=1 --reporter expanded
+          test/app/services/training_game_sound_service_test.dart
+      - name: Require every focused check to pass
+        if: always()
+        env:
+          FORMAT_RESULT: ${{ steps.format.outcome }}
+          ANALYZE_RESULT: ${{ steps.analyze.outcome }}
+          TEST_RESULT: ${{ steps.tests.outcome }}
+        run: |
+          test "$FORMAT_RESULT" = success
+          test "$ANALYZE_RESULT" = success
+          test "$TEST_RESULT" = success
