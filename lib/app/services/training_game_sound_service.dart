@@ -10,7 +10,7 @@ const trainingGameAudioSessionConfiguration = AudioSessionConfiguration(
   avAudioSessionCategory: AVAudioSessionCategory.ambient,
 );
 
-/// No.40でユーザーが採用した効果音だけを表します。
+/// 育成ゲームで使用する効果音です。
 enum TrainingGameSoundEffect {
   /// パスを仲間が受け取った時。
   passReceived,
@@ -20,11 +20,17 @@ enum TrainingGameSoundEffect {
 
   /// ミニゲームの結果画面が現れた時。
   resultDisplayed,
+
+  /// お世話でパラメーターが回復した時。
+  parameterRecovered,
 }
 
 extension TrainingGameSoundEffectAsset on TrainingGameSoundEffect {
   /// 効果音ラボから取得したアプリ内素材のパスです。
   String get assetPath => switch (this) {
+        // 出典: https://soundeffect-lab.info/sound/button/ （ゲージ回復3）
+        TrainingGameSoundEffect.parameterRecovered =>
+          'assets/audio/training_game/gauge-recovery3.mp3',
         TrainingGameSoundEffect.passReceived =>
           'assets/audio/training_game/basket-path1.mp3',
         TrainingGameSoundEffect.passFailed =>

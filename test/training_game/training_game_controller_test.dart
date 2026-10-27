@@ -69,6 +69,8 @@ void main() {
     await TrainingGameProvider.waitForPendingSync();
 
     expect(provider.syncedActionCodes, isEmpty);
+    expect(controller.careFeedbackVersion.value, 0);
+    expect(controller.careFeedback, isEmpty);
     expect(
       controller.logs.first,
       '食事・清潔・体調が50未満です。'
@@ -94,6 +96,8 @@ void main() {
     expect(controller.isServerStateReady.value, isTrue);
 
     controller.perform(TrainingActionType.squat);
+    expect(controller.careFeedbackVersion.value, 1);
+    expect(controller.careFeedback, {'食事': -12.0, '清潔': -8.0, '体調': -6.0});
     await TrainingGameProvider.waitForPendingSync();
 
     expect(provider.syncedActionCodes, ['training']);

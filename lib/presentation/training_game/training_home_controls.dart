@@ -11,58 +11,133 @@ abstract final class TrainingHomeStyle {
 }
 
 /// 通常100・超過50の既存ゲージを、数値と同じ枠に表示します。
-class TrainingHomeMeter extends StatelessWidget {
-  const TrainingHomeMeter({super.key, required this.name, required this.value});
+class TrainingHomeMeter extends StatefulWidget {
+  const TrainingHomeMeter(
+      {super.key,
+      required this.name,
+      required this.value,
+      this.feedbackVersion = 0,
+      this.delta = 0});
   final String name;
   final double value;
+  final int feedbackVersion;
+  final double delta;
 
   @override
-  Widget build(BuildContext context) {
-    final normal = value.clamp(0, 100) / 100;
-    final overage = (value - 100).clamp(0, 50) / 50;
-    final color = value <= 19
-        ? const Color(0xffd03b3b)
-        : value < 50
-            ? const Color(0xffeda100)
-            : value < 80
-                ? const Color(0xff7ec8f0)
-                : const Color(0xff5ee05e);
-    return Semantics(
-      label: '$name ${value.round()}',
-      excludeSemantics: true,
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Row(children: [
-            Expanded(child: Text(name, style: const TextStyle(fontSize: 12))),
-            Text('${value.round()}',
-                style:
-                    const TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
-          ]),
-          const SizedBox(height: 6),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(2),
-            child: SizedBox(
-              height: 5,
-              child: Stack(fit: StackFit.expand, children: [
-                const Positioned.fill(
-                    child: ColoredBox(color: Color(0xffe8edf2))),
-                FractionallySizedBox(
-                    alignment: Alignment.centerLeft,
-                    widthFactor: normal,
-                    child: ColoredBox(color: color)),
-                if (overage > 0)
-                  FractionallySizedBox(
-                      alignment: Alignment.centerLeft,
-                      widthFactor: overage,
-                      child: const ColoredBox(color: Color(0xffd03b3b))),
-              ]),
-            ),
-          ),
-        ],
-      ),
-    );
+  State<TrainingHomeMeter> createState() => _TrainingHomeMeterState();
+}
+
+class _TrainingHomeMeterState extends State<TrainingHomeMeter>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _feedback = AnimationController(
+      vsync: this, duration: const Duration(milliseconds: 1400));
+  double _from = 0;
+  double _target = 0;
+  double _delta = 0;
+
+  double get _progress =>
+      Curves.easeOutCubic.transform((_feedback.value / .55).clamp(0.0, 1.0));
+  double get _displayValue => _from + (_target - _from) * _progress;
+
+  @override
+  void initState() {
+    super.initState();
+    _from = _target = widget.value;
   }
+
+  @override
+  void didUpdateWidget(TrainingHomeMeter oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.feedbackVersion != oldWidget.feedbackVersion &&
+        widget.delta != 0) {
+      _from = widget.value - widget.delta;
+      _target = widget.value;
+      _delta = widget.delta;
+      _feedback.forward(from: 0);
+    } else if (widget.value != oldWidget.value) {
+      // 演出中の自然減衰・同期は到達値だけに反映し、演出を再開しません。
+      if (_feedback.isAnimating) {
+        _target = widget.value;
+      } else {
+        _from = _target = widget.value;
+        _delta = 0;
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _feedback.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => Semantics(
+        label: '${widget.name} ${widget.value.round()}',
+        excludeSemantics: true,
+        child: AnimatedBuilder(
+            animation: _feedback,
+            builder: (context, _) {
+              final value = _displayValue;
+              final normal = value.clamp(0, 100) / 100;
+              final overage = (value - 100).clamp(0, 50) / 50;
+              final color = value <= 19
+                  ? const Color(0xffd03b3b)
+                  : value < 50
+                      ? const Color(0xffeda100)
+                      : value < 80
+                          ? const Color(0xff7ec8f0)
+                          : const Color(0xff5ee05e);
+              final visible = _delta != 0 && _feedback.value < 1;
+              final opacity =
+                  (1 - ((_feedback.value - .7) / .3).clamp(0.0, 1.0));
+              return Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Row(children: [
+                      Expanded(
+                          child: Text(widget.name,
+                              style: const TextStyle(fontSize: 12))),
+                      if (visible)
+                        Padding(
+                            padding: const EdgeInsets.only(right: 4),
+                            child: Opacity(
+                                opacity: opacity,
+                                child: Text(
+                                    '${_delta > 0 ? '+' : ''}${_delta.toStringAsFixed(_delta == _delta.roundToDouble() ? 0 : 1)}',
+                                    key: ValueKey('meter-delta-${widget.name}'),
+                                    style: TextStyle(
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w700,
+                                        color: _delta > 0
+                                            ? const Color(0xff16805d)
+                                            : const Color(0xffb44235))))),
+                      Text('${value.round()}',
+                          style: const TextStyle(
+                              fontSize: 12, fontWeight: FontWeight.w700)),
+                    ]),
+                    const SizedBox(height: 6),
+                    ClipRRect(
+                        borderRadius: BorderRadius.circular(2),
+                        child: SizedBox(
+                            height: 5,
+                            child: Stack(fit: StackFit.expand, children: [
+                              const Positioned.fill(
+                                  child: ColoredBox(color: Color(0xffe8edf2))),
+                              FractionallySizedBox(
+                                  alignment: Alignment.centerLeft,
+                                  widthFactor: normal,
+                                  child: ColoredBox(color: color)),
+                              if (overage > 0)
+                                FractionallySizedBox(
+                                    alignment: Alignment.centerLeft,
+                                    widthFactor: overage,
+                                    child: const ColoredBox(
+                                        color: Color(0xffd03b3b))),
+                            ]))),
+                  ]);
+            }),
+      );
 }
 
 /// 待機中も外寸を変えず、ラベルだけを残り時間へ置き換えます。
