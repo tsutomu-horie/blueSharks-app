@@ -40,11 +40,22 @@ enum TrainingGameSoundEffect {
 
   /// ボールが手を離れた時の短い風切り音。
   passThrown,
+  homeTapSoft,
+  homeTapTouch,
+  homeTapHappy,
 }
 
 extension TrainingGameSoundEffectAsset on TrainingGameSoundEffect {
   /// 効果音ラボから取得したアプリ内素材のパスです。
   String get assetPath => switch (this) {
+        // 効果音ラボ「ぷよん」「ちょこっと触る」「ニュッ3」。承認済み音量。
+        // https://soundeffect-lab.info/sound/anime/
+        TrainingGameSoundEffect.homeTapSoft =>
+          'assets/audio/training_game/home-tap-soft.m4a',
+        TrainingGameSoundEffect.homeTapTouch =>
+          'assets/audio/training_game/home-tap-touch.m4a',
+        TrainingGameSoundEffect.homeTapHappy =>
+          'assets/audio/training_game/home-tap-happy.m4a',
         // 効果音ラボの決定34/22/37/21、しょげるを承認済みの長さ・音量へ加工。
         // https://soundeffect-lab.info/sound/button/
         // https://soundeffect-lab.info/sound/anime/
@@ -306,4 +317,8 @@ TrainingGameSoundService createTrainingHatchingSound() =>
 
 /// 判定音は承認プレビューと同じ合成済み音量を使います。
 TrainingGameSoundService createTackleFeedbackSound() =>
+    TrainingGameSoundService(volume: 1);
+
+/// 承認済みホームタップSEの加工済み音量を保持します。
+TrainingGameSoundService createTrainingHomeTapSound() =>
     TrainingGameSoundService(volume: 1);

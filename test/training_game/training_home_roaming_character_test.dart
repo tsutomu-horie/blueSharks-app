@@ -3,6 +3,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:koto_blue_sharks/app/services/training_game_sound_service.dart';
 import 'package:koto_blue_sharks/presentation/training_game/training_home_roaming_character.dart';
 
 const _avatarKey = ValueKey<String>('roaming-avatar');
@@ -13,6 +14,8 @@ Widget _host({
   Duration walkDuration = const Duration(seconds: 1),
   TrainingHomeWalkPreparation? prepareWalk,
   Object? preparationKey,
+  bool reactToTap = false,
+  TrainingGameSoundService Function()? soundFactory,
 }) =>
     MaterialApp(
       home: Scaffold(
@@ -34,6 +37,8 @@ Widget _host({
               idleDuration: idleDuration,
               walkDuration: walkDuration,
               enabled: enabled,
+              reactToTap: reactToTap,
+              soundFactory: soundFactory ?? TrainingGameSoundService.new,
             ),
           ),
         ),
@@ -74,6 +79,104 @@ String _shownAsset(WidgetTester tester) =>
     (tester.widget<Image>(find.byType(Image)).image as AssetImage).assetName;
 
 void main() {
+  testWidgets('画面非表示で反応を取り消し、戻ると元の歩行を再開する', (t) async {
+    Widget host(bool active) =>
+        TickerMode(enabled: active, child: _host(reactToTap: true));
+    await t.pumpWidget(host(true));
+    await t.pump(const Duration(milliseconds: 1));
+    await t.pump(const Duration(milliseconds: 100));
+    await t.tap(find.byKey(_avatarKey));
+    await t.pump();
+    await t.pumpWidget(host(false));
+    await t.pump(const Duration(seconds: 2));
+    expect(find.text('idle'), findsOneWidget);
+    await t.pumpWidget(host(true));
+    await t.pump();
+    await t.pump(const Duration(milliseconds: 30));
+    expect(find.text('walking'), findsOneWidget);
+    await t.pumpWidget(const SizedBox());
+  });
+
+  testWidgets('SE準備が遅れた場合は後から再生しない', (t) async {
+    var sounds = 0;
+    final configured = Completer<void>();
+    final sound = TrainingGameSoundService(
+        configureAudioSession: () => configured.future,
+        createPlayer: (_) => _TapPlayer(() => sounds++));
+    await t.pumpWidget(
+        _host(enabled: false, reactToTap: true, soundFactory: () => sound));
+    await t.tap(find.byKey(_avatarKey));
+    await t.pump();
+    await t.pump(const Duration(milliseconds: 200));
+    configured.complete();
+    await t.pump();
+    expect(sounds, 0);
+    await t.pumpWidget(const SizedBox());
+  });
+
+  testWidgets('歩行中のタップで停止し、連打を無視して同じ方向へ再開する', (t) async {
+    var sounds = 0;
+    final service = TrainingGameSoundService(
+        configureAudioSession: () async {},
+        createPlayer: (_) => _TapPlayer(() => sounds++));
+    await t.pumpWidget(_host(reactToTap: true, soundFactory: () => service));
+    await t.pump(const Duration(milliseconds: 1));
+    final before = t.getCenter(find.byKey(_avatarKey)).dx;
+    await t.pump(const Duration(milliseconds: 100));
+    final stopped = t.getCenter(find.byKey(_avatarKey)).dx;
+    expect(find.text('walking'), findsOneWidget);
+    await t.tap(find.byKey(_avatarKey));
+    await t.pump();
+    expect(find.text('idle'), findsOneWidget);
+    await t.pump(const Duration(milliseconds: 300));
+    expect(t.getCenter(find.byKey(_avatarKey)).dx, closeTo(stopped, .001));
+    await t.tap(find.byKey(_avatarKey));
+    await t.pump(const Duration(milliseconds: 451));
+    await t.pump(const Duration(milliseconds: 299));
+    expect(find.text('idle'), findsOneWidget);
+    expect(sounds, 1);
+    await t.pump(const Duration(milliseconds: 1));
+    await t.pump(const Duration(milliseconds: 30));
+    expect(find.text('walking'), findsOneWidget);
+    final resumed = t.getCenter(find.byKey(_avatarKey)).dx;
+    expect((resumed - stopped).sign, (stopped - before).sign);
+    await t.pumpWidget(const SizedBox());
+  });
+
+  testWidgets('素材準備中のタップは古い歩行開始を破棄する', (t) async {
+    final prepared = Completer<bool>();
+    await t.pumpWidget(
+        _host(reactToTap: true, prepareWalk: (_) => prepared.future));
+    await t.pump(const Duration(milliseconds: 1));
+    await t.tap(find.byKey(_avatarKey));
+    await t.pump();
+    prepared.complete(true);
+    await t.pump(const Duration(milliseconds: 200));
+    expect(find.text('idle'), findsOneWidget);
+    await t.pumpWidget(const SizedBox());
+  });
+
+  testWidgets('反応中のアプリ中断でSEを破棄し、復帰時に再演出しない', (t) async {
+    var disposed = 0;
+    final service = TrainingGameSoundService(
+        configureAudioSession: () async {},
+        createPlayer: (_) => _TapPlayer(() {}, onDispose: () => disposed++));
+    await t.pumpWidget(_host(reactToTap: true, soundFactory: () => service));
+    await t.pump(const Duration(milliseconds: 1));
+    await t.pump(const Duration(milliseconds: 100));
+    await t.tap(find.byKey(_avatarKey));
+    await t.pump();
+    t.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+    await t.pump(const Duration(seconds: 2));
+    expect(disposed, 1);
+    expect(find.text('idle'), findsOneWidget);
+    t.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    await t.pump();
+    await t.pump(const Duration(milliseconds: 30));
+    expect(find.text('walking'), findsOneWidget);
+    await t.pumpWidget(const SizedBox());
+  });
+
   testWidgets('移動距離を親の左右境界内に制限する', (tester) async {
     await tester.pumpWidget(_host());
     await tester.pump(const Duration(milliseconds: 1));
@@ -299,4 +402,14 @@ void main() {
     expect(find.byType(CircularProgressIndicator), findsNothing);
     expect(tester.takeException(), isNull);
   });
+}
+
+class _TapPlayer implements TrainingGameEffectPlayer {
+  _TapPlayer(this.onPlay, {this.onDispose});
+  final VoidCallback onPlay;
+  final VoidCallback? onDispose;
+  @override
+  Future<void> play() async => onPlay();
+  @override
+  Future<void> dispose() async => onDispose?.call();
 }

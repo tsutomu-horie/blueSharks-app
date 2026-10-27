@@ -6,6 +6,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'sametaroh_asset.dart';
+import 'training_home_tap_reaction.dart';
+import '../../app/services/training_game_sound_service.dart';
 
 typedef TrainingHomeWalkPreparation = Future<bool> Function(
   BuildContext context,
@@ -25,6 +27,8 @@ class TrainingHomeRoamingCharacter extends StatefulWidget {
     this.idleDuration = const Duration(seconds: 6),
     this.walkDuration = const Duration(milliseconds: 1400),
     this.enabled = true,
+    this.reactToTap = false,
+    this.soundFactory = createTrainingHomeTapSound,
     this.random,
     super.key,
   });
@@ -41,6 +45,8 @@ class TrainingHomeRoamingCharacter extends StatefulWidget {
   final Duration idleDuration;
   final Duration walkDuration;
   final bool enabled;
+  final bool reactToTap;
+  final TrainingGameSoundService Function() soundFactory;
   final math.Random? random;
 
   @override
@@ -50,8 +56,18 @@ class TrainingHomeRoamingCharacter extends StatefulWidget {
 
 class _TrainingHomeRoamingCharacterState
     extends State<TrainingHomeRoamingCharacter>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin, WidgetsBindingObserver {
   late final AnimationController _controller;
+  late final AnimationController _reaction;
+  Timer? _reactionWait;
+  bool _reacting = false;
+  bool _resumeWalk = false;
+  bool _routeActive = true;
+  bool _appActive = true;
+  int _tapVariant = 0;
+  int _tapCount = 0;
+  TrainingGameSoundService? _sound;
+  bool get _active => _routeActive && _appActive;
   Timer? _idleTimer;
   bool _isWalking = false;
   late final math.Random _random = widget.random ?? math.Random();
@@ -69,7 +85,107 @@ class _TrainingHomeRoamingCharacterState
       vsync: this,
       duration: widget.walkDuration,
     );
+    _reaction = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 750));
+    WidgetsBinding.instance.addObserver(this);
     if (widget.enabled) _scheduleNextWalk();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final active = TickerMode.valuesOf(context).enabled;
+    if (_routeActive != active) {
+      _routeActive = active;
+      _handleAvailability();
+    }
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    _appActive = state == AppLifecycleState.resumed;
+    if (mounted) setState(_handleAvailability);
+  }
+
+  void _discardSound() {
+    final sound = _sound;
+    _sound = null;
+    if (sound != null) unawaited(sound.dispose());
+  }
+
+  void _handleAvailability() {
+    if (!_active) {
+      _resumeWalk = _resumeWalk || _isWalking;
+      _controller.stop();
+      _isWalking = false;
+      _idleTimer?.cancel();
+      _preparationGeneration++;
+      _reactionWait?.cancel();
+      _reaction.stop();
+      _reacting = false;
+      _discardSound();
+    } else {
+      _reactionWait = Timer(Duration.zero, _continueAfterReaction);
+    }
+  }
+
+  Future<void> _reactToTap() async {
+    if (!widget.reactToTap || !_active || _reacting) return;
+    _preparationGeneration++;
+    _idleTimer?.cancel();
+    _reactionWait?.cancel();
+    _resumeWalk = _resumeWalk || _isWalking;
+    _controller.stop();
+    setState(() {
+      _isWalking = false;
+      _reacting = true;
+      _tapVariant = _tapCount++ % 3;
+    });
+    final effect = [
+      TrainingGameSoundEffect.homeTapSoft,
+      TrainingGameSoundEffect.homeTapTouch,
+      TrainingGameSoundEffect.homeTapHappy
+    ][_tapVariant];
+    unawaited(_playTapSound(effect, _tapCount));
+    try {
+      await _reaction.forward(from: 0).orCancel;
+    } on TickerCanceled {
+      return;
+    }
+    if (!mounted || !_active || !_reacting) return;
+    _reactionWait = Timer(const Duration(milliseconds: 300), () {
+      if (!mounted || !_active) return;
+      setState(() => _reacting = false);
+      _continueAfterReaction();
+    });
+  }
+
+  Future<void> _playTapSound(TrainingGameSoundEffect effect, int tap) async {
+    final sound = _sound ??= widget.soundFactory();
+    final ready = await sound
+        .prepare(effect)
+        .timeout(const Duration(milliseconds: 150), onTimeout: () => false);
+    if (!ready ||
+        !mounted ||
+        !_active ||
+        !_reacting ||
+        tap != _tapCount ||
+        !identical(sound, _sound)) {
+      return;
+    }
+    await sound.play(effect);
+  }
+
+  void _continueAfterReaction() {
+    if (!mounted || !_active || _reacting) return;
+    if (_resumeWalk && widget.enabled) {
+      _resumeWalk = false;
+      setState(() => _isWalking = true);
+      unawaited(_finishWalk());
+    } else {
+      _resumeWalk = false;
+      _scheduleNextWalk();
+    }
   }
 
   @override
@@ -81,7 +197,14 @@ class _TrainingHomeRoamingCharacterState
     final preparationChanged =
         oldWidget.preparationKey != widget.preparationKey;
     final enabledChanged = oldWidget.enabled != widget.enabled;
-    if (preparationChanged || (enabledChanged && !widget.enabled)) {
+    if (preparationChanged ||
+        (enabledChanged && !widget.enabled) ||
+        (oldWidget.reactToTap && !widget.reactToTap)) {
+      _reactionWait?.cancel();
+      _reaction.stop();
+      _reacting = false;
+      _resumeWalk = false;
+      _discardSound();
       _preparationGeneration++;
       _idleTimer?.cancel();
       _idleTimer = null;
@@ -101,12 +224,14 @@ class _TrainingHomeRoamingCharacterState
 
   void _scheduleNextWalk() {
     _idleTimer?.cancel();
-    if (!widget.enabled) return;
+    if (!widget.enabled || !_active || _reacting) return;
     _idleTimer = Timer(widget.idleDuration, _startWalk);
   }
 
   Future<void> _startWalk() async {
-    if (!mounted || !widget.enabled || _isWalking) return;
+    if (!mounted || !widget.enabled || !_active || _reacting || _isWalking) {
+      return;
+    }
     final generation = ++_preparationGeneration;
     try {
       final prepared = await widget.prepareWalk?.call(context) ?? true;
@@ -155,8 +280,13 @@ class _TrainingHomeRoamingCharacterState
       ),
     );
     setState(() => _isWalking = true);
+    _controller.value = 0;
+    await _finishWalk();
+  }
+
+  Future<void> _finishWalk() async {
     try {
-      await _controller.forward(from: 0).orCancel;
+      await _controller.forward().orCancel;
     } on TickerCanceled {
       return;
     }
@@ -168,6 +298,10 @@ class _TrainingHomeRoamingCharacterState
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _reactionWait?.cancel();
+    _reaction.dispose();
+    _discardSound();
     _preparationGeneration++;
     _idleTimer?.cancel();
     _controller.dispose();
@@ -193,10 +327,11 @@ class _TrainingHomeRoamingCharacterState
               _fromOffset.clamp(-maxOffset, maxOffset).toDouble();
           final toOffset = _toOffset.clamp(-maxOffset, maxOffset).toDouble();
           return Stack(
-            clipBehavior: Clip.hardEdge,
+            // タップ時の小さな跳躍を表示枠の上端で切らない。
+            clipBehavior: widget.reactToTap ? Clip.none : Clip.hardEdge,
             children: [
               AnimatedBuilder(
-                animation: _controller,
+                animation: Listenable.merge([_controller, _reaction]),
                 builder: (context, _) {
                   final offset =
                       fromOffset + (toOffset - fromOffset) * _controller.value;
@@ -208,8 +343,17 @@ class _TrainingHomeRoamingCharacterState
                     child: _TrainingHomeWalkTempo(
                       speedScale: _isWalking ? _speedScale : 1,
                       child: Builder(
-                        builder: (context) =>
-                            widget.builder(context, _isWalking),
+                        builder: (context) => GestureDetector(
+                          behavior: HitTestBehavior.opaque,
+                          onTap: widget.reactToTap ? _reactToTap : null,
+                          child: TrainingHomeTapReaction(
+                            progress: _reacting ? _reaction.value : 1,
+                            variant: _tapVariant,
+                            reducedMotion:
+                                MediaQuery.disableAnimationsOf(context),
+                            child: widget.builder(context, _isWalking),
+                          ),
+                        ),
                       ),
                     ),
                   );

@@ -8,6 +8,7 @@ on:
       - 'lib/presentation/training_game/training_care_scene.dart'
       - 'lib/presentation/training_game/training_game_care_action.screen.dart'
       - 'lib/presentation/training_game/training_home_roaming_character.dart'
+      - 'lib/presentation/training_game/training_home_tap_reaction.dart'
       - 'assets/images/sametaroh/**'
       - 'assets/images/training_game/main/**'
       - 'test/training_game/**'
