@@ -1,0 +1,29 @@
+name: No84 current decay settings
+on:
+  pull_request:
+    paths:
+      - 'lib/presentation/training_game/controllers/training_game.controller.dart'
+      - 'lib/presentation/training_game/models/current_decay_policy.dart'
+      - 'test/training_game/no84_current_settings_test.dart'
+      - 'test/fixtures/no84/**'
+      - 'tool/run_no84_tests.sh'
+      - '.github/workflows/no84-decay.yml'
+permissions:
+  contents: read
+jobs:
+  regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install validated Flutter
+        run: |
+          git clone --depth 1 --branch 3.47.2 https://github.com/flutter/flutter.git "$RUNNER_TEMP/flutter"
+          test "$(git -C "$RUNNER_TEMP/flutter" rev-parse HEAD)" = d3b14c876900e553bc736ca19295fc09e3853e8e
+          echo "$RUNNER_TEMP/flutter/bin" >> "$GITHUB_PATH"
+      - name: Compile-only compatibility
+        run: |
+          ln -s constant.dart lib/utils/Constant.dart
+          ln -s string+extensions.dart lib/utils/String+extensions.dart
+      - run: flutter pub get --enforce-lockfile
+      - run: sh tool/run_no84_tests.sh
