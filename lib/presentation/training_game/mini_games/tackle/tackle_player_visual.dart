@@ -14,7 +14,7 @@ class TacklePlayerVisual extends StatelessWidget {
   final bool attacking;
   final bool downward;
   final double visualScale;
-  static const candidateVisualScale = 1.15;
+  static const candidateVisualScale = 1.0;
 
   // Frozen transparent extraction, 615 x 1251 native pixels.
   // Foot anchor is the mean center of the two feet in the bottom four rows.

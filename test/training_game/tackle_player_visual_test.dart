@@ -38,6 +38,7 @@ void main() {
     await tester.tap(find.text('スタート'));
     await tester.pump();
     expect(attack, findsNothing);
+    expect(tester.widget<TacklePlayerVisual>(player).visualScale, 1.0);
   }
 
   for (final up in [true, false]) {
