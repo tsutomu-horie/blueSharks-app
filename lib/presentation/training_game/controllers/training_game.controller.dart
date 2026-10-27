@@ -2421,7 +2421,15 @@ class TrainingGameController extends GetxController
     if (status == 'negative_end') {
       ended.value = true;
       endingStep.value = 2;
-      endingMessage.value = '育成は終了しました。卵からやりなおしてください。';
+      clearPosition.value = null;
+      final overState = data['over_state'];
+      final overParameter = overState is Map && overState['schema'] == 1
+          ? overState['ending_parameter']
+          : null;
+      final label = const {'hunger': '食事', 'work': '仕事'}[overParameter];
+      endingMessage.value = label == null
+          ? '育成は終了しました。卵からやりなおしてください。'
+          : '$labelが過剰のまま72時間経過しました。';
     }
   }
 
@@ -4084,7 +4092,7 @@ class TrainingGameController extends GetxController
           ? '${zeroTarget.key}が0のまま${zeroTarget.value}時間経過しました。'
           : '体調20未満での練習が15回になりました。',
     );
-    logs.insert(0, 'ゲームオーバー：体調が0になりました。');
+    logs.insert(0, 'ゲームオーバー：${endingMessage.value}');
   }
 
   /// 終了状態をサーバーへ保存し、定期復元による新規サイクル開始を防ぎます。
@@ -4115,6 +4123,9 @@ class TrainingGameController extends GetxController
   /// 終了状態がサーバーで育成中でなくなったことを確認します。
   Future<void> _confirmEndingSync() async {
     final expectedSessionVersion = _ownedSessionVersion;
+    final expectedPlayerId = _serverPlayerId;
+    final expectedCycleNo = _serverCycleNo;
+    final expectedStartedAt = _serverGameStartedAt;
     try {
       if (canRetryPendingSync) {
         await retryPendingSync();
@@ -4146,6 +4157,20 @@ class TrainingGameController extends GetxController
       );
       if (!_ownsSession(expectedSessionVersion)) return;
       if (current != null) {
+        final confirmedEnd = current['id'] == expectedPlayerId &&
+            current['cycle_no'] == expectedCycleNo &&
+            _sameGameInstance(
+              _gameStartedAtFrom(current['started_at']),
+              expectedStartedAt,
+            ) &&
+            const ['positive_end', 'negative_end'].contains(current['status']);
+        if (confirmedEnd) {
+          _hasUnsyncedLocalState = false;
+          _restoreEndedState(current);
+          endingSyncError.value = '';
+          await _saveLocalGameState();
+          return;
+        }
         throw StateError(_hasUnknownSyncOutcome
             ? '終了時の通信結果が不明です。同じ操作IDで再確認してください。'
             : '終了状態がサーバーへ反映されていません。');
