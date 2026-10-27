@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 
-/// タックル画面だけで、仲間の承認済み走行コマを表示します。
+/// タックル画面だけで、ボールを持った相手の走行コマを表示します。
 class TackleOpponentVisual extends StatefulWidget {
   const TackleOpponentVisual({this.running = false, super.key});
 
   final bool running;
 
   static const assetPathA =
-      'assets/images/training_game/minigames/pass_run_mate_free_a.png';
+      'assets/images/training_game/minigames/tackle_run_b_a.png';
   static const assetPathB =
-      'assets/images/training_game/minigames/pass_run_mate_free_b.png';
+      'assets/images/training_game/minigames/tackle_run_b_b.png';
 
   static String assetPathForFrame(int frame) =>
       frame.isEven ? assetPathA : assetPathB;
@@ -21,17 +21,16 @@ class TackleOpponentVisual extends StatefulWidget {
   static const imageOffsetY = -1 / 3;
   static const imageWidth = imageHeight * 562 / 891;
 
-  // The approved sprite alpha bounds are 96px tall on a 112px canvas. Match
+  // PDF B frames share one scale and a foot baseline of 104 on a 112px canvas.
+  // Frame A is 96px tall; frame B retains its original shorter pose. Match
   // the previous opponent's 867/891 alpha height while retaining its 72px
   // visual footprint and keeping the two frame bounds centered together.
   static const spriteSize = imageHeight * (112 / 96) * (867 / 891);
-  static const spriteOffsetX =
-      imageOffsetX + (56 - ((54 + 56.5) / 2)) * spriteSize / 112;
-  static const spriteOffsetY = imageOffsetY - .5 * spriteSize / 112;
-  // The widest approved run frame is slightly wider than the previous art at
-  // the exit edge. Keep the legacy silhouette boundary without shifting the
-  // shared center or changing the contact reference box.
-  static const spriteScaleX = .94;
+  static const spriteOffsetX = imageOffsetX - spriteSize / 112;
+  static const spriteOffsetY = imageOffsetY;
+  // Keep the PDF proportions. A one-pixel canvas offset preserves the legacy
+  // exit boundary without stretching the exported vector artwork.
+  static const spriteScaleX = 1.0;
 
   @override
   State<TackleOpponentVisual> createState() => _TackleOpponentVisualState();

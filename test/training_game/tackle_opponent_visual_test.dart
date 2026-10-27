@@ -86,9 +86,9 @@ void main() {
       TackleOpponentVisual.spriteSize * 96 / 112,
       closeTo(TackleOpponentVisual.imageHeight * 867 / 891, .000001),
     );
-    expect(TackleOpponentVisual.assetPathA, contains('pass_run_mate_free_a'));
-    expect(TackleOpponentVisual.assetPathB, contains('pass_run_mate_free_b'));
-    expect(TackleOpponentVisual.spriteScaleX, lessThan(1));
+    expect(TackleOpponentVisual.assetPathA, contains('tackle_run_b_a'));
+    expect(TackleOpponentVisual.assetPathB, contains('tackle_run_b_b'));
+    expect(TackleOpponentVisual.spriteScaleX, 1);
   });
 
   for (final fieldWidth in [288.0, 328.0, 343.0, 370.0]) {
@@ -130,8 +130,8 @@ void main() {
                 Offset(box.size.width * alphaRight / 112, box.size.height / 2),
               )
               .dx;
-          // Independent alpha128 bounds of the approved 112px frames: A right
-          // edge 85, B right edge 87. The former art used 550/562.
+          // Independent alpha128 bounds of the ball-carrying 112px frames: A
+          // right edge 86, B right edge 87. The former art used 550/562.
           final legacyRight = opponentCenter.dx + 58 * (550 - 281) / 891;
           expect(right, lessThanOrEqualTo(legacyRight + .000001));
           if (fieldWidth >= 328) {
@@ -140,7 +140,7 @@ void main() {
         }
 
         await tester.pumpWidget(host());
-        await expectExitEdge(TackleOpponentVisual.assetPathA, 85);
+        await expectExitEdge(TackleOpponentVisual.assetPathA, 86);
         await tester.pump(const Duration(milliseconds: 110));
         await expectExitEdge(TackleOpponentVisual.assetPathB, 87);
         await tester.pumpWidget(const SizedBox.shrink());
