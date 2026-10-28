@@ -43,6 +43,26 @@ void main() {
     );
   });
 
+  test('現在のサーバー期限は長いローカル保存期限より優先される', () {
+    final now = DateTime.utc(2026, 9, 4, 12);
+    final gate = TrainingActionGate(now: () => now);
+
+    gate.replaceServerCooldowns(
+      {TrainingActionType.meal: now.add(const Duration(seconds: 18))},
+      preserveUntil: {
+        TrainingActionType.meal: now.add(const Duration(seconds: 60)),
+      },
+    );
+
+    expect(
+      gate.remaining(
+        TrainingActionType.meal,
+        clientCooldownEnabled: false,
+      ),
+      const Duration(seconds: 18),
+    );
+  });
+
   test('送信中の同一アクションを二重に受け付けない', () {
     final gate = TrainingActionGate(now: () => DateTime.utc(2026, 9, 4));
 
