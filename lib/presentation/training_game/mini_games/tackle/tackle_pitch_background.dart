@@ -12,9 +12,26 @@ class TacklePitchPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
+    final offset =
+        longitudinalOffsetMeters * size.height * .86 / 552 * 394 / 100;
+    // 横幅の広い画面でも、中央線と拡大される中央マークが表示端に残らない倍率にします。
+    const edgeClearance = 10.0;
+    const centerMarkHalfStroke = 1.75;
+    final centerMarkHalfLengthPerZoom = size.height * .86 / 552;
+    final offsetClearancePerZoom = offset.abs() - centerMarkHalfLengthPerZoom;
+    final paintZoom =
+        zoom > 1 && quarterTurns.isOdd && offsetClearancePerZoom > 0
+            ? math
+                .max(
+                  zoom,
+                  (size.width / 2 + edgeClearance + centerMarkHalfStroke) /
+                      offsetClearancePerZoom,
+                )
+                .toDouble()
+            : zoom;
     canvas.save();
     canvas.clipRect(Offset.zero & size);
-    if (zoom > 1) {
+    if (paintZoom > 1) {
       canvas.drawRect(
           Offset.zero & size,
           Paint()
@@ -35,10 +52,8 @@ class TacklePitchPainter extends CustomPainter {
                 ]).createShader(Offset.zero & size));
     }
     canvas.translate(size.width / 2, size.height / 2);
-    canvas.scale(zoom);
+    canvas.scale(paintZoom);
     canvas.rotate(quarterTurns * math.pi / 2);
-    final offset =
-        longitudinalOffsetMeters * size.height * .86 / 552 * 394 / 100;
     canvas.translate(-size.width / 2, -size.height / 2 - offset);
     // 全景はホームの色帯、近距離は左右対称の明暗。ライン配置は参考図を維持。
     const greens = [
@@ -48,7 +63,7 @@ class TacklePitchPainter extends CustomPainter {
       Color(0xff70b543),
       Color(0xff5bad42)
     ];
-    if (zoom <= 1) {
+    if (paintZoom <= 1) {
       for (var i = 0; i < 5; i++) {
         canvas.drawRect(
             Rect.fromLTWH(
@@ -65,11 +80,11 @@ class TacklePitchPainter extends CustomPainter {
         Offset(left + (366 - y) / 342 * width, top + (x - 24) / 552 * height);
     final solid = Paint()
       ..color = const Color(0xfff6f8de)
-      ..strokeWidth = (zoom > 1 ? 3.5 : 1.8) / zoom
+      ..strokeWidth = (paintZoom > 1 ? 3.5 : 1.8) / paintZoom
       ..strokeCap = StrokeCap.butt;
     final dashed = Paint()
       ..color = const Color(0xfff6f8de)
-      ..strokeWidth = (zoom > 1 ? 3 : 1.2) / zoom
+      ..strokeWidth = (paintZoom > 1 ? 3 : 1.2) / paintZoom
       ..strokeCap = StrokeCap.butt;
     void line(double x1, double y1, double x2, double y2, Paint paint) =>
         canvas.drawLine(portrait(x1, y1), portrait(x2, y2), paint);
@@ -82,10 +97,10 @@ class TacklePitchPainter extends CustomPainter {
       line(x, 24, x, 366, solid);
     }
     // 中央から左右10mの破線。
-    final dashY = zoom > 1 ? 342 / 70 * 5 : 6.2;
-    final periodY = zoom > 1 ? dashY * 2 : 12.2;
-    final dashX = zoom > 1 ? 394 / 100 * 5 : 6.2;
-    final periodX = zoom > 1 ? dashX * 2 : 12.2;
+    final dashY = paintZoom > 1 ? 342 / 70 * 5 : 6.2;
+    final periodY = paintZoom > 1 ? dashY * 2 : 12.2;
+    final dashX = paintZoom > 1 ? 394 / 100 * 5 : 6.2;
+    final periodX = paintZoom > 1 ? dashX * 2 : 12.2;
     for (final x in [260.0, 340.0]) {
       for (var y = 30.0; y < 360; y += periodY) {
         line(x, y, x, (y + dashY).clamp(30, 360), dashed);
@@ -108,7 +123,7 @@ class TacklePitchPainter extends CustomPainter {
       line(102, y, 123, y, solid);
       line(476, y, 496, y, solid);
     }
-    if (zoom > 1) {
+    if (paintZoom > 1) {
       line(299, 195, 301, 195, solid);
     } else {
       line(292, 195, 307, 195, solid);
@@ -116,7 +131,7 @@ class TacklePitchPainter extends CustomPainter {
     // インゴール内の俯瞰ゴール記号。参考の配置関係を同じ写像で回転。
     final goal = Paint()
       ..color = const Color(0xfff6f8de)
-      ..strokeWidth = 3 / zoom
+      ..strokeWidth = 3 / paintZoom
       ..strokeCap = StrokeCap.round;
     for (final x in [70.0, 530.0]) {
       line(x - 25, 172, x + 25, 172, goal);

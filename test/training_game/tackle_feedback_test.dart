@@ -78,14 +78,14 @@ void main() {
     picture.dispose();
   });
 
-  testWidgets('プレー範囲から縦のコートラインを外し、横破線はUIとして描く', (tester) async {
-    const size = Size(343, 574);
+  testWidgets('タブレット比率でも縦のコートラインを外し、横破線はUIとして描く', (tester) async {
+    const size = Size(900, 1024);
     final recorder = ui.PictureRecorder();
     final canvas = Canvas(recorder);
     TacklePitchPainter(zoom: 14, quarterTurns: 1, longitudinalOffsetMeters: 5)
         .paint(canvas, size);
     final background = recorder.endRecording();
-    final image = await tester.runAsync(() => background.toImage(343, 574));
+    final image = await tester.runAsync(() => background.toImage(900, 1024));
     final bytes = await tester
         .runAsync(() => image!.toByteData(format: ui.ImageByteFormat.rawRgba));
     var white = 0;
@@ -93,9 +93,9 @@ void main() {
       if (bytes.getUint8(i) > 200 && bytes.getUint8(i + 2) > 150) white++;
     }
     expect(white, 0, reason: '中央線と10m線の間を表示し、コートの縦線は映さない');
-    final leftTone = bytes.getUint8((80 * 343 + 10) * 4);
-    final rightTone = bytes.getUint8((80 * 343 + 332) * 4);
-    final middleTone = bytes.getUint8((80 * 343 + 171) * 4);
+    final leftTone = bytes.getUint8((80 * 900 + 10) * 4);
+    final rightTone = bytes.getUint8((80 * 900 + 889) * 4);
+    final middleTone = bytes.getUint8((80 * 900 + 450) * 4);
     expect((leftTone - rightTone).abs(), lessThanOrEqualTo(1),
         reason: '左右の明暗を均等にする');
     expect(middleTone, greaterThan(leftTone), reason: '中央を少し明るくする');
@@ -107,13 +107,31 @@ void main() {
         Offset.zero & size, Paint()..color = const Color(0xff83bd42));
     const TackleInputDividerPainter().paint(uiCanvas, size);
     final picture = uiRecorder.endRecording();
-    final guide = await tester.runAsync(() => picture.toImage(343, 574));
+    final guide = await tester.runAsync(() => picture.toImage(900, 1024));
     final data = await tester
         .runAsync(() => guide!.toByteData(format: ui.ImageByteFormat.rawRgba));
-    expect(data!.getUint8((287 * 343 + 20) * 4), greaterThan(200),
+    expect(data!.getUint8((512 * 900 + 20) * 4), greaterThan(200),
         reason: '横の破線が中央に描画される');
-    expect(data.getUint8((80 * 343 + 171) * 4), 131, reason: '縦方向の区切りは足さない');
+    expect(data.getUint8((80 * 900 + 450) * 4), 131, reason: '縦方向の区切りは足さない');
     guide!.dispose();
+    picture.dispose();
+  });
+
+  testWidgets('幅広画面でも拡大された中央マークをフィールド外へ切り抜く', (tester) async {
+    const size = Size(1600, 1024);
+    final recorder = ui.PictureRecorder();
+    TacklePitchPainter(zoom: 14, quarterTurns: 1, longitudinalOffsetMeters: 5)
+        .paint(Canvas(recorder), size);
+    final picture = recorder.endRecording();
+    final image = await tester.runAsync(() => picture.toImage(1600, 1024));
+    final bytes = await tester
+        .runAsync(() => image!.toByteData(format: ui.ImageByteFormat.rawRgba));
+    var white = 0;
+    for (var i = 0; i < bytes!.lengthInBytes; i += 4) {
+      if (bytes.getUint8(i) > 200 && bytes.getUint8(i + 2) > 150) white++;
+    }
+    expect(white, 0, reason: '中央線や中央マークを表示端に残さない');
+    image!.dispose();
     picture.dispose();
   });
 
