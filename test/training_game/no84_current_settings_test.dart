@@ -576,6 +576,9 @@ class P extends TrainingGameProvider {
       {required String stageCode,
       required Map<String, double> parameters,
       required int lockVersion,
+      int? elapsedSeconds,
+      int? daysInStage,
+      bool? dayCared,
       int? expectedSessionVersion}) async {
     stage = stageCode;
     values = Map.from(parameters);

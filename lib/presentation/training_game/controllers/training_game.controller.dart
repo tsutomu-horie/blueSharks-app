@@ -272,6 +272,8 @@ class TrainingGameController extends GetxController
   bool _isWorkPreparationPending = false;
   int? _pendingStageIndex;
   bool _pendingStageSyncQueued = false;
+  bool _serverManagedStageProgress = false;
+  String? _pendingProgressEventId;
   int _lowConditionTraining = 0;
   bool _dayCared = false;
   final _zeroHours = <String, int>{'食事': 0, '清潔': 0, '体調': 0, '仕事': 0};
@@ -333,7 +335,8 @@ class TrainingGameController extends GetxController
     Future<bool> Function(String)? writePendingActions,
     Future<bool> Function()? clearPendingActions,
     Future<bool> Function(String)? archivePendingActions,
-  })  : _serverElapsedSinceSyncSeconds = serverElapsedSinceSyncSeconds ?? (() => ServerTimeClock.instance.elapsedSinceSync.inSeconds),
+  })  : _serverElapsedSinceSyncSeconds = serverElapsedSinceSyncSeconds ??
+            (() => ServerTimeClock.instance.elapsedSinceSync.inSeconds),
         _serverProvider = serverProvider ?? TrainingGameProvider(),
         _writePendingActions =
             writePendingActions ?? MySharedPref.setTrainingGamePendingActions,
@@ -1694,7 +1697,8 @@ class TrainingGameController extends GetxController
         _advanceActiveMainProgress();
         _updateElapsedTimeFromStart();
         _mainClockTick.value++;
-        if (_hasDecayContract && ++_decayRefreshTicks >= 60) unawaited(refreshDecaySettings());
+        if (_hasDecayContract && ++_decayRefreshTicks >= 60)
+          unawaited(refreshDecaySettings());
       }
     });
   }
@@ -1706,6 +1710,8 @@ class TrainingGameController extends GetxController
   }) async {
     try {
       await _pendingActionPersistence;
+      if (!_ownsSession(_ownedSessionVersion)) return;
+      state = await _importLegacyProgressIfNeeded(state);
       if (!_ownsSession(_ownedSessionVersion)) return;
       final hasPendingActions = _hasPersistedPendingActionsFor(state);
       if (!_initializeServerState(
@@ -1863,6 +1869,8 @@ class TrainingGameController extends GetxController
     _hasForeignPendingAction = false;
     _pendingStageIndex = null;
     _pendingStageSyncQueued = false;
+    _serverManagedStageProgress = false;
+    _pendingProgressEventId = null;
     ended.value = false;
     endingStep.value = 0;
     endingMessage.value = '';
@@ -1921,11 +1929,40 @@ class TrainingGameController extends GetxController
   }
 
   /// 段階上昇時の進化演出を完了し、育成画面へ戻します。
-  void advanceEvolution() {
+  Future<void> advanceEvolution() async {
     if (evolutionStage.value == null) return;
     final completedFirstTeamReveal = stageIndex.value == stages.length - 1 &&
         evolutionStage.value == stages.length - 1;
-    evolutionStage.value = null;
+    final progressEventId = _pendingProgressEventId;
+    if (progressEventId != null) {
+      try {
+        final data = await _serverProvider.acknowledgeProgressEvent(
+          eventId: progressEventId,
+          cycleNo: _serverCycleNo ?? 0,
+          lockVersion: _serverLockVersion,
+          expectedSessionVersion: _ownedSessionVersion,
+        );
+        if (!_ownsSession(_ownedSessionVersion)) return;
+        _pendingProgressEventId = null;
+        evolutionStage.value = null;
+        _serverLockVersion =
+            (data['lock_version'] as num?)?.toInt() ?? _serverLockVersion;
+        if (!_applyServerState(data, restoreLocalState: false)) {
+          await _restoreServerState();
+          return;
+        }
+        // A long offline interval may have reached more than one stage. Show
+        // each server event in order, acknowledging one before advancing again.
+        if (evolutionStage.value != null) return;
+      } catch (_) {
+        if (_ownsSession(_ownedSessionVersion)) {
+          syncStatusMessage.value = '進化結果の保存に失敗しました。通信状態を確認して再試行してください。';
+        }
+        return;
+      }
+    } else {
+      evolutionStage.value = null;
+    }
     // 進化演出中にOS割り込みが発生しても、次へ進んだ時点で
     // チュートリアルのリアルタイム進行を必ず再開します。
     _isAppInBackground = false;
@@ -2028,16 +2065,26 @@ class TrainingGameController extends GetxController
 
   /// Refresh current admin rates and canonical values together, at most once/minute.
   Future<void> refreshDecaySettings() async {
-    if (!_hasDecayContract || _decayRefreshRunning || _isAppInBackground ||
-        !isServerStateReady.value || ended.value || evolutionStage.value != null ||
-        _pendingStageIndex != null || _syncRunning || pendingSyncActionCount > 0 ||
-        _debugTimeSavePending || debugPositionBusy.value ||
+    if (!_hasDecayContract ||
+        _decayRefreshRunning ||
+        _isAppInBackground ||
+        !isServerStateReady.value ||
+        ended.value ||
+        evolutionStage.value != null ||
+        _pendingStageIndex != null ||
+        _syncRunning ||
+        pendingSyncActionCount > 0 ||
+        _debugTimeSavePending ||
+        debugPositionBusy.value ||
         syncStatus.value != TrainingSyncStatus.idle) return;
     _decayRefreshRunning = true;
     _decayRefreshTicks = 0;
     _waitingForServerRestore = true;
-    try { await _restoreServerState(); }
-    finally { _decayRefreshRunning = false; }
+    try {
+      await _restoreServerState();
+    } finally {
+      _decayRefreshRunning = false;
+    }
   }
 
   /// サーバーに保存された育成状態を復元します。
@@ -2059,11 +2106,13 @@ class TrainingGameController extends GetxController
       // Controller破棄時に予約されたjournal書き込みも反映してから復元します。
       await _pendingActionPersistence;
       if (!_ownsSession(_ownedSessionVersion)) return;
-      final data = await _serverProvider.fetchCurrent(
+      var data = await _serverProvider.fetchCurrent(
         expectedSessionVersion: _ownedSessionVersion,
       );
       if (!_ownsSession(_ownedSessionVersion)) return;
       if (data != null) {
+        data = await _importLegacyProgressIfNeeded(data);
+        if (!_ownsSession(_ownedSessionVersion)) return;
         final hasPendingActions = _hasPersistedPendingActionsFor(data);
         if (!_initializeServerState(
           data,
@@ -2086,6 +2135,56 @@ class TrainingGameController extends GetxController
       }
     });
     await _restoreChain;
+  }
+
+  Future<Map<String, dynamic>> _importLegacyProgressIfNeeded(
+    Map<String, dynamic> data,
+  ) async {
+    final progress = data['stage_progress'];
+    if (progress is! Map ||
+        progress['legacy_progress_import_pending'] != true) {
+      return data;
+    }
+
+    var daysInStage = 0;
+    var dayCared = false;
+    final encodedState = MySharedPref.getTrainingGameLocalState();
+    if (encodedState != null) {
+      try {
+        final decodedState = jsonDecode(encodedState);
+        if (decodedState is Map) {
+          final localState = Map<String, dynamic>.from(decodedState);
+          final samePlayer = (localState['player_id'] as num?)?.toInt() ==
+              (data['id'] as num?)?.toInt();
+          final sameCycle = (localState['cycle_no'] as num?)?.toInt() ==
+              (data['cycle_no'] as num?)?.toInt();
+          final sameStage = localState['stage_code'] == data['stage_code'];
+          if (samePlayer && sameCycle && sameStage) {
+            daysInStage = ((localState['days_in_stage'] as num?)?.toInt() ?? 0)
+                .clamp(0, 7)
+                .toInt();
+            dayCared = localState['day_cared'] == true;
+          }
+        }
+      } catch (_) {
+        // An unreadable/obsolete local snapshot is migrated as zero progress.
+      }
+    }
+
+    final imported = await _serverProvider.importLegacyProgress(
+      cycleNo: (data['cycle_no'] as num?)?.toInt() ?? 0,
+      lockVersion: (data['lock_version'] as num?)?.toInt() ?? 0,
+      stageCode: data['stage_code'] as String? ?? '',
+      daysInStage: daysInStage,
+      dayCared: dayCared,
+      expectedSessionVersion: _ownedSessionVersion,
+    );
+    if (imported['stage_progress'] is! Map ||
+        (imported['stage_progress'] as Map)['legacy_progress_import_pending'] ==
+            true) {
+      throw StateError('従来の育成進行状況をサーバーへ移行できませんでした。');
+    }
+    return imported;
   }
 
   /// 通信エラー画面からサーバー状態の取得を再試行します。
@@ -2194,6 +2293,7 @@ class TrainingGameController extends GetxController
         !ended.value &&
         !isEndingSyncPending.value;
     final stage = data['stage_code'] as String?;
+    final progressEvent = data['pending_progress_event'];
     final serverStageIndex = _stageIndexFromCode(stage);
     // 同一育成サイクルの段階は後退しない。定期取得や復帰処理で古いレスポンスが
     // 到着しても、育成期以降の表示をチュートリアルへ戻さないようにします。
@@ -2205,6 +2305,10 @@ class TrainingGameController extends GetxController
         serverStageIndex < _pendingStageIndex!) {
       return false;
     }
+    _pendingProgressEventId =
+        progressEvent is Map && progressEvent['id'] is String
+            ? progressEvent['id'] as String
+            : null;
     _hasDecayContract = data.containsKey('decay_policy');
     _currentDecayPolicy = CurrentDecayPolicy.parse(data['decay_policy']);
     _restoreServerClock(data, restoreDebugElapsed: restoreDebugElapsed);
@@ -2214,7 +2318,14 @@ class TrainingGameController extends GetxController
     if (serverStageIndex != null) {
       final previousStage = stageIndex.value;
       stageIndex.value = serverStageIndex;
-      if (_pendingStageIndex == serverStageIndex) {
+      final hasServerProgressEvent = progressEvent is Map &&
+          progressEvent['to_stage_code'] == stage &&
+          _pendingProgressEventId != null;
+      if (hasServerProgressEvent) {
+        _pendingStageIndex = null;
+        _pendingStageSyncQueued = false;
+        if (evolutionStage.value == null) _showEvolutionForCurrentStage();
+      } else if (_pendingStageIndex == serverStageIndex) {
         _pendingStageIndex = null;
         _pendingStageSyncQueued = false;
         if (serverStageIndex > previousStage) _showEvolutionForCurrentStage();
@@ -2251,8 +2362,11 @@ class TrainingGameController extends GetxController
         // サーバー値も画面・次回同期で仕様範囲を超えないよう正規化します。
         if (displayName != null) {
           final remainders = data['decay_remainders'];
-          final remainder = _currentDecayPolicy != null && remainders is Map ? (remainders[entry.key] as num?)?.toDouble() ?? 0 : 0.0;
-          meters[displayName] = (value - remainder.clamp(0, .999999)).clamp(0, 150).toDouble();
+          final remainder = _currentDecayPolicy != null && remainders is Map
+              ? (remainders[entry.key] as num?)?.toDouble() ?? 0
+              : 0.0;
+          meters[displayName] =
+              (value - remainder.clamp(0, .999999)).clamp(0, 150).toDouble();
         }
         if (tendencyName != null) {
           trends[tendencyName] = value.clamp(0, 100).toDouble();
@@ -2270,6 +2384,14 @@ class TrainingGameController extends GetxController
       // 後続の終了同期が最新lock_versionでpositive/negative_endを保存します。
       _hasUnsyncedLocalState =
           _debugTimeSavePending && ended.value && isEndingSyncPending.value;
+    }
+    final serverProgress = data['stage_progress'];
+    if (_serverManagedStageProgress && serverProgress is Map) {
+      final serverDaysInStage = serverProgress['days_in_stage'];
+      if (serverDaysInStage is num)
+        daysInStage.value = serverDaysInStage.toInt();
+      final serverDayCared = serverProgress['day_cared'];
+      if (serverDayCared is bool) _dayCared = serverDayCared;
     }
     _restoreLocalCountersOnNextServerState = false;
     final serverActionsToday = (data['actions_today'] as num?)?.toInt();
@@ -2421,10 +2543,17 @@ class TrainingGameController extends GetxController
       _serverRequiredElapsedHours =
           requiredElapsed is num ? requiredElapsed.toInt() : null;
       _serverNextStageCode = progress['next_stage_code'] as String?;
+      _serverManagedStageProgress = progress['server_managed'] == true;
+      final serverDaysInStage = progress['days_in_stage'];
+      if (serverDaysInStage is num)
+        daysInStage.value = serverDaysInStage.toInt();
+      final dayCared = progress['day_cared'];
+      if (dayCared is bool) _dayCared = dayCared;
     } else {
       _serverRequiredWorkValue = null;
       _serverRequiredElapsedHours = null;
       _serverNextStageCode = null;
+      _serverManagedStageProgress = false;
     }
     final playFloor = data['play_floor'];
     // Older API payloads may omit this field; use the existing play-time
@@ -3739,6 +3868,9 @@ class TrainingGameController extends GetxController
           stageCode: stageCode,
           parameters: parameters,
           lockVersion: lockVersion,
+          elapsedSeconds: _currentServerElapsedSeconds,
+          daysInStage: daysInStage.value,
+          dayCared: _dayCared,
           expectedSessionVersion: expectedSessionVersion,
         );
       } catch (_) {
@@ -3747,9 +3879,16 @@ class TrainingGameController extends GetxController
           expectedSessionVersion: expectedSessionVersion,
         );
         final saved = current?['parameters'];
+        final recoveredEvent = current?['pending_progress_event'];
+        final currentStageMatches = current?['stage_code'] == stageCode ||
+            (recoveredEvent is Map &&
+                recoveredEvent['from_stage_code'] == stageCode &&
+                recoveredEvent['to_stage_code'] == current?['stage_code']);
+        final recoveredLockVersion = lockVersion +
+            (recoveredEvent is Map && currentStageMatches ? 2 : 1);
         if (current == null ||
-            current['lock_version'] != lockVersion + 1 ||
-            current['stage_code'] != stageCode ||
+            current['lock_version'] != recoveredLockVersion ||
+            !currentStageMatches ||
             current['id'] != playerId ||
             current['cycle_no'] != cycleNo ||
             !_sameGameInstance(
@@ -3827,9 +3966,15 @@ class TrainingGameController extends GetxController
   void _applyCurrentDecay(int seconds) {
     final policy = _currentDecayPolicy;
     if (policy == null) return;
-    final stage = ['egg','child','training','growth','first_team'][stageIndex.value];
+    final stage =
+        ['egg', 'child', 'training', 'growth', 'first_team'][stageIndex.value];
     if (!policy.rates.containsKey(stage)) return;
-    const names = {'hunger':'食事','cleanliness':'清潔','condition':'体調','work':'仕事'};
+    const names = {
+      'hunger': '食事',
+      'cleanliness': '清潔',
+      'condition': '体調',
+      'work': '仕事'
+    };
     names.forEach((key, name) {
       meters[name] = policy.after(
         stage,
@@ -4005,10 +4150,10 @@ class TrainingGameController extends GetxController
       if (_hasDecayContract) {
         _applyCurrentDecay(3600);
       } else {
-    _changeMeter('食事', meters['食事']! > 100 ? -8.4 : -4.2);
-    _changeMeter('清潔', meters['清潔']! > 100 ? -2.8 : -1.4);
-    _changeMeter('体調', meters['体調']! > 100 ? -4.2 : -2.1);
-    _changeMeter('仕事', meters['仕事']! > 100 ? -8.4 : -4.2);
+        _changeMeter('食事', meters['食事']! > 100 ? -8.4 : -4.2);
+        _changeMeter('清潔', meters['清潔']! > 100 ? -2.8 : -1.4);
+        _changeMeter('体調', meters['体調']! > 100 ? -4.2 : -2.1);
+        _changeMeter('仕事', meters['仕事']! > 100 ? -8.4 : -4.2);
       }
     }
     _zeroHours.updateAll((name, hours) => meters[name]! <= 0 ? hours + 1 : 0);
@@ -4051,13 +4196,20 @@ class TrainingGameController extends GetxController
       }
       _processedActiveMainHours++;
       _mainEvaluationElapsedSeconds = boundary;
-      try { _tickActiveMainHour(); } finally { _mainEvaluationElapsedSeconds = null; }
-      if (ended.value || evolutionStage.value != null || _pendingStageIndex != null) {
+      try {
+        _tickActiveMainHour();
+      } finally {
+        _mainEvaluationElapsedSeconds = null;
+      }
+      if (ended.value ||
+          evolutionStage.value != null ||
+          _pendingStageIndex != null) {
         _policyLastElapsedSeconds = last;
         return;
       }
     }
-    if (_currentDecayPolicy != null && now > last && decayBudget > 0) _applyCurrentDecay(min(now - last, decayBudget));
+    if (_currentDecayPolicy != null && now > last && decayBudget > 0)
+      _applyCurrentDecay(min(now - last, decayBudget));
     _policyLastElapsedSeconds = now;
   }
 
@@ -4083,9 +4235,10 @@ class TrainingGameController extends GetxController
   }
 
   int get _currentServerElapsedSeconds =>
-      _mainEvaluationElapsedSeconds ?? (_serverElapsedSeconds +
-      _elapsedTimeOffsetSeconds +
-      _serverElapsedSinceSyncSeconds());
+      _mainEvaluationElapsedSeconds ??
+      (_serverElapsedSeconds +
+          _elapsedTimeOffsetSeconds +
+          _serverElapsedSinceSyncSeconds());
 
   /// サーバー応答の経過時間とデバッグ加算だけを、画面時計へ反映します。
   void _updateElapsedTimeFromStart() {
@@ -4122,6 +4275,10 @@ class TrainingGameController extends GetxController
       );
       return;
     }
+
+    // Current-stage progression is settled by the server on fetch/action; the
+    // client only renders its pending evolution event.
+    if (_serverManagedStageProgress) return;
 
     final requiredDays = currentStage.days;
     if (_hasServerStageCondition) {

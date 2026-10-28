@@ -49,6 +49,54 @@ void main() {
     expect(controller.evolutionStage.value, 4);
   });
 
+  test('再起動時のサーバー進化イベントを表示し、確認時にACKする', () async {
+    final provider = _PendingProgressEventProvider();
+    Get.routing.args = provider.state();
+    final controller = TrainingGameController(
+      serverProvider: provider,
+      writePendingActions: (_) async => true,
+      clearPendingActions: () async => true,
+      archivePendingActions: (_) async => true,
+    );
+    addTearDown(() {
+      controller.onClose();
+      Get.routing.args = null;
+    });
+
+    controller.onInit();
+    await Future<void>.delayed(Duration.zero);
+
+    expect(controller.stageIndex.value, 3);
+    expect(controller.evolutionStage.value, 3);
+    expect(provider.acknowledgedEventIds, isEmpty);
+
+    await controller.advanceEvolution();
+
+    expect(provider.acknowledgedEventIds, ['offline-growth-event']);
+    expect(controller.evolutionStage.value, isNull);
+  });
+
+  test('旧版の端末進行日数を初回起動時にサーバーへ移行する', () async {
+    final provider = _LegacyProgressImportProvider();
+    Get.routing.args = provider.state();
+    final controller = TrainingGameController(
+      serverProvider: provider,
+      writePendingActions: (_) async => true,
+      clearPendingActions: () async => true,
+      archivePendingActions: (_) async => true,
+    );
+    addTearDown(() {
+      controller.onClose();
+      Get.routing.args = null;
+    });
+
+    controller.onInit();
+    await Future<void>.delayed(Duration.zero);
+
+    expect(provider.importedDaysInStage, 0);
+    expect(controller.isServerStateReady.value, isTrue);
+  });
+
   test('筋トレは各50未満ならControllerが案内して同期しない', () async {
     final provider = _FirstTeamTransitionProvider(meterValue: 49);
     Get.routing.args = provider.state('training');
@@ -221,5 +269,97 @@ class _FirstTeamTransitionProvider extends TrainingGameProvider {
     syncedStageCodes.add(stageCode);
     syncedActionCodes.add(actionCode);
     return state(stageCode);
+  }
+}
+
+class _PendingProgressEventProvider extends TrainingGameProvider {
+  final acknowledgedEventIds = <String>[];
+
+  Map<String, dynamic> state({bool pending = true, int lockVersion = 7}) => {
+        'id': 7,
+        'cycle_no': 3,
+        'lock_version': lockVersion,
+        'stage_code': 'growth',
+        'status': 'playing',
+        'started_at': '2026-10-20T00:00:00Z',
+        'elapsed_seconds': 24 * 3600,
+        'actions_today': 0,
+        'work_available': false,
+        'branch_code': 'FW',
+        'position_code': null,
+        'parameters': {
+          'hunger': 80.0,
+          'cleanliness': 80.0,
+          'condition': 80.0,
+          'work': 30.0,
+          'tendency_fw': 60.0,
+          'tendency_command': 20.0,
+          'tendency_backs': 10.0,
+          'tendency_bulk': 0.0,
+          'tendency_tech': 0.0,
+        },
+        'stage_progress': {
+          'server_managed': true,
+          'days_in_stage': 0,
+          'day_cared': false,
+          'next_stage_code': 'first_team',
+        },
+        if (pending)
+          'pending_progress_event': {
+            'id': 'offline-growth-event',
+            'type': 'evolution',
+            'from_stage_code': 'training',
+            'to_stage_code': 'growth',
+            'reason': 'cared_day',
+          },
+        'cooldowns': <String, dynamic>{},
+      };
+
+  @override
+  Future<Map<String, dynamic>?> fetchCurrent(
+          {int? expectedSessionVersion}) async =>
+      state();
+
+  @override
+  Future<Map<String, dynamic>> acknowledgeProgressEvent({
+    required String eventId,
+    required int cycleNo,
+    required int lockVersion,
+    int? expectedSessionVersion,
+  }) async {
+    acknowledgedEventIds.add(eventId);
+    return state(pending: false, lockVersion: lockVersion + 1);
+  }
+}
+
+class _LegacyProgressImportProvider extends _PendingProgressEventProvider {
+  int importedDaysInStage = -1;
+
+  @override
+  Map<String, dynamic> state({bool pending = true, int lockVersion = 7}) {
+    final data = super.state(pending: false, lockVersion: lockVersion);
+    (data['stage_progress'] as Map)['legacy_progress_import_pending'] = true;
+    return data;
+  }
+
+  @override
+  Future<Map<String, dynamic>?> fetchCurrent({
+    int? expectedSessionVersion,
+  }) async =>
+      state();
+
+  @override
+  Future<Map<String, dynamic>> importLegacyProgress({
+    required int cycleNo,
+    required int lockVersion,
+    required String stageCode,
+    required int daysInStage,
+    required bool dayCared,
+    int? expectedSessionVersion,
+  }) async {
+    importedDaysInStage = daysInStage;
+    final data = state(lockVersion: lockVersion + 1);
+    (data['stage_progress'] as Map)['legacy_progress_import_pending'] = false;
+    return data;
   }
 }
