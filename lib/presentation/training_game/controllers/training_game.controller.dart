@@ -104,9 +104,9 @@ class TrainingGameController extends GetxController
     return write;
   }
 
-  /// 回数上限を設けず、連打だけを抑制するための暫定クールタイムです。
-  /// 仕様では秒数が調整項目のため、正式値確定時にここだけ変更します。
+  /// 旧APIまたは未設定のアクションに使う従来の既定時間です。
   static const careCooldown = Duration(seconds: 60);
+  final Map<TrainingActionType, int> _careCooldownSeconds = {};
 
   /// 画面遷移時に表示するロード時間の下限・上限です。
   static const transitionLoadingMinMilliseconds = 1500;
@@ -2345,6 +2345,9 @@ class TrainingGameController extends GetxController
       if (serverDayCared is bool) _dayCared = serverDayCared;
     }
     _restoreLocalCountersOnNextServerState = false;
+    final changedCooldownTypes = _restoreCareCooldownSeconds(
+      data['cooldown_seconds'],
+    );
     final serverActionsToday = (data['actions_today'] as num?)?.toInt();
     if (serverActionsToday != null) {
       actionsToday.value = serverActionsToday;
@@ -2353,6 +2356,7 @@ class TrainingGameController extends GetxController
     _restoreServerCooldowns(
       data['cooldowns'],
       preserveLocalCooldowns: restoreLocalState,
+      discardPreservedTypes: changedCooldownTypes,
     );
     _restoreEndedState(data);
     // 一軍で未確定だった進化先が応答で決まった場合も、通常の進化演出へ進めます。
@@ -2464,6 +2468,7 @@ class TrainingGameController extends GetxController
         _lowConditionTraining,
       );
       _dayCared = localState['day_cared'] == true;
+      _restoreCareCooldownSeconds(localState['cooldown_seconds']);
       _restoreCooldowns(localState['cooldowns']);
       _restoreCounters(localState['zero_hours'], _zeroHours);
       _restoreCounters(
@@ -2590,8 +2595,12 @@ class TrainingGameController extends GetxController
   void _restoreServerCooldowns(
     Object? rawCooldowns, {
     required bool preserveLocalCooldowns,
+    Set<TrainingActionType> discardPreservedTypes = const {},
   }) {
     final localCooldowns = _actionGate.snapshot(cooldownEnabled);
+    for (final type in discardPreservedTypes) {
+      localCooldowns.remove(type);
+    }
     final serverCooldowns = <TrainingActionType, DateTime>{};
     if (rawCooldowns is! Map) {
       if (!preserveLocalCooldowns) _actionGate.replaceServerCooldowns({});
@@ -2612,6 +2621,47 @@ class TrainingGameController extends GetxController
     );
     cooldownTick.value++;
   }
+
+  /// APIまたはローカル状態からアクション別待機秒数を復元します。
+  Set<TrainingActionType> _restoreCareCooldownSeconds(Object? rawSettings) {
+    const careTypes = {
+      TrainingActionType.meal,
+      TrainingActionType.clean,
+      TrainingActionType.rest,
+      TrainingActionType.squat,
+    };
+    final next = <TrainingActionType, int>{
+      for (final type in careTypes) type: careCooldown.inSeconds,
+    };
+    if (rawSettings is Map) {
+      for (final entry in rawSettings.entries) {
+        final type = _actionTypeFromCode(entry.key.toString());
+        final value = entry.value;
+        if (type == null || !careTypes.contains(type) || value is! num) {
+          continue;
+        }
+        final seconds = value.toInt();
+        if (seconds > 0 && value == seconds) next[type] = seconds;
+      }
+    }
+    final changed = <TrainingActionType>{};
+    for (final type in careTypes) {
+      if (_careCooldownSecondsFor(type) != next[type]) {
+        changed.add(type);
+        _actionGate.clearClientCooldown(type);
+      }
+    }
+    _careCooldownSeconds.clear();
+    for (final entry in next.entries) {
+      if (entry.value != careCooldown.inSeconds) {
+        _careCooldownSeconds[entry.key] = entry.value;
+      }
+    }
+    return changed;
+  }
+
+  int _careCooldownSecondsFor(TrainingActionType type) =>
+      _careCooldownSeconds[type] ?? careCooldown.inSeconds;
 
   /// ローカルスナップショットの整数値を安全に読み取ります。
   int _localInt(Map<String, dynamic> state, String key, int fallback) {
@@ -3085,22 +3135,15 @@ class TrainingGameController extends GetxController
       if (!_ownsSession(expectedSessionVersion)) return;
       // 先行操作がある場合は状態全体をまだ上書きしませんが、サーバーが確定した
       // クールタイムだけは直ちに反映し、同じ行動の再送を防ぎます。
+      final changedCooldownTypes = _restoreCareCooldownSeconds(
+        data['cooldown_seconds'],
+      );
       _restoreServerCooldowns(
         data['cooldowns'],
         preserveLocalCooldowns: true,
+        discardPreservedTypes: changedCooldownTypes,
       );
-      // 古いAPIがcooldownsを返さない場合でも、サーバー側の固定ルールを
-      // クライアントが一時的に無視して再送しないようにします。
       final responseCooldowns = data['cooldowns'];
-      if (action != null &&
-          isCooldownAction(action) &&
-          (responseCooldowns is! Map ||
-              !responseCooldowns.containsKey(_actionCode(action)))) {
-        _actionGate.mergeServerCooldowns({
-          action: _serverNow().add(careCooldown),
-        });
-        cooldownTick.value++;
-      }
       if (syncingRevision == _localStateRevision) {
         // 同期前に保存したローカルスナップショットを再適用すると、
         // サーバーが行ったオフライン精算（下限10を含む）を古い値で上書きします。
@@ -3142,6 +3185,19 @@ class TrainingGameController extends GetxController
           return;
         }
         _hasUnsyncedLocalState = false;
+      }
+      // 古いAPIがcooldownsを返さない場合でも、サーバー側の制限を
+      // クライアントが一時的に無視して再送しないようにします。
+      if (action != null &&
+          isCooldownAction(action) &&
+          (responseCooldowns is! Map ||
+              !responseCooldowns.containsKey(_actionCode(action)))) {
+        _actionGate.mergeServerCooldowns({
+          action: _serverNow().add(
+            Duration(seconds: _careCooldownSecondsFor(action)),
+          ),
+        });
+        cooldownTick.value++;
       }
       _serverLockVersion =
           (data['lock_version'] as num?)?.toInt() ?? _serverLockVersion;
@@ -3224,7 +3280,9 @@ class TrainingGameController extends GetxController
     // 同じ行動が既にキューへ積まれていれば、同じ422を繰り返し発生させない。
     _queuedActions.removeWhere((pending) => pending.type == action);
     _actionGate.mergeServerCooldowns({
-      action: _serverNow().add(careCooldown),
+      action: _serverNow().add(
+        Duration(seconds: _careCooldownSecondsFor(action)),
+      ),
     });
     if (_ownsSession(expectedSessionVersion)) {
       logs.insert(0, '${_labelFor(action)}はサーバー側でクールタイム中です。');
@@ -3237,7 +3295,13 @@ class TrainingGameController extends GetxController
       if (!_ownsSession(expectedSessionVersion) || data == null) return;
       _serverLockVersion =
           (data['lock_version'] as num?)?.toInt() ?? _serverLockVersion;
-      _restoreServerCooldowns(data['cooldowns'], preserveLocalCooldowns: true);
+      _restoreServerCooldowns(
+        data['cooldowns'],
+        preserveLocalCooldowns: true,
+        discardPreservedTypes: _restoreCareCooldownSeconds(
+          data['cooldown_seconds'],
+        ),
+      );
       _restoreWorkAvailability(data);
       if (_queuedActions.isEmpty) {
         // 後続操作がなければ、拒否された操作の楽観更新を正本へ戻します。
@@ -3321,6 +3385,15 @@ class TrainingGameController extends GetxController
       'cooldowns': {
         for (final entry in _actionGate.snapshot(cooldownEnabled).entries)
           _actionCode(entry.key): entry.value.toIso8601String(),
+      },
+      'cooldown_seconds': {
+        for (final type in [
+          TrainingActionType.meal,
+          TrainingActionType.clean,
+          TrainingActionType.rest,
+          TrainingActionType.squat,
+        ])
+          _actionCode(type): _careCooldownSecondsFor(type),
       },
       'ended': ended.value,
       'ending_step': endingStep.value,
@@ -3951,7 +4024,7 @@ class TrainingGameController extends GetxController
     _actionGate.startClientCooldown(
       type,
       enabled: isCooldownEnabled(type),
-      duration: careCooldown,
+      duration: Duration(seconds: _careCooldownSecondsFor(type)),
     );
     cooldownTick.value++;
   }

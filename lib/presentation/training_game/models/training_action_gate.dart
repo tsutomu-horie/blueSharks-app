@@ -55,6 +55,11 @@ class TrainingActionGate {
     if (!enabled) _clientCooldownUntil.remove(type);
   }
 
+  /// 設定変更後に古い端末側の期限を破棄します。
+  void clearClientCooldown(TrainingActionType type) {
+    _clientCooldownUntil.remove(type);
+  }
+
   /// 端末側クールタイムを開始します。
   void startClientCooldown(
     TrainingActionType type, {
@@ -73,6 +78,8 @@ class TrainingActionGate {
       ..clear()
       ..addAll(cooldowns);
     for (final entry in preserveUntil.entries) {
+      // サーバーが現在の期限を返した行動は、その期限を正とします。
+      if (cooldowns.containsKey(entry.key)) continue;
       final current = _serverCooldownUntil[entry.key];
       if (_now().isBefore(entry.value) &&
           (current == null || current.isBefore(entry.value))) {

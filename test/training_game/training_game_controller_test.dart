@@ -97,6 +97,118 @@ void main() {
     expect(controller.isServerStateReady.value, isTrue);
   });
 
+  test('サーバー設定の行動別クールタイムを待ち時間へ反映する', () async {
+    final provider = _FirstTeamTransitionProvider(
+      cooldownSeconds: {'meal': 18, 'clean': 7},
+    );
+    Get.routing.args = provider.state('training');
+    final controller = TrainingGameController(
+      serverProvider: provider,
+      writePendingActions: (_) async => true,
+      clearPendingActions: () async => true,
+      archivePendingActions: (_) async => true,
+    );
+    addTearDown(() {
+      controller.onClose();
+      Get.routing.args = null;
+    });
+    controller.onInit();
+    await Future<void>.delayed(Duration.zero);
+    expect(controller.isServerStateReady.value, isTrue);
+
+    controller.perform(TrainingActionType.meal);
+    await TrainingGameProvider.waitForPendingSync();
+    final mealRemaining = controller.cooldownRemaining(TrainingActionType.meal);
+    expect(mealRemaining, greaterThan(Duration.zero));
+    expect(mealRemaining.inSeconds, lessThanOrEqualTo(18));
+
+    controller.perform(TrainingActionType.clean);
+    await TrainingGameProvider.waitForPendingSync();
+    final cleanRemaining =
+        controller.cooldownRemaining(TrainingActionType.clean);
+    expect(cleanRemaining, greaterThan(Duration.zero));
+    expect(cleanRemaining.inSeconds, lessThanOrEqualTo(7));
+  });
+
+  test('18秒の待機中に旧APIが秒数マップを返さないとタイマーを破棄して60秒へ戻す', () async {
+    final provider = _FirstTeamTransitionProvider(
+      cooldownSeconds: {'meal': 18},
+    );
+    Get.routing.args = provider.state('training');
+    final controller = TrainingGameController(
+      serverProvider: provider,
+      writePendingActions: (_) async => true,
+      clearPendingActions: () async => true,
+      archivePendingActions: (_) async => true,
+    );
+    addTearDown(() {
+      controller.onClose();
+      Get.routing.args = null;
+    });
+    controller.onInit();
+    await Future<void>.delayed(Duration.zero);
+    expect(controller.isServerStateReady.value, isTrue);
+
+    controller.perform(TrainingActionType.meal);
+    await TrainingGameProvider.waitForPendingSync();
+    expect(provider.syncedActionCodes, contains('meal'));
+    final customRemaining =
+        controller.cooldownRemaining(TrainingActionType.meal);
+    expect(customRemaining, greaterThan(Duration.zero));
+    expect(customRemaining.inSeconds, lessThanOrEqualTo(18));
+
+    // 18秒の端末内タイマーが残っている状態で、秒数項目のない旧API応答へ切り替えます。
+    provider.omitCooldownSeconds = true;
+    controller.perform(TrainingActionType.clean);
+    await TrainingGameProvider.waitForPendingSync();
+    expect(
+        controller.cooldownRemaining(TrainingActionType.meal), Duration.zero);
+
+    controller.perform(TrainingActionType.meal);
+    await TrainingGameProvider.waitForPendingSync();
+    final remaining = controller.cooldownRemaining(TrainingActionType.meal);
+    expect(remaining, greaterThan(const Duration(seconds: 50)));
+    expect(remaining.inSeconds, lessThanOrEqualTo(60));
+  });
+
+  test('旧APIに秒数項目がなくても有効なサーバー期限を維持する', () async {
+    final provider = _FirstTeamTransitionProvider(
+      cooldownSeconds: {'meal': 18},
+    );
+    Get.routing.args = provider.state('training');
+    final controller = TrainingGameController(
+      serverProvider: provider,
+      writePendingActions: (_) async => true,
+      clearPendingActions: () async => true,
+      archivePendingActions: (_) async => true,
+    );
+    addTearDown(() {
+      controller.onClose();
+      Get.routing.args = null;
+    });
+    controller.onInit();
+    await Future<void>.delayed(Duration.zero);
+    expect(controller.isServerStateReady.value, isTrue);
+
+    controller.perform(TrainingActionType.meal);
+    await TrainingGameProvider.waitForPendingSync();
+    final localRemaining =
+        controller.cooldownRemaining(TrainingActionType.meal);
+    expect(localRemaining, greaterThan(Duration.zero));
+    expect(localRemaining.inSeconds, lessThanOrEqualTo(18));
+
+    provider.omitCooldownSeconds = true;
+    // 45秒のサーバー期限は、前の端末内18秒タイマーより長く設定します。
+    provider.cooldowns = {'meal': '2026-10-20T00:00:45Z'};
+    controller.perform(TrainingActionType.clean);
+    await TrainingGameProvider.waitForPendingSync();
+
+    final serverRemaining =
+        controller.cooldownRemaining(TrainingActionType.meal);
+    expect(serverRemaining, greaterThan(const Duration(seconds: 18)));
+    expect(serverRemaining, lessThanOrEqualTo(const Duration(seconds: 45)));
+  });
+
   test('筋トレは各50未満ならControllerが案内して同期しない', () async {
     final provider = _FirstTeamTransitionProvider(meterValue: 49);
     Get.routing.args = provider.state('training');
@@ -210,9 +322,15 @@ void main() {
 }
 
 class _FirstTeamTransitionProvider extends TrainingGameProvider {
-  _FirstTeamTransitionProvider({this.meterValue = 80});
+  _FirstTeamTransitionProvider({
+    this.meterValue = 80,
+    this.cooldownSeconds = const {},
+  });
 
   final double meterValue;
+  Object? cooldownSeconds;
+  bool omitCooldownSeconds = false;
+  Map<String, dynamic> cooldowns = const {};
   final syncedStageCodes = <String>[];
   final syncedActionCodes = <String?>[];
 
@@ -239,7 +357,8 @@ class _FirstTeamTransitionProvider extends TrainingGameProvider {
           'tendency_bulk': 0.0,
           'tendency_tech': 0.0,
         },
-        'cooldowns': <String, dynamic>{},
+        'cooldowns': cooldowns,
+        if (!omitCooldownSeconds) 'cooldown_seconds': cooldownSeconds,
         if (stageCode == 'growth')
           'stage_progress': {'next_stage_code': 'first_team'},
       };
