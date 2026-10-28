@@ -3,6 +3,20 @@ import 'package:html/parser.dart' as html;
 import 'package:koto_blue_sharks/app/data/models/match/match_result.dart';
 import 'package:koto_blue_sharks/app/data/models/member/member.dart';
 
+/// Parsed match data plus the images used by the renewed site's Member section.
+/// Images stay outside the persistent CustomField/Hive model.
+class RenewalMatchDetail {
+  const RenewalMatchDetail({
+    required this.match,
+    this.startingImage,
+    this.reserveImage,
+  });
+
+  final MatchResultBySeason match;
+  final String? startingImage;
+  final String? reserveImage;
+}
+
 /// Adapts the renewed site's public content to the existing native/Hive models.
 /// Missing fields stay missing; the original screens retain their placeholders.
 class RenewalWebsiteContent {
@@ -205,7 +219,7 @@ class RenewalWebsiteContent {
     });
   }
 
-  static MatchResultBySeason matchDetail(
+  static RenewalMatchDetail matchDetail(
       String source, MatchResultBySeason match, Uri site) {
     final section = html.parse(source).querySelector('main .match-detail');
     final card = section?.querySelector('article.match-card');
@@ -247,6 +261,18 @@ class RenewalWebsiteContent {
       if (title == 'Reserves') fields['member_reserves'] = entries;
     }
     if (captain != null) fields['member_captain'] = [captain];
+    String? startingImage;
+    String? reserveImage;
+    for (final image in section.querySelectorAll('img[alt]')) {
+      final url = siteUrl(site, image.attributes['src']);
+      if (url == null) continue;
+      final alt = image.attributes['alt']?.trim();
+      if (alt == 'スターティングメンバー') {
+        startingImage = url.toString();
+      } else if (alt == 'リザーブメンバー') {
+        reserveImage = url.toString();
+      }
+    }
     fields['photos'] = section
         .querySelectorAll('.gallery-modal__image')
         .map((img) => siteUrl(site, img.attributes['src'])?.toString())
@@ -258,9 +284,13 @@ class RenewalWebsiteContent {
         .where((element) => text(element.querySelector('h2')) == '試合経過')
         .map((element) => element.innerHtml)
         .join();
-    return match.copyWith(
-        custom_field: CustomField.fromJson(fields),
-        content: Rendered(rendered: report));
+    return RenewalMatchDetail(
+      match: match.copyWith(
+          custom_field: CustomField.fromJson(fields),
+          content: Rendered(rendered: report)),
+      startingImage: startingImage,
+      reserveImage: reserveImage,
+    );
   }
 
   static int? _postId(Uri url, String type) {

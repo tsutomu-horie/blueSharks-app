@@ -4,12 +4,13 @@ import 'package:koto_blue_sharks/app/services/analytics_service.dart';
 import 'package:koto_blue_sharks/infrastructure/navigation/routes.dart';
 import 'package:koto_blue_sharks/app/data/models/match/match_result.dart';
 import 'package:koto_blue_sharks/app/providers/website/renewal_website_provider.dart';
+import 'package:koto_blue_sharks/app/data/models/website/renewal_website_content.dart';
 
 class MatchDetailController extends GetxController {
   MatchDetailController({RenewalWebsiteProvider? website})
       : website = website ?? RenewalWebsiteProvider();
   final RenewalWebsiteProvider website;
-  final detail = Rxn<MatchResultBySeason>();
+  final detail = Rxn<RenewalMatchDetail>();
   final loading = false.obs;
   final failed = false.obs;
   int? _matchId;
