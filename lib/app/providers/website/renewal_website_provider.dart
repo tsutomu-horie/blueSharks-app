@@ -185,7 +185,7 @@ class RenewalWebsiteProvider extends GetConnect {
     }).toList();
   }
 
-  Future<MatchResultBySeason> matchDetail(MatchResultBySeason match) async =>
+  Future<RenewalMatchDetail> matchDetail(MatchResultBySeason match) async =>
       RenewalWebsiteContent.matchDetail(
           await _read(Uri.parse(match.link)), match, site);
 }

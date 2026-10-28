@@ -12,6 +12,7 @@ import 'package:koto_blue_sharks/app/views/views/default_header_title_view.dart'
 import 'package:koto_blue_sharks/generated/locales.g.dart';
 import 'package:koto_blue_sharks/presentation/menu/match/match_detail/controllers/match_detail.controller.dart';
 import 'package:koto_blue_sharks/presentation/menu/match/match_detail/match_member_count_header.dart';
+import 'package:koto_blue_sharks/presentation/menu/match/match_detail/match_roster_image.dart';
 import 'package:koto_blue_sharks/utils/app_color.dart';
 import 'package:koto_blue_sharks/utils/date_formatter.dart';
 import 'package:koto_blue_sharks/utils/match+extensions.dart';
@@ -32,8 +33,14 @@ class MatchDetailScreen extends StatelessWidget {
     controller.loadDetail(data!);
     return Obx(() {
       if (!controller.loading.value && !controller.failed.value) {
-        final value = controller.detail.value ?? data;
-        return _NativeMatchDetailScreen(value, homeStatus: homeStatus);
+        final detail = controller.detail.value;
+        final value = detail?.match ?? data;
+        return _NativeMatchDetailScreen(
+          value,
+          homeStatus: homeStatus,
+          startingImage: detail?.startingImage,
+          reserveImage: detail?.reserveImage,
+        );
       }
       return Scaffold(
         appBar: AppBar(title: const Text('試合情報')),
@@ -58,10 +65,17 @@ class MatchDetailScreen extends StatelessWidget {
 }
 
 class _NativeMatchDetailScreen extends GetView<MatchDetailController> {
-  const _NativeMatchDetailScreen(this.data, {required this.homeStatus});
+  const _NativeMatchDetailScreen(
+    this.data, {
+    required this.homeStatus,
+    this.startingImage,
+    this.reserveImage,
+  });
 
   final MatchResultBySeason? data;
   final String homeStatus;
+  final String? startingImage;
+  final String? reserveImage;
 
   @override
   Widget build(BuildContext context) {
@@ -926,9 +940,12 @@ class _NativeMatchDetailScreen extends GetView<MatchDetailController> {
                                 // Now, dynamically render the content based on the selected index
                                 if (controller.selectedIndex.value == 0)
                                   MemberView(
-                                      data?.custom_field.member_starting,
-                                      data?.custom_field.member_reserves,
-                                      data?.custom_field.member_captain),
+                                    data?.custom_field.member_starting,
+                                    data?.custom_field.member_reserves,
+                                    data?.custom_field.member_captain,
+                                    startingImage: startingImage,
+                                    reserveImage: reserveImage,
+                                  ),
                                 if (controller.selectedIndex.value == 1)
                                   ReportView(data?.content.rendered ?? ""),
                                 if (controller.selectedIndex.value == 2)
@@ -1050,8 +1067,13 @@ class _NativeMatchDetailScreen extends GetView<MatchDetailController> {
     );
   }
 
-  Widget MemberView(List<String>? startingMember, List<String>? reserveMember,
-      List<String>? captain) {
+  Widget MemberView(
+    List<String>? startingMember,
+    List<String>? reserveMember,
+    List<String>? captain, {
+    String? startingImage,
+    String? reserveImage,
+  }) {
     return Container(
       color: Colors.white,
       child: Column(
@@ -1063,7 +1085,9 @@ class _NativeMatchDetailScreen extends GetView<MatchDetailController> {
           SizedBox(
             height: 12.h,
           ),
-          if (startingMember != null)
+          if (startingImage != null)
+            MatchRosterImage(label: 'Starting', image: startingImage),
+          if (startingImage == null && startingMember != null)
             Column(
               children: [
                 MatchMemberCountHeader(
@@ -1159,7 +1183,9 @@ class _NativeMatchDetailScreen extends GetView<MatchDetailController> {
                 )
               ],
             ),
-          if (reserveMember != null)
+          if (reserveImage != null)
+            MatchRosterImage(label: 'Reserves', image: reserveImage),
+          if (reserveImage == null && reserveMember != null)
             Column(
               children: [
                 MatchMemberCountHeader(

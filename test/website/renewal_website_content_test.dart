@@ -1,7 +1,11 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:koto_blue_sharks/app/views/views/custom_image_view.dart';
+import 'package:koto_blue_sharks/presentation/menu/match/match_detail/match_roster_image.dart';
 import 'package:koto_blue_sharks/app/data/models/website/renewal_website_content.dart';
 import 'package:koto_blue_sharks/app/providers/website/renewal_website_provider.dart';
 import 'package:koto_blue_sharks/app/providers/media/media_provider.dart';
@@ -104,7 +108,9 @@ void main() {
     final summary = RenewalWebsiteContent.match(post, 51, cards[25207]!, site);
     final detail =
         RenewalWebsiteContent.matchDetail(fixture('match.html'), summary, site);
-    final data = detail.custom_field;
+    final data = detail.match.custom_field;
+    expect(detail.startingImage, isNull);
+    expect(detail.reserveImage, isNull);
     expect(data.team_T_first_half_1, ['1']);
     expect(data.team_T_second_half_2, ['3']);
     expect(data.team_G_first_half_2, ['4']);
@@ -115,8 +121,69 @@ void main() {
     expect(data.member_captain, ['野村 三四郎']);
     expect(data.member_reserves!.first, 'R 伊藤 潤乃助');
     expect(data.photos, hasLength(8));
-    expect(detail.content.rendered, contains('試合経過'));
-    expect(detail.content.rendered, isNot(contains('header__global')));
+    expect(detail.match.content.rendered, contains('試合経過'));
+    expect(detail.match.content.rendered, isNot(contains('header__global')));
+  });
+
+  test('画像のみの試合詳細はStartingとReservesの画像をMemberへ渡す', () {
+    final post = posts('match').firstWhere((item) => item['id'] == 25207);
+    final cards =
+        RenewalWebsiteContent.matchCards(fixture('schedule.html'), site);
+    final summary = RenewalWebsiteContent.match(post, 51, cards[25207]!, site);
+    final detail = RenewalWebsiteContent.matchDetail(
+        fixture('match-images.html'), summary, site);
+
+    expect(detail.match.custom_field.member_starting, isNull);
+    expect(detail.match.custom_field.member_reserves, isNull);
+    expect(detail.startingImage,
+        'https://blue-sharks.donati.jp/wp-content/uploads/2026/08/starting.png');
+    expect(detail.reserveImage,
+        'https://blue-sharks.donati.jp/wp-content/uploads/2026/08/reserves.png');
+    expect(detail.match.custom_field.photos, isEmpty);
+
+    final unsafe = RenewalWebsiteContent.matchDetail(
+        fixture('match-images.html').replaceFirst(
+          '/wp-content/uploads/2026/08/starting.png',
+          'https://evil.example/starting.png',
+        ),
+        summary,
+        site);
+    expect(unsafe.startingImage, isNull);
+    expect(unsafe.reserveImage, detail.reserveImage);
+  });
+
+  test('メンバーのテキストと画像がない場合は未設定のまま', () {
+    final post = posts('match').firstWhere((item) => item['id'] == 25207);
+    final cards =
+        RenewalWebsiteContent.matchCards(fixture('schedule.html'), site);
+    final summary = RenewalWebsiteContent.match(post, 51, cards[25207]!, site);
+    final detail = RenewalWebsiteContent.matchDetail(
+        fixture('match-empty-member.html'), summary, site);
+
+    expect(detail.match.custom_field.member_starting, isNull);
+    expect(detail.match.custom_field.member_reserves, isNull);
+    expect(detail.startingImage, isNull);
+    expect(detail.reserveImage, isNull);
+  });
+
+  testWidgets('Memberの画像セクションはURLを画像widgetへ渡す', (tester) async {
+    const image =
+        'https://blue-sharks.donati.jp/wp-content/uploads/2026/08/starting.png';
+    await tester.pumpWidget(
+      ScreenUtilInit(
+        designSize: const Size(375, 812),
+        child: const MaterialApp(
+          home: Scaffold(
+            body: MatchRosterImage(label: 'Starting', image: image),
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('Starting'), findsOneWidget);
+    final imageView =
+        tester.widget<CustomImageView>(find.byType(CustomImageView));
+    expect(imageView.image, image);
   });
 
   test('選手・シーズンの新taxonomyを利用し、一覧HTMLは1回にまとめる', () async {

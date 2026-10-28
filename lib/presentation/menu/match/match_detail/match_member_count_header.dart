@@ -7,11 +7,11 @@ class MatchMemberCountHeader extends StatelessWidget {
   const MatchMemberCountHeader({
     super.key,
     required this.label,
-    required this.count,
+    this.count,
   });
 
   final String label;
-  final int count;
+  final int? count;
 
   @override
   Widget build(BuildContext context) {
@@ -25,7 +25,7 @@ class MatchMemberCountHeader extends StatelessWidget {
             color: BrandColor.main,
           ),
           child: CustomTextView(
-            '$label $count',
+            count == null ? label : '$label $count',
             style: TextStyle(
               fontSize: 14.sp,
               color: TextColor.inverse,
