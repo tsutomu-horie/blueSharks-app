@@ -274,7 +274,7 @@ class _CareActionPresentation {
           fit: BoxFit.contain,
           illustrationLabel: '仕事中',
           progressLabel: '仕事中…',
-          description: '今日の仕事をがんばっています。完了すると仕事が回復します。',
+          description: '今日の仕事をがんばっています。',
         ),
       TrainingActionType.meal => _CareActionPresentation(
           title: 'ごはん',
