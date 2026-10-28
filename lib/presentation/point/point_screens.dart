@@ -761,8 +761,7 @@ class _PointRewardDetailScreenState extends State<PointRewardDetailScreen> {
       final reward = controller.selectedReward.value;
       final account = controller.account.value;
       final status = reward == null ? null : controller.rewardStatusFor(reward);
-      final enabled =
-          reward != null &&
+      final enabled = reward != null &&
           account != null &&
           status == PointRewardStatus.available;
       return PointScaffold(
@@ -781,12 +780,12 @@ class _PointRewardDetailScreenState extends State<PointRewardDetailScreen> {
               ),
         child: reward == null
             ? controller.errorMessage.value != null
-                  ? PointErrorView(
-                      message: controller.errorMessage.value!,
-                      onRetry: () =>
-                          controller.loadReward(Get.arguments as String),
-                    )
-                  : const Center(child: CircularProgressIndicator())
+                ? PointErrorView(
+                    message: controller.errorMessage.value!,
+                    onRetry: () =>
+                        controller.loadReward(Get.arguments as String),
+                  )
+                : const Center(child: CircularProgressIndicator())
             : ListView(
                 padding: EdgeInsets.all(16.w),
                 children: [
@@ -979,12 +978,12 @@ class _ExchangeReceiptContent extends StatelessWidget {
       title: title,
       child: exchange == null
           ? onRetry != null &&
-                    Get.find<PointController>().errorMessage.value != null
-                ? PointErrorView(
-                    message: Get.find<PointController>().errorMessage.value!,
-                    onRetry: onRetry!,
-                  )
-                : const Center(child: CircularProgressIndicator())
+                  Get.find<PointController>().errorMessage.value != null
+              ? PointErrorView(
+                  message: Get.find<PointController>().errorMessage.value!,
+                  onRetry: onRetry!,
+                )
+              : const Center(child: CircularProgressIndicator())
           : ListView(
               padding: EdgeInsets.all(20.w),
               children: [
@@ -1117,35 +1116,35 @@ class _QrResultView extends StatelessWidget {
     if (result == PointQrResult.idle) return const SizedBox.shrink();
     final (icon, title, description, color) = switch (result) {
       PointQrResult.pending => (
-        Icons.sync,
-        'ポイント付与処理中',
-        '画面を閉じずにお待ちください',
-        InfoColor.main,
-      ),
+          Icons.sync,
+          'ポイント付与処理中',
+          '画面を閉じずにお待ちください',
+          InfoColor.main,
+        ),
       PointQrResult.granted => (
-        Icons.check_circle,
-        'ポイントを獲得しました',
-        '+100 pt',
-        SuccessColor.main,
-      ),
+          Icons.check_circle,
+          'ポイントを獲得しました',
+          '+100 pt',
+          SuccessColor.main,
+        ),
       PointQrResult.rejected => (
-        Icons.info_outline,
-        failureCode == 'already_redeemed' ? 'すでに獲得済みです' : '受付できませんでした',
-        'この試合の来場ポイントはすでに付与されています。',
-        WarningColor.main,
-      ),
+          Icons.info_outline,
+          failureCode == 'already_redeemed' ? 'すでに獲得済みです' : '受付できませんでした',
+          'この試合の来場ポイントはすでに付与されています。',
+          WarningColor.main,
+        ),
       PointQrResult.failed => (
-        Icons.error_outline,
-        'ポイント付与に失敗しました',
-        '通信状態を確認して、もう一度お試しください。',
-        DangerColor.main,
-      ),
+          Icons.error_outline,
+          'ポイント付与に失敗しました',
+          '通信状態を確認して、もう一度お試しください。',
+          DangerColor.main,
+        ),
       PointQrResult.awaitingSync => (
-        Icons.cloud_off,
-        '受付済み・反映待ち',
-        '会場端末がオンラインに戻った後に反映されます。',
-        InfoColor.main,
-      ),
+          Icons.cloud_off,
+          '受付済み・反映待ち',
+          '会場端末がオンラインに戻った後に反映されます。',
+          InfoColor.main,
+        ),
       PointQrResult.idle => (Icons.info, '', '', Colors.transparent),
     };
     return Container(
