@@ -783,7 +783,7 @@ void main() {
     await restored.retryRestoreServerState();
     expect(restored.syncStatus.value, TrainingSyncStatus.outcomeUnknown);
     expect(restored.canDiscardPendingSync, isFalse);
-    expect(restored.syncStatusMessage.value, contains('操作結果が未確定'));
+    expect(restored.syncStatusMessage.value, contains('処理結果を確認できませんでした'));
   });
 
   test('端末保存に失敗した操作は送信しない', () async {
@@ -985,7 +985,7 @@ void main() {
 
     expect(restored.syncStatus.value, TrainingSyncStatus.outcomeUnknown);
     expect(restored.canDiscardPendingSync, isFalse);
-    expect(restored.syncStatusMessage.value, contains('操作結果が未確定'));
+    expect(restored.syncStatusMessage.value, contains('処理結果を確認できませんでした'));
     expect(restored.syncStatusMessage.value, isNot(contains('未送信の保留操作')));
     expect(provider.appliedActionCount, 1);
   });

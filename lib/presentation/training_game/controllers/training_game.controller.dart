@@ -843,7 +843,7 @@ class TrainingGameController extends GetxController
           ? TrainingSyncStatus.outcomeUnknown
           : TrainingSyncStatus.stopped;
       syncStatusMessage.value = _hasUnknownSyncOutcome
-          ? '前回の操作結果が未確定です。サーバー状態を再取得済みです。同じ操作IDで再確認してください。'
+          ? '処理結果を確認できませんでした。しばらくしてから、もう一度お試しください。'
           : '未送信の保留操作を復元しました。同じ操作IDで再試行するか、破棄してください。';
     } catch (_) {
       _hasCorruptPendingActionQueue = true;
@@ -3003,7 +3003,7 @@ class TrainingGameController extends GetxController
       syncStatus.value = TrainingSyncStatus.outcomeUnknown;
       syncStatusMessage.value = isServerStateReady.value
           ? '通信結果が不明です。未送信とは断定できません。保留操作を同じ操作IDで再確認し、サーバー状態と応答を確認してください。'
-          : '通信結果が不明です。未送信とは断定できません。保留操作は同じ操作IDを保持し、サーバー状態を確認できるまで再送を待ちます。通信復旧後に状態を再取得してください。';
+          : '通信が切断されました。通信が復旧したら、再度お試しください。';
     }
     if (!isServerStateReady.value) {
       serverErrorMessage.value = syncStatusMessage.value;
