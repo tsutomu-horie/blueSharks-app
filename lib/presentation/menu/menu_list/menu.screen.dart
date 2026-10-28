@@ -130,10 +130,10 @@ class _MenuScreenState extends State<MenuScreen> {
                             style: TextStyle(
                               fontSize: 13.sp,
                               fontWeight: FontWeight.w800,
-                              color: controller.selectedIndex.value == index
+                              color: !_showOverview &&
+                                      controller.selectedIndex.value == index
                                   ? Colors.white
-                                  : PrimaryColor
-                                      .border, // Selected/Unselected Color
+                                  : PrimaryColor.border,
                             ),
                           ),
                           if (index == 5 || index == 4)
