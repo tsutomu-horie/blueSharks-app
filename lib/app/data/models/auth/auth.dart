@@ -1,3 +1,5 @@
+// ignore_for_file: invalid_annotation_target
+
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 part 'auth.freezed.dart';
@@ -37,7 +39,21 @@ class UserData with _$UserData {
     @JsonKey(name: 'kat_last_name') String? katLastName,
     @JsonKey(name: 'customer_level') String? customerLevel,
     @JsonKey(name: 'is_notification') bool? isNotification,
+    @JsonKey(name: 'qualification') MemberQualification? qualification,
   }) = _UserData;
 
-  factory UserData.fromJson(Map<String, dynamic> json) => _$UserDataFromJson(json);
+  factory UserData.fromJson(Map<String, dynamic> json) =>
+      _$UserDataFromJson(json);
+}
+
+@freezed
+class MemberQualification with _$MemberQualification {
+  const factory MemberQualification({
+    required String status,
+    @JsonKey(name: 'valid_from') String? validFrom,
+    @JsonKey(name: 'valid_to') String? validTo,
+  }) = _MemberQualification;
+
+  factory MemberQualification.fromJson(Map<String, dynamic> json) =>
+      _$MemberQualificationFromJson(json);
 }
