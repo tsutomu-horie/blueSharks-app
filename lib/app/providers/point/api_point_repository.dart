@@ -16,8 +16,16 @@ class ApiPointRepository extends GetConnect implements PointRepository {
   @override
   Future<PointAccount> getAccount() async {
     final data = _asMap(await _getData('points'));
+    return accountFromResponseData(data);
+  }
+
+  @visibleForTesting
+  PointAccount accountFromResponseData(Map<String, dynamic> data) {
     return PointAccount(
       balance: _asInt(data['balance']),
+      exchangeableBalance: data.containsKey('exchangeable_balance')
+          ? _asInt(data['exchangeable_balance'])
+          : null,
       lifetimeEarned: _asInt(data['lifetime_earned']),
       lifetimeSpent: _asInt(data['lifetime_spent']),
       lastTransactionAt: _asDateTime(data['last_transaction_at']),
@@ -65,9 +73,7 @@ class ApiPointRepository extends GetConnect implements PointRepository {
 
   @override
   Future<List<PointTransaction>> getTransactions() async {
-    final data = _asList(
-      await _getData('points/transactions?per_page=100'),
-    );
+    final data = _asList(await _getData('points/transactions?per_page=100'));
     return data.map((item) => _transactionFromJson(_asMap(item))).toList();
   }
 
@@ -135,22 +141,17 @@ class ApiPointRepository extends GetConnect implements PointRepository {
   }) async {
     final reward = await getReward(rewardId);
     final data = _asMap(
-      await _postData(
-        'points/reward-exchanges',
-        {
-          'offer_id': int.parse(reward.offerId),
-          'idempotency_key': idempotencyKey,
-        },
-      ),
+      await _postData('points/reward-exchanges', {
+        'offer_id': int.parse(reward.offerId),
+        'idempotency_key': idempotencyKey,
+      }),
     );
     return _exchangeFromResponse(data);
   }
 
   @override
   Future<PointRewardExchange> getExchange(String id) async {
-    final exchange = _asMap(
-      await _getData('points/reward-exchanges/$id'),
-    );
+    final exchange = _asMap(await _getData('points/reward-exchanges/$id'));
     if (exchange['status'] != 'consumed') {
       return _exchangeFromJson(exchange);
     }
@@ -209,17 +210,17 @@ class ApiPointRepository extends GetConnect implements PointRepository {
   String _messageFor(String code, int? statusCode, String? serverMessage) {
     return switch (code) {
       'INSUFFICIENT_POINT_BALANCE' ||
-      'INSUFFICIENT_USABLE_POINTS' =>
-        'ポイントが不足しています。',
+      'INSUFFICIENT_USABLE_POINTS' => 'ポイントが不足しています。',
       'REWARD_NOT_AVAILABLE' => 'この景品は現在交換できません。',
       'REWARD_OFFER_OUTSIDE_PERIOD' => '景品の交換期間外です。',
       'REWARD_CUSTOMER_LIMIT_REACHED' => 'この景品の交換上限に達しています。',
       'REWARD_TOTAL_LIMIT_REACHED' || 'REWARD_OUT_OF_STOCK' => '景品の在庫がありません。',
       _ when statusCode == 401 => 'ログインの有効期限が切れました。再度ログインしてください。',
       _ when statusCode == 404 => '対象のデータが見つかりません。',
-      _ => serverMessage?.isNotEmpty == true
-          ? serverMessage!
-          : '通信に失敗しました。時間をおいて再度お試しください。',
+      _ =>
+        serverMessage?.isNotEmpty == true
+            ? serverMessage!
+            : '通信に失敗しました。時間をおいて再度お試しください。',
     };
   }
 
@@ -281,8 +282,8 @@ class ApiPointRepository extends GetConnect implements PointRepository {
     final images = value.whereType<Map>().toList()
       ..sort((a, b) {
         int number(dynamic value) => int.tryParse('$value') ?? 0;
-        final order =
-            number(a['display_order']).compareTo(number(b['display_order']));
+        final order = number(a['display_order'])
+            .compareTo(number(b['display_order']));
         return order != 0 ? order : number(a['id']).compareTo(number(b['id']));
       });
     for (final image in images) {

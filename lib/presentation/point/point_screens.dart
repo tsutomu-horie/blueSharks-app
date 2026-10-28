@@ -59,6 +59,7 @@ class _PointTopScreenState extends State<PointTopScreen> {
               PointBalanceCard(
                 balance: account.balance,
                 lifetimeEarned: account.lifetimeEarned,
+                label: '全種別の利用可能ポイント',
                 onTapExpiring: () => Get.toNamed(Routes.POINT_EXPIRING),
               ),
               SizedBox(height: 12.h),
@@ -130,43 +131,42 @@ class _PointExpiringScreenState extends State<PointExpiringScreen> {
   Widget build(BuildContext context) {
     return PointScaffold(
       title: '失効予定',
-      child: Obx(() => ListView(
-            padding: EdgeInsets.all(16.w),
-            children: [
-              const CustomTextView(
-                '期限が近いポイント',
-                type: TDSFontType.titleSmall,
-              ),
-              SizedBox(height: 12.h),
-              ...controller.expiringLots.map(
-                (lot) => Card(
-                  margin: EdgeInsets.only(bottom: 8.h),
-                  child: ListTile(
-                    title: Text(formatPointDate(lot.expiresAt)),
-                    subtitle: Text(lot.reason),
-                    trailing: Text(
-                      '-${formatPoints(lot.remainingAmount)} pt',
-                      style: TextStyle(
-                        color: DangerColor.main,
-                        fontWeight: FontWeight.w700,
-                      ),
+      child: Obx(
+        () => ListView(
+          padding: EdgeInsets.all(16.w),
+          children: [
+            const CustomTextView('期限が近いポイント', type: TDSFontType.titleSmall),
+            SizedBox(height: 12.h),
+            ...controller.expiringLots.map(
+              (lot) => Card(
+                margin: EdgeInsets.only(bottom: 8.h),
+                child: ListTile(
+                  title: Text(formatPointDate(lot.expiresAt)),
+                  subtitle: Text(lot.reason),
+                  trailing: Text(
+                    '-${formatPoints(lot.remainingAmount)} pt',
+                    style: TextStyle(
+                      color: DangerColor.main,
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
                 ),
               ),
-              SizedBox(height: 12.h),
-              CustomTextView(
-                'ポイントは有効期限が近い付与分から使用されます。',
-                color: TextColor.secondary,
-                type: TDSFontType.bodyTextSmall,
-              ),
-              SizedBox(height: 20.h),
-              PointPrimaryButton(
-                label: 'ポイント履歴を見る',
-                onPressed: () => Get.toNamed(Routes.POINT_HISTORY),
-              ),
-            ],
-          )),
+            ),
+            SizedBox(height: 12.h),
+            CustomTextView(
+              'ポイントは有効期限が近い付与分から使用されます。',
+              color: TextColor.secondary,
+              type: TDSFontType.bodyTextSmall,
+            ),
+            SizedBox(height: 20.h),
+            PointPrimaryButton(
+              label: 'ポイント履歴を見る',
+              onPressed: () => Get.toNamed(Routes.POINT_HISTORY),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -274,9 +274,7 @@ class _PointQrScreenState extends State<PointQrScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('QRを更新しますか？'),
-        content: const Text(
-          '現在表示しているQRは無効になります。会場端末に表示する直前に更新してください。',
-        ),
+        content: const Text('現在表示しているQRは無効になります。会場端末に表示する直前に更新してください。'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
@@ -311,10 +309,7 @@ class PointQrProcessingScreen extends StatelessWidget {
             children: [
               Icon(Icons.qr_code_scanner, size: 56.w, color: BrandColor.main),
               SizedBox(height: 20.h),
-              const CustomTextView(
-                '会場端末で読み取り中',
-                type: TDSFontType.titleMedium,
-              ),
+              const CustomTextView('会場端末で読み取り中', type: TDSFontType.titleMedium),
               SizedBox(height: 8.h),
               const CustomTextView(
                 '読み取り完了後、ポイント履歴で付与結果をご確認ください。',
@@ -367,9 +362,8 @@ class PointQrResultScreen extends StatelessWidget {
           if (!isFailure && !isRejected)
             PointPrimaryButton(
               label: '閉じる',
-              onPressed: () => Get.until(
-                (route) => route.settings.name == Routes.POINT_TOP,
-              ),
+              onPressed: () =>
+                  Get.until((route) => route.settings.name == Routes.POINT_TOP),
             ),
         ],
       ),
@@ -516,7 +510,9 @@ class _PointHistoryDetailScreenState extends State<PointHistoryDetailScreen> {
             CustomTextView(item.title, type: TDSFontType.titleMedium),
             SizedBox(height: 16.h),
             _DetailRow(
-                '処理日時', formatPointDate(item.occurredAt, withTime: true)),
+              '処理日時',
+              formatPointDate(item.occurredAt, withTime: true),
+            ),
             _DetailRow('種別', transactionTypeLabel(item.type)),
             _DetailRow(
               '増減',
@@ -662,8 +658,9 @@ class _PointRewardsScreenState extends State<PointRewardsScreen> {
           children: [
             if (account != null)
               PointBalanceCard(
-                balance: account.balance,
+                balance: account.exchangeableBalanceForRedemption,
                 lifetimeEarned: account.lifetimeEarned,
+                label: '交換可能ポイント',
               ),
             SizedBox(height: 16.h),
             if (controller.isLoading.value && controller.rewards.isEmpty)
@@ -675,10 +672,7 @@ class _PointRewardsScreenState extends State<PointRewardsScreen> {
                 onRetry: controller.loadRewards,
               )
             else if (controller.rewards.isEmpty)
-              const CustomTextView(
-                '現在交換できる景品はありません。',
-                align: TextAlign.center,
-              ),
+              const CustomTextView('現在交換できる景品はありません。', align: TextAlign.center),
             ...controller.rewards.map(
               (reward) => Card(
                 margin: EdgeInsets.only(bottom: 12.h),
@@ -767,7 +761,8 @@ class _PointRewardDetailScreenState extends State<PointRewardDetailScreen> {
       final reward = controller.selectedReward.value;
       final account = controller.account.value;
       final status = reward == null ? null : controller.rewardStatusFor(reward);
-      final enabled = reward != null &&
+      final enabled =
+          reward != null &&
           account != null &&
           status == PointRewardStatus.available;
       return PointScaffold(
@@ -786,12 +781,12 @@ class _PointRewardDetailScreenState extends State<PointRewardDetailScreen> {
               ),
         child: reward == null
             ? controller.errorMessage.value != null
-                ? PointErrorView(
-                    message: controller.errorMessage.value!,
-                    onRetry: () =>
-                        controller.loadReward(Get.arguments as String),
-                  )
-                : const Center(child: CircularProgressIndicator())
+                  ? PointErrorView(
+                      message: controller.errorMessage.value!,
+                      onRetry: () =>
+                          controller.loadReward(Get.arguments as String),
+                    )
+                  : const Center(child: CircularProgressIndicator())
             : ListView(
                 padding: EdgeInsets.all(16.w),
                 children: [
@@ -814,10 +809,7 @@ class _PointRewardDetailScreenState extends State<PointRewardDetailScreen> {
                     '必要ポイント',
                     '${formatPoints(reward.requiredPoints)} pt',
                   ),
-                  _DetailRow(
-                    '交換期間',
-                    _rewardPeriod(reward),
-                  ),
+                  _DetailRow('交換期間', _rewardPeriod(reward)),
                   _DetailRow('受渡場所', reward.pickupLocation),
                   _DetailRow('注意事項', reward.notice),
                   if (!enabled && account != null)
@@ -828,7 +820,7 @@ class _PointRewardDetailScreenState extends State<PointRewardDetailScreen> {
                       child: CustomTextView(
                         status == PointRewardStatus.ended
                             ? '受付は終了しました'
-                            : 'ポイントが不足しています\n必要 ${formatPoints(reward.requiredPoints)} pt／保有 ${formatPoints(account.balance)} pt',
+                            : 'ポイントが不足しています\n必要 ${formatPoints(reward.requiredPoints)} pt／交換可能 ${formatPoints(account.exchangeableBalanceForRedemption)} pt',
                         align: TextAlign.center,
                         color: WarningColor.main,
                       ),
@@ -865,7 +857,7 @@ class PointExchangeConfirmScreen extends StatelessWidget {
             _DetailRow('利用ポイント', '-${formatPoints(reward.requiredPoints)} pt'),
             _DetailRow(
               '交換後残高',
-              '${formatPoints(account.balance - reward.requiredPoints)} pt',
+              '${formatPoints(account.exchangeableBalanceForRedemption - reward.requiredPoints)} pt',
             ),
             SizedBox(height: 16.h),
             Container(
@@ -917,15 +909,16 @@ class PointExchangeCompleteScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final controller = Get.find<PointController>();
-    return Obx(() => _ExchangeReceiptContent(
-          title: '交換完了',
-          exchange: controller.selectedExchange.value,
-          closeLabel: '閉じる',
-          showDeliveryQr: false,
-          onClose: () => Get.until(
-            (route) => route.settings.name == Routes.POINT_TOP,
-          ),
-        ));
+    return Obx(
+      () => _ExchangeReceiptContent(
+        title: '交換完了',
+        exchange: controller.selectedExchange.value,
+        closeLabel: '閉じる',
+        showDeliveryQr: false,
+        onClose: () =>
+            Get.until((route) => route.settings.name == Routes.POINT_TOP),
+      ),
+    );
   }
 }
 
@@ -952,12 +945,14 @@ class _PointExchangeReceiptScreenState
 
   @override
   Widget build(BuildContext context) {
-    return Obx(() => _ExchangeReceiptContent(
-          title: '交換履歴',
-          exchange: controller.selectedExchange.value,
-          showDeliveryQr: true,
-          onRetry: () => controller.loadExchange(Get.arguments as String),
-        ));
+    return Obx(
+      () => _ExchangeReceiptContent(
+        title: '交換履歴',
+        exchange: controller.selectedExchange.value,
+        showDeliveryQr: true,
+        onRetry: () => controller.loadExchange(Get.arguments as String),
+      ),
+    );
   }
 }
 
@@ -984,12 +979,12 @@ class _ExchangeReceiptContent extends StatelessWidget {
       title: title,
       child: exchange == null
           ? onRetry != null &&
-                  Get.find<PointController>().errorMessage.value != null
-              ? PointErrorView(
-                  message: Get.find<PointController>().errorMessage.value!,
-                  onRetry: onRetry!,
-                )
-              : const Center(child: CircularProgressIndicator())
+                    Get.find<PointController>().errorMessage.value != null
+                ? PointErrorView(
+                    message: Get.find<PointController>().errorMessage.value!,
+                    onRetry: onRetry!,
+                  )
+                : const Center(child: CircularProgressIndicator())
           : ListView(
               padding: EdgeInsets.all(20.w),
               children: [
@@ -1007,10 +1002,7 @@ class _ExchangeReceiptContent extends StatelessWidget {
                   align: TextAlign.center,
                 ),
                 SizedBox(height: 16.h),
-                _DetailRow(
-                  '消費済み',
-                  '${formatPoints(exchange!.spentPoints)} pt',
-                ),
+                _DetailRow('消費済み', '${formatPoints(exchange!.spentPoints)} pt'),
                 _DetailRow(
                   '交換日時',
                   formatPointDate(exchange!.requestedAt, withTime: true),
@@ -1098,10 +1090,7 @@ class _PointAuthenticationRequired extends StatelessWidget {
           children: [
             Icon(Icons.lock_outline, size: 48.w, color: BrandColor.main),
             SizedBox(height: 16.h),
-            const CustomTextView(
-              '会員認証が必要です',
-              type: TDSFontType.titleMedium,
-            ),
+            const CustomTextView('会員認証が必要です', type: TDSFontType.titleMedium),
             SizedBox(height: 8.h),
             CustomTextView(
               'ポイント機能を利用するには\n会員情報を認証してください。',
@@ -1109,10 +1098,7 @@ class _PointAuthenticationRequired extends StatelessWidget {
               color: TextColor.secondary,
             ),
             SizedBox(height: 20.h),
-            PointPrimaryButton(
-              label: '会員認証へ',
-              onPressed: onAuthenticate,
-            ),
+            PointPrimaryButton(label: '会員認証へ', onPressed: onAuthenticate),
           ],
         ),
       ),
@@ -1131,35 +1117,35 @@ class _QrResultView extends StatelessWidget {
     if (result == PointQrResult.idle) return const SizedBox.shrink();
     final (icon, title, description, color) = switch (result) {
       PointQrResult.pending => (
-          Icons.sync,
-          'ポイント付与処理中',
-          '画面を閉じずにお待ちください',
-          InfoColor.main,
-        ),
+        Icons.sync,
+        'ポイント付与処理中',
+        '画面を閉じずにお待ちください',
+        InfoColor.main,
+      ),
       PointQrResult.granted => (
-          Icons.check_circle,
-          'ポイントを獲得しました',
-          '+100 pt',
-          SuccessColor.main,
-        ),
+        Icons.check_circle,
+        'ポイントを獲得しました',
+        '+100 pt',
+        SuccessColor.main,
+      ),
       PointQrResult.rejected => (
-          Icons.info_outline,
-          failureCode == 'already_redeemed' ? 'すでに獲得済みです' : '受付できませんでした',
-          'この試合の来場ポイントはすでに付与されています。',
-          WarningColor.main,
-        ),
+        Icons.info_outline,
+        failureCode == 'already_redeemed' ? 'すでに獲得済みです' : '受付できませんでした',
+        'この試合の来場ポイントはすでに付与されています。',
+        WarningColor.main,
+      ),
       PointQrResult.failed => (
-          Icons.error_outline,
-          'ポイント付与に失敗しました',
-          '通信状態を確認して、もう一度お試しください。',
-          DangerColor.main,
-        ),
+        Icons.error_outline,
+        'ポイント付与に失敗しました',
+        '通信状態を確認して、もう一度お試しください。',
+        DangerColor.main,
+      ),
       PointQrResult.awaitingSync => (
-          Icons.cloud_off,
-          '受付済み・反映待ち',
-          '会場端末がオンラインに戻った後に反映されます。',
-          InfoColor.main,
-        ),
+        Icons.cloud_off,
+        '受付済み・反映待ち',
+        '会場端末がオンラインに戻った後に反映されます。',
+        InfoColor.main,
+      ),
       PointQrResult.idle => (Icons.info, '', '', Colors.transparent),
     };
     return Container(

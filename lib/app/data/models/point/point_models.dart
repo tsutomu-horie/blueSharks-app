@@ -5,10 +5,7 @@ enum PointHistoryFilter { all, earned, spent, expired }
 enum PointQrResult { idle, pending, granted, rejected, failed, awaitingSync }
 
 class PointQrResultArguments {
-  const PointQrResultArguments({
-    required this.result,
-    this.failureCode,
-  });
+  const PointQrResultArguments({required this.result, this.failureCode});
 
   final PointQrResult result;
   final String? failureCode;
@@ -23,22 +20,28 @@ class PointAccount {
     required this.balance,
     required this.lifetimeEarned,
     required this.lifetimeSpent,
+    this.exchangeableBalance,
     this.lastTransactionAt,
   });
 
   final int balance;
+  final int? exchangeableBalance;
   final int lifetimeEarned;
   final int lifetimeSpent;
   final DateTime? lastTransactionAt;
 
+  int get exchangeableBalanceForRedemption => exchangeableBalance ?? balance;
+
   PointAccount copyWith({
     int? balance,
+    int? exchangeableBalance,
     int? lifetimeEarned,
     int? lifetimeSpent,
     DateTime? lastTransactionAt,
   }) {
     return PointAccount(
       balance: balance ?? this.balance,
+      exchangeableBalance: exchangeableBalance ?? this.exchangeableBalance,
       lifetimeEarned: lifetimeEarned ?? this.lifetimeEarned,
       lifetimeSpent: lifetimeSpent ?? this.lifetimeSpent,
       lastTransactionAt: lastTransactionAt ?? this.lastTransactionAt,
