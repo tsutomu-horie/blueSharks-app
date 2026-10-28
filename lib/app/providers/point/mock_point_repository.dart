@@ -10,6 +10,7 @@ class MockPointRepository implements PointRepository {
 
   PointAccount _account = PointAccount(
     balance: 1250,
+    exchangeableBalance: 1250,
     lifetimeEarned: 12500,
     lifetimeSpent: 11250,
     lastTransactionAt: DateTime(2026, 7, 27, 10, 24),
@@ -196,13 +197,29 @@ class MockPointRepository implements PointRepository {
       periodName: periodName,
       entries: const [
         PointRankingEntry(
-            customerId: 1, rank: 1, nickname: 'サメ太郎', points: 12500),
+          customerId: 1,
+          rank: 1,
+          nickname: 'サメ太郎',
+          points: 12500,
+        ),
         PointRankingEntry(
-            customerId: 2, rank: 2, nickname: 'BlueFan', points: 11800),
+          customerId: 2,
+          rank: 2,
+          nickname: 'BlueFan',
+          points: 11800,
+        ),
         PointRankingEntry(
-            customerId: 3, rank: 2, nickname: 'KOTO12', points: 11800),
+          customerId: 3,
+          rank: 2,
+          nickname: 'KOTO12',
+          points: 11800,
+        ),
         PointRankingEntry(
-            customerId: 4, rank: 4, nickname: 'RUGBY5', points: 10400),
+          customerId: 4,
+          rank: 4,
+          nickname: 'RUGBY5',
+          points: 10400,
+        ),
       ],
       myEntry: const PointRankingEntry(
         customerId: 128,
@@ -242,7 +259,7 @@ class MockPointRepository implements PointRepository {
     if (reward.status == PointRewardStatus.ended) {
       throw const PointOperationException('reward_ended', 'この景品の受付は終了しました。');
     }
-    if (_account.balance < reward.requiredPoints) {
+    if (_account.exchangeableBalanceForRedemption < reward.requiredPoints) {
       throw const PointOperationException(
         'insufficient_points',
         'ポイントが不足しています。',
@@ -263,8 +280,11 @@ class MockPointRepository implements PointRepository {
       deliveryToken: 'mock-delivery-token',
     );
     final nextBalance = _account.balance - reward.requiredPoints;
+    final nextExchangeableBalance =
+        _account.exchangeableBalanceForRedemption - reward.requiredPoints;
     _account = _account.copyWith(
       balance: nextBalance,
+      exchangeableBalance: nextExchangeableBalance,
       lifetimeSpent: _account.lifetimeSpent + reward.requiredPoints,
       lastTransactionAt: now,
     );

@@ -8,7 +8,7 @@ import 'package:koto_blue_sharks/app/services/auth_token.dart';
 
 class PointController extends GetxController {
   PointController({PointRepository? repository})
-      : repository = repository ?? ApiPointRepository.instance;
+    : repository = repository ?? ApiPointRepository.instance;
 
   final PointRepository repository;
 
@@ -249,8 +249,9 @@ class PointController extends GetxController {
     if (reward.status == PointRewardStatus.ended) {
       return PointRewardStatus.ended;
     }
-    final currentBalance = account.value?.balance ?? 0;
-    return currentBalance >= reward.requiredPoints
+    final exchangeableBalance =
+        account.value?.exchangeableBalanceForRedemption ?? 0;
+    return exchangeableBalance >= reward.requiredPoints
         ? PointRewardStatus.available
         : PointRewardStatus.insufficientPoints;
   }

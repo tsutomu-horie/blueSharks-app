@@ -75,12 +75,14 @@ class PointBalanceCard extends StatelessWidget {
   const PointBalanceCard({
     required this.balance,
     required this.lifetimeEarned,
+    this.label = '利用可能ポイント',
     this.onTapExpiring,
     super.key,
   });
 
   final int balance;
   final int lifetimeEarned;
+  final String label;
   final VoidCallback? onTapExpiring;
 
   @override
@@ -94,8 +96,8 @@ class PointBalanceCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const CustomTextView(
-            '利用可能ポイント',
+          CustomTextView(
+            label,
             color: Colors.white,
             type: TDSFontType.bodyTextSmall,
           ),
@@ -196,9 +198,9 @@ class PointPrimaryButton extends StatelessWidget {
 
 String formatPoints(int value) {
   return value.toString().replaceAllMapped(
-        RegExp(r'(\d)(?=(\d{3})+(?!\d))'),
-        (match) => '${match[1]},',
-      );
+    RegExp(r'(\d)(?=(\d{3})+(?!\d))'),
+    (match) => '${match[1]},',
+  );
 }
 
 String formatPointDate(DateTime value, {bool withTime = false}) {

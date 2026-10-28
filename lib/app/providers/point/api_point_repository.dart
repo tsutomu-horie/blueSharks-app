@@ -16,8 +16,16 @@ class ApiPointRepository extends GetConnect implements PointRepository {
   @override
   Future<PointAccount> getAccount() async {
     final data = _asMap(await _getData('points'));
+    return accountFromResponseData(data);
+  }
+
+  @visibleForTesting
+  PointAccount accountFromResponseData(Map<String, dynamic> data) {
     return PointAccount(
       balance: _asInt(data['balance']),
+      exchangeableBalance: data.containsKey('exchangeable_balance')
+          ? _asInt(data['exchangeable_balance'])
+          : null,
       lifetimeEarned: _asInt(data['lifetime_earned']),
       lifetimeSpent: _asInt(data['lifetime_spent']),
       lastTransactionAt: _asDateTime(data['last_transaction_at']),
@@ -65,9 +73,7 @@ class ApiPointRepository extends GetConnect implements PointRepository {
 
   @override
   Future<List<PointTransaction>> getTransactions() async {
-    final data = _asList(
-      await _getData('points/transactions?per_page=100'),
-    );
+    final data = _asList(await _getData('points/transactions?per_page=100'));
     return data.map((item) => _transactionFromJson(_asMap(item))).toList();
   }
 
@@ -135,22 +141,17 @@ class ApiPointRepository extends GetConnect implements PointRepository {
   }) async {
     final reward = await getReward(rewardId);
     final data = _asMap(
-      await _postData(
-        'points/reward-exchanges',
-        {
-          'offer_id': int.parse(reward.offerId),
-          'idempotency_key': idempotencyKey,
-        },
-      ),
+      await _postData('points/reward-exchanges', {
+        'offer_id': int.parse(reward.offerId),
+        'idempotency_key': idempotencyKey,
+      }),
     );
     return _exchangeFromResponse(data);
   }
 
   @override
   Future<PointRewardExchange> getExchange(String id) async {
-    final exchange = _asMap(
-      await _getData('points/reward-exchanges/$id'),
-    );
+    final exchange = _asMap(await _getData('points/reward-exchanges/$id'));
     if (exchange['status'] != 'consumed') {
       return _exchangeFromJson(exchange);
     }

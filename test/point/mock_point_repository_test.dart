@@ -13,6 +13,7 @@ void main() {
       final account = await repository.getAccount();
 
       expect(account.balance, 1250);
+      expect(account.exchangeableBalanceForRedemption, 1250);
       expect(account.lifetimeEarned, 12500);
       expect(account.lifetimeSpent, 11250);
     });
@@ -59,10 +60,7 @@ void main() {
         lifetimeEarned: 12500,
         lifetimeSpent: 11250,
       );
-      expect(
-        controller.rewardStatusFor(reward),
-        PointRewardStatus.available,
-      );
+      expect(controller.rewardStatusFor(reward), PointRewardStatus.available);
 
       controller.account.value = const PointAccount(
         balance: 250,
@@ -87,12 +85,43 @@ void main() {
 
       expect(exchange.rewardId, 'REWARD-001');
       expect(account.balance, 250);
+      expect(account.exchangeableBalanceForRedemption, 250);
       expect(account.lifetimeEarned, 12500);
       expect(account.lifetimeSpent, 12250);
       expect(transactions.first.type, PointTransactionType.spend);
       expect(transactions.first.amount, -1000);
       expect(transactions.first.balanceAfter, 250);
       expect(transactions.first.exchangeId, exchange.id);
+    });
+
+    test('交換可否は全種別残高ではなく交換可能残高で判定する', () {
+      final controller = PointController(
+        repository: MockPointRepository.instance,
+      );
+      final reward = PointReward(
+        id: 'CAMPAIGN-ONLY-REWARD',
+        offerId: 'CAMPAIGN-ONLY-OFFER',
+        name: 'テスト景品',
+        description: '',
+        requiredPoints: 1,
+        exchangeStartsAt: DateTime(2026),
+        exchangeEndsAt: DateTime(2027),
+        pickupLocation: '',
+        notice: '',
+        status: PointRewardStatus.available,
+      );
+      controller.account.value = const PointAccount(
+        balance: 100,
+        exchangeableBalance: 0,
+        lifetimeEarned: 100,
+        lifetimeSpent: 0,
+      );
+
+      expect(controller.account.value!.balance, 100);
+      expect(
+        controller.rewardStatusFor(reward),
+        PointRewardStatus.insufficientPoints,
+      );
     });
 
     test('同じ冪等キーの交換要求を拒否する', () async {

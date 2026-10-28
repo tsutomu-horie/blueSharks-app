@@ -10,6 +10,8 @@ import 'package:koto_blue_sharks/presentation/point/controllers/point.controller
 class SessionRepository implements PointRepository {
   int balance = 5000;
   int reads = 0;
+  DateTime serverNow = DateTime.utc(2026, 10, 28);
+  PointAccount Function(DateTime now)? accountAt;
   Completer<PointAccount>? pending;
   Completer<PointQrToken>? pendingQr;
 
@@ -17,11 +19,14 @@ class SessionRepository implements PointRepository {
   Future<PointAccount> getAccount() {
     reads++;
     return pending?.future ??
-        Future.value(PointAccount(
-          balance: balance,
-          lifetimeEarned: balance,
-          lifetimeSpent: 0,
-        ));
+        Future.value(
+          accountAt?.call(serverNow) ??
+              PointAccount(
+                balance: balance,
+                lifetimeEarned: balance,
+                lifetimeSpent: 0,
+              ),
+        );
   }
 
   @override
@@ -47,19 +52,19 @@ void main() {
     token = null;
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(storage, (call) async {
-      switch (call.method) {
-        case 'read':
-          return token;
-        case 'write':
-          token = call.arguments['value'] as String;
+          switch (call.method) {
+            case 'read':
+              return token;
+            case 'write':
+              token = call.arguments['value'] as String;
+              return null;
+            case 'delete':
+            case 'deleteAll':
+              token = null;
+              return null;
+          }
           return null;
-        case 'delete':
-        case 'deleteAll':
-          token = null;
-          return null;
-      }
-      return null;
-    });
+        });
     repository = SessionRepository();
     controller = PointController(repository: repository)..onInit();
     await controller.initialize();
@@ -71,15 +76,17 @@ void main() {
         .setMockMethodCallHandler(storage, null);
   });
 
-  test('login refreshes an already initialized anonymous points controller',
-      () async {
-    expect(controller.isAuthenticated.value, false);
-    await AuthToken().saveAccessToken('test-session-a');
-    await drain();
-    expect(controller.isAuthenticated.value, true);
-    expect(controller.account.value?.balance, 5000);
-    expect(repository.reads, 1);
-  });
+  test(
+    'login refreshes an already initialized anonymous points controller',
+    () async {
+      expect(controller.isAuthenticated.value, false);
+      await AuthToken().saveAccessToken('test-session-a');
+      await drain();
+      expect(controller.isAuthenticated.value, true);
+      expect(controller.account.value?.balance, 5000);
+      expect(repository.reads, 1);
+    },
+  );
 
   test('logout immediately clears account and private point data', () async {
     await AuthToken().saveAccessToken('test-session-a');
@@ -90,15 +97,17 @@ void main() {
       maskedMemberId: 'test',
       issuedAt: DateTime(2026),
     );
-    controller.transactions.add(PointTransaction(
-      id: 'old',
-      type: PointTransactionType.grant,
-      title: 'test',
-      amount: 5000,
-      balanceAfter: 5000,
-      occurredAt: DateTime(2026),
-      sourceType: 'test',
-    ));
+    controller.transactions.add(
+      PointTransaction(
+        id: 'old',
+        type: PointTransactionType.grant,
+        title: 'test',
+        amount: 5000,
+        balanceAfter: 5000,
+        occurredAt: DateTime(2026),
+        sourceType: 'test',
+      ),
+    );
     final logout = AuthToken().deleteToken();
     await logout;
     await drain();
@@ -116,34 +125,86 @@ void main() {
     final oldLoad = controller.initialize();
     await AuthToken().deleteToken();
     await drain();
-    repository.pending!.complete(const PointAccount(
-      balance: 5000,
-      lifetimeEarned: 5000,
-      lifetimeSpent: 0,
-    ));
+    repository.pending!.complete(
+      const PointAccount(balance: 5000, lifetimeEarned: 5000, lifetimeSpent: 0),
+    );
     await oldLoad;
     expect(controller.isAuthenticated.value, false);
     expect(controller.account.value, null);
     expect(controller.isLoading.value, false);
   });
 
-  test('account switch ignores old failures and loads the new balance',
-      () async {
-    repository.pending = Completer<PointAccount>();
-    await AuthToken().saveAccessToken('test-session-a');
-    await drain();
-    final oldLoad = controller.initialize();
-    final old = repository.pending!;
-    repository.pending = null;
-    repository.balance = 10;
-    await AuthToken().saveAccessToken('test-session-b');
-    await drain();
-    old.completeError(const PointOperationException('old', 'old failure'));
-    await oldLoad;
-    expect(controller.account.value?.balance, 10);
-    expect(controller.errorMessage.value, null);
-    expect(controller.isLoading.value, false);
-  });
+  test(
+    'account switch ignores old failures and loads the new balance',
+    () async {
+      repository.pending = Completer<PointAccount>();
+      await AuthToken().saveAccessToken('test-session-a');
+      await drain();
+      final oldLoad = controller.initialize();
+      final old = repository.pending!;
+      repository.pending = null;
+      repository.balance = 10;
+      await AuthToken().saveAccessToken('test-session-b');
+      await drain();
+      old.completeError(const PointOperationException('old', 'old failure'));
+      await oldLoad;
+      expect(controller.account.value?.balance, 10);
+      expect(controller.errorMessage.value, null);
+      expect(controller.isLoading.value, false);
+    },
+  );
+
+  test(
+    'refreshed summary drops expired points at the exact boundary',
+    () async {
+      final expiresAt = DateTime.utc(2026, 10, 29);
+      const beforeExpiry = PointAccount(
+        balance: 100,
+        exchangeableBalance: 40,
+        lifetimeEarned: 100,
+        lifetimeSpent: 0,
+      );
+      const atExpiry = PointAccount(
+        balance: 60,
+        exchangeableBalance: 0,
+        lifetimeEarned: 100,
+        lifetimeSpent: 0,
+      );
+      final reward = PointReward(
+        id: 'EXPIRING-REWARD',
+        offerId: 'EXPIRING-OFFER',
+        name: 'テスト景品',
+        description: '',
+        requiredPoints: 1,
+        exchangeStartsAt: DateTime(2026),
+        exchangeEndsAt: DateTime(2027),
+        pickupLocation: '',
+        notice: '',
+        status: PointRewardStatus.available,
+      );
+      repository.accountAt = (now) =>
+          now.isBefore(expiresAt) ? beforeExpiry : atExpiry;
+      repository.serverNow = expiresAt.subtract(
+        const Duration(microseconds: 1),
+      );
+      await AuthToken().saveAccessToken('test-expiry-boundary');
+      await drain();
+
+      expect(controller.account.value?.balance, 100);
+      expect(controller.account.value?.exchangeableBalanceForRedemption, 40);
+      expect(controller.rewardStatusFor(reward), PointRewardStatus.available);
+
+      repository.serverNow = expiresAt;
+      await controller.loadOverview();
+
+      expect(controller.account.value?.balance, 60);
+      expect(controller.account.value?.exchangeableBalanceForRedemption, 0);
+      expect(
+        controller.rewardStatusFor(reward),
+        PointRewardStatus.insufficientPoints,
+      );
+    },
+  );
 
   test('late QR response cannot restore another session QR', () async {
     await AuthToken().saveAccessToken('test-session-a');
@@ -152,11 +213,13 @@ void main() {
     final request = controller.loadQr();
     await AuthToken().deleteToken();
     await drain();
-    repository.pendingQr!.complete(PointQrToken(
-      token: 'test-only-old-qr',
-      maskedMemberId: 'test',
-      issuedAt: DateTime(2026),
-    ));
+    repository.pendingQr!.complete(
+      PointQrToken(
+        token: 'test-only-old-qr',
+        maskedMemberId: 'test',
+        issuedAt: DateTime(2026),
+      ),
+    );
     await request;
     expect(controller.qrToken.value, null);
     expect(controller.isAuthenticated.value, false);
