@@ -921,6 +921,7 @@ class PointExchangeCompleteScreen extends StatelessWidget {
           title: '交換完了',
           exchange: controller.selectedExchange.value,
           closeLabel: '閉じる',
+          showDeliveryQr: false,
           onClose: () => Get.until(
             (route) => route.settings.name == Routes.POINT_TOP,
           ),
@@ -954,6 +955,7 @@ class _PointExchangeReceiptScreenState
     return Obx(() => _ExchangeReceiptContent(
           title: '交換履歴',
           exchange: controller.selectedExchange.value,
+          showDeliveryQr: true,
           onRetry: () => controller.loadExchange(Get.arguments as String),
         ));
   }
@@ -963,6 +965,7 @@ class _ExchangeReceiptContent extends StatelessWidget {
   const _ExchangeReceiptContent({
     required this.title,
     required this.exchange,
+    required this.showDeliveryQr,
     this.closeLabel,
     this.onClose,
     this.onRetry,
@@ -970,6 +973,7 @@ class _ExchangeReceiptContent extends StatelessWidget {
 
   final String title;
   final PointRewardExchange? exchange;
+  final bool showDeliveryQr;
   final String? closeLabel;
   final VoidCallback? onClose;
   final VoidCallback? onRetry;
@@ -1015,7 +1019,7 @@ class _ExchangeReceiptContent extends StatelessWidget {
                 _DetailRow('履歴ID', exchange!.id),
                 if (exchange!.maskedMemberId.isNotEmpty)
                   _DetailRow('会員ID', exchange!.maskedMemberId),
-                if (exchange!.deliveryToken != null) ...[
+                if (showDeliveryQr && exchange!.deliveryToken != null) ...[
                   SizedBox(height: 16.h),
                   Center(
                     child: Container(
