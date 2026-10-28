@@ -56,7 +56,9 @@ class MypageScreen extends GetView<MypageController> {
                                   "",
                               controller.profileData.value
                                   ?.accountId ??
-                                  "");
+                                  "",
+                              qualification: controller
+                                  .profileData.value?.qualification);
                         })
                             : SizedBox(
                             width: 343.w,

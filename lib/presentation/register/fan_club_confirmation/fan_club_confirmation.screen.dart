@@ -73,7 +73,9 @@ class FanClubConfirmationScreen extends GetView<FanClubConfirmationController> {
                               "",
                           controller.profileData.value
                               ?.accountId ??
-                              "");
+                              "",
+                          qualification: controller
+                              .profileData.value?.qualification);
                     })
                         : SizedBox(
                         width: 343.w,

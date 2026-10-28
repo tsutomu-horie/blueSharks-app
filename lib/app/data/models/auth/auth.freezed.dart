@@ -375,6 +375,8 @@ mixin _$UserData {
   String? get customerLevel => throw _privateConstructorUsedError;
   @JsonKey(name: 'is_notification')
   bool? get isNotification => throw _privateConstructorUsedError;
+  @JsonKey(name: 'qualification')
+  MemberQualification? get qualification => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
   @JsonKey(ignore: true)
@@ -400,7 +402,10 @@ abstract class $UserDataCopyWith<$Res> {
       @JsonKey(name: 'kat_first_name') String? katFirstName,
       @JsonKey(name: 'kat_last_name') String? katLastName,
       @JsonKey(name: 'customer_level') String? customerLevel,
-      @JsonKey(name: 'is_notification') bool? isNotification});
+      @JsonKey(name: 'is_notification') bool? isNotification,
+      @JsonKey(name: 'qualification') MemberQualification? qualification});
+
+  $MemberQualificationCopyWith<$Res>? get qualification;
 }
 
 /// @nodoc
@@ -429,6 +434,7 @@ class _$UserDataCopyWithImpl<$Res, $Val extends UserData>
     Object? katLastName = freezed,
     Object? customerLevel = freezed,
     Object? isNotification = freezed,
+    Object? qualification = freezed,
   }) {
     return _then(_value.copyWith(
       accountId: null == accountId
@@ -483,7 +489,23 @@ class _$UserDataCopyWithImpl<$Res, $Val extends UserData>
           ? _value.isNotification
           : isNotification // ignore: cast_nullable_to_non_nullable
               as bool?,
+      qualification: freezed == qualification
+          ? _value.qualification
+          : qualification // ignore: cast_nullable_to_non_nullable
+              as MemberQualification?,
     ) as $Val);
+  }
+
+  @override
+  @pragma('vm:prefer-inline')
+  $MemberQualificationCopyWith<$Res>? get qualification {
+    if (_value.qualification == null) {
+      return null;
+    }
+
+    return $MemberQualificationCopyWith<$Res>(_value.qualification!, (value) {
+      return _then(_value.copyWith(qualification: value) as $Val);
+    });
   }
 }
 
@@ -508,7 +530,11 @@ abstract class _$$UserDataImplCopyWith<$Res>
       @JsonKey(name: 'kat_first_name') String? katFirstName,
       @JsonKey(name: 'kat_last_name') String? katLastName,
       @JsonKey(name: 'customer_level') String? customerLevel,
-      @JsonKey(name: 'is_notification') bool? isNotification});
+      @JsonKey(name: 'is_notification') bool? isNotification,
+      @JsonKey(name: 'qualification') MemberQualification? qualification});
+
+  @override
+  $MemberQualificationCopyWith<$Res>? get qualification;
 }
 
 /// @nodoc
@@ -535,6 +561,7 @@ class __$$UserDataImplCopyWithImpl<$Res>
     Object? katLastName = freezed,
     Object? customerLevel = freezed,
     Object? isNotification = freezed,
+    Object? qualification = freezed,
   }) {
     return _then(_$UserDataImpl(
       accountId: null == accountId
@@ -589,6 +616,10 @@ class __$$UserDataImplCopyWithImpl<$Res>
           ? _value.isNotification
           : isNotification // ignore: cast_nullable_to_non_nullable
               as bool?,
+      qualification: freezed == qualification
+          ? _value.qualification
+          : qualification // ignore: cast_nullable_to_non_nullable
+              as MemberQualification?,
     ));
   }
 }
@@ -609,7 +640,8 @@ class _$UserDataImpl implements _UserData {
       @JsonKey(name: 'kat_first_name') this.katFirstName,
       @JsonKey(name: 'kat_last_name') this.katLastName,
       @JsonKey(name: 'customer_level') this.customerLevel,
-      @JsonKey(name: 'is_notification') this.isNotification});
+      @JsonKey(name: 'is_notification') this.isNotification,
+      @JsonKey(name: 'qualification') this.qualification});
 
   factory _$UserDataImpl.fromJson(Map<String, dynamic> json) =>
       _$$UserDataImplFromJson(json);
@@ -650,10 +682,13 @@ class _$UserDataImpl implements _UserData {
   @override
   @JsonKey(name: 'is_notification')
   final bool? isNotification;
+  @override
+  @JsonKey(name: 'qualification')
+  final MemberQualification? qualification;
 
   @override
   String toString() {
-    return 'UserData(accountId: $accountId, createdAt: $createdAt, email: $email, gender: $gender, id: $id, isVerified: $isVerified, isEitherMatched: $isEitherMatched, kanFirstName: $kanFirstName, kanLastName: $kanLastName, katFirstName: $katFirstName, katLastName: $katLastName, customerLevel: $customerLevel, isNotification: $isNotification)';
+    return 'UserData(accountId: $accountId, createdAt: $createdAt, email: $email, gender: $gender, id: $id, isVerified: $isVerified, isEitherMatched: $isEitherMatched, kanFirstName: $kanFirstName, kanLastName: $kanLastName, katFirstName: $katFirstName, katLastName: $katLastName, customerLevel: $customerLevel, isNotification: $isNotification, qualification: $qualification)';
   }
 
   @override
@@ -683,7 +718,9 @@ class _$UserDataImpl implements _UserData {
             (identical(other.customerLevel, customerLevel) ||
                 other.customerLevel == customerLevel) &&
             (identical(other.isNotification, isNotification) ||
-                other.isNotification == isNotification));
+                other.isNotification == isNotification) &&
+            (identical(other.qualification, qualification) ||
+                other.qualification == qualification));
   }
 
   @JsonKey(ignore: true)
@@ -702,7 +739,8 @@ class _$UserDataImpl implements _UserData {
       katFirstName,
       katLastName,
       customerLevel,
-      isNotification);
+      isNotification,
+      qualification);
 
   @JsonKey(ignore: true)
   @override
@@ -720,20 +758,21 @@ class _$UserDataImpl implements _UserData {
 
 abstract class _UserData implements UserData {
   const factory _UserData(
-          {@JsonKey(name: 'account_id') required final String accountId,
-          @JsonKey(name: 'created_at') required final String createdAt,
-          required final String email,
-          final String? gender,
-          required final int id,
-          @JsonKey(name: 'is_verified') required final bool isVerified,
-          @JsonKey(name: 'is_either_matched') final bool? isEitherMatched,
-          @JsonKey(name: 'kan_first_name') final String? kanFirstName,
-          @JsonKey(name: 'kan_last_name') final String? kanLastName,
-          @JsonKey(name: 'kat_first_name') final String? katFirstName,
-          @JsonKey(name: 'kat_last_name') final String? katLastName,
-          @JsonKey(name: 'customer_level') final String? customerLevel,
-          @JsonKey(name: 'is_notification') final bool? isNotification}) =
-      _$UserDataImpl;
+      {@JsonKey(name: 'account_id') required final String accountId,
+      @JsonKey(name: 'created_at') required final String createdAt,
+      required final String email,
+      final String? gender,
+      required final int id,
+      @JsonKey(name: 'is_verified') required final bool isVerified,
+      @JsonKey(name: 'is_either_matched') final bool? isEitherMatched,
+      @JsonKey(name: 'kan_first_name') final String? kanFirstName,
+      @JsonKey(name: 'kan_last_name') final String? kanLastName,
+      @JsonKey(name: 'kat_first_name') final String? katFirstName,
+      @JsonKey(name: 'kat_last_name') final String? katLastName,
+      @JsonKey(name: 'customer_level') final String? customerLevel,
+      @JsonKey(name: 'is_notification') final bool? isNotification,
+      @JsonKey(name: 'qualification')
+      final MemberQualification? qualification}) = _$UserDataImpl;
 
   factory _UserData.fromJson(Map<String, dynamic> json) =
       _$UserDataImpl.fromJson;
@@ -775,7 +814,199 @@ abstract class _UserData implements UserData {
   @JsonKey(name: 'is_notification')
   bool? get isNotification;
   @override
+  @JsonKey(name: 'qualification')
+  MemberQualification? get qualification;
+  @override
   @JsonKey(ignore: true)
   _$$UserDataImplCopyWith<_$UserDataImpl> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+MemberQualification _$MemberQualificationFromJson(Map<String, dynamic> json) {
+  return _MemberQualification.fromJson(json);
+}
+
+/// @nodoc
+mixin _$MemberQualification {
+  String get status => throw _privateConstructorUsedError;
+  @JsonKey(name: 'valid_from')
+  String? get validFrom => throw _privateConstructorUsedError;
+  @JsonKey(name: 'valid_to')
+  String? get validTo => throw _privateConstructorUsedError;
+
+  Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
+  @JsonKey(ignore: true)
+  $MemberQualificationCopyWith<MemberQualification> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class $MemberQualificationCopyWith<$Res> {
+  factory $MemberQualificationCopyWith(
+          MemberQualification value, $Res Function(MemberQualification) then) =
+      _$MemberQualificationCopyWithImpl<$Res, MemberQualification>;
+  @useResult
+  $Res call(
+      {String status,
+      @JsonKey(name: 'valid_from') String? validFrom,
+      @JsonKey(name: 'valid_to') String? validTo});
+}
+
+/// @nodoc
+class _$MemberQualificationCopyWithImpl<$Res, $Val extends MemberQualification>
+    implements $MemberQualificationCopyWith<$Res> {
+  _$MemberQualificationCopyWithImpl(this._value, this._then);
+
+  // ignore: unused_field
+  final $Val _value;
+  // ignore: unused_field
+  final $Res Function($Val) _then;
+
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? status = null,
+    Object? validFrom = freezed,
+    Object? validTo = freezed,
+  }) {
+    return _then(_value.copyWith(
+      status: null == status
+          ? _value.status
+          : status // ignore: cast_nullable_to_non_nullable
+              as String,
+      validFrom: freezed == validFrom
+          ? _value.validFrom
+          : validFrom // ignore: cast_nullable_to_non_nullable
+              as String?,
+      validTo: freezed == validTo
+          ? _value.validTo
+          : validTo // ignore: cast_nullable_to_non_nullable
+              as String?,
+    ) as $Val);
+  }
+}
+
+/// @nodoc
+abstract class _$$MemberQualificationImplCopyWith<$Res>
+    implements $MemberQualificationCopyWith<$Res> {
+  factory _$$MemberQualificationImplCopyWith(_$MemberQualificationImpl value,
+          $Res Function(_$MemberQualificationImpl) then) =
+      __$$MemberQualificationImplCopyWithImpl<$Res>;
+  @override
+  @useResult
+  $Res call(
+      {String status,
+      @JsonKey(name: 'valid_from') String? validFrom,
+      @JsonKey(name: 'valid_to') String? validTo});
+}
+
+/// @nodoc
+class __$$MemberQualificationImplCopyWithImpl<$Res>
+    extends _$MemberQualificationCopyWithImpl<$Res, _$MemberQualificationImpl>
+    implements _$$MemberQualificationImplCopyWith<$Res> {
+  __$$MemberQualificationImplCopyWithImpl(_$MemberQualificationImpl _value,
+      $Res Function(_$MemberQualificationImpl) _then)
+      : super(_value, _then);
+
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? status = null,
+    Object? validFrom = freezed,
+    Object? validTo = freezed,
+  }) {
+    return _then(_$MemberQualificationImpl(
+      status: null == status
+          ? _value.status
+          : status // ignore: cast_nullable_to_non_nullable
+              as String,
+      validFrom: freezed == validFrom
+          ? _value.validFrom
+          : validFrom // ignore: cast_nullable_to_non_nullable
+              as String?,
+      validTo: freezed == validTo
+          ? _value.validTo
+          : validTo // ignore: cast_nullable_to_non_nullable
+              as String?,
+    ));
+  }
+}
+
+/// @nodoc
+@JsonSerializable()
+class _$MemberQualificationImpl implements _MemberQualification {
+  const _$MemberQualificationImpl(
+      {required this.status,
+      @JsonKey(name: 'valid_from') this.validFrom,
+      @JsonKey(name: 'valid_to') this.validTo});
+
+  factory _$MemberQualificationImpl.fromJson(Map<String, dynamic> json) =>
+      _$$MemberQualificationImplFromJson(json);
+
+  @override
+  final String status;
+  @override
+  @JsonKey(name: 'valid_from')
+  final String? validFrom;
+  @override
+  @JsonKey(name: 'valid_to')
+  final String? validTo;
+
+  @override
+  String toString() {
+    return 'MemberQualification(status: $status, validFrom: $validFrom, validTo: $validTo)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$MemberQualificationImpl &&
+            (identical(other.status, status) || other.status == status) &&
+            (identical(other.validFrom, validFrom) ||
+                other.validFrom == validFrom) &&
+            (identical(other.validTo, validTo) || other.validTo == validTo));
+  }
+
+  @JsonKey(ignore: true)
+  @override
+  int get hashCode => Object.hash(runtimeType, status, validFrom, validTo);
+
+  @JsonKey(ignore: true)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$MemberQualificationImplCopyWith<_$MemberQualificationImpl> get copyWith =>
+      __$$MemberQualificationImplCopyWithImpl<_$MemberQualificationImpl>(
+          this, _$identity);
+
+  @override
+  Map<String, dynamic> toJson() {
+    return _$$MemberQualificationImplToJson(
+      this,
+    );
+  }
+}
+
+abstract class _MemberQualification implements MemberQualification {
+  const factory _MemberQualification(
+          {required final String status,
+          @JsonKey(name: 'valid_from') final String? validFrom,
+          @JsonKey(name: 'valid_to') final String? validTo}) =
+      _$MemberQualificationImpl;
+
+  factory _MemberQualification.fromJson(Map<String, dynamic> json) =
+      _$MemberQualificationImpl.fromJson;
+
+  @override
+  String get status;
+  @override
+  @JsonKey(name: 'valid_from')
+  String? get validFrom;
+  @override
+  @JsonKey(name: 'valid_to')
+  String? get validTo;
+  @override
+  @JsonKey(ignore: true)
+  _$$MemberQualificationImplCopyWith<_$MemberQualificationImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }

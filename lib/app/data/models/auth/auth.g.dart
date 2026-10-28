@@ -48,6 +48,10 @@ _$UserDataImpl _$$UserDataImplFromJson(Map<String, dynamic> json) =>
       katLastName: json['kat_last_name'] as String?,
       customerLevel: json['customer_level'] as String?,
       isNotification: json['is_notification'] as bool?,
+      qualification: json['qualification'] == null
+          ? null
+          : MemberQualification.fromJson(
+              json['qualification'] as Map<String, dynamic>),
     );
 
 Map<String, dynamic> _$$UserDataImplToJson(_$UserDataImpl instance) =>
@@ -65,4 +69,21 @@ Map<String, dynamic> _$$UserDataImplToJson(_$UserDataImpl instance) =>
       'kat_last_name': instance.katLastName,
       'customer_level': instance.customerLevel,
       'is_notification': instance.isNotification,
+      'qualification': instance.qualification,
+    };
+
+_$MemberQualificationImpl _$$MemberQualificationImplFromJson(
+        Map<String, dynamic> json) =>
+    _$MemberQualificationImpl(
+      status: json['status'] as String,
+      validFrom: json['valid_from'] as String?,
+      validTo: json['valid_to'] as String?,
+    );
+
+Map<String, dynamic> _$$MemberQualificationImplToJson(
+        _$MemberQualificationImpl instance) =>
+    <String, dynamic>{
+      'status': instance.status,
+      'valid_from': instance.validFrom,
+      'valid_to': instance.validTo,
     };
