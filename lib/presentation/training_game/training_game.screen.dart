@@ -216,11 +216,7 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
                 if (controller.canRetryPendingSync)
                   TextButton(
                     onPressed: controller.retryPendingSync,
-                    child: Text(status == TrainingSyncStatus.outcomeUnknown
-                        ? controller.pendingSyncActionCount > 0
-                            ? '同じ操作IDで再確認'
-                            : 'サーバー状態を再確認'
-                        : '再試行'),
+                    child: const Text('再試行'),
                   ),
                 if (controller.canDiscardPendingSync &&
                     (status == TrainingSyncStatus.stopped ||
