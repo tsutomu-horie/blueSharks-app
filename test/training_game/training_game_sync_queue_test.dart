@@ -841,54 +841,6 @@ void main() {
     expect(MySharedPref.getTrainingGamePendingActions(), isNull);
   });
 
-  test('同一PlayerとCycleでも初期化後の旧操作は隔離して再送しない', () async {
-    final provider = _RateLimitedTrainingGameProvider(alwaysRateLimited: true);
-    final controller = TrainingGameController(serverProvider: provider);
-    addTearDown(controller.onClose);
-
-    await controller.debugStartAtTraining();
-    controller.setCooldownEnabled(TrainingActionType.clean, false);
-    controller.perform(TrainingActionType.clean);
-    await TrainingGameProvider.waitForPendingSync();
-    expect(controller.pendingSyncActionCount, 1);
-    expect(provider.actionCodes, ['clean', 'clean', 'clean']);
-
-    await controller.resetDebugGame();
-
-    final quarantined = MySharedPref.getTrainingGamePendingActions();
-    expect(quarantined, contains('"quarantined":true'));
-    expect(controller.pendingSyncActionCount, 0);
-    expect(controller.canRetryPendingSync, isFalse);
-    await controller.retryPendingSync();
-    expect(provider.actionCodes, ['clean', 'clean', 'clean']);
-
-    final restored = TrainingGameController(serverProvider: provider);
-    addTearDown(restored.onClose);
-    await restored.retryRestoreServerState();
-    expect(restored.pendingSyncActionCount, 0);
-    expect(restored.canRetryPendingSync, isFalse);
-    expect(provider.actionCodes, ['clean', 'clean', 'clean']);
-  });
-
-  test('429待機中にサーバー初期化された操作は再送前に隔離する', () async {
-    final provider = _RateLimitedTrainingGameProvider(alwaysRateLimited: true);
-    final controller = TrainingGameController(serverProvider: provider);
-    addTearDown(controller.onClose);
-
-    await controller.debugStartAtTraining();
-    controller.setCooldownEnabled(TrainingActionType.clean, false);
-    controller.perform(TrainingActionType.clean);
-    await provider.firstRateLimitObserved.future;
-    await provider.resetDebugState();
-    await TrainingGameProvider.waitForPendingSync();
-
-    expect(provider.actionCodes, ['clean']);
-    expect(controller.pendingSyncActionCount, 0);
-    expect(controller.syncStatusMessage.value, contains('隔離しました'));
-    expect(MySharedPref.getTrainingGamePendingActions(),
-        contains('"quarantined":true'));
-  });
-
   test('lock_versionの409は状態を再取得し、同じ操作IDを保持する', () async {
     final provider = _RateLimitedTrainingGameProvider(
       lockConflictFirstAction: true,
@@ -1177,17 +1129,6 @@ class _RateLimitedTrainingGameProvider extends TrainingGameProvider {
     int? expectedSessionVersion,
   }) async =>
       <String>[];
-
-  @override
-  Future<Map<String, dynamic>> resetDebugState({
-    int? expectedSessionVersion,
-  }) async {
-    _startedAt = _startedAt.add(const Duration(days: 1));
-    _lockVersion = 0;
-    _cleanliness = 20;
-    _processedActionKeys.clear();
-    return _payload();
-  }
 
   @override
   Future<Map<String, dynamic>> sync({

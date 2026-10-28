@@ -63,7 +63,6 @@ void main() {
                       onAdvanceTime: () => callbacks.add('minutes'),
                       onStartEgg: () => callbacks.add('egg'),
                       onStartTraining: () => callbacks.add('training'),
-                      onReset: () => callbacks.add('reset'),
                     ),
                   ),
                   child: const Text('開く'),
@@ -164,7 +163,6 @@ void main() {
   for (final entry in {
     '🥚 段階1（卵）から開始': 'egg',
     '段階3（育成期）から開始': 'training',
-    '初回プレイ状態へ初期化': 'reset'
   }.entries) {
     testWidgets('${entry.key}は対象確認・取消・明示実行を区別する', (tester) async {
       await open(tester);
