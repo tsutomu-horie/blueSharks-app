@@ -522,6 +522,9 @@ class DebugDayProvider extends TrainingGameProvider {
     required String stageCode,
     required Map<String, double> parameters,
     required int lockVersion,
+    int? elapsedSeconds,
+    int? daysInStage,
+    bool? dayCared,
     int? expectedSessionVersion,
   }) async {
     timeSaves++;

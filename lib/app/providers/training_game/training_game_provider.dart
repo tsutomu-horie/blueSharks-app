@@ -110,6 +110,9 @@ class TrainingGameProvider extends GetConnect {
     required String stageCode,
     required Map<String, double> parameters,
     required int lockVersion,
+    int? elapsedSeconds,
+    int? daysInStage,
+    bool? dayCared,
     int? expectedSessionVersion,
   }) async {
     if (!AppEnvironment.showsTrainingDebugUi) {
@@ -124,6 +127,9 @@ class TrainingGameProvider extends GetConnect {
           'stage_code': stageCode,
           'parameters': parameters,
           'lock_version': lockVersion,
+          if (elapsedSeconds != null) 'elapsed_seconds': elapsedSeconds,
+          if (daysInStage != null) 'days_in_stage': daysInStage,
+          if (dayCared != null) 'day_cared': dayCared,
         },
         headers: headers,
       );
@@ -252,6 +258,60 @@ class TrainingGameProvider extends GetConnect {
       return _data(response) ?? <String, dynamic>{};
     });
     // 次の取得が書き込み完了を待てるよう、エラーを吸収したFutureを保持します。
+    _pendingWrite = write.then<void>((_) {}, onError: (_, __) {});
+    return write;
+  }
+
+  /// サーバーが保留した進化演出を確認し、次のオフライン精算を再開します。
+  Future<Map<String, dynamic>> acknowledgeProgressEvent({
+    required String eventId,
+    required int cycleNo,
+    required int lockVersion,
+    int? expectedSessionVersion,
+  }) async {
+    final write = _pendingWrite.then((_) async {
+      final headers = await _headers(expectedSessionVersion);
+      _assertSessionVersion(expectedSessionVersion);
+      final response = await post(
+        'game/progress-event/ack',
+        {
+          'event_id': eventId,
+          'cycle_no': cycleNo,
+          'lock_version': lockVersion,
+        },
+        headers: headers,
+      );
+      return _data(response) ?? <String, dynamic>{};
+    });
+    _pendingWrite = write.then<void>((_) {}, onError: (_, __) {});
+    return write;
+  }
+
+  /// 古いクライアントで保存していた進行日数を初回だけサーバーへ移行します。
+  Future<Map<String, dynamic>> importLegacyProgress({
+    required int cycleNo,
+    required int lockVersion,
+    required String stageCode,
+    required int daysInStage,
+    required bool dayCared,
+    int? expectedSessionVersion,
+  }) async {
+    final write = _pendingWrite.then((_) async {
+      final headers = await _headers(expectedSessionVersion);
+      _assertSessionVersion(expectedSessionVersion);
+      final response = await post(
+        'game/progress/import-legacy',
+        {
+          'cycle_no': cycleNo,
+          'lock_version': lockVersion,
+          'stage_code': stageCode,
+          'days_in_stage': daysInStage,
+          'day_cared': dayCared,
+        },
+        headers: headers,
+      );
+      return _data(response) ?? <String, dynamic>{};
+    });
     _pendingWrite = write.then<void>((_) {}, onError: (_, __) {});
     return write;
   }
