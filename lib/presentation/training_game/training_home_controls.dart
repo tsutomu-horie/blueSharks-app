@@ -52,7 +52,9 @@ class _TrainingHomeMeterState extends State<TrainingHomeMeter>
         widget.delta != 0) {
       _from = widget.value - widget.delta;
       _target = widget.value;
-      _delta = widget.delta;
+      // The meter itself is displayed as a rounded integer, so the animated
+      // change label must describe the same visible difference.
+      _delta = (_target.round() - _from.round()).toDouble();
       _feedback.forward(from: 0);
     } else if (widget.value != oldWidget.value) {
       // 演出中の自然減衰・同期は到達値だけに反映し、演出を再開しません。

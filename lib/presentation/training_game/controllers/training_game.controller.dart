@@ -3374,8 +3374,6 @@ class TrainingGameController extends GetxController
   void perform(TrainingActionType type, {MiniGameResult? miniGameResult}) {
     final before = Map<String, double>.from(meters);
     _performAction(type, miniGameResult: miniGameResult);
-    if (type == TrainingActionType.tackle ||
-        type == TrainingActionType.passAndRun) return;
     final changes = <String, double>{
       for (final entry in meters.entries)
         if ((entry.value - before[entry.key]!).abs() >= .01)

@@ -4,6 +4,7 @@ import 'package:koto_blue_sharks/app/providers/training_game/training_game_provi
 import 'package:koto_blue_sharks/presentation/training_game/controllers/training_game.controller.dart';
 import 'package:koto_blue_sharks/presentation/training_game/models/mini_game_settings.dart';
 import 'package:koto_blue_sharks/presentation/training_game/models/training_game_models.dart';
+import 'package:koto_blue_sharks/presentation/training_game/mini_games/models/mini_game_result.dart';
 import 'package:koto_blue_sharks/utils/my_shared_pref.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -101,6 +102,34 @@ void main() {
     await TrainingGameProvider.waitForPendingSync();
 
     expect(provider.syncedActionCodes, ['training']);
+  });
+
+  test('ミニゲーム結果もホームのパラメーター変動演出へ渡す', () async {
+    final provider = _FirstTeamTransitionProvider(meterValue: 80);
+    Get.routing.args = provider.state('training');
+    final controller = TrainingGameController(
+      serverProvider: provider,
+      writePendingActions: (_) async => true,
+      clearPendingActions: () async => true,
+      archivePendingActions: (_) async => true,
+    );
+    addTearDown(() {
+      controller.onClose();
+      Get.routing.args = null;
+    });
+    controller.onInit();
+    await Future<void>.delayed(Duration.zero);
+    expect(controller.isServerStateReady.value, isTrue);
+
+    controller.completeMiniGame(
+      TrainingActionType.passAndRun,
+      MiniGameResult.passAndRun(outboundScore: 0, inboundScore: 0),
+    );
+
+    expect(controller.careFeedbackVersion.value, 1);
+    expect(controller.careFeedback['仕事'], 2.5);
+    await TrainingGameProvider.waitForPendingSync();
+    expect(provider.syncedActionCodes, ['pass_run']);
   });
 
   test('進化演出中のOS割り込み後も、次へ進むと16倍速の時間が再開する', () {

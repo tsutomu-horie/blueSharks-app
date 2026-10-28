@@ -68,4 +68,15 @@ void main() {
     expect(find.text('110'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets('小数の変動量は表示される整数値どうしの差で表示する', (tester) async {
+    await tester.pumpWidget(host(80.1));
+    await tester.pumpWidget(host(80.7, version: 1, delta: .6));
+    expect(find.text('+1'), findsOneWidget);
+    expect(find.textContaining('.'), findsNothing);
+
+    await tester.pumpWidget(host(80.4, version: 2, delta: -.3));
+    expect(find.textContaining(RegExp(r'[+-]\d+\.\d')), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
 }
