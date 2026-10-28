@@ -1790,55 +1790,6 @@ class TrainingGameController extends GetxController
     super.onClose();
   }
 
-  /// デバッグ用に、サーバー・端末の育成データを初期パラメータ付きで初期化します。
-  Future<Map<String, dynamic>?> resetDebugGame() {
-    if (debugPositionBusy.value || !_ownsSession(_ownedSessionVersion)) {
-      return Future<Map<String, dynamic>?>.value();
-    }
-    // 先行する同期を完了させてから削除し、古い状態の再保存を防ぎます。
-    return TrainingGameProvider.waitForPendingSync()
-        .then((_) => _serverProvider.resetDebugState(
-              expectedSessionVersion: _ownedSessionVersion,
-            ))
-        .then<Map<String, dynamic>?>((initialState) async {
-      if (!_ownsSession(_ownedSessionVersion)) return null;
-      await MySharedPref.clearTrainingGameStartedAt();
-      if (!_ownsSession(_ownedSessionVersion)) return null;
-      await MySharedPref.clearTrainingGameDebugElapsedSeconds();
-      if (!_ownsSession(_ownedSessionVersion)) return null;
-      await MySharedPref.clearTrainingGameLocalState();
-      if (!_ownsSession(_ownedSessionVersion)) return null;
-      final oldActions = <_PendingTrainingAction>[
-        if (_activeSyncAction != null) _activeSyncAction!,
-        ..._queuedActions,
-      ];
-      _queuedActions.clear();
-      _activeSyncAction = null;
-      _syncRequested = false;
-      _syncRequestMayHaveBeenApplied = false;
-      _syncActionInFlight = false;
-      _hasUnknownSyncOutcome = false;
-      _releaseAllPendingActionClaims();
-      // 画面遷移を挟まず、APIが返した初期状態を現在のControllerへ反映します。
-      _resetLocalProgressForNewCycle();
-      _initializeServerState(initialState);
-      try {
-        await _persistPendingActions(quarantineActions: oldActions);
-      } catch (_) {
-        // Old timestamps remain in the journal; restoration will still quarantine them.
-      }
-      if (_queuedActions.isEmpty) {
-        syncStatus.value = TrainingSyncStatus.idle;
-        syncStatusMessage.value =
-            oldActions.isEmpty ? '' : '初期化前の保留操作を隔離しました。新しい状態には再送しません。';
-      }
-      return initialState;
-    }, onError: (_, __) {
-      // 初期化失敗時は現在のゲームを維持し、誤って画面遷移しないようにします。
-      return null;
-    });
-  }
-
   /// 初期化前サイクルのローカル進行状態を破棄します。
   void _resetLocalProgressForNewCycle() {
     // Controllerが再利用された場合や、開始レスポンスに一部パラメータが

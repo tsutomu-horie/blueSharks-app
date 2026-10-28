@@ -1191,25 +1191,8 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
         controller: controller,
         onAdvanceTime: () => unawaited(_showAdvanceTimeDialog(context)),
         onStartEgg: _openDebugEgg,
-        onReset: () => unawaited(_resetDebugGame(context)),
         onStartTraining: () => unawaited(controller.debugStartAtTraining()),
       ),
-    );
-  }
-
-  /// デバッグ対象を初期パラメータで再作成し、現在の育成画面へ反映します。
-  Future<void> _resetDebugGame(BuildContext context) async {
-    final initialState = await controller.resetDebugGame();
-    if (!context.mounted) return;
-    if (initialState == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('初期化に失敗しました。通信状態を確認してください。')),
-      );
-      return;
-    }
-    // Controllerへ初期状態を反映済みのため、同一画面の表示を継続します。
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('初回プレイ状態へ初期化しました。')),
     );
   }
 

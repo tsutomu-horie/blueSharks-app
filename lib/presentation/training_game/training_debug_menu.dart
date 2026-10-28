@@ -11,14 +11,12 @@ class TrainingDebugMenu extends StatelessWidget {
     required this.controller,
     required this.onAdvanceTime,
     required this.onStartEgg,
-    required this.onReset,
     required this.onStartTraining,
   });
 
   final TrainingGameController controller;
   final VoidCallback onAdvanceTime;
   final VoidCallback onStartEgg;
-  final VoidCallback onReset;
   final VoidCallback onStartTraining;
 
   @override
@@ -162,13 +160,6 @@ class TrainingDebugMenu extends StatelessWidget {
                   subtitle: const Text('現在の育成を初期パラメータでやり直します。'),
                   onTap: () => _confirm(context, '育成期から開始',
                       '現在の育成を終了し、育成期の初期パラメータでやり直します。', onStartTraining),
-                ),
-                ListTile(
-                  leading: const Icon(Icons.delete_forever),
-                  title: const Text('初回プレイ状態へ初期化'),
-                  subtitle: const Text('サーバー・端末の育成履歴を削除します。'),
-                  onTap: () => _confirm(context, '初回プレイ状態へ初期化',
-                      'サーバー・端末の現在の育成データと履歴を削除し、初期パラメータで開始します。', onReset),
                 ),
                 ListTile(
                   leading: const Icon(Icons.close),

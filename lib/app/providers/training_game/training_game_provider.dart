@@ -77,16 +77,6 @@ class TrainingGameProvider extends GetConnect {
     return _data(response) ?? <String, dynamic>{};
   }
 
-  /// デバッグ用に、ログイン会員の育成ゲームデータを初回状態へ削除します。
-  Future<Map<String, dynamic>> resetDebugState(
-      {int? expectedSessionVersion}) async {
-    await _pendingWrite;
-    final headers = await _headers(expectedSessionVersion);
-    _assertSessionVersion(expectedSessionVersion);
-    final response = await post('game/debug/reset', null, headers: headers);
-    return _data(response) ?? <String, dynamic>{};
-  }
-
   /// デバッグ用に、現在の育成サイクルの日次アクション利用履歴をリセットします。
   Future<Map<String, dynamic>> resetDebugDailyActionUsage({
     int? expectedSessionVersion,
