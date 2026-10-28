@@ -46,6 +46,7 @@ void main() {
     await TrainingGameProvider.waitForPendingSync();
     await Future<void>.delayed(Duration.zero);
     expect(controller.ended.value, isTrue);
+    expect(controller.endingStep.value, 1);
     expect(controller.clearPosition.value, isNotNull);
     expect(controller.isEndingSyncPending.value, isFalse);
     expect(controller.endingSyncError.value, isEmpty);
@@ -164,7 +165,9 @@ class _PositionProvider extends TrainingGameProvider {
   @override
   Future<Map<String, dynamic>?> fetchCurrent(
           {int? expectedSessionVersion}) async =>
-      statusValue == 'playing' ? state() : null;
+      statusValue == 'playing' || statusValue == 'positive_end'
+          ? state()
+          : null;
   @override
   Future<List<String>> fetchUnlockedPositions(
           {int? expectedSessionVersion}) async =>

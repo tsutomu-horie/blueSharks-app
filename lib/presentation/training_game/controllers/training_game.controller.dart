@@ -2575,8 +2575,10 @@ class TrainingGameController extends GetxController
       return;
     }
     if (status == 'positive_end') {
+      final wasShowingPositiveEnding =
+          ended.value && clearPosition.value != null;
       ended.value = true;
-      endingStep.value = 0;
+      if (!wasShowingPositiveEnding) endingStep.value = 0;
       clearPosition.value =
           _positionNameFromCode(data['position_code']) ?? position;
       endingMessage.value = '育成完了。${clearPosition.value}として図鑑に登録されました。';
