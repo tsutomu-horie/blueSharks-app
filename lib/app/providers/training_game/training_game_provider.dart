@@ -3,6 +3,7 @@ import 'package:koto_blue_sharks/presentation/training_game/mini_games/models/mi
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:koto_blue_sharks/app/services/auth_token.dart';
+import 'package:koto_blue_sharks/app/services/auth_session_manager.dart';
 import 'package:koto_blue_sharks/app/services/server_time_clock.dart';
 import 'package:koto_blue_sharks/utils/constant.dart';
 import 'package:koto_blue_sharks/utils/app_environment.dart';
@@ -28,25 +29,27 @@ class TrainingGameProvider extends GetConnect {
   }
 
   /// 現在の育成状態を取得します。
-  Future<Map<String, dynamic>?> fetchCurrent(
-      {int? expectedSessionVersion}) async {
+  Future<Map<String, dynamic>?> fetchCurrent({
+    int? expectedSessionVersion,
+  }) async {
     // 直前のバックグラウンド保存を待ってから最新状態を取得します。
     await _pendingWrite;
     final headers = await _headers(expectedSessionVersion);
     _assertSessionVersion(expectedSessionVersion);
     final response = await get('game', headers: headers);
-    return _data(response);
+    return _data(response, requestHeaders: headers);
   }
 
   /// DBのクリア履歴から解放済みポジションを取得します。
-  Future<List<String>> fetchUnlockedPositions(
-      {int? expectedSessionVersion}) async {
+  Future<List<String>> fetchUnlockedPositions({
+    int? expectedSessionVersion,
+  }) async {
     // 直前の完了同期を待ち、履歴登録後の一覧を取得します。
     await _pendingWrite;
     final headers = await _headers(expectedSessionVersion);
     _assertSessionVersion(expectedSessionVersion);
     final response = await get('game/clear-history', headers: headers);
-    final data = _data(response);
+    final data = await _data(response, requestHeaders: headers);
     final positions = data?['positions'];
     return positions is List
         ? positions.whereType<String>().toList()
@@ -66,15 +69,15 @@ class TrainingGameProvider extends GetConnect {
     final headers = await _headers(expectedSessionVersion);
     _assertSessionVersion(expectedSessionVersion);
     final response = await post(
-      'game/start',
-      {
-        'stage_code': stageCode,
-        'parameters': parameters,
-        if (forceRestart) 'force_restart': true,
-      },
-      headers: headers,
-    );
-    return _data(response) ?? <String, dynamic>{};
+        'game/start',
+        {
+          'stage_code': stageCode,
+          'parameters': parameters,
+          if (forceRestart) 'force_restart': true,
+        },
+        headers: headers);
+    return await _data(response, requestHeaders: headers) ??
+        <String, dynamic>{};
   }
 
   /// デバッグ用に、現在の育成サイクルの日次アクション利用履歴をリセットします。
@@ -89,7 +92,8 @@ class TrainingGameProvider extends GetConnect {
         null,
         headers: headers,
       );
-      return _data(response) ?? <String, dynamic>{};
+      return await _data(response, requestHeaders: headers) ??
+          <String, dynamic>{};
     });
     _pendingWrite = write.then<void>((_) {}, onError: (_, __) {});
     return write;
@@ -112,31 +116,35 @@ class TrainingGameProvider extends GetConnect {
       final headers = await _headers(expectedSessionVersion);
       _assertSessionVersion(expectedSessionVersion);
       final response = await post(
-        'game/debug/sync-time',
-        {
-          'stage_code': stageCode,
-          'parameters': parameters,
-          'lock_version': lockVersion,
-          if (elapsedSeconds != null) 'elapsed_seconds': elapsedSeconds,
-          if (daysInStage != null) 'days_in_stage': daysInStage,
-          if (dayCared != null) 'day_cared': dayCared,
-        },
-        headers: headers,
-      );
-      return _data(response) ?? <String, dynamic>{};
+          'game/debug/sync-time',
+          {
+            'stage_code': stageCode,
+            'parameters': parameters,
+            'lock_version': lockVersion,
+            if (elapsedSeconds != null) 'elapsed_seconds': elapsedSeconds,
+            if (daysInStage != null) 'days_in_stage': daysInStage,
+            if (dayCared != null) 'day_cared': dayCared,
+          },
+          headers: headers);
+      return await _data(response, requestHeaders: headers) ??
+          <String, dynamic>{};
     });
     _pendingWrite = write.then<void>((_) {}, onError: (_, __) {});
     return write;
   }
 
   /// テスト環境の有効な位置と操作対象を取得します。
-  Future<Map<String, dynamic>> debugPositionOptions(
-      {int? expectedSessionVersion}) async {
+  Future<Map<String, dynamic>> debugPositionOptions({
+    int? expectedSessionVersion,
+  }) async {
     if (!AppEnvironment.showsTrainingDebugUi) throw StateError('通常版では実行できません。');
     await _pendingWrite;
     final headers = await _headers(expectedSessionVersion);
     _assertSessionVersion(expectedSessionVersion);
-    return _data(await get('game/debug/position-options', headers: headers)) ??
+    return await _data(
+          await get('game/debug/position-options', headers: headers),
+          requestHeaders: headers,
+        ) ??
         <String, dynamic>{};
   }
 
@@ -151,7 +159,8 @@ class TrainingGameProvider extends GetConnect {
     final write = _pendingWrite.then((_) async {
       final headers = await _headers(expectedSessionVersion);
       _assertSessionVersion(expectedSessionVersion);
-      return _data(await post(
+      return await _data(
+            await post(
               complete ? 'game/debug/complete' : 'game/debug/position',
               {
                 'confirm': true,
@@ -161,7 +170,10 @@ class TrainingGameProvider extends GetConnect {
                 'expected_started_at': target['started_at'],
                 if (!complete) 'position_code': positionCode,
               },
-              headers: headers)) ??
+              headers: headers,
+            ),
+            requestHeaders: headers,
+          ) ??
           <String, dynamic>{};
     });
     _pendingWrite = write.then<void>((_) {}, onError: (_, __) {});
@@ -215,37 +227,38 @@ class TrainingGameProvider extends GetConnect {
       final headers = await _headers(expectedSessionVersion);
       _assertSessionVersion(expectedSessionVersion);
       final response = await post(
-        'game/sync',
-        {
-          'stage_code': stageCode,
-          'position_code': positionCode,
-          'branch_code': branchCode,
-          'status': status,
-          'lock_version': lockVersion,
-          'parameters': parameters,
-          if (actionCode != null)
-            'action': {
-              'code': actionCode,
-              'idempotency_key': actionIdempotencyKey ??
-                  '$cycleNo-${_clock.elapsedMicroseconds}-$actionCode',
-              'result_code': actionResultCode ?? 'completed',
-              if (hasTackleMetadata) ...{
-                'result_policy': actionResultPolicy,
-                'attempt_count': actionAttemptCount,
-                'success_count': actionSuccessCount,
-                'successful_reaction_total_us': actionSuccessfulReactionTotalUs,
-                if (actionTackleSettings?.snapshotToken != null)
-                  'rule_snapshot_token': actionTackleSettings!.snapshotToken,
+          'game/sync',
+          {
+            'stage_code': stageCode,
+            'position_code': positionCode,
+            'branch_code': branchCode,
+            'status': status,
+            'lock_version': lockVersion,
+            'parameters': parameters,
+            if (actionCode != null)
+              'action': {
+                'code': actionCode,
+                'idempotency_key': actionIdempotencyKey ??
+                    '$cycleNo-${_clock.elapsedMicroseconds}-$actionCode',
+                'result_code': actionResultCode ?? 'completed',
+                if (hasTackleMetadata) ...{
+                  'result_policy': actionResultPolicy,
+                  'attempt_count': actionAttemptCount,
+                  'success_count': actionSuccessCount,
+                  'successful_reaction_total_us':
+                      actionSuccessfulReactionTotalUs,
+                  if (actionTackleSettings?.snapshotToken != null)
+                    'rule_snapshot_token': actionTackleSettings!.snapshotToken,
+                },
+                if (debugBypassCooldown) 'debug_bypass_cooldown': true,
+                if (actionScore != null) 'score': actionScore,
+                if (actionEffectMultiplier != null)
+                  'effect_multiplier': actionEffectMultiplier,
               },
-              if (debugBypassCooldown) 'debug_bypass_cooldown': true,
-              if (actionScore != null) 'score': actionScore,
-              if (actionEffectMultiplier != null)
-                'effect_multiplier': actionEffectMultiplier,
-            },
-        },
-        headers: headers,
-      );
-      return _data(response) ?? <String, dynamic>{};
+          },
+          headers: headers);
+      return await _data(response, requestHeaders: headers) ??
+          <String, dynamic>{};
     });
     // 次の取得が書き込み完了を待てるよう、エラーを吸収したFutureを保持します。
     _pendingWrite = write.then<void>((_) {}, onError: (_, __) {});
@@ -263,15 +276,15 @@ class TrainingGameProvider extends GetConnect {
       final headers = await _headers(expectedSessionVersion);
       _assertSessionVersion(expectedSessionVersion);
       final response = await post(
-        'game/progress-event/ack',
-        {
-          'event_id': eventId,
-          'cycle_no': cycleNo,
-          'lock_version': lockVersion,
-        },
-        headers: headers,
-      );
-      return _data(response) ?? <String, dynamic>{};
+          'game/progress-event/ack',
+          {
+            'event_id': eventId,
+            'cycle_no': cycleNo,
+            'lock_version': lockVersion,
+          },
+          headers: headers);
+      return await _data(response, requestHeaders: headers) ??
+          <String, dynamic>{};
     });
     _pendingWrite = write.then<void>((_) {}, onError: (_, __) {});
     return write;
@@ -290,17 +303,17 @@ class TrainingGameProvider extends GetConnect {
       final headers = await _headers(expectedSessionVersion);
       _assertSessionVersion(expectedSessionVersion);
       final response = await post(
-        'game/progress/import-legacy',
-        {
-          'cycle_no': cycleNo,
-          'lock_version': lockVersion,
-          'stage_code': stageCode,
-          'days_in_stage': daysInStage,
-          'day_cared': dayCared,
-        },
-        headers: headers,
-      );
-      return _data(response) ?? <String, dynamic>{};
+          'game/progress/import-legacy',
+          {
+            'cycle_no': cycleNo,
+            'lock_version': lockVersion,
+            'stage_code': stageCode,
+            'days_in_stage': daysInStage,
+            'day_cared': dayCared,
+          },
+          headers: headers);
+      return await _data(response, requestHeaders: headers) ??
+          <String, dynamic>{};
     });
     _pendingWrite = write.then<void>((_) {}, onError: (_, __) {});
     return write;
@@ -329,10 +342,24 @@ class TrainingGameProvider extends GetConnect {
   }
 
   /// GetConnectのレスポンスをAPIデータへ変換します。
-  Map<String, dynamic>? _data(Response<dynamic> response) {
+  Future<Map<String, dynamic>?> _data(
+    Response<dynamic> response, {
+    required Map<String, String> requestHeaders,
+  }) async {
     if (response.hasError) {
       final body = response.body;
       final message = body is Map ? body['message']?.toString() : null;
+      final requestToken = requestHeaders['Authorization']?.replaceFirst(
+        'Bearer ',
+        '',
+      );
+      if (requestToken != null &&
+          await AuthSessionManager.handleResponse(
+            response,
+            requestToken: requestToken,
+          )) {
+        throw const AuthSessionChangedException();
+      }
       throw TrainingGameApiException(
         statusCode: response.statusCode,
         message: message ?? response.statusText ?? '育成ゲームAPIエラー',
@@ -374,8 +401,10 @@ class TrainingGameProvider extends GetConnect {
     }
 
     try {
-      final retryAt = DateFormat("EEE, dd MMM yyyy HH:mm:ss 'GMT'", 'en_US')
-          .parseUtc(value);
+      final retryAt = DateFormat(
+        "EEE, dd MMM yyyy HH:mm:ss 'GMT'",
+        'en_US',
+      ).parseUtc(value);
       final delay = retryAt.difference((now ?? DateTime.now()).toUtc());
       return delay.isNegative ? Duration.zero : delay;
     } on FormatException {

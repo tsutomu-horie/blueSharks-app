@@ -5,6 +5,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:koto_blue_sharks/app/providers/auth/auth_provider.dart';
+import 'package:koto_blue_sharks/app/services/auth_session_manager.dart';
 import 'package:koto_blue_sharks/firebase_options.dart';
 import 'package:koto_blue_sharks/utils/Constant.dart';
 import 'package:koto_blue_sharks/utils/awesome_notifications_helper.dart';
@@ -22,6 +23,9 @@ class FcmHelper {
   static Future<void>? _initialization;
   static bool _ready = false;
   static bool _sessionListenerAdded = false;
+  static bool _lifecycleObserverAdded = false;
+  static bool _sessionValidationInProgress = false;
+  static final _sessionLifecycleObserver = _SessionLifecycleObserver();
   static final _tokenSync = NotificationTokenSync(
     currentSession: () => AuthToken.sessionVersion,
     readToken: () => messaging.getToken(),
@@ -49,6 +53,10 @@ class FcmHelper {
   }
 
   static Future<void> _initialize() async {
+    if (!_lifecycleObserverAdded) {
+      WidgetsBinding.instance.addObserver(_sessionLifecycleObserver);
+      _lifecycleObserverAdded = true;
+    }
     if (!_sessionListenerAdded) {
       AuthToken.addSessionChangeListener((_) => _tokenSync.cancel());
       _sessionListenerAdded = true;
@@ -117,6 +125,11 @@ class FcmHelper {
 
   //handle fcm notification when app is open
   static Future<void> _fcmForegroundHandler(RemoteMessage message) async {
+    if (message.data['type'] == AuthSessionManager.replacedMessageType) {
+      await _validateCurrentSession();
+      return;
+    }
+
     if (Platform.isAndroid) {
       AwesomeNotificationsHelper.showNotification(
           id: 1,
@@ -126,6 +139,36 @@ class FcmHelper {
           largeIcon: Platform.isAndroid
               ? message.notification?.android?.imageUrl
               : message.notification?.apple?.imageUrl);
+    }
+  }
+
+  static Future<void> _validateCurrentSession() async {
+    if (_sessionValidationInProgress) return;
+    _sessionValidationInProgress = true;
+    try {
+      final snapshot = await AuthToken().readSessionSnapshot();
+      final token = snapshot.token;
+      if (token == null || token.isEmpty) return;
+
+      final response = await AuthProvider().checkCurrentSession(token);
+      await AuthSessionManager.handleResponse(
+        response,
+        requestToken: token,
+      );
+    } catch (_) {
+      // The next authenticated request handles a replaced session if FCM
+      // validation cannot reach the API.
+    } finally {
+      _sessionValidationInProgress = false;
+    }
+  }
+}
+
+class _SessionLifecycleObserver extends WidgetsBindingObserver {
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      unawaited(FcmHelper._validateCurrentSession());
     }
   }
 }
