@@ -116,6 +116,11 @@ void main() {
     await Future<void>.delayed(Duration.zero);
     expect(controller.isServerStateReady.value, isTrue);
 
+    expect(controller.cooldownDuration(TrainingActionType.meal),
+        const Duration(seconds: 18));
+    expect(controller.cooldownDuration(TrainingActionType.clean),
+        const Duration(seconds: 7));
+
     controller.perform(TrainingActionType.meal);
     await TrainingGameProvider.waitForPendingSync();
     final mealRemaining = controller.cooldownRemaining(TrainingActionType.meal);
