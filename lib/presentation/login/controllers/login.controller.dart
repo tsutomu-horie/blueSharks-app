@@ -70,8 +70,7 @@ class LoginController extends GetxController {
             'メールアドレスまたはIDが確認できませんでした。ご登録情報を再度ご確認ください',
             message:
                 'ファンクラブ会員情報の更新には最大12時間かかります。ご登録情報が正しい場合には、しばらくしてから再度会員連携を行ってください。',
-            stateMessage:
-                'ログインできませんでした。入力内容を確認し、時間をおいて再度お試しください。',
+            stateMessage: 'ログインできませんでした。入力内容を確認し、時間をおいて再度お試しください。',
           );
           break;
         case LoginFailureKind.network:

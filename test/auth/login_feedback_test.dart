@@ -69,8 +69,7 @@ Map<String, dynamic> validData({String token = 'mock-session'}) => {
       },
     };
 
-const _rejectedLoginDialogTitle =
-    'メールアドレスまたはIDが確認できませんでした。ご登録情報を再度ご確認ください';
+const _rejectedLoginDialogTitle = 'メールアドレスまたはIDが確認できませんでした。ご登録情報を再度ご確認ください';
 const _rejectedLoginDialogMessage =
     'ファンクラブ会員情報の更新には最大12時間かかります。ご登録情報が正しい場合には、しばらくしてから再度会員連携を行ってください。';
 
