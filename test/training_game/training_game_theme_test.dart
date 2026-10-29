@@ -24,6 +24,17 @@ void main() {
     expect(
         Theme.of(textContext).textTheme.bodyMedium!.fontFamily, 'LINESeedJP');
     expect(DefaultTextStyle.of(textContext).style.fontFamily, 'LINESeedJP');
+    expect(DefaultTextStyle.of(textContext).style.fontWeight, FontWeight.w700);
+    final theme = Theme.of(textContext);
+    for (final style in [
+      theme.textTheme.bodyMedium,
+      theme.textTheme.titleLarge,
+      theme.textTheme.labelLarge,
+      theme.primaryTextTheme.bodyMedium,
+    ]) {
+      expect(style!.fontWeight, FontWeight.w700);
+      expect(style.fontFamily, 'LINESeedJP');
+    }
     expect(MediaQuery.textScalerOf(textContext).scale(14), 21);
     expect(tester.takeException(), isNull);
   });
