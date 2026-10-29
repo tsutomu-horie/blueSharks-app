@@ -58,6 +58,15 @@ void main() {
     await tester.pump();
 
     expect(find.text('TOPICS'), findsOneWidget);
+    expect(tester.widget<Text>(find.text('TOPICS')).style?.color, Colors.white);
+    final topicsContainer = tester.widget<AnimatedContainer>(find.ancestor(
+      of: find.text('TOPICS'),
+      matching: find.byType(AnimatedContainer),
+    ));
+    expect(
+      (topicsContainer.decoration! as BoxDecoration).border!.bottom.color,
+      Colors.white,
+    );
     expect(find.text('GAME INFO'), findsOneWidget);
     expect(find.text('MEMBER'), findsOneWidget);
     expect(find.text('GALLERY'), findsOneWidget);
