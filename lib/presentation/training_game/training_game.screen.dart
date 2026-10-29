@@ -1101,6 +1101,25 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
     );
   }
 
+  /// 筋トレ条件や仕事の案内をタップで閉じられるように表示します。
+  void _showDismissibleMessage(
+    BuildContext context,
+    String message, {
+    bool removeCurrent = false,
+  }) {
+    final messenger = ScaffoldMessenger.of(context)..clearSnackBars();
+    if (removeCurrent) messenger.removeCurrentSnackBar();
+    messenger.showSnackBar(
+      SnackBar(
+        content: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: messenger.hideCurrentSnackBar,
+          child: SizedBox(width: double.infinity, child: Text(message)),
+        ),
+      ),
+    );
+  }
+
   /// お世話は専用画面の完了操作後、ミニゲームはプレイ結果の受領後に反映します。
   Future<void> _handleAction(
     BuildContext context,
@@ -1109,10 +1128,11 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
     if (type == TrainingActionType.squat) {
       final requirementMessage = controller.squatRequirementMessage;
       if (requirementMessage != null) {
-        final messenger = ScaffoldMessenger.of(context)
-          ..clearSnackBars()
-          ..removeCurrentSnackBar();
-        messenger.showSnackBar(SnackBar(content: Text(requirementMessage)));
+        _showDismissibleMessage(
+          context,
+          requirementMessage,
+          removeCurrent: true,
+        );
         return;
       }
     }
@@ -1149,16 +1169,11 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
         return;
       }
       if (!canWork) {
-        final messenger = ScaffoldMessenger.of(context);
-        messenger.clearSnackBars();
-        messenger.showSnackBar(
-          SnackBar(
-            content: Text(
-              controller.workAvailabilityError.value.isNotEmpty
-                  ? controller.workAvailabilityError.value
-                  : '仕事は1日1回までです。',
-            ),
-          ),
+        _showDismissibleMessage(
+          context,
+          controller.workAvailabilityError.value.isNotEmpty
+              ? controller.workAvailabilityError.value
+              : '仕事は1日1回までです。',
         );
         return;
       }

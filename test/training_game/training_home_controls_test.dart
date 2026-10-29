@@ -277,7 +277,7 @@ void main() {
     semantics.dispose();
   });
 
-  testWidgets('筋トレ条件未達ならタップで不足項目を案内し、連打しても実行しない', (tester) async {
+  testWidgets('筋トレ条件未達メッセージはタップで閉じ、連打とスワイプも保つ', (tester) async {
     tester.view.physicalSize = const Size(375, 812);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
@@ -308,11 +308,121 @@ void main() {
 
     expect(find.text(message), findsOneWidget);
     expect(find.byType(TrainingGameCareActionScreen), findsNothing);
+    expect(
+      tester.widget<SnackBar>(find.byType(SnackBar)).duration,
+      const Duration(seconds: 4),
+    );
+
+    // 同じ案内が続けて届いた場合は、最新の1件だけを表示します。
+    final showRequirement = tester.widget<TextButton>(squatButton).onPressed!;
+    showRequirement();
+    await tester.pump();
+    showRequirement();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(find.byType(SnackBar), findsOneWidget);
+    expect(find.text(message), findsOneWidget);
+
     expect(controller.meters['食事'], 49);
     expect(controller.meters['清潔'], 50);
     expect(controller.meters['体調'], 49);
     expect(controller.trainingCount.value, 0);
     expect(controller.actionsToday.value, 0);
+
+    await tester.pump(const Duration(milliseconds: 300));
+    final messageFinder = find.text(message);
+    final messageCenter = tester.getCenter(messageFinder);
+    final messageRect = tester.getRect(messageFinder);
+    final footerRect = tester.getRect(
+      find.byKey(const ValueKey('training-home-footer')),
+    );
+    expect(
+      messageRect.overlaps(footerRect),
+      isTrue,
+      reason: '筋トレ案内は下部のお世話メニューに重なっている: '
+          'message=$messageRect footer=$footerRect',
+    );
+
+    // ダブルタップ中もメッセージを押下対象に保ち、下のメニューへ入力を通しません。
+    await tester.tapAt(messageCenter);
+    await tester.pump();
+    await tester.tapAt(messageCenter);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(find.text(message), findsNothing);
+    expect(find.byType(TrainingGameCareActionScreen), findsNothing);
+    expect(controller.trainingCount.value, 0);
+    expect(controller.actionsToday.value, 0);
+
+    // 続けて表示しても従来どおりスワイプで閉じられます。
+    await tester.tap(squatButton);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(find.text(message), findsOneWidget);
+    await tester.drag(find.text(message), const Offset(0, 400));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(find.text(message), findsNothing);
+
+    // スワイプ後に再表示した案内もタップで閉じられます。
+    await tester.tap(squatButton);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(find.text(message), findsOneWidget);
+    await tester.tap(find.text(message));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(find.text(message), findsNothing);
+    expect(controller.trainingCount.value, 0);
+    expect(controller.actionsToday.value, 0);
+    expect(tester.takeException(), isNull);
+    await tester.pumpWidget(const SizedBox());
+  });
+
+  testWidgets('筋トレ案内をタップで閉じるとフッターから専用画面へ進める', (tester) async {
+    tester.view.physicalSize = const Size(375, 812);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    Get.testMode = true;
+    addTearDown(Get.reset);
+    final controller = HomeControlsFixture()
+      ..stageIndex.value = 1
+      ..isServerStateReady.value = true
+      ..meters['食事'] = 49
+      ..meters['清潔'] = 50
+      ..meters['体調'] = 49;
+    Get.put<TrainingGameController>(controller);
+    await tester.pumpWidget(homeControlsHost());
+    await tester.pump();
+
+    await tester.tap(find.byKey(const ValueKey('training-home-care-squat')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    const message = '食事・体調が50未満です。ごはん・休養で50以上に整えてから筋トレしましょう。';
+    expect(find.text(message), findsOneWidget);
+
+    await tester.tap(find.text(message));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(find.text(message), findsNothing);
+
+    final restButton = find.descendant(
+      of: find.byKey(const ValueKey('training-home-care-rest')),
+      matching: find.byType(TextButton),
+    );
+    await tester.tap(restButton);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    expect(find.byType(TrainingGameCareActionScreen), findsOneWidget);
+    expect(controller.trainingCount.value, 0);
+    expect(controller.actionsToday.value, 0);
+
+    await tester.tap(find.byTooltip('お世話を中止'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+    expect(find.byType(TrainingGameCareActionScreen), findsNothing);
+    expect(find.text(message), findsNothing);
     expect(tester.takeException(), isNull);
     await tester.pumpWidget(const SizedBox());
   });
