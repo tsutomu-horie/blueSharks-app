@@ -20,6 +20,7 @@ Future<void> _openCare(
   TrainingActionType action = TrainingActionType.meal,
   String? body,
   required ValueChanged<bool?> onResult,
+  VoidCallback? onCompletionSound,
 }) async {
   tester.view.physicalSize = const Size(375, 812);
   tester.view.devicePixelRatio = 1;
@@ -36,6 +37,7 @@ Future<void> _openCare(
                 builder: (_) => TrainingGameCareActionScreen(
                   actionType: action,
                   bodyKey: body,
+                  onCompletionSound: onCompletionSound,
                 ),
               )));
             },
@@ -100,8 +102,8 @@ void main() {
         semantics.dispose();
         await tester.pump(const Duration(milliseconds: 10));
         // 補正画像準備の実asyncを排出し、完了画面が表示されるまで待ちます。
-        await tester.runAsync(() =>
-            Future<void>.delayed(const Duration(milliseconds: 50)));
+        await tester.runAsync(
+            () => Future<void>.delayed(const Duration(milliseconds: 50)));
         await tester.pump();
         final done = tester
             .widget<SametarohFrameImage>(find.byType(SametarohFrameImage));
@@ -162,6 +164,28 @@ void main() {
       expect(tester.takeException(), isNull);
     });
   }
+
+  testWidgets('完了フレーム表示時に完了SEを一度だけ要求する', (tester) async {
+    final results = <bool?>[];
+    var soundRequests = 0;
+    await _openCare(
+      tester,
+      onResult: results.add,
+      onCompletionSound: () => soundRequests++,
+    );
+    await tester.tap(find.text('5秒で自動完了します。画面タップでスキップ'));
+    await tester.runAsync(
+      () => Future<void>.delayed(const Duration(milliseconds: 50)),
+    );
+    await tester.pump();
+    expect(find.text('タップして戻る'), findsOneWidget);
+    expect(soundRequests, 1);
+    await tester.pump(const Duration(seconds: 1));
+    expect(soundRequests, 1);
+    await tester.tap(find.text('タップして戻る'));
+    await tester.pumpAndSettle();
+    expect(results, [true]);
+  });
 
   testWidgets('中止後に5秒経過してもホームを閉じず効果を確定しない', (tester) async {
     final results = <bool?>[];

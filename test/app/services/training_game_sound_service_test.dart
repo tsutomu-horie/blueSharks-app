@@ -1,10 +1,13 @@
 import 'dart:async';
 
 import 'package:audio_session/audio_session.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:koto_blue_sharks/app/services/training_game_sound_service.dart';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
   group('mini-game audio session', () {
     test('uses the iOS ambient category', () {
       expect(
@@ -31,12 +34,13 @@ void main() {
   });
 
   group('TrainingGameSoundEffect', () {
-    test('maps the game effects to bundled assets', () {
+    test('maps the game effects to bundled assets', () async {
       expect(TrainingGameSoundEffect.values, [
         TrainingGameSoundEffect.passReceived,
         TrainingGameSoundEffect.passFailed,
         TrainingGameSoundEffect.resultDisplayed,
         TrainingGameSoundEffect.parameterRecovered,
+        TrainingGameSoundEffect.careCompleted,
         TrainingGameSoundEffect.evolutionNormal,
         TrainingGameSoundEffect.evolutionFirstTeam,
         TrainingGameSoundEffect.hatching,
@@ -58,6 +62,7 @@ void main() {
           'assets/audio/training_game/cute-sad1.mp3',
           'assets/audio/training_game/mini-game-result.m4a',
           'assets/audio/training_game/gauge-recovery3.mp3',
+          'assets/audio/training_game/care-completed.mp3',
           'assets/audio/training_game/evolution-normal.m4a',
           'assets/audio/training_game/evolution-first-team.m4a',
           'assets/audio/training_game/hatching-charge.m4a',
@@ -73,6 +78,9 @@ void main() {
           'assets/audio/training_game/sceneswitch1.mp3',
         ],
       );
+      final completionAsset = await rootBundle
+          .load('assets/audio/training_game/care-completed.mp3');
+      expect(completionAsset.lengthInBytes, greaterThan(0));
     });
   });
 

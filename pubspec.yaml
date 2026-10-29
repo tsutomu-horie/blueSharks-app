@@ -116,6 +116,7 @@ flutter:
     - "assets/audio/training_game/mini-game-result.m4a"
     - "assets/audio/training_game/sceneswitch1.mp3"
     - "assets/audio/training_game/gauge-recovery3.mp3"
+    - "assets/audio/training_game/care-completed.mp3"
     - "assets/audio/training_game/evolution-normal.m4a"
     - "assets/audio/training_game/evolution-first-team.m4a"
     - "assets/audio/training_game/hatching-charge.m4a"

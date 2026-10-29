@@ -24,6 +24,9 @@ enum TrainingGameSoundEffect {
   /// お世話でパラメーターが回復した時。
   parameterRecovered,
 
+  /// お世話の完了ポーズを表示した時。
+  careCompleted,
+
   /// 承認済みの進化プレビューと同じ溜め音・お披露目音です。
   evolutionNormal,
   evolutionFirstTeam,
@@ -89,6 +92,10 @@ extension TrainingGameSoundEffectAsset on TrainingGameSoundEffect {
         // 出典: https://soundeffect-lab.info/sound/button/ （ゲージ回復3）
         TrainingGameSoundEffect.parameterRecovered =>
           'assets/audio/training_game/gauge-recovery3.mp3',
+        // 効果音ラボ「決定ボタンを押す37（キラリーン）」。
+        // https://soundeffect-lab.info/sound/button/
+        TrainingGameSoundEffect.careCompleted =>
+          'assets/audio/training_game/care-completed.mp3',
         // パス＆ランは修正前の投球音へ復元。パンチ素振りの頭0.22秒。
         // https://soundeffect-lab.info/sound/battle/
         TrainingGameSoundEffect.passThrown =>

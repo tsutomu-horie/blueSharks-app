@@ -16,6 +16,7 @@ class TrainingGameCareActionScreen extends StatefulWidget {
   const TrainingGameCareActionScreen({
     required this.actionType,
     this.bodyKey,
+    this.onCompletionSound,
     super.key,
   });
 
@@ -24,6 +25,9 @@ class TrainingGameCareActionScreen extends StatefulWidget {
 
   /// 表示専用の体形。未指定・未知値では既存ノーマルを使います。
   final String? bodyKey;
+
+  /// 完了ポーズの表示に合わせて再生するSEです。
+  final VoidCallback? onCompletionSound;
 
   @override
   State<TrainingGameCareActionScreen> createState() =>
@@ -300,20 +304,23 @@ class _TrainingGameCareActionScreenState
   Widget _buildActionSeekBar() {
     return AnimatedBuilder(
       animation: _actionProgressController,
-      builder: (context, _) => Semantics(
+      child: SizedBox(
+        height: 24.h,
+        width: double.infinity,
+        child: RepaintBoundary(
+          child: CustomPaint(
+            painter: _CareActionSeekBarPainter(
+              progress: _actionProgressController,
+            ),
+          ),
+        ),
+      ),
+      builder: (context, child) => Semantics(
         container: true,
         explicitChildNodes: true,
         label: 'お世話の進行状況',
         value: '${(_actionProgressController.value * 100).round()}%',
-        child: SizedBox(
-          height: 24.h,
-          width: double.infinity,
-          child: CustomPaint(
-            painter: _CareActionSeekBarPainter(
-              progress: _actionProgressController.value,
-            ),
-          ),
-        ),
+        child: child,
       ),
     );
   }
@@ -345,14 +352,16 @@ class _TrainingGameCareActionScreenState
     if (!mounted || generation != _completionGeneration) return;
     setState(() => _showCompletionFrame = true);
     _completionEffectController.forward(from: 0);
+    widget.onCompletionSound?.call();
   }
 }
 
 /// 5秒の自動進行を、つまみ付きのシークバーとして表示します。
 class _CareActionSeekBarPainter extends CustomPainter {
-  const _CareActionSeekBarPainter({required this.progress});
+  _CareActionSeekBarPainter({required this.progress})
+      : super(repaint: progress);
 
-  final double progress;
+  final Animation<double> progress;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -361,7 +370,7 @@ class _CareActionSeekBarPainter extends CustomPainter {
     const thumbRadius = 6.0;
     final trackWidth = math.max(0.0, size.width - inset * 2).toDouble();
     final trackTop = (size.height - trackHeight) / 2;
-    final normalizedProgress = progress.clamp(0.0, 1.0).toDouble();
+    final normalizedProgress = progress.value.clamp(0.0, 1.0).toDouble();
     final progressWidth = trackWidth * normalizedProgress;
     final trackRect = RRect.fromRectAndRadius(
       Rect.fromLTWH(inset, trackTop, trackWidth, trackHeight),
