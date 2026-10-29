@@ -229,20 +229,18 @@ class TrainingHomeCareButton extends StatelessWidget {
           child: Stack(
             children: [
               Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      icon,
-                      size: 24,
-                      color: enabled
-                          ? TrainingHomeStyle.navy
-                          : const Color(0xff888888),
-                    ),
-                    const SizedBox(height: 6),
-                    SizedBox(
-                      height: 16,
-                      child: FittedBox(
+                  child: Column(mainAxisSize: MainAxisSize.min, children: [
+                Icon(
+                  icon,
+                  size: 24,
+                  color: enabled
+                      ? TrainingHomeStyle.navy
+                      : const Color(0xff888888),
+                ),
+                const SizedBox(height: 6),
+                SizedBox(
+                    height: 16,
+                    child: FittedBox(
                         fit: BoxFit.scaleDown,
                         child: Text(waiting ? 'あと $time' : label,
                             style: TextStyle(
