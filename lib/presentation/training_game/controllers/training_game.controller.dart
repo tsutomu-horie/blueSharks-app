@@ -2219,6 +2219,9 @@ class TrainingGameController extends GetxController
     )) {
       return false;
     }
+    // 再取得・拒否後の復元では、未確定だった演出を持ち越しません。
+    careFeedbackPending.value = false;
+    careFeedback.clear();
     _syncBlockedUntilServerRestore = false;
     isServerStateReady.value = true;
     _refreshUnlockedPositionsInBackground();
@@ -3190,6 +3193,7 @@ class TrainingGameController extends GetxController
           await _saveLocalGameState();
           return;
         }
+        _confirmCareFeedback();
         _hasUnsyncedLocalState = false;
       }
       // 古いAPIがcooldownsを返さない場合でも、サーバー側の制限を
@@ -3527,20 +3531,40 @@ class TrainingGameController extends GetxController
     };
   }
 
-  /// お世話による実際の増減だけを表示する、永続化しない演出情報です。
+  /// お世話前からサーバー確定値までの増減を表示する、一時的な演出情報です。
   final careFeedback = <String, double>{}.obs;
   final careFeedbackVersion = 0.obs;
+  final careFeedbackStartValues = <String, double>{}.obs;
+  final careFeedbackPending = false.obs;
+  final careFeedbackConfirmedVersion = 0.obs;
+
+  /// 通信待ちの操作をまとめ、表示前の値からサーバー確定値への差を演出します。
+  void _confirmCareFeedback() {
+    if (!careFeedbackPending.value) return;
+    careFeedback.assignAll({
+      for (final entry in meters.entries)
+        if ((entry.value - careFeedbackStartValues[entry.key]!).abs() >= .01)
+          entry.key: entry.value - careFeedbackStartValues[entry.key]!,
+    });
+    careFeedbackPending.value = false;
+    careFeedbackConfirmedVersion.value++;
+  }
 
   /// 指定した行動を実行し、メーターと傾向値を更新します。
   void perform(TrainingActionType type, {MiniGameResult? miniGameResult}) {
     final before = Map<String, double>.from(meters);
+    final revisionBefore = _localStateRevision;
     _performAction(type, miniGameResult: miniGameResult);
     final changes = <String, double>{
       for (final entry in meters.entries)
         if ((entry.value - before[entry.key]!).abs() >= .01)
           entry.key: entry.value - before[entry.key]!,
     };
-    if (changes.isEmpty) return;
+    if (_localStateRevision == revisionBefore) return;
+    if (!careFeedbackPending.value) {
+      careFeedbackStartValues.assignAll(before);
+    }
+    careFeedbackPending.value = true;
     careFeedback.assignAll(changes);
     careFeedbackVersion.value++;
   }
@@ -3660,7 +3684,7 @@ class TrainingGameController extends GetxController
         _changeMeter('清潔', -12);
         _changeMeter('体調', -12);
         _changeMeter('食事', -8);
-        _changeMeter('仕事', 10 * miniGameMultiplier);
+        _changeMeter('仕事', (10 * miniGameMultiplier).roundToDouble());
         break;
       case TrainingActionType.passAndRun:
         _addTrend(
@@ -3682,7 +3706,7 @@ class TrainingGameController extends GetxController
         _changeMeter('清潔', -10);
         _changeMeter('体調', -10);
         _changeMeter('食事', -10);
-        _changeMeter('仕事', 10 * miniGameMultiplier);
+        _changeMeter('仕事', (10 * miniGameMultiplier).roundToDouble());
         break;
       case TrainingActionType.work:
         _addTrend('TECH', 6, '体調', sourceOffset: 10);
@@ -4098,15 +4122,8 @@ class TrainingGameController extends GetxController
     if (effects == null) return false;
     _markLocalStateChanged();
 
-    effects.forEach((name, amount) {
-      if (activeMeters.contains(name)) {
-        if (amount > 0) {
-          meters[name] = (meters[name]! + 25).clamp(0, 100).toDouble();
-        } else {
-          _changeMeter(name, amount);
-        }
-      }
-    });
+    // サーバーは卵・幼少段階でも同じアクションマスタと上下限を適用します。
+    effects.forEach(_changeMeter);
     for (final name in activeMeters) {
       if (meters[name]! > 0) _tutorialZeroSeconds[name] = 0;
     }
