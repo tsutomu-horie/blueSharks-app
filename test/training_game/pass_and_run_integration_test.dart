@@ -430,6 +430,7 @@ void main() {
     await t.pump();
     expect(trail, findsOneWidget);
     await step(t, 15000);
+    await t.pump(const Duration(milliseconds: 1100));
     expect(find.text('メインへ戻る'), findsOneWidget);
     expect(ball, findsNothing);
     // The product retries by reopening from the training menu.
@@ -750,11 +751,11 @@ void main() {
       expect(trail, findsNothing);
     }
     expect(sounds.createdAssetPaths, [
-      'assets/audio/training_game/pass-miss.m4a',
+      'assets/audio/training_game/cute-sad1.mp3',
     ]);
     expect(sounds.playedAssetPaths, [
-      'assets/audio/training_game/pass-miss.m4a',
-      'assets/audio/training_game/pass-miss.m4a',
+      'assets/audio/training_game/cute-sad1.mp3',
+      'assets/audio/training_game/cute-sad1.mp3',
     ]);
     await step(t, 2100);
     await t.flingFrom(t.getCenter(player), const Offset(-100, 0), 2000);
@@ -1404,6 +1405,7 @@ void main() {
     expect(ball, findsOneWidget);
     await step(t, 15100);
     await step(t, 1000);
+    await t.pump(const Duration(milliseconds: 1100));
     expect(find.text('メインへ戻る'), findsOneWidget);
     expect(ball, findsNothing);
     expect(trail, findsNothing);
@@ -1607,7 +1609,7 @@ void main() {
     });
   }
 
-  testWidgets('受球フックは刷新した受球音を再生する', (t) async {
+  testWidgets('受球フックは従来の受球音を再生する', (t) async {
     final sounds = RecordingTrainingGameSound();
     addTearDown(sounds.dispose);
     await start(t, seed: 3, soundService: sounds.service);
@@ -1618,11 +1620,11 @@ void main() {
 
     expect(sounds.createdAssetPaths, [
       'assets/audio/training_game/pass-throw.m4a',
-      'assets/audio/training_game/pass-catch.m4a',
+      'assets/audio/training_game/basket-path1.mp3',
     ]);
     expect(sounds.playedAssetPaths, [
       'assets/audio/training_game/pass-throw.m4a',
-      'assets/audio/training_game/pass-catch.m4a',
+      'assets/audio/training_game/basket-path1.mp3',
     ]);
     for (var i = 0; i < 400 && !visual(t, player).holding; i++) {
       await step(t, 8);
@@ -1639,7 +1641,7 @@ void main() {
     expect(find.byKey(const Key('pass-catch-feedback')), findsNothing);
   });
 
-  testWidgets('失敗フックは刷新したミス音を再生する', (t) async {
+  testWidgets('失敗フックは従来のミス音を再生する', (t) async {
     final sounds = RecordingTrainingGameSound();
     addTearDown(sounds.dispose);
     await start(t, soundService: sounds.service);
@@ -1651,15 +1653,15 @@ void main() {
     expect(find.textContaining('MISS'), findsOneWidget);
     expect(sounds.createdAssetPaths, [
       'assets/audio/training_game/pass-throw.m4a',
-      'assets/audio/training_game/pass-miss.m4a',
+      'assets/audio/training_game/cute-sad1.mp3',
     ]);
     expect(sounds.playedAssetPaths, [
       'assets/audio/training_game/pass-throw.m4a',
-      'assets/audio/training_game/pass-miss.m4a',
+      'assets/audio/training_game/cute-sad1.mp3',
     ]);
   });
 
-  testWidgets('パス＆ラン結果フックは刷新した結果音を再生する', (t) async {
+  testWidgets('パス＆ラン結果フックは従来の結果音を再生する', (t) async {
     final sounds = RecordingTrainingGameSound();
     addTearDown(sounds.dispose);
     const settings = PassRunSettings(
@@ -1671,12 +1673,13 @@ void main() {
     await step(t, 800);
     await step(t, 10100);
 
+    await t.pump(const Duration(milliseconds: 1100));
     expect(find.text('メインへ戻る'), findsOneWidget);
     expect(sounds.createdAssetPaths, [
-      'assets/audio/training_game/mini-game-result.m4a',
+      'assets/audio/training_game/sceneswitch1.mp3',
     ]);
     expect(sounds.playedAssetPaths, [
-      'assets/audio/training_game/mini-game-result.m4a',
+      'assets/audio/training_game/sceneswitch1.mp3',
     ]);
   });
 }

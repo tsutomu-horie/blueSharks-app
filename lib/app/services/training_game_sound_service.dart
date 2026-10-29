@@ -43,6 +43,9 @@ enum TrainingGameSoundEffect {
   homeTapSoft,
   homeTapTouch,
   homeTapHappy,
+
+  /// パス＆ランの結果画面（従来の場面切替音）。
+  passResultDisplayed,
 }
 
 extension TrainingGameSoundEffectAsset on TrainingGameSoundEffect {
@@ -86,17 +89,18 @@ extension TrainingGameSoundEffectAsset on TrainingGameSoundEffect {
         // 出典: https://soundeffect-lab.info/sound/button/ （ゲージ回復3）
         TrainingGameSoundEffect.parameterRecovered =>
           'assets/audio/training_game/gauge-recovery3.mp3',
-        // 効果音ラボ「パンチの素振り3」の頭0.22秒を減音・フェード。
+        // パス＆ランは修正前の投球音へ復元。パンチ素振りの頭0.22秒。
         // https://soundeffect-lab.info/sound/battle/
         TrainingGameSoundEffect.passThrown =>
           'assets/audio/training_game/pass-throw.m4a',
-        // 受球: 決定29（木琴）、失敗: キャンセル6（短いポップ音）。
-        // https://soundeffect-lab.info/sound/button/
+        // パス＆ランは修正前の受球音・ミス音を使用。
         TrainingGameSoundEffect.passReceived =>
-          'assets/audio/training_game/pass-catch.m4a',
+          'assets/audio/training_game/basket-path1.mp3',
         TrainingGameSoundEffect.passFailed =>
-          'assets/audio/training_game/pass-miss.m4a',
-        // 結果: レベルアップ。1.8秒に調整。
+          'assets/audio/training_game/cute-sad1.mp3',
+        TrainingGameSoundEffect.passResultDisplayed =>
+          'assets/audio/training_game/sceneswitch1.mp3',
+        // タックル結果: レベルアップ。1.8秒に調整。
         // https://soundeffect-lab.info/sound/anime/
         TrainingGameSoundEffect.resultDisplayed =>
           'assets/audio/training_game/mini-game-result.m4a',

@@ -49,12 +49,13 @@ void main() {
         TrainingGameSoundEffect.homeTapSoft,
         TrainingGameSoundEffect.homeTapTouch,
         TrainingGameSoundEffect.homeTapHappy,
+        TrainingGameSoundEffect.passResultDisplayed,
       ]);
       expect(
         TrainingGameSoundEffect.values.map((effect) => effect.assetPath),
         [
-          'assets/audio/training_game/pass-catch.m4a',
-          'assets/audio/training_game/pass-miss.m4a',
+          'assets/audio/training_game/basket-path1.mp3',
+          'assets/audio/training_game/cute-sad1.mp3',
           'assets/audio/training_game/mini-game-result.m4a',
           'assets/audio/training_game/gauge-recovery3.mp3',
           'assets/audio/training_game/evolution-normal.m4a',
@@ -69,6 +70,7 @@ void main() {
           'assets/audio/training_game/home-tap-soft.m4a',
           'assets/audio/training_game/home-tap-touch.m4a',
           'assets/audio/training_game/home-tap-happy.m4a',
+          'assets/audio/training_game/sceneswitch1.mp3',
         ],
       );
     });
@@ -111,7 +113,7 @@ void main() {
       await service.play(TrainingGameSoundEffect.passReceived);
 
       expect(createdPaths, [
-        'assets/audio/training_game/pass-catch.m4a',
+        'assets/audio/training_game/basket-path1.mp3',
       ]);
       expect(players.values.single.playCount, 2);
 
