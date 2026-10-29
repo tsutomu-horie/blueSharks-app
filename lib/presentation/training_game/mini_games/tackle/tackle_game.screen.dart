@@ -941,6 +941,13 @@ class _TackleGameScreenState extends State<TackleGameScreen>
   /// 全セットの総合ランクと記録を表示します。
   Widget _buildResultOverlay() {
     final rank = TackleRules.overallRank(_attempts, settings: _settings);
+    final rankColor = switch (rank) {
+      'S' => const Color(0xffffd66b),
+      'A' => const Color(0xffa9dcff),
+      'B' => const Color(0xff9aebc4),
+      'C' => const Color(0xffffcc9c),
+      _ => const Color(0xffd5dbe3),
+    };
     final successCount = TackleRules.successCount(
       _attempts,
       settings: _settings,
@@ -955,14 +962,26 @@ class _TackleGameScreenState extends State<TackleGameScreen>
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           const Text('総合ランク', style: TextStyle(color: Colors.white70)),
-          Text(
-            rank,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 88,
-              fontWeight: FontWeight.w900,
+          const SizedBox(height: 16),
+          Container(
+            width: 132,
+            height: 132,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: rankColor.withValues(alpha: .1),
+              border: Border.all(color: rankColor, width: 3),
+            ),
+            child: Text(
+              rank,
+              style: TextStyle(
+                color: rankColor,
+                fontSize: 88,
+                fontWeight: FontWeight.w900,
+              ),
             ),
           ),
+          const SizedBox(height: 16),
           Text(
             '判定平均 $averageLabel　成功 $successCount/${_settings.setCount}',
             style: const TextStyle(
@@ -1019,7 +1038,9 @@ class _TackleGameScreenState extends State<TackleGameScreen>
                     ? 'GO! 進む方向をタップ'
                     : _phase == _TacklePhase.feint
                         ? '相手の動きを見よう'
-                        : '全${_settings.setCount}セットの反応速度を計測します',
+                        : _phase == _TacklePhase.gameResult
+                            ? '全${_settings.setCount}セットの計測が完了しました'
+                            : '全${_settings.setCount}セットの反応速度を計測します',
             key: _phase == _TacklePhase.input
                 ? const Key('tackle-input-cue')
                 : null,

@@ -286,13 +286,18 @@ void main() {
     );
     await advance(tester, const Duration(milliseconds: 15100));
     expect(find.text('メインへ戻る'), findsOneWidget);
+    expect(find.text('復路'), findsNothing);
+    expect(find.textContaining('残り '), findsNothing);
+    expect(find.textContaining('PASS '), findsNothing);
+    expect(find.text('プレイ完了'), findsNothing);
+    expect(find.byIcon(Icons.stars_rounded), findsOneWidget);
     expect(
       tester.widget<PassAndRunCharacterVisual>(player).facing,
       PassRunFacing.front,
     );
   });
 
-  testWidgets('No.40タックル結果フックはsceneswitch1を再生する', (tester) async {
+  testWidgets('タックル結果フックは刷新した結果音を再生する', (tester) async {
     final sounds = RecordingTrainingGameSound();
     addTearDown(sounds.dispose);
     await tester.pumpWidget(
@@ -318,11 +323,13 @@ void main() {
     await tester.pump();
 
     expect(find.text('総合ランク'), findsOneWidget);
+    expect(find.text('全1セットの計測が完了しました'), findsOneWidget);
+    expect(find.text('全1セットの反応速度を計測します'), findsNothing);
     expect(sounds.createdAssetPaths, [
-      'assets/audio/training_game/sceneswitch1.mp3',
+      'assets/audio/training_game/mini-game-result.m4a',
     ]);
     expect(sounds.playedAssetPaths, [
-      'assets/audio/training_game/sceneswitch1.mp3',
+      'assets/audio/training_game/mini-game-result.m4a',
     ]);
   });
 }

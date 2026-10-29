@@ -1,0 +1,90 @@
+{
+  "provider": "効果音ラボ",
+  "terms": "https://soundeffect-lab.info/agreement/",
+  "sources": {
+    "punch-real-swing3": "https://soundeffect-lab.info/sound/battle/mp3/punch-real-swing3.mp3",
+    "decision29": "https://soundeffect-lab.info/sound/button/mp3/decision29.mp3",
+    "cancel6": "https://soundeffect-lab.info/sound/button/mp3/cancel6.mp3",
+    "levelup1": "https://soundeffect-lab.info/sound/anime/mp3/levelup1.mp3",
+    "punch-light2": "https://soundeffect-lab.info/sound/battle/mp3/punch-light2.mp3",
+    "decision30": "https://soundeffect-lab.info/sound/button/mp3/decision30.mp3",
+    "decision53": "https://soundeffect-lab.info/sound/button/mp3/decision53.mp3",
+    "success1": "https://soundeffect-lab.info/sound/button/mp3/success1.mp3"
+  },
+  "effects": [
+    {
+      "asset": "pass-throw.m4a",
+      "sources": [
+        "punch-real-swing3"
+      ],
+      "duration": 0.22,
+      "gain": 0.65
+    },
+    {
+      "asset": "pass-catch.m4a",
+      "sources": [
+        "decision29"
+      ],
+      "duration": 0.38,
+      "gain": 0.72
+    },
+    {
+      "asset": "pass-miss.m4a",
+      "sources": [
+        "cancel6"
+      ],
+      "duration": 0.48,
+      "gain": 0.65
+    },
+    {
+      "asset": "mini-game-result.m4a",
+      "sources": [
+        "levelup1"
+      ],
+      "duration": 1.8,
+      "gain": 0.78
+    },
+    {
+      "asset": "tackle-miss.m4a",
+      "sources": [
+        "cancel6"
+      ],
+      "duration": 0.48,
+      "gain": 0.65
+    },
+    {
+      "asset": "tackle-ok.m4a",
+      "sources": [
+        "punch-light2",
+        "decision29"
+      ],
+      "duration": 0.42
+    },
+    {
+      "asset": "tackle-good.m4a",
+      "sources": [
+        "punch-light2",
+        "decision30"
+      ],
+      "duration": 0.58
+    },
+    {
+      "asset": "tackle-great.m4a",
+      "sources": [
+        "punch-light2",
+        "decision53"
+      ],
+      "duration": 0.7
+    },
+    {
+      "asset": "tackle-perfect.m4a",
+      "sources": [
+        "punch-light2",
+        "success1"
+      ],
+      "duration": 0.95
+    }
+  ],
+  "processing": "44.1kHz mono AAC 96kbps; loudnorm -20 LUFS/-6 dBTP; fade out; tackle contact + chime delayed 70ms",
+  "playbackVolume": 0.72
+}
