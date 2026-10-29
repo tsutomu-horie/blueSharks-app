@@ -147,7 +147,7 @@ class TrainingDexDialog extends StatelessWidget {
                         ? const Color(0xff1554b0)
                         : const Color(0xff5b6672),
                     fontSize: 12,
-                    fontWeight: unlocked ? FontWeight.w700 : FontWeight.normal,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
               ],

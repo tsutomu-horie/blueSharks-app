@@ -172,7 +172,10 @@ class _TrainingGameCareActionScreenState
         child: Scaffold(
           backgroundColor: Colors.white,
           appBar: AppBar(
-            title: Text('お世話 ｜ ${presentation.title}'),
+            title: Text(
+              'お世話 ｜ ${presentation.title}',
+              style: const TextStyle(fontWeight: FontWeight.w700),
+            ),
             leading: IconButton(
               // 完了演出の準備中は、行動確定前に閉じられないようにします。
               onPressed: _isCompleting && !_showCompletionFrame
@@ -224,14 +227,21 @@ class _TrainingGameCareActionScreenState
                     Text(
                       presentation.description,
                       textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: 14.sp, height: 1.5),
+                      style: TextStyle(
+                        fontSize: 14.sp,
+                        height: 1.5,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                     if (_showCompletionFrame || _isCompleting) ...[
                       SizedBox(height: 12.h),
                       Text(
                         _showCompletionFrame ? 'タップして戻る' : '完了しています…',
                         textAlign: TextAlign.center,
-                        style: TextStyle(fontSize: 14.sp),
+                        style: TextStyle(
+                          fontSize: 14.sp,
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
                     ],
                   ],

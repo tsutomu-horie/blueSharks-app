@@ -215,6 +215,7 @@ class TrainingHomeCareButton extends StatelessWidget {
                             style: TextStyle(
                                 fontFamily: 'LINESeedJP',
                                 fontSize: 12,
+                                fontWeight: FontWeight.w700,
                                 color: waiting || enabled
                                     ? TrainingHomeStyle.navy
                                     : const Color(0xff616161))))),
@@ -244,7 +245,9 @@ class TrainingHomeCareButton extends StatelessWidget {
                     right: 2,
                     child: Text('$trainingCount/15',
                         style: const TextStyle(
-                            fontSize: 12, color: TrainingHomeStyle.navy))),
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            color: TrainingHomeStyle.navy))),
             ],
           ),
         ),
