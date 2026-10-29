@@ -1081,6 +1081,7 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
             controller.stageIndex.value < 1) &&
         !(type == TrainingActionType.work && controller.stageIndex.value < 2);
     return TrainingHomeCareButton(
+      cooldownDuration: controller.cooldownDuration(type),
       key: ValueKey('training-home-care-${type.name}'),
       type: type,
       label: action.label,

@@ -97,7 +97,7 @@ void main() {
             .scene
             .asset,
         endsWith('rest_room_night.png'));
-    await tester.tap(find.text('5秒で自動完了します。画面タップでスキップ'));
+    await tester.tapAt(const Offset(2, 200));
     await tester.runAsync(() async {
       await Future<void>.delayed(const Duration(milliseconds: 100));
     });

@@ -226,16 +226,14 @@ class _TrainingGameCareActionScreenState
                       textAlign: TextAlign.center,
                       style: TextStyle(fontSize: 14.sp, height: 1.5),
                     ),
-                    SizedBox(height: 12.h),
-                    Text(
-                      _showCompletionFrame
-                          ? 'タップして戻る'
-                          : _isCompleting
-                              ? '完了しています…'
-                              : '5秒で自動完了します。画面タップでスキップ',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: 14.sp),
-                    ),
+                    if (_showCompletionFrame || _isCompleting) ...[
+                      SizedBox(height: 12.h),
+                      Text(
+                        _showCompletionFrame ? 'タップして戻る' : '完了しています…',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(fontSize: 14.sp),
+                      ),
+                    ],
                   ],
                 ),
               ),

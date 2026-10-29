@@ -1592,6 +1592,12 @@ class TrainingGameController extends GetxController
     );
   }
 
+  /// バーの100%に対応する、行動別の設定時間を返します。
+  Duration cooldownDuration(TrainingActionType type) {
+    cooldownTick.value;
+    return Duration(seconds: _careCooldownSecondsFor(type));
+  }
+
   /// 画面に表示するクールタイムを返します。
   String cooldownLabel(TrainingActionType type) {
     final seconds = cooldownRemaining(type).inSeconds;

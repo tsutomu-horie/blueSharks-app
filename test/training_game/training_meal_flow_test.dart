@@ -77,7 +77,7 @@ void main() {
       expect(_shownAsset(tester), frames[1].asset);
       await tester.pump(const Duration(milliseconds: 650));
       expect(_shownAsset(tester), frames[0].asset);
-      await tester.tap(find.text('5秒で自動完了します。画面タップでスキップ'));
+      await tester.tapAt(const Offset(2, 200));
       await tester.pump();
       expect(_shownAsset(tester), done.asset);
       await tester.pump(const Duration(milliseconds: 499));
