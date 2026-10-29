@@ -191,7 +191,35 @@ void main() {
     });
   }
 
-  testWidgets('読み上げの操作・待機状態と、長いサーバー期限を保持', (tester) async {
+  testWidgets('30秒設定を100%として残り時間と設定変更を反映する', (tester) async {
+    Future<void> show(int remaining, int configured) =>
+        tester.pumpWidget(MaterialApp(
+          home: Scaffold(
+            body: TrainingHomeCareButton(
+              type: TrainingActionType.meal,
+              label: 'ごはん',
+              remaining: Duration(seconds: remaining),
+              cooldownDuration: Duration(seconds: configured),
+              onPressed: null,
+            ),
+          ),
+        ));
+    double? progress() => tester
+        .widget<LinearProgressIndicator>(find.byType(LinearProgressIndicator))
+        .value;
+    await show(30, 60);
+    expect(progress(), .5);
+    await show(30, 30);
+    expect(progress(), 1);
+    await show(15, 30);
+    expect(progress(), .5);
+    await show(0, 30);
+    expect(find.byType(LinearProgressIndicator), findsNothing);
+    await show(30, 30);
+    expect(progress(), 1);
+  });
+
+  testWidgets('読み上げの操作・待機状態と、設定された待機時間を保持', (tester) async {
     final semantics = tester.ensureSemantics();
 
     var taps = 0;
@@ -204,6 +232,7 @@ void main() {
                   type: TrainingActionType.clean,
                   label: '掃除',
                   remaining: remaining,
+                  cooldownDuration: const Duration(seconds: 120),
                   onPressed: remaining == Duration.zero ? () => taps++ : null,
                 )))));
     await show();
