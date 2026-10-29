@@ -286,6 +286,11 @@ void main() {
     );
     await advance(tester, const Duration(milliseconds: 15100));
     expect(find.text('メインへ戻る'), findsOneWidget);
+    expect(find.text('復路'), findsNothing);
+    expect(find.textContaining('残り '), findsNothing);
+    expect(find.textContaining('PASS '), findsNothing);
+    expect(find.text('プレイ完了'), findsNothing);
+    expect(find.byIcon(Icons.stars_rounded), findsOneWidget);
     expect(
       tester.widget<PassAndRunCharacterVisual>(player).facing,
       PassRunFacing.front,
@@ -318,6 +323,8 @@ void main() {
     await tester.pump();
 
     expect(find.text('総合ランク'), findsOneWidget);
+    expect(find.text('全1セットの計測が完了しました'), findsOneWidget);
+    expect(find.text('全1セットの反応速度を計測します'), findsNothing);
     expect(sounds.createdAssetPaths, [
       'assets/audio/training_game/sceneswitch1.mp3',
     ]);
