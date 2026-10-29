@@ -75,7 +75,8 @@ class TrainingGameProvider extends GetConnect {
       },
       headers: headers,
     );
-    return await _data(response, requestHeaders: headers) ?? <String, dynamic>{};
+    return await _data(response, requestHeaders: headers) ??
+        <String, dynamic>{};
   }
 
   /// デバッグ用に、現在の育成サイクルの日次アクション利用履歴をリセットします。
@@ -90,7 +91,8 @@ class TrainingGameProvider extends GetConnect {
         null,
         headers: headers,
       );
-      return await _data(response, requestHeaders: headers) ?? <String, dynamic>{};
+      return await _data(response, requestHeaders: headers) ??
+          <String, dynamic>{};
     });
     _pendingWrite = write.then<void>((_) {}, onError: (_, __) {});
     return write;
@@ -124,7 +126,8 @@ class TrainingGameProvider extends GetConnect {
         },
         headers: headers,
       );
-      return await _data(response, requestHeaders: headers) ?? <String, dynamic>{};
+      return await _data(response, requestHeaders: headers) ??
+          <String, dynamic>{};
     });
     _pendingWrite = write.then<void>((_) {}, onError: (_, __) {});
     return write;
@@ -138,9 +141,9 @@ class TrainingGameProvider extends GetConnect {
     final headers = await _headers(expectedSessionVersion);
     _assertSessionVersion(expectedSessionVersion);
     return await _data(
-          await get('game/debug/position-options', headers: headers),
-          requestHeaders: headers,
-        ) ??
+      await get('game/debug/position-options', headers: headers),
+      requestHeaders: headers,
+    ) ??
         <String, dynamic>{};
   }
 
@@ -155,7 +158,8 @@ class TrainingGameProvider extends GetConnect {
     final write = _pendingWrite.then((_) async {
       final headers = await _headers(expectedSessionVersion);
       _assertSessionVersion(expectedSessionVersion);
-      return await _data(await post(
+      return await _data(
+            await post(
               complete ? 'game/debug/complete' : 'game/debug/position',
               {
                 'confirm': true,
@@ -165,7 +169,10 @@ class TrainingGameProvider extends GetConnect {
                 'expected_started_at': target['started_at'],
                 if (!complete) 'position_code': positionCode,
               },
-              headers: headers), requestHeaders: headers) ??
+              headers: headers,
+            ),
+            requestHeaders: headers,
+          ) ??
           <String, dynamic>{};
     });
     _pendingWrite = write.then<void>((_) {}, onError: (_, __) {});
@@ -249,7 +256,8 @@ class TrainingGameProvider extends GetConnect {
         },
         headers: headers,
       );
-      return await _data(response, requestHeaders: headers) ?? <String, dynamic>{};
+      return await _data(response, requestHeaders: headers) ??
+          <String, dynamic>{};
     });
     // 次の取得が書き込み完了を待てるよう、エラーを吸収したFutureを保持します。
     _pendingWrite = write.then<void>((_) {}, onError: (_, __) {});
@@ -275,7 +283,8 @@ class TrainingGameProvider extends GetConnect {
         },
         headers: headers,
       );
-      return await _data(response, requestHeaders: headers) ?? <String, dynamic>{};
+      return await _data(response, requestHeaders: headers) ??
+          <String, dynamic>{};
     });
     _pendingWrite = write.then<void>((_) {}, onError: (_, __) {});
     return write;
@@ -304,7 +313,8 @@ class TrainingGameProvider extends GetConnect {
         },
         headers: headers,
       );
-      return await _data(response, requestHeaders: headers) ?? <String, dynamic>{};
+      return await _data(response, requestHeaders: headers) ??
+          <String, dynamic>{};
     });
     _pendingWrite = write.then<void>((_) {}, onError: (_, __) {});
     return write;
