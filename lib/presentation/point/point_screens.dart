@@ -948,7 +948,7 @@ class _PointExchangeReceiptScreenState
       () => _ExchangeReceiptContent(
         title: '交換履歴',
         exchange: controller.selectedExchange.value,
-        showDeliveryQr: true,
+        showDeliveryQr: false,
         onRetry: () => controller.loadExchange(Get.arguments as String),
       ),
     );
