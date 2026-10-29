@@ -881,7 +881,7 @@ class PointExchangeConfirmScreen extends StatelessWidget {
                 margin: EdgeInsets.only(top: 16.h),
                 padding: EdgeInsets.all(16.w),
                 color: WarningColor.surface,
-                child: const CustomTextView(
+                child: CustomTextView(
                   'この景品の交換上限に達しているため、交換できません。',
                   align: TextAlign.center,
                   color: WarningColor.main,
