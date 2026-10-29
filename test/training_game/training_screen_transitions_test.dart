@@ -42,7 +42,7 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
       if (complete) {
-        await tester.tap(find.text('5秒で自動完了します。画面タップでスキップ'));
+        await tester.tapAt(const Offset(2, 200));
         await tester.pump();
         await tester.pump(const Duration(milliseconds: 500));
         await tester.tap(find.text('タップして戻る'));
