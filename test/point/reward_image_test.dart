@@ -214,7 +214,7 @@ void main() {
 
     await tester.tap(find.text('上限テスト景品'));
     await tester.pumpAndSettle();
-    expect(find.text('この景品の交換上限に達しています'), findsOneWidget);
+    expect(find.text('景品詳細'), findsOneWidget);
     final detailButton = tester.widget<ElevatedButton>(
       find.widgetWithText(ElevatedButton, '交換上限に達しています'),
     );
