@@ -79,4 +79,13 @@ void main() {
     expect(find.text('閉じる').hitTestable(), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets('タブレットでも全項目へスクロールできる', (tester) async {
+    await open(tester, size: const Size(834, 1194), scale: 1.5);
+    expect(tester.takeException(), isNull);
+    await tester.scrollUntilVisible(find.text('フルバック'), 250,
+        scrollable: find.byType(Scrollable).last);
+    expect(find.text('閉じる').hitTestable(), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
 }

@@ -99,7 +99,7 @@ class _TrainingHomeMeterState extends State<TrainingHomeMeter>
                     Row(children: [
                       Expanded(
                           child: Text(widget.name,
-                              style: const TextStyle(fontSize: 12))),
+                              style: const TextStyle(fontSize: 14))),
                       if (visible)
                         Padding(
                             padding: const EdgeInsets.only(right: 4),
@@ -109,14 +109,14 @@ class _TrainingHomeMeterState extends State<TrainingHomeMeter>
                                     '${_delta > 0 ? '+' : ''}${_delta.toStringAsFixed(_delta == _delta.roundToDouble() ? 0 : 1)}',
                                     key: ValueKey('meter-delta-${widget.name}'),
                                     style: TextStyle(
-                                        fontSize: 10,
+                                        fontSize: 12,
                                         fontWeight: FontWeight.w700,
                                         color: _delta > 0
                                             ? const Color(0xff16805d)
                                             : const Color(0xffb44235))))),
                       Text('${value.round()}',
                           style: const TextStyle(
-                              fontSize: 12, fontWeight: FontWeight.w700)),
+                              fontSize: 14, fontWeight: FontWeight.w700)),
                     ]),
                     const SizedBox(height: 6),
                     ClipRRect(
@@ -238,7 +238,7 @@ class _TrainingHomeCareButtonState extends State<TrainingHomeCareButton> {
                         child: Text(waiting ? 'あと $time' : widget.label,
                             style: TextStyle(
                                 fontFamily: 'LINESeedJP',
-                                fontSize: waiting ? 10 : 11,
+                                fontSize: 12,
                                 color: waiting || enabled
                                     ? TrainingHomeStyle.navy
                                     : const Color(0xff616161))))),
@@ -266,7 +266,7 @@ class _TrainingHomeCareButtonState extends State<TrainingHomeCareButton> {
                     right: 2,
                     child: Text('${widget.trainingCount}/15',
                         style: const TextStyle(
-                            fontSize: 9, color: TrainingHomeStyle.navy))),
+                            fontSize: 12, color: TrainingHomeStyle.navy))),
             ],
           ),
         ),

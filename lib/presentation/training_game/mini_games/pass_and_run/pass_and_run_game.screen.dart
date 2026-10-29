@@ -12,6 +12,7 @@ import 'pass_and_run_character_visual.dart';
 import 'pass_and_run_catch_feedback.dart';
 import 'pass_and_run_direction_guide.dart';
 import '../../models/training_game_clock.dart';
+import '../../training_game_theme.dart';
 import '../../models/mini_game_settings.dart';
 import 'pass_and_run_logic.dart';
 import 'pass_and_run_sparse_flick.dart';
@@ -1402,21 +1403,23 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
   }
 
   @override
-  Widget build(BuildContext context) => Listener(
-        behavior: HitTestBehavior.translucent,
-        onPointerDown: (event) {
-          if (!_isPaused) _updatePassCycle(_now());
-          final box =
-              _fieldInputKey.currentContext?.findRenderObject() as RenderBox?;
-          final bounds =
-              box == null ? null : box.localToGlobal(Offset.zero) & box.size;
-          _sparseFlick.down(event,
-              fieldBounds: bounds, ready: _acceptsPassInput);
-        },
-        onPointerMove: _sparseFlick.move,
-        onPointerUp: _sparseFlick.up,
-        onPointerCancel: _sparseFlick.cancel,
-        child: _buildGame(context),
+  Widget build(BuildContext context) => TrainingGameTheme(
+        child: Listener(
+          behavior: HitTestBehavior.translucent,
+          onPointerDown: (event) {
+            if (!_isPaused) _updatePassCycle(_now());
+            final box =
+                _fieldInputKey.currentContext?.findRenderObject() as RenderBox?;
+            final bounds =
+                box == null ? null : box.localToGlobal(Offset.zero) & box.size;
+            _sparseFlick.down(event,
+                fieldBounds: bounds, ready: _acceptsPassInput);
+          },
+          onPointerMove: _sparseFlick.move,
+          onPointerUp: _sparseFlick.up,
+          onPointerCancel: _sparseFlick.cancel,
+          child: _buildGame(context),
+        ),
       );
 
   Widget _buildGame(BuildContext context) {
@@ -1492,7 +1495,7 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
         final actorSize = _characterSize;
         final labelScale = math.min(
           1.0,
-          math.max(0.0, _fieldSize.height * .22 - actorSize / 2 - 2) / 16,
+          math.max(0.0, _fieldSize.height * .22 - actorSize / 2 - 2) / 20,
         );
         final ballGeometry = _ballGeometry;
         return GestureDetector(
@@ -1598,7 +1601,7 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
                 ),
                 Positioned(
                   left: player.dx - actorSize / 2,
-                  top: player.dy - actorSize / 2 - 16 * labelScale - 2,
+                  top: player.dy - actorSize / 2 - 20 * labelScale - 2,
                   width: actorSize,
                   child: IgnorePointer(
                     child: Center(
@@ -1616,7 +1619,7 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
                           key: Key('pass-player-label'),
                           textAlign: TextAlign.center,
                           style: TextStyle(
-                            fontSize: 10 * labelScale,
+                            fontSize: 12 * labelScale,
                             height: 1.2,
                             fontWeight: FontWeight.w700,
                             color: Colors.white,

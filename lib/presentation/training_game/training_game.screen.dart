@@ -23,6 +23,7 @@ import 'training_sync_indicator.dart';
 import 'training_debug_menu.dart';
 import 'training_evolution_reveal.dart';
 import 'training_dex_dialog.dart';
+import 'training_game_theme.dart';
 import 'training_screen_transitions.dart';
 
 /// 参照HTMLのスマートフォン画面部分だけをアプリ用に再現します。
@@ -40,88 +41,92 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
 
   @override
   Widget build(BuildContext context) {
-    return Obx(
-      () => PopScope(
-        canPop: !controller.isReturningHome.value,
-        child: Scaffold(
-          backgroundColor: Colors.white,
-          body: SafeArea(
-            child: Obx(() {
-              final shouldShowEvolution =
-                  controller.evolutionStage.value != null &&
-                      (!controller.ended.value ||
-                          controller.clearPosition.value != null);
-              final content = controller.isServerStateReady.value
-                  ? shouldShowEvolution
-                      ? _buildEvolutionFlow()
-                      : controller.ended.value
-                          ? _buildEndingFlow(context)
-                          : Column(
-                              children: [
-                                Expanded(
-                                  child: Stack(
-                                    children: [
-                                      const Positioned.fill(
-                                        child: TrainingHomeBackground(),
-                                      ),
-                                      Column(
-                                        children: [
-                                          if (controller.syncStatusMessage.value
-                                                  .isNotEmpty &&
-                                              controller.syncStatus.value !=
-                                                  TrainingSyncStatus.syncing)
-                                            _buildSyncStatusBanner(context),
-                                          _buildHud(context),
-                                          Expanded(child: _buildRoom(context)),
-                                        ],
-                                      ),
-                                    ],
+    return TrainingGameTheme(
+      child: Obx(
+        () => PopScope(
+          canPop: !controller.isReturningHome.value,
+          child: Scaffold(
+            backgroundColor: Colors.white,
+            body: SafeArea(
+              child: Obx(() {
+                final shouldShowEvolution =
+                    controller.evolutionStage.value != null &&
+                        (!controller.ended.value ||
+                            controller.clearPosition.value != null);
+                final content = controller.isServerStateReady.value
+                    ? shouldShowEvolution
+                        ? _buildEvolutionFlow()
+                        : controller.ended.value
+                            ? _buildEndingFlow(context)
+                            : Column(
+                                children: [
+                                  Expanded(
+                                    child: Stack(
+                                      children: [
+                                        const Positioned.fill(
+                                          child: TrainingHomeBackground(),
+                                        ),
+                                        Column(
+                                          children: [
+                                            if (controller.syncStatusMessage
+                                                    .value.isNotEmpty &&
+                                                controller.syncStatus.value !=
+                                                    TrainingSyncStatus.syncing)
+                                              _buildSyncStatusBanner(context),
+                                            _buildHud(context),
+                                            Expanded(
+                                                child: _buildRoom(context)),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
                                   ),
-                                ),
-                                _buildCareBar(context),
-                              ],
-                            )
-                  : controller.serverErrorMessage.value.isEmpty
-                      ? const Center(child: CircularProgressIndicator())
-                      : _buildConnectionError();
-              final pageKey = !controller.isServerStateReady.value
-                  ? 'connection'
-                  : shouldShowEvolution
-                      ? 'evolution-${controller.evolutionStage.value}'
-                      : controller.ended.value
-                          ? 'ending-${controller.endingStep.value}'
-                          : 'home';
-              final reduceMotion = MediaQuery.disableAnimationsOf(context);
-              return Stack(
-                children: [
-                  AnimatedSwitcher(
-                    duration: reduceMotion
-                        ? Duration.zero
-                        : const Duration(milliseconds: 300),
-                    switchInCurve: Curves.easeOutCubic,
-                    switchOutCurve: Curves.easeInCubic,
-                    transitionBuilder: (child, animation) => FadeTransition(
-                      opacity: animation,
-                      child: AnimatedBuilder(
-                        animation: animation,
-                        child: child,
-                        builder: (context, child) {
-                          final leaving =
-                              animation.status == AnimationStatus.reverse;
-                          return IgnorePointer(
-                              ignoring: leaving,
-                              child: ExcludeSemantics(
-                                  excluding: leaving, child: child!));
-                        },
+                                  _buildCareBar(context),
+                                ],
+                              )
+                    : controller.serverErrorMessage.value.isEmpty
+                        ? const Center(child: CircularProgressIndicator())
+                        : _buildConnectionError();
+                final pageKey = !controller.isServerStateReady.value
+                    ? 'connection'
+                    : shouldShowEvolution
+                        ? 'evolution-${controller.evolutionStage.value}'
+                        : controller.ended.value
+                            ? 'ending-${controller.endingStep.value}'
+                            : 'home';
+                final reduceMotion = MediaQuery.disableAnimationsOf(context);
+                return Stack(
+                  children: [
+                    AnimatedSwitcher(
+                      duration: reduceMotion
+                          ? Duration.zero
+                          : const Duration(milliseconds: 300),
+                      switchInCurve: Curves.easeOutCubic,
+                      switchOutCurve: Curves.easeInCubic,
+                      transitionBuilder: (child, animation) => FadeTransition(
+                        opacity: animation,
+                        child: AnimatedBuilder(
+                          animation: animation,
+                          child: child,
+                          builder: (context, child) {
+                            final leaving =
+                                animation.status == AnimationStatus.reverse;
+                            return IgnorePointer(
+                                ignoring: leaving,
+                                child: ExcludeSemantics(
+                                    excluding: leaving, child: child!));
+                          },
+                        ),
                       ),
+                      child:
+                          KeyedSubtree(key: ValueKey(pageKey), child: content),
                     ),
-                    child: KeyedSubtree(key: ValueKey(pageKey), child: content),
-                  ),
-                  if (controller.isReturningHome.value)
-                    _buildReturningHomeOverlay(),
-                ],
-              );
-            }),
+                    if (controller.isReturningHome.value)
+                      _buildReturningHomeOverlay(),
+                  ],
+                );
+              }),
+            ),
           ),
         ),
       ),
@@ -497,7 +502,7 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
                   style: TextStyle(
                     color: TrainingHomeStyle.navy,
                     fontFamily: 'LINESeedJP',
-                    fontSize: 13.sp,
+                    fontSize: 14.sp,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
@@ -582,7 +587,7 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
                                   style: TextStyle(
                                     color: TrainingHomeStyle.navy,
                                     fontFamily: 'LINESeedJP',
-                                    fontSize: 11.sp,
+                                    fontSize: 12.sp,
                                     fontWeight: FontWeight.w700,
                                   ),
                                 ),
@@ -776,6 +781,9 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
                 childAspectRatio: 2.7,
+                mainAxisExtent: MediaQuery.textScalerOf(context).scale(14) > 14
+                    ? MediaQuery.textScalerOf(context).scale(14) * 3 + 12
+                    : null,
                 crossAxisSpacing: 20,
                 mainAxisSpacing: 8,
                 padding: EdgeInsets.zero,
