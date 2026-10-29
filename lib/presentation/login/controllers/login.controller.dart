@@ -68,7 +68,10 @@ class LoginController extends GetxController {
           _showLoginError(
             context,
             'メールアドレスまたはIDが確認できませんでした。ご登録情報を再度ご確認ください',
-            'ファンクラブ会員情報の更新には最大12時間かかります。ご登録情報が正しい場合には、しばらくしてから再度会員連携を行ってください。',
+            message:
+                'ファンクラブ会員情報の更新には最大12時間かかります。ご登録情報が正しい場合には、しばらくしてから再度会員連携を行ってください。',
+            stateMessage:
+                'ログインできませんでした。入力内容を確認し、時間をおいて再度お試しください。',
           );
           break;
         case LoginFailureKind.network:
@@ -100,8 +103,13 @@ class LoginController extends GetxController {
     }
   }
 
-  void _showLoginError(BuildContext context, String title, [String? message]) {
-    loginErrorMessage.value = title;
+  void _showLoginError(
+    BuildContext context,
+    String title, {
+    String? message,
+    String? stateMessage,
+  }) {
+    loginErrorMessage.value = stateMessage ?? title;
     if (!_disposed && context.mounted) {
       Utils.showError(context, title, message);
     }
