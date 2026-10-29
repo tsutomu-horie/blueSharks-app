@@ -772,7 +772,11 @@ class _PointRewardDetailScreenState extends State<PointRewardDetailScreen> {
                 child: Padding(
                   padding: EdgeInsets.all(16.w),
                   child: PointPrimaryButton(
-                    label: enabled ? 'この景品と交換する' : '交換できません',
+                    label: status == PointRewardStatus.customerLimitReached
+                        ? '交換上限に達しています'
+                        : enabled
+                            ? 'この景品と交換する'
+                            : '交換できません',
                     enabled: enabled,
                     onPressed: () => Get.toNamed(Routes.POINT_EXCHANGE_CONFIRM),
                   ),
@@ -819,7 +823,9 @@ class _PointRewardDetailScreenState extends State<PointRewardDetailScreen> {
                       child: CustomTextView(
                         status == PointRewardStatus.ended
                             ? '受付は終了しました'
-                            : 'ポイントが不足しています\n必要 ${formatPoints(reward.requiredPoints)} pt／交換可能 ${formatPoints(account.exchangeableBalanceForRedemption)} pt',
+                            : status == PointRewardStatus.customerLimitReached
+                                ? 'この景品の交換上限に達しています'
+                                : 'ポイントが不足しています\n必要 ${formatPoints(reward.requiredPoints)} pt／交換可能 ${formatPoints(account.exchangeableBalanceForRedemption)} pt',
                         align: TextAlign.center,
                         color: WarningColor.main,
                       ),
@@ -846,6 +852,10 @@ class PointExchangeConfirmScreen extends StatelessWidget {
           child: Center(child: CircularProgressIndicator()),
         );
       }
+      final status = controller.rewardStatusFor(reward);
+      final enabled =
+          status == PointRewardStatus.available &&
+          !controller.isProcessing.value;
       return PointScaffold(
         title: '交換確認',
         child: ListView(
@@ -867,14 +877,37 @@ class PointExchangeConfirmScreen extends StatelessWidget {
                 align: TextAlign.center,
               ),
             ),
+            if (status == PointRewardStatus.customerLimitReached)
+              Container(
+                margin: EdgeInsets.only(top: 16.h),
+                padding: EdgeInsets.all(16.w),
+                color: WarningColor.surface,
+                child: const CustomTextView(
+                  'この景品の交換上限に達しているため、交換できません。',
+                  align: TextAlign.center,
+                  color: WarningColor.main,
+                ),
+              ),
             SizedBox(height: 24.h),
             PointPrimaryButton(
-              label: 'ポイントを消費して交換',
+              label: controller.isProcessing.value
+                  ? '交換処理中'
+                  : status == PointRewardStatus.customerLimitReached
+                      ? '交換上限に達しています'
+                      : 'ポイントを消費して交換',
+              enabled: enabled,
               onPressed: () async {
+                if (!enabled ||
+                    controller.isProcessing.value ||
+                    controller.rewardStatusFor(reward) !=
+                        PointRewardStatus.available) {
+                  return;
+                }
                 final succeeded = await controller.exchangeSelectedReward();
                 if (succeeded) {
                   Get.offNamed(Routes.POINT_EXCHANGE_COMPLETE);
                 } else {
+                  Get.closeCurrentSnackbar();
                   Get.snackbar(
                     '交換できませんでした',
                     controller.errorMessage.value ?? 'もう一度お試しください。',
@@ -1259,6 +1292,7 @@ String _rewardStatusLabel(PointRewardStatus status) {
     PointRewardStatus.available => '交換可能',
     PointRewardStatus.insufficientPoints => 'ポイント不足',
     PointRewardStatus.ended => '受付終了',
+    PointRewardStatus.customerLimitReached => '交換上限に達しています',
   };
 }
 
@@ -1276,5 +1310,6 @@ Color _rewardStatusColor(PointRewardStatus status) {
     PointRewardStatus.available => SuccessColor.main,
     PointRewardStatus.insufficientPoints => WarningColor.main,
     PointRewardStatus.ended => TextColor.disabled,
+    PointRewardStatus.customerLimitReached => WarningColor.main,
   };
 }

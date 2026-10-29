@@ -53,6 +53,26 @@ void main() {
     expect(reward.imageUrl, url);
   });
 
+  test('marks a reward unavailable when the API reports the customer limit', () {
+    final reward = ApiPointRepository.instance.rewardFromJson({
+      'id': 1,
+      'name': '上限テスト景品',
+      'required_points': 10,
+      'offers': [
+        {
+          'id': 11,
+          'per_customer_limit': 1,
+          'customer_exchange_count': 1,
+        }
+      ],
+      'images': [],
+    });
+
+    expect(reward.perCustomerLimit, 1);
+    expect(reward.customerExchangeCount, 1);
+    expect(reward.status, PointRewardStatus.customerLimitReached);
+  });
+
   for (final images in [
     null,
     [],
@@ -167,12 +187,79 @@ void main() {
       debugNetworkImageHttpClientProvider = null;
     }
   });
+
+  testWidgets('customer limit appears unavailable in list and detail',
+      (tester) async {
+    final reward = ApiPointRepository.instance.rewardFromJson({
+      'id': 1,
+      'name': '上限テスト景品',
+      'required_points': 10,
+      'offers': [
+        {
+          'id': 11,
+          'per_customer_limit': 1,
+          'customer_exchange_count': 1,
+        }
+      ],
+      'images': [],
+    });
+    Get.put<PointController>(_ImageController(reward));
+
+    await tester.pumpWidget(_app());
+    await tester.pumpAndSettle();
+    expect(find.text('交換上限に達しています'), findsOneWidget);
+
+    await tester.tap(find.text('上限テスト景品'));
+    await tester.pumpAndSettle();
+    expect(find.text('この景品の交換上限に達しています'), findsOneWidget);
+    final detailButton = tester.widget<ElevatedButton>(
+      find.widgetWithText(ElevatedButton, '交換上限に達しています'),
+    );
+    expect(detailButton.onPressed, isNull);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('customer limit disables the confirmation action', (tester) async {
+    final reward = ApiPointRepository.instance.rewardFromJson({
+      'id': 1,
+      'name': '上限テスト景品',
+      'required_points': 10,
+      'offers': [
+        {
+          'id': 11,
+          'per_customer_limit': 1,
+          'customer_exchange_count': 1,
+        }
+      ],
+      'images': [],
+    });
+    final controller = _ImageController(reward)
+      ..selectedReward.value = reward
+      ..account.value = const PointAccount(
+        balance: 100,
+        lifetimeEarned: 100,
+        lifetimeSpent: 0,
+      );
+    Get.put<PointController>(controller);
+
+    await tester.pumpWidget(
+      _app(initialRoute: Routes.POINT_EXCHANGE_CONFIRM),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('この景品の交換上限に達しているため、交換できません。'),
+        findsOneWidget);
+    final confirmButton = tester.widget<ElevatedButton>(
+      find.widgetWithText(ElevatedButton, '交換上限に達しています'),
+    );
+    expect(confirmButton.onPressed, isNull);
+    expect(tester.takeException(), isNull);
+  });
 }
 
-Widget _app() => ScreenUtilInit(
+Widget _app({String initialRoute = Routes.POINT_REWARDS}) => ScreenUtilInit(
       designSize: const Size(375, 812),
       builder: (context, child) => GetMaterialApp(
-        initialRoute: Routes.POINT_REWARDS,
+        initialRoute: initialRoute,
         getPages: [
           GetPage(
               name: Routes.POINT_REWARDS,
@@ -180,6 +267,9 @@ Widget _app() => ScreenUtilInit(
           GetPage(
               name: Routes.POINT_REWARD_DETAIL,
               page: () => const PointRewardDetailScreen()),
+          GetPage(
+              name: Routes.POINT_EXCHANGE_CONFIRM,
+              page: () => const PointExchangeConfirmScreen()),
         ],
       ),
     );
