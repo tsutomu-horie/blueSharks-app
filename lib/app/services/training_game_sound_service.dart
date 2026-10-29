@@ -31,7 +31,7 @@ enum TrainingGameSoundEffect {
   /// 孵化A案の上昇する溜め音と誕生のきらめき。
   hatching,
 
-  /// 承認済みのタックル判定SE（接触時に1回再生）。
+  /// タックル判定SE（接触時に1回再生）。
   tackleOk,
   tackleGood,
   tackleGreat,
@@ -56,9 +56,10 @@ extension TrainingGameSoundEffectAsset on TrainingGameSoundEffect {
           'assets/audio/training_game/home-tap-touch.m4a',
         TrainingGameSoundEffect.homeTapHappy =>
           'assets/audio/training_game/home-tap-happy.m4a',
-        // 効果音ラボの決定34/22/37/21、しょげるを承認済みの長さ・音量へ加工。
+        // 効果音ラボ「軽いパンチ2」＋決定29/30/53/成功音。MISSはキャンセル6。
+        // 0.42〜0.95秒、-20 LUFS目標へ加工。出典・加工条件: tool/mini_game_audio_sources.json。
         // https://soundeffect-lab.info/sound/button/
-        // https://soundeffect-lab.info/sound/anime/
+        // https://soundeffect-lab.info/sound/battle/
         TrainingGameSoundEffect.tackleOk =>
           'assets/audio/training_game/tackle-ok.m4a',
         TrainingGameSoundEffect.tackleGood =>
@@ -85,16 +86,20 @@ extension TrainingGameSoundEffectAsset on TrainingGameSoundEffect {
         // 出典: https://soundeffect-lab.info/sound/button/ （ゲージ回復3）
         TrainingGameSoundEffect.parameterRecovered =>
           'assets/audio/training_game/gauge-recovery3.mp3',
-        // 効果音ラボ「パンチ素振り」の頭0.22秒を減音・フェード。
+        // 効果音ラボ「パンチの素振り3」の頭0.22秒を減音・フェード。
         // https://soundeffect-lab.info/sound/battle/
         TrainingGameSoundEffect.passThrown =>
           'assets/audio/training_game/pass-throw.m4a',
+        // 受球: 決定29（木琴）、失敗: キャンセル6（短いポップ音）。
+        // https://soundeffect-lab.info/sound/button/
         TrainingGameSoundEffect.passReceived =>
-          'assets/audio/training_game/basket-path1.mp3',
+          'assets/audio/training_game/pass-catch.m4a',
         TrainingGameSoundEffect.passFailed =>
-          'assets/audio/training_game/cute-sad1.mp3',
+          'assets/audio/training_game/pass-miss.m4a',
+        // 結果: レベルアップ。1.8秒に調整。
+        // https://soundeffect-lab.info/sound/anime/
         TrainingGameSoundEffect.resultDisplayed =>
-          'assets/audio/training_game/sceneswitch1.mp3',
+          'assets/audio/training_game/mini-game-result.m4a',
       };
 }
 
