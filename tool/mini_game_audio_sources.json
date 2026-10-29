@@ -2,7 +2,6 @@
   "provider": "効果音ラボ",
   "terms": "https://soundeffect-lab.info/agreement/",
   "sources": {
-    "punch-real-swing3": "https://soundeffect-lab.info/sound/battle/mp3/punch-real-swing3.mp3",
     "decision29": "https://soundeffect-lab.info/sound/button/mp3/decision29.mp3",
     "cancel6": "https://soundeffect-lab.info/sound/button/mp3/cancel6.mp3",
     "levelup1": "https://soundeffect-lab.info/sound/anime/mp3/levelup1.mp3",
@@ -12,30 +11,6 @@
     "success1": "https://soundeffect-lab.info/sound/button/mp3/success1.mp3"
   },
   "effects": [
-    {
-      "asset": "pass-throw.m4a",
-      "sources": [
-        "punch-real-swing3"
-      ],
-      "duration": 0.22,
-      "gain": 0.65
-    },
-    {
-      "asset": "pass-catch.m4a",
-      "sources": [
-        "decision29"
-      ],
-      "duration": 0.38,
-      "gain": 0.72
-    },
-    {
-      "asset": "pass-miss.m4a",
-      "sources": [
-        "cancel6"
-      ],
-      "duration": 0.48,
-      "gain": 0.65
-    },
     {
       "asset": "mini-game-result.m4a",
       "sources": [
@@ -86,5 +61,14 @@
     }
   ],
   "processing": "44.1kHz mono AAC 96kbps; loudnorm -20 LUFS/-6 dBTP; fade out; tackle contact + chime delayed 70ms",
-  "playbackVolume": 0.72
+  "playbackVolume": 0.72,
+  "restoredPassAndRun": {
+    "revision": "9b45b5746fb72568c52ff3fa1733082cc5f6edb5",
+    "assets": [
+      "pass-throw.m4a",
+      "basket-path1.mp3",
+      "cute-sad1.mp3",
+      "sceneswitch1.mp3"
+    ]
+  }
 }
