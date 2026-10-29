@@ -156,8 +156,8 @@ class TrainingDexDialog extends StatelessWidget {
                     ? SametarohFrameImage(
                         alignment: Alignment.bottomCenter,
                         frame: frame,
-                        width: 48,
-                        height: 64,
+                        width: 84,
+                        height: 112,
                       )
                     : ColorFiltered(
                         colorFilter: const ColorFilter.mode(
@@ -169,8 +169,8 @@ class TrainingDexDialog extends StatelessWidget {
                           child: SametarohFrameImage(
                             alignment: Alignment.bottomCenter,
                             frame: frame,
-                            width: 48,
-                            height: 64,
+                            width: 84,
+                            height: 112,
                           ),
                         ),
                       ),
