@@ -126,11 +126,11 @@ void main() {
       c.perform(TrainingActionType.clean);
       await t.pump();
       await t.pump();
-      expect(c.meters['清潔'], start == 50 ? 75 : 100);
+      expect(c.meters['清潔'], start + 40);
       expect(c.cooldownRemaining(TrainingActionType.clean).inSeconds,
           greaterThan(0));
       c.perform(TrainingActionType.clean);
-      expect(c.meters['清潔'], start == 50 ? 75 : 100);
+      expect(c.meters['清潔'], start + 40);
       c.onClose();
       await t.pump();
       Get.routing.args = null;
