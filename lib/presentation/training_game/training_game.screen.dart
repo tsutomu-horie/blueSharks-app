@@ -1016,7 +1016,11 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
         disabledForegroundColor: const Color(0xff888888),
         minimumSize: const Size(48, 44),
         padding: const EdgeInsets.symmetric(horizontal: 12),
-        textStyle: const TextStyle(fontFamily: 'LINESeedJP', fontSize: 12),
+        textStyle: const TextStyle(
+          fontFamily: 'LINESeedJP',
+          fontSize: 12,
+          fontWeight: FontWeight.w700,
+        ),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
       );
 

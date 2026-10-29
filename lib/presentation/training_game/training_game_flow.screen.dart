@@ -312,7 +312,7 @@ class _TrainingGameNewGameScreenState extends State<TrainingGameNewGameScreen>
                                     '鮫太朗とのものがたり',
                                     style: TextStyle(
                                       color: Color(0xff26769a),
-                                      fontWeight: FontWeight.w600,
+                                      fontWeight: FontWeight.w700,
                                     ),
                                   ),
                                 ),
