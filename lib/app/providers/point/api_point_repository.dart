@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:koto_blue_sharks/app/data/models/point/point_models.dart';
 import 'package:koto_blue_sharks/app/providers/point/point_repository.dart';
 import 'package:koto_blue_sharks/app/services/auth_token.dart';
+import 'package:koto_blue_sharks/app/services/auth_session_manager.dart';
 import 'package:koto_blue_sharks/utils/constant.dart';
 
 class ApiPointRepository extends GetConnect implements PointRepository {
@@ -162,16 +163,18 @@ class ApiPointRepository extends GetConnect implements PointRepository {
   }
 
   Future<dynamic> _getData(String path) async {
-    final response = await get(path, headers: await _headers());
-    return _handle(response);
+    final auth = await _headers();
+    final response = await get(path, headers: auth.headers);
+    return _handle(response, requestToken: auth.token);
   }
 
   Future<dynamic> _postData(String path, Map<String, dynamic> body) async {
-    final response = await post(path, body, headers: await _headers());
-    return _handle(response);
+    final auth = await _headers();
+    final response = await post(path, body, headers: auth.headers);
+    return _handle(response, requestToken: auth.token);
   }
 
-  Future<Map<String, String>> _headers() async {
+  Future<({Map<String, String> headers, String token})> _headers() async {
     final token = await AuthToken().getAccessToken();
     if (token == null || token.isEmpty) {
       throw const PointOperationException(
@@ -179,14 +182,20 @@ class ApiPointRepository extends GetConnect implements PointRepository {
         'ポイント機能を利用するにはログインが必要です。',
       );
     }
-    return {
-      'Authorization': 'Bearer $token',
-      'Accept': 'application/json',
-      'Content-Type': 'application/json',
-    };
+    return (
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+      },
+      token: token,
+    );
   }
 
-  dynamic _handle(Response<dynamic> response) {
+  Future<dynamic> _handle(
+    Response<dynamic> response, {
+    required String requestToken,
+  }) async {
     if (!response.hasError) {
       final body = response.body;
       if (body is Map && body.containsKey('data')) {
@@ -195,11 +204,18 @@ class ApiPointRepository extends GetConnect implements PointRepository {
       return body;
     }
 
+    await AuthSessionManager.handleResponse(
+      response,
+      requestToken: requestToken,
+    );
+
     final body = response.body;
     final error = body is Map ? body['error'] : null;
     final code = error is Map
         ? (error['code']?.toString() ?? 'http_${response.statusCode}')
-        : 'http_${response.statusCode}';
+        : body is Map
+            ? (body['code']?.toString() ?? 'http_${response.statusCode}')
+            : 'http_${response.statusCode}';
     final serverMessage = error is Map ? error['message']?.toString() : null;
     throw PointOperationException(
       code,

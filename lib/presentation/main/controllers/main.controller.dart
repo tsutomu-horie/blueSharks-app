@@ -3,6 +3,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:get/get.dart';
 import 'package:koto_blue_sharks/app/data/models/info/post.dart';
 import 'package:koto_blue_sharks/app/providers/auth/auth_provider.dart';
+import 'package:koto_blue_sharks/app/services/auth_session_manager.dart';
 import 'package:koto_blue_sharks/app/services/auth_token.dart';
 import 'package:koto_blue_sharks/utils/Constant.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -36,6 +37,7 @@ class MainController extends GetxController {
 
   void setupFirebaseMessaging() {
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+      if (message.data['type'] == AuthSessionManager.replacedMessageType) return;
       getUnreadNotificationCount();
     });
   }

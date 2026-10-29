@@ -6,6 +6,7 @@ import 'package:get/get.dart';
 import 'package:koto_blue_sharks/app/data/models/auth/auth.dart';
 import 'package:koto_blue_sharks/app/data/models/info/notification.dart';
 import 'package:koto_blue_sharks/app/providers/auth/login_response_diagnostics.dart';
+import 'package:koto_blue_sharks/app/services/auth_session_manager.dart';
 import 'package:koto_blue_sharks/app/services/auth_token.dart';
 import 'package:koto_blue_sharks/app/services/notification_token_sync.dart';
 import 'package:koto_blue_sharks/utils/Constant.dart';
@@ -143,9 +144,15 @@ class AuthProvider extends GetConnect {
       url.toString(), body, headers: headers // Send the body in the request
     );
 
+    final sessionReplaced = token == null
+        ? false
+        : await AuthSessionManager.handleResponse(
+            response,
+            requestToken: token,
+          );
 
     if (response.hasError) {
-      onError();
+      if (!sessionReplaced) onError();
       throw Exception('Failed to login: ${response.statusText}');
     }
 
@@ -177,9 +184,17 @@ class AuthProvider extends GetConnect {
       url.toString(), body, headers: headers // Send the body in the request
     );
 
+    final sessionReplaced = token == null
+        ? false
+        : await AuthSessionManager.handleResponse(
+            response,
+            requestToken: token,
+          );
 
     if (response.hasError) {
-      onError("${response.body['errors']}", "${response.body['message']}");
+      if (!sessionReplaced) {
+        onError("${response.body['errors']}", "${response.body['message']}");
+      }
       throw Exception('Failed to login: ${response.statusText}');
     }
 
@@ -200,8 +215,12 @@ class AuthProvider extends GetConnect {
       url.toString(), headers: headers // Send the body in the request
     );
 
+    final sessionReplaced = await AuthSessionManager.handleResponse(
+      response,
+      requestToken: token,
+    );
     if (response.hasError) {
-      onError();
+      if (!sessionReplaced) onError();
       throw Exception('Failed to login: ${response.statusText}');
     }
 
@@ -221,8 +240,12 @@ class AuthProvider extends GetConnect {
         url.toString(), headers: headers // Send the body in the request
     );
 
+    final sessionReplaced = await AuthSessionManager.handleResponse(
+      response,
+      requestToken: token,
+    );
     if (response.hasError) {
-      onError();
+      if (!sessionReplaced) onError();
       throw Exception('Failed to login: ${response.statusText}');
     }
 
@@ -242,9 +265,13 @@ class AuthProvider extends GetConnect {
       url.toString(), headers: headers // Send the body in the request
     );
 
+    final sessionReplaced = await AuthSessionManager.handleResponse(
+      response,
+      requestToken: token,
+    );
 
     if (response.hasError) {
-      onError();
+      if (!sessionReplaced) onError();
       throw Exception('Failed to login: ${response.statusText}');
     }
 
@@ -286,6 +313,13 @@ class AuthProvider extends GetConnect {
               'Authorization': 'Bearer $token',
               'Content-Type': 'application/json',
             });
+            final sessionReplaced = await AuthSessionManager.handleResponse(
+              response,
+              requestToken: token,
+            );
+            if (sessionReplaced) {
+              throw StateError('Authentication session was replaced');
+            }
             if (response.hasError) {
               throw StateError('Notification synchronization unavailable');
             }
@@ -310,6 +344,10 @@ class AuthProvider extends GetConnect {
         url.toString(), headers: headers // Send the body in the request
     );
 
+    await AuthSessionManager.handleResponse(
+      response,
+      requestToken: token ?? '',
+    );
 
     if (response.hasError) {
       throw Exception('Failed to send fcm token: ${response.statusText}');
@@ -338,6 +376,10 @@ class AuthProvider extends GetConnect {
         url.toString(), headers: headers // Send the body in the request
     );
 
+    await AuthSessionManager.handleResponse(
+      response,
+      requestToken: token ?? '',
+    );
 
     if (response.hasError) {
       throw Exception('Failed to send fcm token: ${response.statusText}');
@@ -364,6 +406,10 @@ class AuthProvider extends GetConnect {
         url.toString(), null, headers: headers // Send the body in the request
     );
 
+    await AuthSessionManager.handleResponse(
+      response,
+      requestToken: token ?? '',
+    );
 
     if (response.hasError) {
       throw Exception('Failed to send fcm token: ${response.statusText}');
@@ -371,6 +417,14 @@ class AuthProvider extends GetConnect {
 
 
     return response;
+  }
+
+  Future<Response<dynamic>> checkCurrentSession(String token) async {
+    httpClient.baseUrl = Constants.baseUrlAuthApi;
+    return get('profile', headers: {
+      'Authorization': 'Bearer $token',
+      'Content-Type': 'application/json',
+    });
   }
 
   Future<Response> logoutAccount(String token) async {
@@ -385,6 +439,11 @@ class AuthProvider extends GetConnect {
 
     final response = await post(
         url.toString(), null, headers: headers // Send the body in the request
+    );
+
+    await AuthSessionManager.handleResponse(
+      response,
+      requestToken: token,
     );
 
     // A 401 means the bearer token is already invalid, such as after the
