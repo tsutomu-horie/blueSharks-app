@@ -107,7 +107,8 @@ class _MenuScreenState extends State<MenuScreen> {
                   },
                   child: Obx(() {
                     final selectedIndex = controller.selectedIndex.value;
-                    final isSelected = !_showOverview && selectedIndex == index;
+                    final isSelected =
+                        (_showOverview ? 0 : selectedIndex) == index;
 
                     return AnimatedContainer(
                       duration: const Duration(milliseconds: 300),
