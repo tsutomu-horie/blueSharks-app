@@ -1803,7 +1803,7 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
                         : !_canPass
                             ? '次のパスを準備中…'
                             : _lastPassSucceeded
-                                ? 'PASS!　次の仲間位置を狙おう'
+                                ? '仲間にフリックでパス！'
                                 : '仲間の現在位置へ素早くフリック';
     return Container(
       width: double.infinity,
