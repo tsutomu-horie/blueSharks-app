@@ -446,7 +446,7 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
       _remainingMilliseconds = 0;
       _phase = _PassGamePhase.result;
     });
-    _playSound(TrainingGameSoundEffect.resultDisplayed);
+    _playSound(TrainingGameSoundEffect.passResultDisplayed);
   }
 
   /// フリック開始位置を記録します。
