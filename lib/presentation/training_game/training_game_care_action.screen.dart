@@ -233,17 +233,19 @@ class _TrainingGameCareActionScreenState
                         fontWeight: FontWeight.w700,
                       ),
                     ),
-                    if (_showCompletionFrame || _isCompleting) ...[
-                      SizedBox(height: 12.h),
-                      Text(
-                        _showCompletionFrame ? 'タップして戻る' : '完了しています…',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 14.sp,
-                          fontWeight: FontWeight.w700,
-                        ),
+                    SizedBox(height: 12.h),
+                    Text(
+                      _showCompletionFrame
+                          ? 'タップして戻る'
+                          : _isCompleting
+                              ? '完了しています…'
+                              : '画面タップでスキップ。',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 14.sp,
+                        fontWeight: FontWeight.w700,
                       ),
-                    ],
+                    ),
                   ],
                 ),
               ),

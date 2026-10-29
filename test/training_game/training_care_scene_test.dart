@@ -183,8 +183,9 @@ void main() {
                 .first);
             expect(progressChip.top - sceneBounds.bottom,
                 closeTo(20 * size.height / 812, 0.01));
-            // 画面下部の自動完了案内と専用ボタンは表示しない。
+            // スキップ案内を残し、自動完了の秒数案内と専用ボタンは表示しない。
             expect(find.text('スキップ'), findsNothing);
+            expect(find.text('画面タップでスキップ。'), findsOneWidget);
             expect(find.text('5秒で自動完了します。画面タップでスキップ'), findsNothing);
             if (action == TrainingActionType.meal) {
               expect(find.text('食事中…'), findsOneWidget);
