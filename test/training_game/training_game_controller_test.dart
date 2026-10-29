@@ -246,30 +246,35 @@ void main() {
     );
   });
 
-  test('各50ちょうどならControllerの既存筋トレ同期経路を通る', () async {
-    final provider = _FirstTeamTransitionProvider(meterValue: 50);
-    Get.routing.args = provider.state('training');
-    final controller = TrainingGameController(
-      serverProvider: provider,
-      writePendingActions: (_) async => true,
-      clearPendingActions: () async => true,
-      archivePendingActions: (_) async => true,
-    );
-    addTearDown(() {
-      controller.onClose();
-      Get.routing.args = null;
+  for (final value in [49.5, 49.9, 50.0]) {
+    test('表示50（実値$value）ならControllerの既存筋トレ同期経路を通る', () async {
+      final provider = _FirstTeamTransitionProvider(meterValue: 80);
+      Get.routing.args = provider.state('training');
+      final controller = TrainingGameController(
+        serverProvider: provider,
+        writePendingActions: (_) async => true,
+        clearPendingActions: () async => true,
+        archivePendingActions: (_) async => true,
+      );
+      addTearDown(() {
+        controller.onClose();
+        Get.routing.args = null;
+      });
+      controller.onInit();
+      await Future<void>.delayed(Duration.zero);
+      expect(controller.isServerStateReady.value, isTrue);
+
+      controller.meters
+          .assignAll({'食事': 80, '清潔': value, '体調': value, '仕事': 0});
+      expect(controller.squatRequirementMessage, isNull);
+      controller.perform(TrainingActionType.squat);
+      expect(controller.careFeedbackVersion.value, 1);
+      expect(controller.careFeedback, {'食事': -12.0, '清潔': -8.0, '体調': -6.0});
+      await TrainingGameProvider.waitForPendingSync();
+
+      expect(provider.syncedActionCodes, ['training']);
     });
-    controller.onInit();
-    await Future<void>.delayed(Duration.zero);
-    expect(controller.isServerStateReady.value, isTrue);
-
-    controller.perform(TrainingActionType.squat);
-    expect(controller.careFeedbackVersion.value, 1);
-    expect(controller.careFeedback, {'食事': -12.0, '清潔': -8.0, '体調': -6.0});
-    await TrainingGameProvider.waitForPendingSync();
-
-    expect(provider.syncedActionCodes, ['training']);
-  });
+  }
 
   for (final stage in ['egg', 'child', 'training']) {
     final effects = <TrainingActionType, Map<String, double>>{

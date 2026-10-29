@@ -23,6 +23,19 @@ void main() {
     });
   }
 
+  for (final value in [49.0, 49.49, 49.5, 49.9, 50.0]) {
+    test('食事80・清潔体調$valueは表示整数で筋トレ可否を判定する', () {
+      final meters = <String, double>{'食事': 80, '清潔': value, '体調': value};
+      final allowed = value.round() >= 50;
+
+      expect(TrainingWorkoutRequirement.isMet(meters), allowed);
+      expect(TrainingWorkoutRequirement.missingMeters(meters),
+          allowed ? isEmpty : ['清潔', '体調']);
+      expect(TrainingWorkoutRequirement.messageFor(meters),
+          allowed ? isNull : contains('清潔・体調が50未満です。'));
+    });
+  }
+
   test('複数の不足項目と対応する回復行動をまとめて案内する', () {
     const meters = <String, double>{
       '食事': 49,

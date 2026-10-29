@@ -8,10 +8,10 @@ abstract final class TrainingWorkoutRequirement {
     '体調': '休養',
   };
 
-  /// 50未満のメーターを表示順で返します。
+  /// HOMEと同じ四捨五入後の表示値が50未満のメーターを返します。
   static List<String> missingMeters(Map<String, double> meters) =>
       _recoveryActionByMeter.keys
-          .where((name) => (meters[name] ?? 0) < minimumValue)
+          .where((name) => (meters[name] ?? 0).round() < minimumValue)
           .toList(growable: false);
 
   /// 筋トレを始められる状態かを返します。
