@@ -1444,25 +1444,26 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
           padding: const EdgeInsets.all(16),
           child: Column(
             children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    _isOutbound ? '往路' : '復路',
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w800,
+              if (_phase != _PassGamePhase.result)
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      _isOutbound ? '往路' : '復路',
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w800,
+                      ),
                     ),
-                  ),
-                  Flexible(
-                    child: Text(
-                      '残り ${remainingSeconds.toStringAsFixed(1)}s　PASS $_totalScore',
-                      textAlign: TextAlign.right,
-                      style: const TextStyle(fontWeight: FontWeight.w700),
+                    Flexible(
+                      child: Text(
+                        '残り ${remainingSeconds.toStringAsFixed(1)}s　PASS $_totalScore',
+                        textAlign: TextAlign.right,
+                        style: const TextStyle(fontWeight: FontWeight.w700),
+                      ),
                     ),
-                  ),
-                ],
-              ),
+                  ],
+                ),
               const SizedBox(height: 12),
               Expanded(
                 child: ValueListenableBuilder<int>(
@@ -1470,8 +1471,10 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
                   builder: (context, _, child) => _buildField(),
                 ),
               ),
-              const SizedBox(height: 12),
-              _buildStatusPanel(),
+              if (_phase != _PassGamePhase.result) ...[
+                const SizedBox(height: 12),
+                _buildStatusPanel(),
+              ],
             ],
           ),
         ),
@@ -1694,7 +1697,7 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24),
               child: Text(
-                '${_secondsLabel(_roundDuration)}秒 × 往復2セット\n攻撃方向へは投げず、真横・後方の仲間を狙おう',
+                '${_secondsLabel(_roundDuration)}秒 × 往復2セット\n攻撃方向へは投げず、真横・後方の仲間にパスしよう',
                 textAlign: TextAlign.center,
               ),
             ),
@@ -1726,11 +1729,13 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
+          const Icon(Icons.stars_rounded, color: Color(0xffffd66b), size: 48),
+          const SizedBox(height: 12),
           const Text('パス成功', style: TextStyle(color: Colors.white70)),
           Text(
             '$_totalScore',
             style: const TextStyle(
-              color: Colors.white,
+              color: Color(0xffffd66b),
               fontSize: 82,
               fontWeight: FontWeight.w900,
             ),
@@ -1784,21 +1789,19 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
   Widget _buildStatusPanel() {
     final message = _phase == _PassGamePhase.waiting
         ? '${_secondsLabel(_roundDuration)}秒 × 往復2セット（合計${_secondsLabel(_roundDuration * 2)}秒）'
-        : _phase == _PassGamePhase.result
-            ? 'プレイ完了'
-            : _isPenalized
-                ? '${_isForwardPass ? '前方パス' : 'MISS'}　${_secondsLabel(_missPenalty)}秒間パス不可'
-                : _passInFlight && !_passScoreConfirmed
-                    ? 'ボール移動中…'
-                    : _mateHolding
-                        ? '仲間からの返球待ち…'
-                        : _passInFlight
-                            ? '仲間から返球中…'
-                            : !_canPass
-                                ? '次のパスを準備中…'
-                                : _lastPassSucceeded
-                                    ? 'PASS!　次の仲間位置を狙おう'
-                                    : '仲間の現在位置へ素早くフリック';
+        : _isPenalized
+            ? '${_isForwardPass ? '前方パス' : 'MISS'}　${_secondsLabel(_missPenalty)}秒間パス不可'
+            : _passInFlight && !_passScoreConfirmed
+                ? 'ボール移動中…'
+                : _mateHolding
+                    ? '仲間からの返球待ち…'
+                    : _passInFlight
+                        ? '仲間から返球中…'
+                        : !_canPass
+                            ? '次のパスを準備中…'
+                            : _lastPassSucceeded
+                                ? 'PASS!　次の仲間位置を狙おう'
+                                : '仲間の現在位置へ素早くフリック';
     return Container(
       width: double.infinity,
       height: 72,
