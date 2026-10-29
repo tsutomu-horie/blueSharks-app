@@ -750,11 +750,11 @@ void main() {
       expect(trail, findsNothing);
     }
     expect(sounds.createdAssetPaths, [
-      'assets/audio/training_game/cute-sad1.mp3',
+      'assets/audio/training_game/pass-miss.m4a',
     ]);
     expect(sounds.playedAssetPaths, [
-      'assets/audio/training_game/cute-sad1.mp3',
-      'assets/audio/training_game/cute-sad1.mp3',
+      'assets/audio/training_game/pass-miss.m4a',
+      'assets/audio/training_game/pass-miss.m4a',
     ]);
     await step(t, 2100);
     await t.flingFrom(t.getCenter(player), const Offset(-100, 0), 2000);
@@ -1607,7 +1607,7 @@ void main() {
     });
   }
 
-  testWidgets('No.40受球フックはbasket-path1を再生する', (t) async {
+  testWidgets('受球フックは刷新した受球音を再生する', (t) async {
     final sounds = RecordingTrainingGameSound();
     addTearDown(sounds.dispose);
     await start(t, seed: 3, soundService: sounds.service);
@@ -1618,11 +1618,11 @@ void main() {
 
     expect(sounds.createdAssetPaths, [
       'assets/audio/training_game/pass-throw.m4a',
-      'assets/audio/training_game/basket-path1.mp3',
+      'assets/audio/training_game/pass-catch.m4a',
     ]);
     expect(sounds.playedAssetPaths, [
       'assets/audio/training_game/pass-throw.m4a',
-      'assets/audio/training_game/basket-path1.mp3',
+      'assets/audio/training_game/pass-catch.m4a',
     ]);
     for (var i = 0; i < 400 && !visual(t, player).holding; i++) {
       await step(t, 8);
@@ -1639,7 +1639,7 @@ void main() {
     expect(find.byKey(const Key('pass-catch-feedback')), findsNothing);
   });
 
-  testWidgets('No.40失敗フックはcute-sad1を再生する', (t) async {
+  testWidgets('失敗フックは刷新したミス音を再生する', (t) async {
     final sounds = RecordingTrainingGameSound();
     addTearDown(sounds.dispose);
     await start(t, soundService: sounds.service);
@@ -1651,15 +1651,15 @@ void main() {
     expect(find.textContaining('MISS'), findsOneWidget);
     expect(sounds.createdAssetPaths, [
       'assets/audio/training_game/pass-throw.m4a',
-      'assets/audio/training_game/cute-sad1.mp3',
+      'assets/audio/training_game/pass-miss.m4a',
     ]);
     expect(sounds.playedAssetPaths, [
       'assets/audio/training_game/pass-throw.m4a',
-      'assets/audio/training_game/cute-sad1.mp3',
+      'assets/audio/training_game/pass-miss.m4a',
     ]);
   });
 
-  testWidgets('No.40パス＆ラン結果フックはsceneswitch1を再生する', (t) async {
+  testWidgets('パス＆ラン結果フックは刷新した結果音を再生する', (t) async {
     final sounds = RecordingTrainingGameSound();
     addTearDown(sounds.dispose);
     const settings = PassRunSettings(
@@ -1673,10 +1673,10 @@ void main() {
 
     expect(find.text('メインへ戻る'), findsOneWidget);
     expect(sounds.createdAssetPaths, [
-      'assets/audio/training_game/sceneswitch1.mp3',
+      'assets/audio/training_game/mini-game-result.m4a',
     ]);
     expect(sounds.playedAssetPaths, [
-      'assets/audio/training_game/sceneswitch1.mp3',
+      'assets/audio/training_game/mini-game-result.m4a',
     ]);
   });
 }
