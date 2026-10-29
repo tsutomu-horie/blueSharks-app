@@ -148,6 +148,7 @@ class _SelectionCard extends StatelessWidget {
                 child: DefaultTextStyle(
                   style: const TextStyle(
                     fontFamily: 'LINESeedJP',
+                    fontWeight: FontWeight.w700,
                     color: TrainingHomeStyle.navy,
                     fontSize: 14,
                     height: 1.5,
