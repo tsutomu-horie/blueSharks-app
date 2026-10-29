@@ -143,59 +143,32 @@ class _TrainingHomeMeterState extends State<TrainingHomeMeter>
 }
 
 /// 待機中も外寸を変えず、ラベルだけを残り時間へ置き換えます。
-class TrainingHomeCareButton extends StatefulWidget {
+class TrainingHomeCareButton extends StatelessWidget {
   const TrainingHomeCareButton({
     super.key,
     required this.type,
     required this.label,
     required this.remaining,
+    this.cooldownDuration = const Duration(seconds: 60),
     required this.onPressed,
     this.trainingCount,
   });
   final TrainingActionType type;
   final String label;
   final Duration remaining;
+  final Duration cooldownDuration;
   final VoidCallback? onPressed;
   final int? trainingCount;
 
   @override
-  State<TrainingHomeCareButton> createState() => _TrainingHomeCareButtonState();
-}
-
-class _TrainingHomeCareButtonState extends State<TrainingHomeCareButton> {
-  Duration _displaySpan = const Duration(seconds: 60);
-
-  void _updateSpan() {
-    // サーバー側が60秒より長い期限を返しても、見た目の分母だけで受け止めます。
-    if (widget.remaining <= Duration.zero) {
-      _displaySpan = const Duration(seconds: 60);
-    } else if (widget.remaining > _displaySpan) {
-      _displaySpan = widget.remaining;
-    }
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    _updateSpan();
-  }
-
-  @override
-  void didUpdateWidget(TrainingHomeCareButton oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    _updateSpan();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final waiting = widget.remaining > Duration.zero;
-    final enabled = widget.onPressed != null;
+    final waiting = remaining > Duration.zero;
+    final enabled = onPressed != null;
     final seconds =
-        (widget.remaining.inMicroseconds / Duration.microsecondsPerSecond)
-            .ceil();
+        (remaining.inMicroseconds / Duration.microsecondsPerSecond).ceil();
     final time =
         '${(seconds ~/ 60).toString().padLeft(2, '0')}:${(seconds % 60).toString().padLeft(2, '0')}';
-    final icon = switch (widget.type) {
+    final icon = switch (type) {
       TrainingActionType.meal => Icons.restaurant_outlined,
       TrainingActionType.clean => Icons.cleaning_services_outlined,
       TrainingActionType.squat => Icons.fitness_center_outlined,
@@ -204,16 +177,16 @@ class _TrainingHomeCareButtonState extends State<TrainingHomeCareButton> {
       _ => Icons.sports_rugby_outlined,
     };
     return Semantics(
-      label: waiting ? '${widget.label}、待機中、あと $time' : widget.label,
-      value: widget.trainingCount == null ? null : '${widget.trainingCount}/15',
+      label: waiting ? '$label、待機中、あと $time' : label,
+      value: trainingCount == null ? null : '$trainingCount/15',
       button: true,
       enabled: enabled,
-      onTap: widget.onPressed,
+      onTap: onPressed,
       excludeSemantics: true,
       child: SizedBox(
         height: TrainingHomeStyle.buttonHeight,
         child: TextButton(
-          onPressed: widget.onPressed,
+          onPressed: onPressed,
           style: TextButton.styleFrom(
             padding: EdgeInsets.zero,
             minimumSize: const Size(48, TrainingHomeStyle.buttonHeight),
@@ -235,7 +208,7 @@ class _TrainingHomeCareButtonState extends State<TrainingHomeCareButton> {
                     height: 16,
                     child: FittedBox(
                         fit: BoxFit.scaleDown,
-                        child: Text(waiting ? 'あと $time' : widget.label,
+                        child: Text(waiting ? 'あと $time' : label,
                             style: TextStyle(
                                 fontFamily: 'LINESeedJP',
                                 fontSize: 12,
@@ -251,8 +224,10 @@ class _TrainingHomeCareButtonState extends State<TrainingHomeCareButton> {
                   child: SizedBox(
                     height: 2,
                     child: LinearProgressIndicator(
-                      value: (widget.remaining.inMicroseconds /
-                              _displaySpan.inMicroseconds)
+                      value: (remaining.inMicroseconds /
+                              (cooldownDuration.inMicroseconds > 0
+                                  ? cooldownDuration.inMicroseconds
+                                  : 1))
                           .clamp(0, 1),
                       color: const Color(0xff48a6d5),
                       backgroundColor: const Color(0xffe5ebf0),
@@ -260,11 +235,11 @@ class _TrainingHomeCareButtonState extends State<TrainingHomeCareButton> {
                     ),
                   ),
                 ),
-              if (widget.trainingCount != null)
+              if (trainingCount != null)
                 Positioned(
                     top: 0,
                     right: 2,
-                    child: Text('${widget.trainingCount}/15',
+                    child: Text('$trainingCount/15',
                         style: const TextStyle(
                             fontSize: 12, color: TrainingHomeStyle.navy))),
             ],
