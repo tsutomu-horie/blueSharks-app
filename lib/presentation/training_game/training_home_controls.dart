@@ -12,12 +12,13 @@ abstract final class TrainingHomeStyle {
 
 /// 通常100・超過50の既存ゲージを、数値と同じ枠に表示します。
 class TrainingHomeMeter extends StatefulWidget {
-  const TrainingHomeMeter(
-      {super.key,
-      required this.name,
-      required this.value,
-      this.feedbackVersion = 0,
-      this.delta = 0});
+  const TrainingHomeMeter({
+    super.key,
+    required this.name,
+    required this.value,
+    this.feedbackVersion = 0,
+    this.delta = 0,
+  });
   final String name;
   final double value;
   final int feedbackVersion;
@@ -30,7 +31,9 @@ class TrainingHomeMeter extends StatefulWidget {
 class _TrainingHomeMeterState extends State<TrainingHomeMeter>
     with SingleTickerProviderStateMixin {
   late final AnimationController _feedback = AnimationController(
-      vsync: this, duration: const Duration(milliseconds: 1400));
+    vsync: this,
+    duration: const Duration(milliseconds: 1400),
+  );
   double _from = 0;
   double _target = 0;
   double _delta = 0;
@@ -78,67 +81,95 @@ class _TrainingHomeMeterState extends State<TrainingHomeMeter>
         label: '${widget.name} ${widget.value.round()}',
         excludeSemantics: true,
         child: AnimatedBuilder(
-            animation: _feedback,
-            builder: (context, _) {
-              final value = _displayValue;
-              final normal = value.clamp(0, 100) / 100;
-              final overage = (value - 100).clamp(0, 50) / 50;
-              final color = value <= 19
-                  ? const Color(0xffd03b3b)
-                  : value < 50
-                      ? const Color(0xffeda100)
-                      : value < 80
-                          ? const Color(0xff7ec8f0)
-                          : const Color(0xff5ee05e);
-              final visible = _delta != 0 && _feedback.value < 1;
-              final opacity =
-                  (1 - ((_feedback.value - .7) / .3).clamp(0.0, 1.0));
-              return Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
+          animation: _feedback,
+          builder: (context, _) {
+            final value = _displayValue;
+            final normal = value.clamp(0, 100) / 100;
+            final overage = (widget.value - 100).clamp(0, 50) / 50;
+            final color = value <= 19
+                ? const Color(0xffd03b3b)
+                : value < 50
+                    ? const Color(0xffeda100)
+                    : value < 80
+                        ? const Color(0xff7ec8f0)
+                        : const Color(0xff5ee05e);
+            final visible = _delta != 0 && _feedback.value < 1;
+            final opacity = (1 - ((_feedback.value - .7) / .3).clamp(0.0, 1.0));
+            return Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Row(
                   children: [
-                    Row(children: [
-                      Expanded(
-                          child: Text(widget.name,
-                              style: const TextStyle(fontSize: 14))),
-                      if (visible)
-                        Padding(
-                            padding: const EdgeInsets.only(right: 4),
-                            child: Opacity(
-                                opacity: opacity,
-                                child: Text(
-                                    '${_delta > 0 ? '+' : ''}${_delta.toStringAsFixed(_delta == _delta.roundToDouble() ? 0 : 1)}',
-                                    key: ValueKey('meter-delta-${widget.name}'),
-                                    style: TextStyle(
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w700,
-                                        color: _delta > 0
-                                            ? const Color(0xff16805d)
-                                            : const Color(0xffb44235))))),
-                      Text('${value.round()}',
-                          style: const TextStyle(
-                              fontSize: 14, fontWeight: FontWeight.w700)),
-                    ]),
-                    const SizedBox(height: 6),
-                    ClipRRect(
-                        borderRadius: BorderRadius.circular(2),
-                        child: SizedBox(
-                            height: 5,
-                            child: Stack(fit: StackFit.expand, children: [
-                              const Positioned.fill(
-                                  child: ColoredBox(color: Color(0xffe8edf2))),
-                              FractionallySizedBox(
+                    Expanded(
+                      child: Text(
+                        widget.name,
+                        style: const TextStyle(fontSize: 14),
+                      ),
+                    ),
+                    if (visible)
+                      Padding(
+                        padding: const EdgeInsets.only(right: 4),
+                        child: Opacity(
+                          opacity: opacity,
+                          child: Text(
+                            '${_delta > 0 ? '+' : ''}${_delta.toStringAsFixed(_delta == _delta.roundToDouble() ? 0 : 1)}',
+                            key: ValueKey('meter-delta-${widget.name}'),
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              color: _delta > 0
+                                  ? const Color(0xff16805d)
+                                  : const Color(0xffb44235),
+                            ),
+                          ),
+                        ),
+                      ),
+                    Text(
+                      '${value.round()}',
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(2),
+                  child: SizedBox(
+                    height: 5,
+                    child: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        const Positioned.fill(
+                          child: ColoredBox(color: Color(0xffe8edf2)),
+                        ),
+                        FractionallySizedBox(
+                          alignment: Alignment.centerLeft,
+                          widthFactor: normal,
+                          child: ColoredBox(color: color),
+                        ),
+                        TweenAnimationBuilder<double>(
+                          tween: Tween(begin: overage, end: overage),
+                          duration: const Duration(milliseconds: 1600),
+                          curve: Curves.easeInOutCubic,
+                          builder: (context, width, _) => width > 0
+                              ? FractionallySizedBox(
                                   alignment: Alignment.centerLeft,
-                                  widthFactor: normal,
-                                  child: ColoredBox(color: color)),
-                              if (overage > 0)
-                                FractionallySizedBox(
-                                    alignment: Alignment.centerLeft,
-                                    widthFactor: overage,
-                                    child: const ColoredBox(
-                                        color: Color(0xffd03b3b))),
-                            ]))),
-                  ]);
-            }),
+                                  widthFactor: width,
+                                  child: const ColoredBox(
+                                      color: Color(0xffd03b3b)),
+                                )
+                              : const SizedBox.shrink(),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            );
+          },
+        ),
       );
 }
 
@@ -217,32 +248,44 @@ class _TrainingHomeCareButtonState extends State<TrainingHomeCareButton> {
           style: TextButton.styleFrom(
             padding: EdgeInsets.zero,
             minimumSize: const Size(48, TrainingHomeStyle.buttonHeight),
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(4),
+            ),
             foregroundColor: TrainingHomeStyle.navy,
           ),
           child: Stack(
             children: [
               Center(
-                  child: Column(mainAxisSize: MainAxisSize.min, children: [
-                Icon(icon,
-                    size: 24,
-                    color: enabled
-                        ? TrainingHomeStyle.navy
-                        : const Color(0xff888888)),
-                const SizedBox(height: 6),
-                SizedBox(
-                    height: 16,
-                    child: FittedBox(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      icon,
+                      size: 24,
+                      color: enabled
+                          ? TrainingHomeStyle.navy
+                          : const Color(0xff888888),
+                    ),
+                    const SizedBox(height: 6),
+                    SizedBox(
+                      height: 16,
+                      child: FittedBox(
                         fit: BoxFit.scaleDown,
-                        child: Text(waiting ? 'あと $time' : widget.label,
-                            style: TextStyle(
-                                fontFamily: 'LINESeedJP',
-                                fontSize: 12,
-                                color: waiting || enabled
-                                    ? TrainingHomeStyle.navy
-                                    : const Color(0xff616161))))),
-              ])),
+                        child: Text(
+                          waiting ? 'あと $time' : widget.label,
+                          style: TextStyle(
+                            fontFamily: 'LINESeedJP',
+                            fontSize: 12,
+                            color: waiting || enabled
+                                ? TrainingHomeStyle.navy
+                                : const Color(0xff616161),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
               if (waiting)
                 Positioned(
                   left: 7,
@@ -262,11 +305,16 @@ class _TrainingHomeCareButtonState extends State<TrainingHomeCareButton> {
                 ),
               if (widget.trainingCount != null)
                 Positioned(
-                    top: 0,
-                    right: 2,
-                    child: Text('${widget.trainingCount}/15',
-                        style: const TextStyle(
-                            fontSize: 12, color: TrainingHomeStyle.navy))),
+                  top: 0,
+                  right: 2,
+                  child: Text(
+                    '${widget.trainingCount}/15',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: TrainingHomeStyle.navy,
+                    ),
+                  ),
+                ),
             ],
           ),
         ),
