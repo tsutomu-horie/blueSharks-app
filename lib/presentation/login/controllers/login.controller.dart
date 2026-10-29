@@ -10,6 +10,7 @@ import 'package:koto_blue_sharks/infrastructure/navigation/routes.dart';
 import 'package:koto_blue_sharks/presentation/main/main.screen.dart';
 import 'package:koto_blue_sharks/utils/fcm_helper.dart';
 import 'package:koto_blue_sharks/utils/my_shared_pref.dart';
+import 'package:koto_blue_sharks/utils/utils.dart';
 
 class LoginController extends GetxController {
   LoginController({AuthProvider? apiProvider})
@@ -53,7 +54,7 @@ class LoginController extends GetxController {
       final response = await apiProvider.login(
         emailTextFieldController.text,
         passwordTextFieldController.text,
-        () {}, // Present one error below, after the request has settled.
+        () {}, // Show one modal after the request has settled.
       );
       if (response.access_token.trim().isEmpty) {
         throw const LoginFailure(LoginFailureKind.invalidResponse);
@@ -62,16 +63,54 @@ class LoginController extends GetxController {
       await completeLogin(
           response, selectedPlayer, selectedPlayerName, isFromHome);
     } on LoginFailure catch (error) {
-      loginErrorMessage.value = switch (error.kind) {
-        LoginFailureKind.rejected => 'ログインできませんでした。入力内容を確認し、時間をおいて再度お試しください。',
-        LoginFailureKind.network => '通信できませんでした。接続を確認して再度お試しください。',
-        LoginFailureKind.server => '現在ログインできません。時間をおいて再度お試しください。',
-        LoginFailureKind.invalidResponse => 'ログイン情報を確認できませんでした。再度お試しください。',
-      };
+      switch (error.kind) {
+        case LoginFailureKind.rejected:
+          _showLoginError(
+            context,
+            'メールアドレスまたはIDが確認できませんでした。ご登録情報を再度ご確認ください',
+            message:
+                'ファンクラブ会員情報の更新には最大12時間かかります。ご登録情報が正しい場合には、しばらくしてから再度会員連携を行ってください。',
+            stateMessage: 'ログインできませんでした。入力内容を確認し、時間をおいて再度お試しください。',
+          );
+          break;
+        case LoginFailureKind.network:
+          _showLoginError(
+            context,
+            '通信できませんでした。接続を確認して再度お試しください。',
+          );
+          break;
+        case LoginFailureKind.server:
+          _showLoginError(
+            context,
+            '現在ログインできません。時間をおいて再度お試しください。',
+          );
+          break;
+        case LoginFailureKind.invalidResponse:
+          _showLoginError(
+            context,
+            'ログイン情報を確認できませんでした。再度お試しください。',
+          );
+          break;
+      }
     } catch (_) {
-      loginErrorMessage.value = 'ログインを完了できませんでした。再度お試しください。';
+      _showLoginError(
+        context,
+        'ログインを完了できませんでした。再度お試しください。',
+      );
     } finally {
       isLoadingLogin.value = false;
+    }
+  }
+
+  void _showLoginError(
+    BuildContext context,
+    String title, {
+    String? message,
+    String? stateMessage,
+  }) {
+    loginErrorMessage.value = stateMessage ?? title;
+    if (!_disposed && context.mounted) {
+      Utils.showError(context, title, message);
     }
   }
 

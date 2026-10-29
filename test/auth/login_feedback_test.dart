@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -68,6 +69,17 @@ Map<String, dynamic> validData({String token = 'mock-session'}) => {
       },
     };
 
+const _rejectedLoginDialogTitle = 'メールアドレスまたはIDが確認できませんでした。ご登録情報を再度ご確認ください';
+const _rejectedLoginDialogMessage =
+    'ファンクラブ会員情報の更新には最大12時間かかります。ご登録情報が正しい場合には、しばらくしてから再度会員連携を行ってください。';
+
+Widget _screenUtilTestApp(Widget child) {
+  return ScreenUtilInit(
+    designSize: const Size(390, 844),
+    child: MaterialApp(home: child),
+  );
+}
+
 void main() {
   final cases = <String, Future<Response<dynamic>> Function()>{
     for (final status in [401, 403, 422])
@@ -97,15 +109,27 @@ void main() {
   for (final entry in cases.entries) {
     testWidgets('${entry.key} shows error and stops loading', (tester) async {
       late BuildContext context;
-      await tester.pumpWidget(MaterialApp(home: Builder(builder: (value) {
-        context = value;
-        return const SizedBox();
-      })));
+      await tester.pumpWidget(
+        _screenUtilTestApp(
+          Builder(
+            builder: (value) {
+              context = value;
+              return const SizedBox();
+            },
+          ),
+        ),
+      );
       final controller = TestController(MockProvider(entry.value));
       await controller.login(context, '', '', false);
+      await tester.pump();
       expect(controller.isLoadingLogin.value, isFalse);
       expect(controller.loginErrorMessage.value, isNotEmpty);
       expect(controller.completed, 0);
+      expect(find.byType(Dialog), findsOneWidget);
+      if (entry.key.startsWith('rejected')) {
+        expect(find.text(_rejectedLoginDialogTitle), findsOneWidget);
+        expect(find.text(_rejectedLoginDialogMessage), findsOneWidget);
+      }
       final expected = entry.key.startsWith('rejected')
           ? 'ログインできません'
           : ['network status', 'socket', 'timeout'].contains(entry.key)
@@ -119,10 +143,16 @@ void main() {
   testWidgets('pending request times out and late response cannot log in',
       (tester) async {
     late BuildContext context;
-    await tester.pumpWidget(MaterialApp(home: Builder(builder: (value) {
-      context = value;
-      return const SizedBox();
-    })));
+    await tester.pumpWidget(
+      _screenUtilTestApp(
+        Builder(
+          builder: (value) {
+            context = value;
+            return const SizedBox();
+          },
+        ),
+      ),
+    );
     final pending = Completer<Response<dynamic>>();
     final controller = TestController(MockProvider(() => pending.future));
     final operation = controller.login(context, '', '', false);
@@ -160,10 +190,16 @@ void main() {
   testWidgets('retry success then old timed-out success completes only once',
       (tester) async {
     late BuildContext context;
-    await tester.pumpWidget(MaterialApp(home: Builder(builder: (value) {
-      context = value;
-      return const SizedBox();
-    })));
+    await tester.pumpWidget(
+      _screenUtilTestApp(
+        Builder(
+          builder: (value) {
+            context = value;
+            return const SizedBox();
+          },
+        ),
+      ),
+    );
     final old = Completer<Response<dynamic>>();
     var attempts = 0;
     final provider = MockProvider(() => ++attempts == 1
@@ -185,10 +221,16 @@ void main() {
   });
   testWidgets('unexpected exception has safe generic feedback', (tester) async {
     late BuildContext context;
-    await tester.pumpWidget(MaterialApp(home: Builder(builder: (value) {
-      context = value;
-      return const SizedBox();
-    })));
+    await tester.pumpWidget(
+      _screenUtilTestApp(
+        Builder(
+          builder: (value) {
+            context = value;
+            return const SizedBox();
+          },
+        ),
+      ),
+    );
     final controller = TestController(
         MockProvider(() async => throw StateError('private-canary')));
     final captured = <String>[];
@@ -196,7 +238,9 @@ void main() {
         zoneSpecification: ZoneSpecification(print: (_, __, ___, line) {
       captured.add(line);
     }));
+    await tester.pump();
     expect(captured.join(), isNot(contains('private-canary')));
+    expect(find.byType(Dialog), findsOneWidget);
     expect(controller.isLoadingLogin.value, isFalse);
     expect(controller.loginErrorMessage.value, 'ログインを完了できませんでした。再度お試しください。');
   });

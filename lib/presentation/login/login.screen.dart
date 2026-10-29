@@ -296,48 +296,31 @@ class LoginScreen extends GetView<LoginController> {
       bottomNavigationBar: Padding(
         padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
         child: Obx(() {
-          return Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              if (loginController.loginErrorMessage.value != null)
-                Semantics(
-                  liveRegion: true,
-                  child: Padding(
-                    padding: const EdgeInsets.only(bottom: 8),
-                    child: Text(
-                      loginController.loginErrorMessage.value!,
-                      style: TextStyle(color: TextColor.error),
+          return ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: BrandColor.main,
+            ),
+            onPressed: loginController.isLoadingLogin.value
+                ? null
+                : () {
+                    if (globalKey.currentState!.validate()) {
+                      loginController.login(context, selectedPlayer,
+                          selectedPlayerName, isFromHome);
+                    }
+                  },
+            child: loginController.isLoadingLogin.value
+                ? const SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2.0,
+                      color: Colors.white, // Spinner color
                     ),
+                  )
+                : CustomTextView(
+                    LocaleKeys.login.tr,
+                    color: BrandColor.content,
                   ),
-                ),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: BrandColor.main,
-                ),
-                onPressed: loginController.isLoadingLogin.value
-                    ? null
-                    : () {
-                        if (globalKey.currentState!.validate()) {
-                          loginController.login(context, selectedPlayer,
-                              selectedPlayerName, isFromHome);
-                        }
-                      },
-                child: loginController.isLoadingLogin.value
-                    ? const SizedBox(
-                        width: 24,
-                        height: 24,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2.0,
-                          color: Colors.white, // Spinner color
-                        ),
-                      )
-                    : CustomTextView(
-                        LocaleKeys.login.tr,
-                        color: BrandColor.content,
-                      ),
-              ),
-            ],
           );
         }),
       ),
