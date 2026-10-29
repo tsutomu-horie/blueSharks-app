@@ -106,6 +106,9 @@ class _MenuScreenState extends State<MenuScreen> {
                       {_selectSection(index)}
                   },
                   child: Obx(() {
+                    final selectedIndex = controller.selectedIndex.value;
+                    final isSelected = !_showOverview && selectedIndex == index;
+
                     return AnimatedContainer(
                       duration: const Duration(milliseconds: 300),
                       constraints: BoxConstraints(minHeight: 44.h),
@@ -115,10 +118,8 @@ class _MenuScreenState extends State<MenuScreen> {
                       decoration: BoxDecoration(
                         border: Border(
                           bottom: BorderSide(
-                            color: !_showOverview &&
-                                    controller.selectedIndex.value == index
-                                ? Colors.white
-                                : Colors.transparent,
+                            color:
+                                isSelected ? Colors.white : Colors.transparent,
                             width: 2.0, // Underline thickness
                           ),
                         ),
@@ -130,8 +131,7 @@ class _MenuScreenState extends State<MenuScreen> {
                             style: TextStyle(
                               fontSize: 13.sp,
                               fontWeight: FontWeight.w800,
-                              color: !_showOverview &&
-                                      controller.selectedIndex.value == index
+                              color: isSelected
                                   ? Colors.white
                                   : PrimaryColor.border,
                             ),
