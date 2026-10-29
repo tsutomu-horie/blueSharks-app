@@ -14,6 +14,10 @@ class SessionRepository implements PointRepository {
   PointAccount Function(DateTime now)? accountAt;
   Completer<PointAccount>? pending;
   Completer<PointQrToken>? pendingQr;
+  Completer<PointRewardExchange>? pendingExchange;
+  PointReward? rewardToLoad;
+  List<PointRewardExchange> exchangeResponses = [];
+  int exchangeRequests = 0;
 
   @override
   Future<PointAccount> getAccount() {
@@ -34,6 +38,22 @@ class SessionRepository implements PointRepository {
 
   @override
   Future<PointQrToken> getQrToken() => pendingQr!.future;
+
+  @override
+  Future<List<PointTransaction>> getTransactions() async => [];
+
+  @override
+  Future<PointReward> getReward(String id) async => rewardToLoad!;
+
+  @override
+  Future<PointRewardExchange> exchangeReward(
+    String rewardId, {
+    required String idempotencyKey,
+  }) {
+    exchangeRequests++;
+    return pendingExchange?.future ??
+        Future.value(exchangeResponses[exchangeRequests - 1]);
+  }
 
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
@@ -223,6 +243,125 @@ void main() {
     await request;
     expect(controller.qrToken.value, null);
     expect(controller.isAuthenticated.value, false);
+  });
+
+  test('concurrent reward exchange taps send only one request', () async {
+    repository.pendingExchange = Completer<PointRewardExchange>();
+    controller.selectedReward.value = const PointReward(
+      id: 'REWARD-1',
+      offerId: 'OFFER-1',
+      name: 'テスト景品',
+      description: '',
+      requiredPoints: 100,
+      pickupLocation: '',
+      notice: '',
+      status: PointRewardStatus.available,
+    );
+
+    final firstRequest = controller.exchangeSelectedReward();
+    final duplicateRequest = controller.exchangeSelectedReward();
+    repository.pendingExchange!.completeError(
+      const PointOperationException(
+        'REWARD_CUSTOMER_LIMIT_REACHED',
+        'この景品の交換上限に達しています。',
+      ),
+    );
+    expect(await firstRequest, isFalse);
+    expect(await duplicateRequest, isFalse);
+    final exchangeRequestCount = repository.exchangeRequests;
+    expect(exchangeRequestCount, 1);
+    expect(repository.exchangeRequests, 1);
+    expect(controller.errorMessage.value, 'この景品の交換上限に達しています。');
+    expect(
+      controller.rewardStatusFor(controller.selectedReward.value!),
+      PointRewardStatus.customerLimitReached,
+    );
+    expect(controller.isProcessing.value, isFalse);
+  });
+
+  test('successful exchanges accumulate toward the customer limit', () async {
+    const reward = PointReward(
+      id: 'REWARD-2',
+      offerId: 'OFFER-2',
+      name: 'テスト景品',
+      description: '',
+      requiredPoints: 100,
+      perCustomerLimit: 2,
+      customerExchangeCount: 0,
+      pickupLocation: '',
+      notice: '',
+      status: PointRewardStatus.available,
+    );
+    PointRewardExchange exchange(int id) => PointRewardExchange(
+      id: 'EX-$id',
+      exchangeNumber: 'EX-$id',
+      rewardId: reward.id,
+      rewardName: reward.name,
+      spentPoints: reward.requiredPoints,
+      requestedAt: DateTime(2026),
+      maskedMemberId: 'C-***',
+    );
+    controller.selectedReward.value = reward;
+    controller.rewards.assignAll([reward]);
+    repository.exchangeResponses = [exchange(1), exchange(2)];
+
+    expect(await controller.exchangeSelectedReward(), isTrue);
+    expect(controller.selectedReward.value?.customerExchangeCount, 1);
+    expect(
+      controller.rewardStatusFor(controller.selectedReward.value!),
+      PointRewardStatus.available,
+    );
+
+    expect(await controller.exchangeSelectedReward(), isTrue);
+    expect(controller.selectedReward.value?.customerExchangeCount, 2);
+    expect(
+      controller.rewardStatusFor(controller.selectedReward.value!),
+      PointRewardStatus.customerLimitReached,
+    );
+    expect(
+      controller.rewardStatusFor(controller.rewards.single),
+      PointRewardStatus.customerLimitReached,
+    );
+  });
+
+  test('a refreshed reward clears a stale customer limit override', () async {
+    const reward = PointReward(
+      id: 'REWARD-3',
+      offerId: 'OFFER-3',
+      name: 'テスト景品',
+      description: '',
+      requiredPoints: 100,
+      perCustomerLimit: 2,
+      customerExchangeCount: 1,
+      pickupLocation: '',
+      notice: '',
+      status: PointRewardStatus.available,
+    );
+    const staleReward = PointReward(
+      id: 'REWARD-3',
+      offerId: 'OFFER-3',
+      name: 'テスト景品',
+      description: '',
+      requiredPoints: 100,
+      perCustomerLimit: 1,
+      customerExchangeCount: 1,
+      pickupLocation: '',
+      notice: '',
+      status: PointRewardStatus.customerLimitReached,
+    );
+    controller.rewards.assignAll([
+      staleReward,
+    ]);
+    controller.customerLimitReachedRewardIds.add(reward.id);
+    repository.rewardToLoad = reward;
+
+    await controller.loadReward(reward.id);
+
+    expect(controller.customerLimitReachedRewardIds.contains(reward.id), isFalse);
+    expect(
+      controller.rewardStatusFor(controller.rewards.single),
+      PointRewardStatus.available,
+    );
   });
 
   test('closed controller does not refresh on a session change', () async {

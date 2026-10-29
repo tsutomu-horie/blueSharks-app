@@ -11,7 +11,12 @@ class PointQrResultArguments {
   final String? failureCode;
 }
 
-enum PointRewardStatus { available, insufficientPoints, ended }
+enum PointRewardStatus {
+  available,
+  insufficientPoints,
+  ended,
+  customerLimitReached,
+}
 
 enum PointRankingType { monthly, yearly, season }
 
@@ -135,6 +140,8 @@ class PointReward {
     required this.description,
     this.imageUrl,
     required this.requiredPoints,
+    this.perCustomerLimit = 0,
+    this.customerExchangeCount,
     this.exchangeStartsAt,
     this.exchangeEndsAt,
     required this.pickupLocation,
@@ -148,11 +155,35 @@ class PointReward {
   final String description;
   final String? imageUrl;
   final int requiredPoints;
+  final int perCustomerLimit;
+  final int? customerExchangeCount;
   final DateTime? exchangeStartsAt;
   final DateTime? exchangeEndsAt;
   final String pickupLocation;
   final String notice;
   final PointRewardStatus status;
+
+  PointReward copyWith({
+    int? customerExchangeCount,
+    PointRewardStatus? status,
+  }) {
+    return PointReward(
+      id: id,
+      offerId: offerId,
+      name: name,
+      description: description,
+      imageUrl: imageUrl,
+      requiredPoints: requiredPoints,
+      perCustomerLimit: perCustomerLimit,
+      customerExchangeCount:
+          customerExchangeCount ?? this.customerExchangeCount,
+      exchangeStartsAt: exchangeStartsAt,
+      exchangeEndsAt: exchangeEndsAt,
+      pickupLocation: pickupLocation,
+      notice: notice,
+      status: status ?? this.status,
+    );
+  }
 }
 
 class PointRewardExchange {

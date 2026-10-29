@@ -278,6 +278,12 @@ class ApiPointRepository extends GetConnect implements PointRepository {
       );
     }
     final offer = _asMap(offers.first);
+    final perCustomerLimit = offer['per_customer_limit'] == null
+        ? 0
+        : _asInt(offer['per_customer_limit']);
+    final customerExchangeCount = offer['customer_exchange_count'] == null
+        ? null
+        : _asInt(offer['customer_exchange_count']);
     return PointReward(
       id: json['id'].toString(),
       offerId: offer['id'].toString(),
@@ -285,11 +291,17 @@ class ApiPointRepository extends GetConnect implements PointRepository {
       description: json['description'] as String? ?? '',
       imageUrl: _primaryImageUrl(json['images']),
       requiredPoints: _asInt(json['required_points']),
+      perCustomerLimit: perCustomerLimit,
+      customerExchangeCount: customerExchangeCount,
       exchangeStartsAt: _asDateTime(offer['starts_at']),
       exchangeEndsAt: _asDateTime(offer['ends_at']),
       pickupLocation: json['pickup_location'] as String? ?? '',
       notice: json['terms'] as String? ?? '',
-      status: PointRewardStatus.available,
+      status: perCustomerLimit > 0 &&
+              customerExchangeCount != null &&
+              customerExchangeCount >= perCustomerLimit
+          ? PointRewardStatus.customerLimitReached
+          : PointRewardStatus.available,
     );
   }
 

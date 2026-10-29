@@ -21,6 +21,7 @@ class PointController extends GetxController {
   final selectedReward = Rxn<PointReward>();
   final selectedTransaction = Rxn<PointTransaction>();
   final selectedExchange = Rxn<PointRewardExchange>();
+  final customerLimitReachedRewardIds = <String>{}.obs;
 
   final isLoading = false.obs;
   final isProcessing = false.obs;
@@ -58,6 +59,7 @@ class PointController extends GetxController {
     selectedReward.value = null;
     selectedTransaction.value = null;
     selectedExchange.value = null;
+    customerLimitReachedRewardIds.clear();
     errorMessage.value = null;
     qrFailureCode.value = null;
     qrResult.value = PointQrResult.idle;
@@ -173,6 +175,9 @@ class PointController extends GetxController {
       final balance = await repository.getAccount();
       if (!current()) return;
       rewards.assignAll(items);
+      for (final reward in items) {
+        _reconcileCustomerLimitOverride(reward);
+      }
       account.value = balance;
     });
   }
@@ -192,12 +197,17 @@ class PointController extends GetxController {
       if (!current() || _rewardRequestId != id) {
         return;
       }
-      selectedReward.value = results[0] as PointReward;
+      final reward = results[0] as PointReward;
+      _reconcileCustomerLimitOverride(reward);
+      final rewardIndex = rewards.indexWhere((item) => item.id == reward.id);
+      if (rewardIndex >= 0) rewards[rewardIndex] = reward;
+      selectedReward.value = reward;
       account.value = results[1] as PointAccount;
     });
   }
 
   Future<bool> exchangeSelectedReward() async {
+    if (isProcessing.value) return false;
     final version = AuthToken.sessionVersion;
     final reward = selectedReward.value;
     if (reward == null || _disposed) return false;
@@ -213,6 +223,7 @@ class PointController extends GetxController {
       if (!_current(version)) return false;
       selectedExchange.value = exchange;
       _pendingExchangeKey = null;
+      _recordSuccessfulRewardExchange(reward);
       final balance = await repository.getAccount();
       if (!_current(version)) return false;
       account.value = balance;
@@ -221,7 +232,12 @@ class PointController extends GetxController {
       transactions.assignAll(items);
       return true;
     } on PointOperationException catch (error) {
-      if (_current(version)) errorMessage.value = error.message;
+      if (_current(version)) {
+        if (error.code == 'REWARD_CUSTOMER_LIMIT_REACHED') {
+          customerLimitReachedRewardIds.add(reward.id);
+        }
+        errorMessage.value = error.message;
+      }
       return false;
     } catch (_) {
       if (_current(version)) {
@@ -249,11 +265,54 @@ class PointController extends GetxController {
     if (reward.status == PointRewardStatus.ended) {
       return PointRewardStatus.ended;
     }
+    if (reward.status == PointRewardStatus.customerLimitReached ||
+        customerLimitReachedRewardIds.contains(reward.id)) {
+      return PointRewardStatus.customerLimitReached;
+    }
     final exchangeableBalance =
         account.value?.exchangeableBalanceForRedemption ?? 0;
     return exchangeableBalance >= reward.requiredPoints
         ? PointRewardStatus.available
         : PointRewardStatus.insufficientPoints;
+  }
+
+  void _recordSuccessfulRewardExchange(PointReward reward) {
+    final rewardIndex = rewards.indexWhere((item) => item.id == reward.id);
+    final listReward = rewardIndex < 0 ? null : rewards[rewardIndex];
+    final selectedCount = reward.customerExchangeCount ?? 0;
+    final listCount = listReward?.customerExchangeCount ?? 0;
+    final latestCount = listCount > selectedCount ? listCount : selectedCount;
+    final nextCount = latestCount + 1;
+    final reachedLimit = reward.perCustomerLimit > 0 &&
+        nextCount >= reward.perCustomerLimit;
+    final updatedStatus = reachedLimit
+        ? PointRewardStatus.customerLimitReached
+        : reward.status;
+
+    selectedReward.value = reward.copyWith(
+      customerExchangeCount: nextCount,
+      status: updatedStatus,
+    );
+    if (rewardIndex >= 0) {
+      rewards[rewardIndex] = rewards[rewardIndex].copyWith(
+        customerExchangeCount: nextCount,
+        status: reachedLimit
+            ? PointRewardStatus.customerLimitReached
+            : rewards[rewardIndex].status,
+      );
+    }
+    if (reachedLimit) customerLimitReachedRewardIds.add(reward.id);
+  }
+
+  void _reconcileCustomerLimitOverride(PointReward reward) {
+    final customerExchangeCount = reward.customerExchangeCount;
+    if (customerExchangeCount == null) return;
+    if (reward.perCustomerLimit > 0 &&
+        customerExchangeCount >= reward.perCustomerLimit) {
+      customerLimitReachedRewardIds.add(reward.id);
+    } else {
+      customerLimitReachedRewardIds.remove(reward.id);
+    }
   }
 
   List<PointTransaction> get filteredTransactions {
