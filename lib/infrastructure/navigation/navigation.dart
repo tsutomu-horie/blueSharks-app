@@ -1,5 +1,9 @@
+import 'dart:async';
+
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:koto_blue_sharks/app/data/models/game_guide/game_guide_post.dart';
+import 'package:koto_blue_sharks/app/services/training_game_sound_service.dart';
 
 import '../../presentation/screens.dart';
 import 'bindings/controllers/controllers_bindings.dart';
@@ -24,7 +28,12 @@ class Nav {
     ),
     GetPage(
       name: Routes.TRAINING_GAME,
-      page: () => const TrainingGameScreen(),
+      page: () => TrainingGameScreen(
+        careCompletionSound: () => unawaited(
+          TrainingGameSoundService.instance
+              .play(TrainingGameSoundEffect.careCompleted),
+        ),
+      ),
       binding: TrainingGameControllerBinding(),
     ),
     GetPage(

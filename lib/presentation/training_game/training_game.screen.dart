@@ -32,10 +32,12 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
   const TrainingGameScreen(
       {super.key,
       this.evolutionSoundFactory = createTrainingEvolutionSound,
-      this.homeTapSoundFactory = createTrainingHomeTapSound});
+      this.homeTapSoundFactory = createTrainingHomeTapSound,
+      this.careCompletionSound});
 
   final TrainingGameSoundService Function() evolutionSoundFactory;
   final TrainingGameSoundService Function() homeTapSoundFactory;
+  final VoidCallback? careCompletionSound;
 
   String? get _bodyKey => SametarohAssets.bodyKeyForBranch(controller.branch);
 
@@ -1157,6 +1159,11 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
         type == TrainingActionType.squat ? controller.beginSquatScene() : null;
     if (type == TrainingActionType.squat && finishSquat == null) return;
     final feedbackBefore = controller.careFeedbackVersion.value;
+    if (careCompletionSound != null) {
+      unawaited(TrainingGameSoundService.instance
+          .prepare(TrainingGameSoundEffect.careCompleted)
+          .then((_) {}));
+    }
     bool? completed;
     try {
       final route = TrainingCareRoute<bool>(
@@ -1166,6 +1173,7 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
           bodyKey: controller.stageIndex.value == 1
               ? SametarohAssets.childBodyKey
               : _bodyKey,
+          onCompletionSound: careCompletionSound,
         ),
       );
       completed = await Navigator.of(context).push<bool>(route);

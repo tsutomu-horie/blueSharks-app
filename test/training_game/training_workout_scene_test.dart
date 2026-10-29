@@ -113,9 +113,10 @@ void main() {
         }
       }
       await tester.pump(const Duration(seconds: 5));
-      if (scenario == 'complete')
-        expect(controller.meters['食事']!, lessThan(50));
       await tester.runAsync(() => Future<void>.delayed(Duration.zero));
+      await tester.pump();
+      expect(find.text('タップして戻る'), findsOneWidget);
+      await tester.tap(find.text('タップして戻る'));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 500));
       await tester.pump(const Duration(milliseconds: 400));
@@ -127,6 +128,9 @@ void main() {
       });
       await tester.pump(const Duration(seconds: 1));
       await tester.runAsync(() => TrainingGameProvider.waitForPendingSync());
+      if (scenario == 'complete') {
+        expect(controller.meters['食事']!, lessThan(50));
+      }
       final actions = provider.syncedActionCodes.whereType<String>().toList();
       expect(
           actions,

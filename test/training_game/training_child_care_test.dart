@@ -100,7 +100,7 @@ void main() {
     TrainingActionType.squat,
     TrainingActionType.rest
   ]) {
-    testWidgets('幼体${action.name}は承認2コマを反復し完了図500ms後に戻る', (tester) async {
+    testWidgets('幼体${action.name}は承認2コマを反復し、タップで完了図から戻る', (tester) async {
       tester.view.physicalSize = const Size(375, 812);
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.resetPhysicalSize);
@@ -160,6 +160,9 @@ void main() {
       await tester.pump(const Duration(milliseconds: 499));
       expect(result, isNull);
       await tester.pump(const Duration(milliseconds: 1));
+      expect(find.text('タップして戻る'), findsOneWidget);
+      expect(result, isNull);
+      await tester.tap(find.text('タップして戻る'));
       await tester.pumpAndSettle();
       expect(result, isTrue);
       await tester.pumpWidget(const SizedBox());

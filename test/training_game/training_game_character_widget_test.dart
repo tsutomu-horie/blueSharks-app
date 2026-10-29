@@ -318,7 +318,7 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('care完了は500ms終了図を表示してtrueで戻り、中止はfalse', (tester) async {
+  testWidgets('care完了図はタップまで保持しtrueで戻り、中止はfalse', (tester) async {
     configurePhone(tester);
     bool? result;
     await tester.pumpWidget(host(Builder(
@@ -356,6 +356,9 @@ void main() {
     await tester.pump(const Duration(milliseconds: 499));
     expect(result, isNull);
     await tester.pump(const Duration(milliseconds: 1));
+    expect(find.text('タップして戻る'), findsOneWidget);
+    expect(result, isNull);
+    await tester.tap(find.text('タップして戻る'));
     await pumpRouteTransition(tester);
     expect(result, isTrue);
     result = null;
@@ -827,6 +830,7 @@ void main() {
           endsWith('/${entry.value}/work_done.png'));
       await tester.pump(const Duration(milliseconds: 499));
       expect(controller.callbackTrace, ['prepareWork']);
+      await tester.tap(find.text('タップして戻る'));
       await tester.pump(const Duration(milliseconds: 1));
       await pumpRouteTransition(tester);
       expect(controller.callbackTrace,
