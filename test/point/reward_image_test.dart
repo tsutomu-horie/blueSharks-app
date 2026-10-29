@@ -53,25 +53,28 @@ void main() {
     expect(reward.imageUrl, url);
   });
 
-  test('marks a reward unavailable when the API reports the customer limit', () {
-    final reward = ApiPointRepository.instance.rewardFromJson({
-      'id': 1,
-      'name': '上限テスト景品',
-      'required_points': 10,
-      'offers': [
-        {
-          'id': 11,
-          'per_customer_limit': 1,
-          'customer_exchange_count': 1,
-        }
-      ],
-      'images': [],
-    });
+  test(
+    'marks a reward unavailable when the API reports the customer limit',
+    () {
+      final reward = ApiPointRepository.instance.rewardFromJson({
+        'id': 1,
+        'name': '上限テスト景品',
+        'required_points': 10,
+        'offers': [
+          {
+            'id': 11,
+            'per_customer_limit': 1,
+            'customer_exchange_count': 1,
+          }
+        ],
+        'images': [],
+      });
 
-    expect(reward.perCustomerLimit, 1);
-    expect(reward.customerExchangeCount, 1);
-    expect(reward.status, PointRewardStatus.customerLimitReached);
-  });
+      expect(reward.perCustomerLimit, 1);
+      expect(reward.customerExchangeCount, 1);
+      expect(reward.status, PointRewardStatus.customerLimitReached);
+    },
+  );
 
   for (final images in [
     null,
@@ -219,7 +222,8 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('customer limit disables the confirmation action', (tester) async {
+  testWidgets('customer limit disables the confirmation action',
+      (tester) async {
     final reward = ApiPointRepository.instance.rewardFromJson({
       'id': 1,
       'name': '上限テスト景品',
@@ -246,8 +250,7 @@ void main() {
       _app(initialRoute: Routes.POINT_EXCHANGE_CONFIRM),
     );
     await tester.pumpAndSettle();
-    expect(find.text('この景品の交換上限に達しているため、交換できません。'),
-        findsOneWidget);
+    expect(find.text('この景品の交換上限に達しているため、交換できません。'), findsOneWidget);
     final confirmButton = tester.widget<ElevatedButton>(
       find.widgetWithText(ElevatedButton, '交換上限に達しています'),
     );

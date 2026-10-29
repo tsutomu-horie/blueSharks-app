@@ -854,8 +854,7 @@ class PointExchangeConfirmScreen extends StatelessWidget {
       }
       final status = controller.rewardStatusFor(reward);
       final enabled =
-          status == PointRewardStatus.available &&
-          !controller.isProcessing.value;
+          status == PointRewardStatus.available && !controller.isProcessing.value;
       return PointScaffold(
         title: '交換確認',
         child: ListView(
