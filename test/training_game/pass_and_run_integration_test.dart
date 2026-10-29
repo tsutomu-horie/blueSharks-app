@@ -344,7 +344,7 @@ void main() {
     await start(t);
     final label = find.byKey(const Key('pass-player-label'));
     expect(find.text('鮫太郎'), findsOneWidget);
-    expect(t.widget<Text>(label).style!.fontSize, 10);
+    expect(t.widget<Text>(label).style!.fontSize, 12);
     expect(
         t
             .widget<IgnorePointer>(find

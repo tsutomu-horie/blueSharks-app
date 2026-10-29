@@ -8,6 +8,7 @@ import 'package:koto_blue_sharks/infrastructure/navigation/routes.dart';
 
 import 'controllers/training_game.controller.dart';
 import 'controllers/training_game_new_game.controller.dart';
+import 'training_game_theme.dart';
 import 'training_hatching_scene.dart';
 
 /// ワイヤーフレーム①「アプリ内 ゲーム起動」を表示します。
@@ -52,73 +53,78 @@ class _TrainingGameLaunchScreenState extends State<TrainingGameLaunchScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return PopScope(
-      canPop: !_isLaunching,
-      child: Scaffold(
-        appBar:
-            AppBar(title: Text(_autoStartPending ? 'ゲームを起動中…' : 'アプリ ｜ ゲーム')),
-        body: FutureBuilder<String?>(
-          future: _accessTokenFuture,
-          builder: (context, snapshot) {
-            if (snapshot.connectionState != ConnectionState.done) {
-              return const Center(child: CircularProgressIndicator());
-            }
-            if (_autoStartPending) {
-              return const Center(child: CircularProgressIndicator());
-            }
-            final authenticated = snapshot.data?.isNotEmpty == true;
-            return Stack(
-              children: [
-                Padding(
-                  padding: EdgeInsets.all(20.w),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _FlowPlaceholder(height: 180.h, label: 'ゲームバナー'),
-                      SizedBox(height: 20.h),
-                      Text(
-                        '鮫太朗育成ゲーム',
-                        style: TextStyle(
-                          fontSize: 22.sp,
-                          fontWeight: FontWeight.w700,
+    return TrainingGameTheme(
+      child: PopScope(
+        canPop: !_isLaunching,
+        child: Scaffold(
+          appBar:
+              AppBar(title: Text(_autoStartPending ? 'ゲームを起動中…' : 'アプリ ｜ ゲーム')),
+          body: FutureBuilder<String?>(
+            future: _accessTokenFuture,
+            builder: (context, snapshot) {
+              if (snapshot.connectionState != ConnectionState.done) {
+                return const Center(child: CircularProgressIndicator());
+              }
+              if (_autoStartPending) {
+                return const Center(child: CircularProgressIndicator());
+              }
+              final authenticated = snapshot.data?.isNotEmpty == true;
+              return Stack(
+                children: [
+                  Padding(
+                    padding: EdgeInsets.all(20.w),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _FlowPlaceholder(height: 180.h, label: 'ゲームバナー'),
+                        SizedBox(height: 20.h),
+                        Text(
+                          '鮫太朗育成ゲーム',
+                          style: TextStyle(
+                            fontSize: 22.sp,
+                            fontWeight: FontWeight.w700,
+                          ),
                         ),
-                      ),
-                      SizedBox(height: 8.h),
-                      Text(
-                        authenticated ? 'ゲームを開始できます。' : 'ゲームを起動するには会員認証が必要です。',
-                      ),
-                      const Spacer(),
-                      SizedBox(
-                        width: double.infinity,
-                        height: 52.h,
-                        child: ElevatedButton(
-                          onPressed:
-                              authenticated && !_isLaunching ? _openGame : null,
-                          child: _isLaunching
-                              ? Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    SizedBox(
-                                      width: 20.w,
-                                      height: 20.w,
-                                      child: const CircularProgressIndicator(
-                                        strokeWidth: 2,
+                        SizedBox(height: 8.h),
+                        Text(
+                          authenticated
+                              ? 'ゲームを開始できます。'
+                              : 'ゲームを起動するには会員認証が必要です。',
+                        ),
+                        const Spacer(),
+                        SizedBox(
+                          width: double.infinity,
+                          height: 52.h,
+                          child: ElevatedButton(
+                            onPressed: authenticated && !_isLaunching
+                                ? _openGame
+                                : null,
+                            child: _isLaunching
+                                ? Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      SizedBox(
+                                        width: 20.w,
+                                        height: 20.w,
+                                        child: const CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                        ),
                                       ),
-                                    ),
-                                    SizedBox(width: 8.w),
-                                    const Text('起動中…'),
-                                  ],
-                                )
-                              : const Text('ゲームを起動'),
+                                      SizedBox(width: 8.w),
+                                      const Text('起動中…'),
+                                    ],
+                                  )
+                                : const Text('ゲームを起動'),
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-                if (_isLaunching) _buildLaunchingOverlay(),
-              ],
-            );
-          },
+                  if (_isLaunching) _buildLaunchingOverlay(),
+                ],
+              );
+            },
+          ),
         ),
       ),
     );
@@ -253,138 +259,155 @@ class _TrainingGameNewGameScreenState extends State<TrainingGameNewGameScreen>
 
   @override
   Widget build(BuildContext context) {
-    return PopScope(
-      canPop: !_busy,
-      child: Scaffold(
-        appBar: AppBar(title: const Text('新しい出会い')),
-        body: Stack(
-          fit: StackFit.expand,
-          children: [
-            Image.asset(
-              'assets/images/training_game/scenes/home_outdoor_day.png',
-              fit: BoxFit.cover,
-              excludeFromSemantics: true,
-            ),
-            const DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    Color(0xf2effaff),
-                    Color(0xe6f5fcff),
-                    Color(0xf2ffffff),
-                  ],
+    return TrainingGameTheme(
+      child: PopScope(
+        canPop: !_busy,
+        child: Scaffold(
+          appBar: AppBar(title: const Text('新しい出会い')),
+          body: Stack(
+            fit: StackFit.expand,
+            children: [
+              Image.asset(
+                'assets/images/training_game/scenes/home_outdoor_day.png',
+                fit: BoxFit.cover,
+                excludeFromSemantics: true,
+              ),
+              const DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Color(0xf2effaff),
+                      Color(0xe6f5fcff),
+                      Color(0xf2ffffff),
+                    ],
+                  ),
                 ),
               ),
-            ),
-            SafeArea(
-              child: LayoutBuilder(builder: (context, constraints) {
-                return SingleChildScrollView(
-                  child: ConstrainedBox(
-                    constraints: BoxConstraints(
-                      minHeight: constraints.maxHeight,
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(24),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Column(
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 16,
-                                  vertical: 7,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: Colors.white.withValues(alpha: .85),
-                                  borderRadius: BorderRadius.circular(24),
-                                ),
-                                child: const Text(
-                                  '鮫太朗とのものがたり',
-                                  style: TextStyle(
-                                    color: Color(0xff26769a),
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(height: 20),
-                              TrainingHatchingScene(
-                                key: ValueKey(_sceneGeneration),
-                                isPlaying: _hatching,
-                                soundFactory: widget.soundFactory,
-                                onCompleted: _onHatched,
-                                onLoadFailed: _onSceneLoadFailed,
-                              ),
-                            ],
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.only(top: 24),
-                            child: Obx(() => Column(
-                              mainAxisSize: MainAxisSize.min,
+              SafeArea(
+                child: LayoutBuilder(builder: (context, constraints) {
+                  return SingleChildScrollView(
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(
+                        minHeight: constraints.maxHeight,
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(24),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Column(
                               children: [
-                                if (_controller.errorMessage.value.isNotEmpty)
-                                  Padding(
-                                    padding: const EdgeInsets.only(bottom: 16),
-                                    child: Semantics(
-                                      liveRegion: true,
-                                      child: Text(_controller.errorMessage.value,
-                                        textAlign: TextAlign.center,
-                                        style: const TextStyle(color: Color(0xffa12b2b))),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                    vertical: 7,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withValues(alpha: .85),
+                                    borderRadius: BorderRadius.circular(24),
+                                  ),
+                                  child: const Text(
+                                    '鮫太朗とのものがたり',
+                                    style: TextStyle(
+                                      color: Color(0xff26769a),
+                                      fontWeight: FontWeight.w600,
                                     ),
                                   ),
-                                SizedBox(
-                                  width: double.infinity,
-                                  height: 54,
-                                  child: ElevatedButton(
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: const Color(0xff126694),
-                                      foregroundColor: Colors.white,
-                                      disabledBackgroundColor: const Color(0xff6b9db7),
-                                      disabledForegroundColor: Colors.white,
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(16),
-                                      ),
-                                    ),
-                                    onPressed: _busy ? null : _startGame,
-                                    child: Row(
-                                      mainAxisAlignment: MainAxisAlignment.center,
-                                      children: [
-                                        if (_controller.isStarting.value) ...[
-                                          const SizedBox(
-                                            width: 18,
-                                            height: 18,
-                                            child: CircularProgressIndicator(
-                                              strokeWidth: 2,
-                                              color: Colors.white,
-                                            ),
-                                          ),
-                                          const SizedBox(width: 10),
-                                        ],
-                                        Text(_controller.isStarting.value
-                                            ? '育成を準備しています…'
-                                            : _busy
-                                                ? '卵がかえっています…'
-                                                : _hatched
-                                                    ? 'もう一度接続する'
-                                                    : 'はじめる',
-                                            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
-                                      ],
-                                    ),
-                                  ),
+                                ),
+                                const SizedBox(height: 20),
+                                TrainingHatchingScene(
+                                  key: ValueKey(_sceneGeneration),
+                                  isPlaying: _hatching,
+                                  soundFactory: widget.soundFactory,
+                                  onCompleted: _onHatched,
+                                  onLoadFailed: _onSceneLoadFailed,
                                 ),
                               ],
-                            )),
-                          ),
-                        ],
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.only(top: 24),
+                              child: Obx(() => Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      if (_controller
+                                          .errorMessage.value.isNotEmpty)
+                                        Padding(
+                                          padding:
+                                              const EdgeInsets.only(bottom: 16),
+                                          child: Semantics(
+                                            liveRegion: true,
+                                            child: Text(
+                                                _controller.errorMessage.value,
+                                                textAlign: TextAlign.center,
+                                                style: const TextStyle(
+                                                    color: Color(0xffa12b2b))),
+                                          ),
+                                        ),
+                                      SizedBox(
+                                        width: double.infinity,
+                                        height: 54,
+                                        child: ElevatedButton(
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor:
+                                                const Color(0xff126694),
+                                            foregroundColor: Colors.white,
+                                            disabledBackgroundColor:
+                                                const Color(0xff6b9db7),
+                                            disabledForegroundColor:
+                                                Colors.white,
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(16),
+                                            ),
+                                          ),
+                                          onPressed: _busy ? null : _startGame,
+                                          child: Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.center,
+                                            children: [
+                                              if (_controller
+                                                  .isStarting.value) ...[
+                                                const SizedBox(
+                                                  width: 18,
+                                                  height: 18,
+                                                  child:
+                                                      CircularProgressIndicator(
+                                                    strokeWidth: 2,
+                                                    color: Colors.white,
+                                                  ),
+                                                ),
+                                                const SizedBox(width: 10),
+                                              ],
+                                              Text(
+                                                  _controller.isStarting.value
+                                                      ? '育成を準備しています…'
+                                                      : _busy
+                                                          ? '卵がかえっています…'
+                                                          : _hatched
+                                                              ? 'もう一度接続する'
+                                                              : 'はじめる',
+                                                  style: const TextStyle(
+                                                      fontSize: 16,
+                                                      fontWeight:
+                                                          FontWeight.w700)),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  )),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
-                  ),
-                );
-              }),
-            ),
-          ],
+                  );
+                }),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -423,16 +446,14 @@ class _TrainingGameNewGameScreenState extends State<TrainingGameNewGameScreen>
   Future<void> _submitStart() async {
     if (!mounted) return;
     if (_session != AuthToken.sessionVersion) {
-      _controller.errorMessage.value =
-          'ログイン状態が変わりました。画面を閉じて、もう一度お試しください。';
+      _controller.errorMessage.value = 'ログイン状態が変わりました。画面を閉じて、もう一度お試しください。';
       setState(() => _busy = false);
       return;
     }
     final state = await _controller.startNewGame(forceRestart: _forceRestart);
     if (!mounted) return;
     if (_session != AuthToken.sessionVersion) {
-      _controller.errorMessage.value =
-          'ログイン状態が変わりました。画面を閉じて、もう一度お試しください。';
+      _controller.errorMessage.value = 'ログイン状態が変わりました。画面を閉じて、もう一度お試しください。';
       setState(() => _busy = false);
       return;
     }
@@ -445,10 +466,10 @@ class _TrainingGameNewGameScreenState extends State<TrainingGameNewGameScreen>
   }
 
   void _openStartedGame() {
-    if (!mounted || !_foreground || _didNavigate || _startedState == null) return;
+    if (!mounted || !_foreground || _didNavigate || _startedState == null)
+      return;
     if (_session != AuthToken.sessionVersion) {
-      _controller.errorMessage.value =
-          'ログイン状態が変わりました。画面を閉じて、もう一度お試しください。';
+      _controller.errorMessage.value = 'ログイン状態が変わりました。画面を閉じて、もう一度お試しください。';
       setState(() {
         _busy = false;
         _startedState = null;

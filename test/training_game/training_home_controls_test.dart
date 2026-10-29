@@ -34,18 +34,27 @@ class HomeControlsFixture extends TrainingGameController {
   }
 }
 
-Widget homeControlsHost({Key? captureKey}) => ScreenUtilInit(
+Widget homeControlsHost({Key? captureKey, double textScale = 1}) =>
+    ScreenUtilInit(
       designSize: const Size(375, 812),
       builder: (_, __) => MaterialApp(
         debugShowCheckedModeBanner: false,
-        builder: (_, child) => EnvironmentBadge(child: child!),
+        builder: (context, child) => MediaQuery(
+          data: MediaQuery.of(context)
+              .copyWith(textScaler: TextScaler.linear(textScale)),
+          child: EnvironmentBadge(child: child!),
+        ),
         home:
             RepaintBoundary(key: captureKey, child: const TrainingGameScreen()),
       ),
     );
 
 void main() {
-  for (final size in [const Size(375, 812), const Size(320, 568)]) {
+  for (final size in [
+    const Size(375, 812),
+    const Size(320, 568),
+    const Size(834, 1194),
+  ]) {
     testWidgets('実HOMEのずかんと練習/MGの下端が有効・無効時とも揃う $size', (tester) async {
       tester.view.physicalSize = size;
       tester.view.devicePixelRatio = 1;
@@ -151,6 +160,33 @@ void main() {
                   find.descendant(of: clean, matching: find.byType(TextButton)))
               .onPressed,
           isNull);
+      await tester.pumpWidget(const SizedBox());
+    });
+  }
+
+  for (final size in [
+    const Size(375, 812),
+    const Size(320, 568),
+    const Size(834, 1194),
+  ]) {
+    testWidgets('大きい文字でも育成ホームのフッターが画面内に収まる $size', (tester) async {
+      tester.view.physicalSize = size;
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      Get.testMode = true;
+      addTearDown(Get.reset);
+      final controller = HomeControlsFixture()
+        ..stageIndex.value = 2
+        ..isServerStateReady.value = true;
+      Get.put<TrainingGameController>(controller);
+      await tester.pumpWidget(homeControlsHost(textScale: 1.5));
+      await tester.pump();
+
+      final footer = find.byKey(const ValueKey('training-home-footer'));
+      expect(tester.getRect(footer).bottom, lessThanOrEqualTo(size.height));
+      expect(find.text('掃除').hitTestable(), findsOneWidget);
+      expect(tester.takeException(), isNull);
       await tester.pumpWidget(const SizedBox());
     });
   }

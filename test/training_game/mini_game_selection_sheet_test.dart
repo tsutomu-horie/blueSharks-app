@@ -64,7 +64,8 @@ void main() {
   for (final size in [
     const Size(375, 812),
     const Size(320, 568),
-    const Size(568, 320)
+    const Size(568, 320),
+    const Size(834, 1194),
   ]) {
     for (final scale in [1.0, 2.0, 3.0]) {
       testWidgets('狭い画面・横画面・文字拡大で末尾カードまで選択できる $size ×$scale', (tester) async {

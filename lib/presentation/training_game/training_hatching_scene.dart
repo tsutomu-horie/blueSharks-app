@@ -305,7 +305,7 @@ class _TrainingHatchingSceneState extends State<TrainingHatchingScene>
             Text(
               reveal > .5 ? '小さな一歩から、一緒に育っていこう。' : '新しい出会いが、ここからはじまります。',
               textAlign: TextAlign.center,
-              style: const TextStyle(color: Color(0xff496d80), fontSize: 13),
+              style: const TextStyle(color: Color(0xff496d80), fontSize: 14),
             ),
           ],
         );

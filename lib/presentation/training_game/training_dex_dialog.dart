@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'sametaroh_asset.dart';
+import 'training_game_theme.dart';
 
 /// 図鑑の表示専用部品。取得・保存と解放判定は呼び出し元が担当します。
 /// 呼び出し元の Obx 内で生成し、取得後の登録状態を反映してください。
@@ -16,74 +17,76 @@ class TrainingDexDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Dialog(
-      backgroundColor: Colors.white,
-      insetPadding: EdgeInsets.symmetric(horizontal: 22, vertical: 24),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: ConstrainedBox(
-        constraints: BoxConstraints(
-          maxWidth: 520,
-          maxHeight: MediaQuery.of(context).size.height * .8,
-        ),
-        child: Padding(
-          padding: EdgeInsets.fromLTRB(20, 18, 20, 14),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Expanded(
-                child: SingleChildScrollView(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Row(
-                        children: [
-                          Container(
-                            width: 4,
-                            height: 22,
-                            decoration: BoxDecoration(
-                              color: const Color(0xff1f6feb),
-                              borderRadius: BorderRadius.circular(2),
-                            ),
-                          ),
-                          SizedBox(width: 9),
-                          Icon(Icons.menu_book_rounded,
-                              color: Color(0xff1f6feb), size: 20),
-                          SizedBox(width: 6),
-                          Expanded(
-                            child: Text(
-                              'ずかん（$registeredCount/10 登録）',
-                              style: TextStyle(
-                                fontSize: 15,
-                                fontWeight: FontWeight.w700,
+    return TrainingGameTheme(
+      child: Dialog(
+        backgroundColor: Colors.white,
+        insetPadding: EdgeInsets.symmetric(horizontal: 22, vertical: 24),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxWidth: 520,
+            maxHeight: MediaQuery.of(context).size.height * .8,
+          ),
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(20, 18, 20, 14),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(
+                  child: SingleChildScrollView(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Row(
+                          children: [
+                            Container(
+                              width: 4,
+                              height: 22,
+                              decoration: BoxDecoration(
+                                color: const Color(0xff1f6feb),
+                                borderRadius: BorderRadius.circular(2),
                               ),
                             ),
-                          ),
-                        ],
-                      ),
-                      SizedBox(height: 8),
-                      Text(
-                        registeredCount == 0
-                            ? '一軍で待っている10のポジション。\nいまはまだすべて未解放です。育て方しだいで、どれか1つに到達します。'
-                            : '一軍で待っている10のポジション。\n解放したポジションは登録済みとして表示されます。',
-                        style: TextStyle(
-                          color: const Color(0xff5b6672),
-                          fontSize: 12.5,
-                          height: 1.75,
+                            SizedBox(width: 9),
+                            Icon(Icons.menu_book_rounded,
+                                color: Color(0xff1f6feb), size: 20),
+                            SizedBox(width: 6),
+                            Expanded(
+                              child: Text(
+                                'ずかん（$registeredCount/10 登録）',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
-                      ),
-                      SizedBox(height: 8),
-                      ..._dexPositions.map((position) => _buildDexCard(
-                          position, isPositionUnlocked(position.name))),
-                    ],
+                        SizedBox(height: 8),
+                        Text(
+                          registeredCount == 0
+                              ? '一軍で待っている10のポジション。\nいまはまだすべて未解放です。育て方しだいで、どれか1つに到達します。'
+                              : '一軍で待っている10のポジション。\n解放したポジションは登録済みとして表示されます。',
+                          style: TextStyle(
+                            color: const Color(0xff5b6672),
+                            fontSize: 14,
+                            height: 1.75,
+                          ),
+                        ),
+                        SizedBox(height: 8),
+                        ..._dexPositions.map((position) => _buildDexCard(
+                            position, isPositionUnlocked(position.name))),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(),
-                style: TextButton.styleFrom(minimumSize: const Size(48, 48)),
-                child: const Text('閉じる'),
-              ),
-            ],
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  style: TextButton.styleFrom(minimumSize: const Size(48, 48)),
+                  child: const Text('閉じる'),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -127,13 +130,13 @@ class TrainingDexDialog extends StatelessWidget {
                   ),
                   child: Text(
                     position.number,
-                    style: TextStyle(color: Colors.white, fontSize: 10.5),
+                    style: TextStyle(color: Colors.white, fontSize: 12),
                   ),
                 ),
                 Text(
                   position.name,
                   style: TextStyle(
-                    fontSize: 13,
+                    fontSize: 14,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
@@ -143,7 +146,7 @@ class TrainingDexDialog extends StatelessWidget {
                     color: unlocked
                         ? const Color(0xff1554b0)
                         : const Color(0xff5b6672),
-                    fontSize: 11,
+                    fontSize: 12,
                     fontWeight: unlocked ? FontWeight.w700 : FontWeight.normal,
                   ),
                 ),
@@ -198,7 +201,7 @@ class TrainingDexDialog extends StatelessWidget {
             TextSpan(text: value),
           ],
         ),
-        style: TextStyle(fontSize: 11.5, height: 1.65),
+        style: TextStyle(fontSize: 13, height: 1.65),
       ),
     );
   }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../models/training_game_models.dart';
 import '../training_home_controls.dart';
+import '../training_game_theme.dart';
 
 /// 選択だけを返し、ゲームの開始・報酬・待機時間は呼び出し元へ委ねます。
 Future<TrainingActionType?> showMiniGameSelectionSheet(BuildContext context) {
@@ -42,45 +43,48 @@ class _MiniGameSelectionSheetState extends State<MiniGameSelectionSheet> {
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      top: false,
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(16, 24, 16, 24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const Text(
-              'ミニゲームを選ぶ',
-              style: TextStyle(
-                fontFamily: 'LINESeedJP',
-                fontSize: 19,
-                fontWeight: FontWeight.w700,
-                color: TrainingHomeStyle.navy,
+    return TrainingGameTheme(
+      child: SafeArea(
+        top: false,
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(16, 24, 16, 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const Text(
+                'ミニゲームを選ぶ',
+                style: TextStyle(
+                  fontFamily: 'LINESeedJP',
+                  fontSize: 19,
+                  fontWeight: FontWeight.w700,
+                  color: TrainingHomeStyle.navy,
+                ),
               ),
-            ),
-            const SizedBox(height: 24),
-            _SelectionCard(
-              type: TrainingActionType.tackle,
-              title: 'タックル',
-              category: '反応・タイミング',
-              description: 'フェイントを見抜いて\n相手の動く方向をタップ',
-              asset:
-                  'assets/images/training_game/minigames/tackle_attack_normal.png',
-              imageSize: const Size(66, 94),
-              onSelected: _select,
-            ),
-            const SizedBox(height: 12),
-            _SelectionCard(
-              type: TrainingActionType.passAndRun,
-              title: 'パス＆ラン',
-              category: 'フリック・パス',
-              description: '仲間をねらってフリック\nパスをつないで走ろう',
-              asset: 'assets/images/training_game/selection/pass_run_ball.png',
-              imageSize: const Size(70, 58),
-              onSelected: _select,
-            ),
-          ],
+              const SizedBox(height: 24),
+              _SelectionCard(
+                type: TrainingActionType.tackle,
+                title: 'タックル',
+                category: '反応・タイミング',
+                description: 'フェイントを見抜いて\n相手の動く方向をタップ',
+                asset:
+                    'assets/images/training_game/minigames/tackle_attack_normal.png',
+                imageSize: const Size(66, 94),
+                onSelected: _select,
+              ),
+              const SizedBox(height: 12),
+              _SelectionCard(
+                type: TrainingActionType.passAndRun,
+                title: 'パス＆ラン',
+                category: 'フリック・パス',
+                description: '仲間をねらってフリック\nパスをつないで走ろう',
+                asset:
+                    'assets/images/training_game/selection/pass_run_ball.png',
+                imageSize: const Size(70, 58),
+                onSelected: _select,
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -145,7 +149,7 @@ class _SelectionCard extends StatelessWidget {
                   style: const TextStyle(
                     fontFamily: 'LINESeedJP',
                     color: TrainingHomeStyle.navy,
-                    fontSize: 12,
+                    fontSize: 14,
                     height: 1.5,
                   ),
                   child: Column(
@@ -167,7 +171,7 @@ class _SelectionCard extends StatelessWidget {
                       const SizedBox(height: 2),
                       Text(category,
                           style: const TextStyle(
-                              fontSize: 10, color: Color(0xff5e6c7e))),
+                              fontSize: 12, color: Color(0xff5e6c7e))),
                       const SizedBox(height: 12),
                       Text(description),
                     ],

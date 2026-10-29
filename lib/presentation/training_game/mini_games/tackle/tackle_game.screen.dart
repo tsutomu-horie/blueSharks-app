@@ -7,6 +7,7 @@ import 'package:koto_blue_sharks/app/services/training_game_sound_service.dart';
 import '../models/mini_game_result.dart';
 import '../mini_game_result_transition.dart';
 import '../../models/mini_game_settings.dart';
+import '../../training_game_theme.dart';
 import 'tackle_player_visual.dart';
 import 'tackle_opponent_visual.dart';
 import 'tackle_contact_geometry.dart';
@@ -698,45 +699,47 @@ class _TackleGameScreenState extends State<TackleGameScreen>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xffe8f3e8),
-      appBar: AppBar(
-        title: const Text('タックル'),
-        backgroundColor: const Color(0xff123d28),
-        foregroundColor: Colors.white,
-        actions: [
-          if (_phase == _TacklePhase.approach ||
-              _phase == _TacklePhase.feint ||
-              _phase == _TacklePhase.input)
-            IconButton(
-              onPressed: _isPaused ? _resumeGame : _pauseGame,
-              tooltip: _isPaused ? '再開' : '一時停止',
-              icon: Icon(_isPaused ? Icons.play_arrow : Icons.pause),
-            ),
-        ],
-      ),
-      body: Listener(
-        behavior: HitTestBehavior.opaque,
-        onPointerDown: _recordBodyPointerDown,
-        onPointerUp: _recordBodyPointerUp,
-        onPointerCancel: _recordBodyPointerCancel,
-        child: SafeArea(
-          child: GestureDetector(
-            behavior: HitTestBehavior.opaque,
-            // 判定表示後は、下部パネル以外を含む画面全体のタップで次セットへ進めます。
-            onTap: _phase == _TacklePhase.attemptResult
-                ? _advanceAfterAttempt
-                : null,
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                children: [
-                  _buildHeader(),
-                  const SizedBox(height: 12),
-                  Expanded(child: _buildField()),
-                  const SizedBox(height: 12),
-                  _buildBottomPanel(),
-                ],
+    return TrainingGameTheme(
+      child: Scaffold(
+        backgroundColor: const Color(0xffe8f3e8),
+        appBar: AppBar(
+          title: const Text('タックル'),
+          backgroundColor: const Color(0xff123d28),
+          foregroundColor: Colors.white,
+          actions: [
+            if (_phase == _TacklePhase.approach ||
+                _phase == _TacklePhase.feint ||
+                _phase == _TacklePhase.input)
+              IconButton(
+                onPressed: _isPaused ? _resumeGame : _pauseGame,
+                tooltip: _isPaused ? '再開' : '一時停止',
+                icon: Icon(_isPaused ? Icons.play_arrow : Icons.pause),
+              ),
+          ],
+        ),
+        body: Listener(
+          behavior: HitTestBehavior.opaque,
+          onPointerDown: _recordBodyPointerDown,
+          onPointerUp: _recordBodyPointerUp,
+          onPointerCancel: _recordBodyPointerCancel,
+          child: SafeArea(
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              // 判定表示後は、下部パネル以外を含む画面全体のタップで次セットへ進めます。
+              onTap: _phase == _TacklePhase.attemptResult
+                  ? _advanceAfterAttempt
+                  : null,
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  children: [
+                    _buildHeader(),
+                    const SizedBox(height: 12),
+                    Expanded(child: _buildField()),
+                    const SizedBox(height: 12),
+                    _buildBottomPanel(),
+                  ],
+                ),
               ),
             ),
           ),

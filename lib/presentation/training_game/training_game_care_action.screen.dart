@@ -7,6 +7,7 @@ import 'models/training_game_models.dart';
 import 'sametaroh_asset.dart';
 import 'sametaroh_clean_warp.dart';
 import 'training_care_scene.dart';
+import 'training_game_theme.dart';
 
 /// ④-a〜④-eのお世話実行中画面を共通レイアウトで表示します。
 class TrainingGameCareActionScreen extends StatefulWidget {
@@ -124,61 +125,63 @@ class _TrainingGameCareActionScreenState
   Widget build(BuildContext context) {
     final presentation = _CareActionPresentation.forType(widget.actionType,
         bodyKey: widget.bodyKey);
-    return PopScope(
-      canPop: !_isCompleting,
-      child: Scaffold(
-        backgroundColor: Colors.white,
-        appBar: AppBar(
-          title: Text('お世話 ｜ ${presentation.title}'),
-          leading: IconButton(
-            // 完了フレーム表示中は、行動確定前に閉じられないようにします。
-            onPressed:
-                _isCompleting ? null : () => Navigator.pop(context, false),
-            icon: const Icon(Icons.close),
-            tooltip: 'お世話を中止',
+    return TrainingGameTheme(
+      child: PopScope(
+        canPop: !_isCompleting,
+        child: Scaffold(
+          backgroundColor: Colors.white,
+          appBar: AppBar(
+            title: Text('お世話 ｜ ${presentation.title}'),
+            leading: IconButton(
+              // 完了フレーム表示中は、行動確定前に閉じられないようにします。
+              onPressed:
+                  _isCompleting ? null : () => Navigator.pop(context, false),
+              icon: const Icon(Icons.close),
+              tooltip: 'お世話を中止',
+            ),
           ),
-        ),
-        body: GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onTap: _isCompleting ? null : _completeAction,
-          child: SafeArea(
-            child: Padding(
-              padding: EdgeInsets.all(20.w),
-              child: Column(
-                children: [
-                  Expanded(
-                    child: SizedBox(
-                      width: double.infinity,
-                      child: _buildIllustration(presentation),
+          body: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: _isCompleting ? null : _completeAction,
+            child: SafeArea(
+              child: Padding(
+                padding: EdgeInsets.all(20.w),
+                child: Column(
+                  children: [
+                    Expanded(
+                      child: SizedBox(
+                        width: double.infinity,
+                        child: _buildIllustration(presentation),
+                      ),
                     ),
-                  ),
-                  SizedBox(height: 20.h),
-                  Container(
-                    padding:
-                        EdgeInsets.symmetric(horizontal: 16.w, vertical: 10.h),
-                    decoration: BoxDecoration(
-                      color: const Color(0xfff4f4f4),
-                      borderRadius: BorderRadius.circular(999.r),
+                    SizedBox(height: 20.h),
+                    Container(
+                      padding: EdgeInsets.symmetric(
+                          horizontal: 16.w, vertical: 10.h),
+                      decoration: BoxDecoration(
+                        color: const Color(0xfff4f4f4),
+                        borderRadius: BorderRadius.circular(999.r),
+                      ),
+                      child: Text(
+                        presentation.progressLabel,
+                        style: TextStyle(
+                            fontSize: 16.sp, fontWeight: FontWeight.w700),
+                      ),
                     ),
-                    child: Text(
-                      presentation.progressLabel,
-                      style: TextStyle(
-                          fontSize: 16.sp, fontWeight: FontWeight.w700),
+                    SizedBox(height: 12.h),
+                    Text(
+                      presentation.description,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(fontSize: 14.sp, height: 1.5),
                     ),
-                  ),
-                  SizedBox(height: 12.h),
-                  Text(
-                    presentation.description,
-                    textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 14.sp, height: 1.5),
-                  ),
-                  SizedBox(height: 12.h),
-                  Text(
-                    _isCompleting ? '完了しました' : '5秒で自動完了します。画面タップでスキップ',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 14.sp),
-                  ),
-                ],
+                    SizedBox(height: 12.h),
+                    Text(
+                      _isCompleting ? '完了しました' : '5秒で自動完了します。画面タップでスキップ',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(fontSize: 14.sp),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
