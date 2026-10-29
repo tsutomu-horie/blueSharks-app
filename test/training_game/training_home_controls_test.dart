@@ -317,6 +317,54 @@ void main() {
     await tester.pumpWidget(const SizedBox());
   });
 
+  testWidgets('超過バーはゆっくり加減速し途中更新でも連続する', (tester) async {
+    Future<void> show(double value) => tester.pumpWidget(MaterialApp(
+        home: Scaffold(
+            body: SizedBox(
+                width: 150,
+                height: 60,
+                child: TrainingHomeMeter(name: '食事', value: value)))));
+    double width() {
+      final bars = tester
+          .widgetList<FractionallySizedBox>(find.descendant(
+              of: find.byType(TrainingHomeMeter),
+              matching: find.byType(FractionallySizedBox)))
+          .toList();
+      return bars.length == 1 ? 0 : bars.last.widthFactor!;
+    }
+
+    await show(100);
+    await show(150);
+    expect(width(), 0);
+    await tester.pump(const Duration(milliseconds: 200));
+    final early = width();
+    expect(early, greaterThan(0));
+    expect(early, lessThan(.1));
+    await tester.pump(const Duration(milliseconds: 600));
+    expect(width(), closeTo(.5, .03));
+    await tester.pump(const Duration(milliseconds: 600));
+    final late = width();
+    expect(late, greaterThan(.9));
+    expect(late, lessThan(1));
+    await tester.pump(const Duration(milliseconds: 200));
+    expect(width(), 1);
+
+    await show(110);
+    expect(width(), 1);
+    await tester.pump(const Duration(milliseconds: 800));
+    final before = width();
+    expect(before, closeTo(.6, .03));
+    await show(140);
+    expect(width(), before);
+    await tester.pump(const Duration(milliseconds: 1600));
+    expect(width(), closeTo(.8, .001));
+    await show(90);
+    expect(width(), closeTo(.8, .001));
+    await tester.pump(const Duration(milliseconds: 1600));
+    expect(width(), 0);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('ゲージの既存色境界と100超過50を維持', (tester) async {
     const red = Color(0xffd03b3b),
         orange = Color(0xffeda100),
@@ -342,6 +390,7 @@ void main() {
                   width: 150,
                   height: 60,
                   child: TrainingHomeMeter(name: '食事', value: sample.$1)))));
+      await tester.pumpAndSettle();
       final root = find.byType(TrainingHomeMeter);
       final bars = tester
           .widgetList<FractionallySizedBox>(find.descendant(
