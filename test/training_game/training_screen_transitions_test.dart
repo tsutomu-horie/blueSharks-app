@@ -45,6 +45,8 @@ void main() {
         await tester.tap(find.text('5秒で自動完了します。画面タップでスキップ'));
         await tester.pump();
         await tester.pump(const Duration(milliseconds: 500));
+        await tester.tap(find.text('タップして戻る'));
+        await tester.pump();
       } else {
         await tester.tap(find.byTooltip('お世話を中止'));
       }

@@ -18,7 +18,7 @@ void main() {
     'unknown',
     SametarohAssets.childBodyKey
   ]) {
-    testWidgets('食事はstartなしで1↔2、完了後doneを500ms表示: $body', (tester) async {
+    testWidgets('食事はstartなしで1↔2、完了後タップまでdoneを表示: $body', (tester) async {
       tester.view.physicalSize = const Size(375, 812);
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.resetPhysicalSize);
@@ -84,6 +84,10 @@ void main() {
       expect(result, isNull);
       expect(_shownAsset(tester), done.asset);
       await tester.pump(const Duration(milliseconds: 1));
+      await tester.pumpAndSettle();
+      expect(result, isNull);
+      expect(find.text('タップして戻る'), findsOneWidget);
+      await tester.tap(find.text('タップして戻る'));
       await tester.pumpAndSettle();
       expect(result, isTrue);
       result = null;

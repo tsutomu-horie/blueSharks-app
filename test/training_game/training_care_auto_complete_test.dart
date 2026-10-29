@@ -77,32 +77,41 @@ void main() {
           action == TrainingActionType.work) {
         continue;
       }
-      testWidgets('$body/${action.name}は操作なしで5秒後に完了し1回だけ戻る', (tester) async {
+      testWidgets('$body/${action.name}は5秒後に完了画面を表示し、タップで1回戻る', (tester) async {
         final results = <bool?>[];
+        final semantics = tester.ensureSemantics();
         await _openCare(tester,
             action: action, body: body, onResult: results.add);
         expect(find.text('完了する'), findsNothing);
         expect(find.text('スキップ'), findsNothing);
         // 同じ画面の再buildで自動完了までの時間が延長されない。
-        await tester.pump(const Duration(seconds: 2));
+        await tester.pump(const Duration(milliseconds: 2200));
+        final seekBar = find.bySemanticsLabel('お世話の進行状況');
+        expect(tester.getSemantics(seekBar).getSemanticsData().value, '50%');
         tester
             .element(find.byType(TrainingGameCareActionScreen))
             .markNeedsBuild();
         await tester.pump();
-        await tester.pump(const Duration(milliseconds: 2699));
+        await tester.pump(const Duration(milliseconds: 2499));
         expect(find.byType(SametarohAnimatedImage), findsOneWidget);
         expect(results, isEmpty);
         await tester.pump(const Duration(milliseconds: 1));
-        // 補正画像準備の実asyncを排出し、500msのfake clockは進めない。
-        await tester.runAsync(() => Future<void>.delayed(Duration.zero));
+        expect(tester.getSemantics(seekBar).getSemanticsData().value, '100%');
+        semantics.dispose();
+        await tester.pump(const Duration(milliseconds: 10));
+        // 補正画像準備の実asyncを排出し、完了画面が表示されるまで待ちます。
+        await tester.runAsync(() =>
+            Future<void>.delayed(const Duration(milliseconds: 50)));
         await tester.pump();
         final done = tester
             .widget<SametarohFrameImage>(find.byType(SametarohFrameImage));
         expect(done.frame.asset,
             SametarohAssets.completionFrameFor(action, bodyKey: body).asset);
-        await tester.pump(const Duration(milliseconds: 499));
+        expect(find.text('タップして戻る'), findsOneWidget);
         expect(results, isEmpty);
-        await tester.pump(const Duration(milliseconds: 1));
+        await tester.pump(const Duration(seconds: 1));
+        expect(find.byType(TrainingGameCareActionScreen), findsOneWidget);
+        await tester.tap(find.text('タップして戻る'));
         await tester.pumpAndSettle();
         expect(results, [true]);
         await tester.pump(const Duration(seconds: 6));
@@ -114,7 +123,7 @@ void main() {
   }
 
   for (final targetName in ['案内文', '余白', 'キャラクター', '画面下部']) {
-    testWidgets('$targetName連打で待ち時間をスキップして1回だけ完了', (tester) async {
+    testWidgets('$targetName連打で待ち時間をスキップし、タップで1回戻る', (tester) async {
       final results = <bool?>[];
       await _openCare(tester, onResult: results.add);
       if (targetName != 'キャラクター') {
@@ -128,24 +137,23 @@ void main() {
       };
       await tester.tapAt(target);
       await tester.tapAt(target);
+      await tester.runAsync(() => Future<void>.delayed(Duration.zero));
       await tester.pump();
       expect(find.byType(SametarohAnimatedImage), findsNothing);
-      expect(find.text('完了しました'), findsOneWidget);
+      expect(find.text('タップして戻る'), findsOneWidget);
       expect(tester.widget<PopScope>(find.byType(PopScope)).canPop, isFalse);
       expect(
           tester
               .widget<IconButton>(find.ancestor(
-                of: find.byTooltip('お世話を中止'),
+                of: find.byTooltip('完了して戻る'),
                 matching: find.byType(IconButton),
               ))
               .onPressed,
-          isNull);
+          isNotNull);
       // 5秒の境界を跨いでも再度完了処理を開始しない。
-      await tester.pump(const Duration(milliseconds: 1));
-      await tester.tapAt(target);
-      await tester.pump(const Duration(milliseconds: 498));
+      await tester.pump(const Duration(seconds: 1));
       expect(results, isEmpty);
-      await tester.pump(const Duration(milliseconds: 1));
+      await tester.tap(find.text('タップして戻る'));
       await tester.pumpAndSettle();
       expect(results, [true]);
       await tester.pump(const Duration(seconds: 6));
