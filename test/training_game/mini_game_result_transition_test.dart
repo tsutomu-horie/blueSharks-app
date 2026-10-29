@@ -4,72 +4,69 @@ import 'package:koto_blue_sharks/presentation/training_game/mini_games/mini_game
 
 void main() {
   testWidgets(
-      'result fades and moves in over 200ms without replaying on rebuild',
+      'prelude precedes the result, then reveals it without replay on rebuild',
       (tester) async {
     await tester.pumpWidget(const MaterialApp(home: _ResultHost()));
-
     await tester.tap(find.byKey(const Key('show-result')));
     await tester.pump();
+    expect(find.text('結果発表'), findsOneWidget);
+    expect(find.text('総合結果 0'), findsNothing);
+    expect(find.byKey(const Key('confirm-result')), findsNothing);
+    await tester.pump(const Duration(milliseconds: 700));
+    expect(find.text('結果発表'), findsOneWidget);
+    await tester.pump(const Duration(milliseconds: 100));
+    expect(find.text('結果発表'), findsNothing);
     expect(find.text('総合結果 0'), findsOneWidget);
-    expect(_currentFade(tester).opacity.value, 0);
-    expect(_currentSlide(tester).position.value.dy, closeTo(.02, .0001));
-
-    await tester.pump(const Duration(milliseconds: 100));
-    expect(_currentFade(tester).opacity.value, greaterThan(0));
-    expect(_currentFade(tester).opacity.value, lessThan(1));
-    expect(_currentSlide(tester).position.value.dy, greaterThan(0));
-
-    await tester.pump(const Duration(milliseconds: 100));
-    expect(_currentFade(tester).opacity.value, 1);
-    expect(_currentSlide(tester).position.value.dy, 0);
-
+    final opacity = tester
+        .widget<Opacity>(
+            find.byKey(const Key('mini-game-result-reveal-content')))
+        .opacity;
+    expect(opacity, greaterThan(0));
+    expect(opacity, lessThan(1));
+    await tester.tap(find.byKey(const Key('confirm-result')),
+        warnIfMissed: false);
+    expect(tester.state<_ResultHostState>(find.byType(_ResultHost)).confirmed,
+        isFalse);
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(
+        tester
+            .widget<Opacity>(
+                find.byKey(const Key('mini-game-result-reveal-content')))
+            .opacity,
+        1);
     await tester.tap(find.byKey(const Key('rebuild-result')));
     await tester.pump();
     expect(find.text('総合結果 1'), findsOneWidget);
-    expect(_currentFade(tester).opacity.value, 1);
-  });
-
-  testWidgets('result action is available before the entrance finishes',
-      (tester) async {
-    await tester.pumpWidget(const MaterialApp(home: _ResultHost()));
-
-    await tester.tap(find.byKey(const Key('show-result')));
-    await tester.pump();
+    expect(find.text('結果発表'), findsNothing);
     await tester.tap(find.byKey(const Key('confirm-result')));
-
     expect(tester.state<_ResultHostState>(find.byType(_ResultHost)).confirmed,
         isTrue);
-    expect(_currentFade(tester).opacity.value, lessThan(1));
   });
 
-  testWidgets('reduced motion shows the result immediately without movement',
+  testWidgets('disposing during the prelude cancels its animation cleanly',
       (tester) async {
-    await tester.pumpWidget(const MaterialApp(
-      home: _ResultHost(disableAnimations: true),
-    ));
-
+    await tester.pumpWidget(const MaterialApp(home: _ResultHost()));
     await tester.tap(find.byKey(const Key('show-result')));
     await tester.pump();
+    await tester.pump(const Duration(milliseconds: 200));
+    await tester.pumpWidget(const SizedBox());
+    await tester.pump(const Duration(seconds: 2));
+    expect(tester.takeException(), isNull);
+  });
 
+  testWidgets('reduced motion shows the result immediately without a prelude',
+      (tester) async {
+    await tester.pumpWidget(
+        const MaterialApp(home: _ResultHost(disableAnimations: true)));
+    await tester.tap(find.byKey(const Key('show-result')));
+    await tester.pump();
     expect(find.text('総合結果 0'), findsOneWidget);
-    expect(_resultTransitions<FadeTransition>(tester), findsNothing);
-    expect(_resultTransitions<SlideTransition>(tester), findsNothing);
+    expect(find.text('結果発表'), findsNothing);
+    await tester.tap(find.byKey(const Key('confirm-result')));
+    expect(tester.state<_ResultHostState>(find.byType(_ResultHost)).confirmed,
+        isTrue);
   });
 }
-
-FadeTransition _currentFade(WidgetTester tester) => tester
-    .widgetList<FadeTransition>(_resultTransitions<FadeTransition>(tester))
-    .last;
-
-SlideTransition _currentSlide(WidgetTester tester) => tester
-    .widgetList<SlideTransition>(_resultTransitions<SlideTransition>(tester))
-    .last;
-
-Finder _resultTransitions<T extends Widget>(WidgetTester tester) =>
-    find.descendant(
-      of: find.byKey(const Key('mini-game-result-transition-switcher')),
-      matching: find.byType(T),
-    );
 
 class _ResultHost extends StatefulWidget {
   const _ResultHost({this.disableAnimations = false});

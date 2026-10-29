@@ -285,6 +285,8 @@ void main() {
       PassRunFacing.front,
     );
     await advance(tester, const Duration(milliseconds: 15100));
+    expect(find.text('結果発表'), findsOneWidget);
+    await tester.pump(const Duration(milliseconds: 1100));
     expect(find.text('メインへ戻る'), findsOneWidget);
     expect(find.text('復路'), findsNothing);
     expect(find.textContaining('残り '), findsNothing);
@@ -322,6 +324,8 @@ void main() {
     await tester.tap(find.text('SET 1 / 1'));
     await tester.pump();
 
+    expect(find.text('結果発表'), findsOneWidget);
+    await tester.pump(const Duration(milliseconds: 1100));
     expect(find.text('総合ランク'), findsOneWidget);
     expect(find.text('全1セットの計測が完了しました'), findsOneWidget);
     expect(find.text('全1セットの反応速度を計測します'), findsNothing);

@@ -53,6 +53,7 @@ void main() {
         await t.tap(find.text('SET 1 / 1'));
         await t.pump();
       }
+      await t.pump(const Duration(milliseconds: 1100));
       final button = find.widgetWithText(ElevatedButton, 'メインへ戻る');
       expect(button, findsOneWidget);
       final confirm = t.widget<ElevatedButton>(button).onPressed!;
@@ -74,7 +75,7 @@ void main() {
           of: find.byKey(const Key('mini-game-result-transition-switcher')),
           matching: find.byType(FadeTransition));
       expect(t.widgetList<FadeTransition>(fades).last.opacity.value, 1);
-      // Existing transition unit test covers first-frame hit testing.
+      // The transition test covers the prelude and result action availability.
 
       await t.tap(button);
       confirm();
