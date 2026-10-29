@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
 import 'package:koto_blue_sharks/app/providers/training_game/training_game_provider.dart';
@@ -264,6 +266,136 @@ void main() {
     expect(provider.syncedActionCodes, ['training']);
   });
 
+  for (final stage in ['egg', 'child', 'training']) {
+    final effects = <TrainingActionType, Map<String, double>>{
+      if (stage != 'egg') TrainingActionType.meal: {'食事': 35, '清潔': -3},
+      TrainingActionType.clean: {'清潔': 40},
+      TrainingActionType.rest: {'体調': 40, '食事': -5},
+      if (stage != 'egg')
+        TrainingActionType.squat: {'食事': -12, '清潔': -8, '体調': -6},
+    };
+    for (final action in effects.entries) {
+      test('$stageの${action.key.name}はサーバー既定効果と同じ増減を反映する', () async {
+        final provider = _FirstTeamTransitionProvider(meterValue: 80);
+        Get.routing.args = provider.state(stage);
+        final controller = TrainingGameController(
+          serverProvider: provider,
+          writePendingActions: (_) async => true,
+          clearPendingActions: () async => true,
+          archivePendingActions: (_) async => true,
+        );
+        addTearDown(() {
+          controller.onClose();
+          Get.routing.args = null;
+        });
+        controller.onInit();
+        await Future<void>.delayed(Duration.zero);
+        final before = Map<String, double>.from(controller.meters);
+
+        controller.perform(action.key);
+
+        expect(controller.careFeedback, action.value);
+        expect(controller.careFeedbackStartValues, before);
+        for (final entry in before.entries) {
+          expect(controller.meters[entry.key],
+              entry.value + (action.value[entry.key] ?? 0));
+        }
+        await TrainingGameProvider.waitForPendingSync();
+        expect(provider.syncedActionCodes, hasLength(1));
+      });
+    }
+
+    test('$stageの回復も150で止まり実際に増えた分だけを演出する', () async {
+      final provider = _FirstTeamTransitionProvider(meterValue: 140);
+      Get.routing.args = provider.state(stage);
+      final controller = TrainingGameController(
+        serverProvider: provider,
+        writePendingActions: (_) async => true,
+        clearPendingActions: () async => true,
+        archivePendingActions: (_) async => true,
+      );
+      addTearDown(() {
+        controller.onClose();
+        Get.routing.args = null;
+      });
+      controller.onInit();
+      await Future<void>.delayed(Duration.zero);
+
+      controller.perform(TrainingActionType.clean);
+
+      expect(controller.meters['清潔'], 150);
+      expect(controller.careFeedback['清潔'], 10);
+      await TrainingGameProvider.waitForPendingSync();
+    });
+  }
+
+  for (final queued in [false, true]) {
+    test('同期完了まで演出を保留し確定差分を表示する（連続操作: $queued）', () async {
+      final response = Completer<void>();
+      final provider = _FirstTeamTransitionProvider(
+        meterValue: 80,
+        syncWait: response.future,
+        confirmedParameters: {'hunger': 90.0, 'cleanliness': 95.0},
+      );
+      Get.routing.args = provider.state('training');
+      final controller = TrainingGameController(
+        serverProvider: provider,
+        writePendingActions: (_) async => true,
+        clearPendingActions: () async => true,
+        archivePendingActions: (_) async => true,
+      );
+      addTearDown(() {
+        controller.onClose();
+        Get.routing.args = null;
+      });
+      controller.onInit();
+      await Future<void>.delayed(Duration.zero);
+      controller.perform(TrainingActionType.meal);
+      if (queued) controller.perform(TrainingActionType.clean);
+      await Future<void>.delayed(Duration.zero);
+
+      expect(controller.careFeedbackPending.value, isTrue);
+      expect(controller.careFeedbackConfirmedVersion.value, 0);
+      expect(controller.careFeedbackStartValues['食事'], 80);
+      expect(controller.careFeedbackStartValues['清潔'], 80);
+      response.complete();
+      await TrainingGameProvider.waitForPendingSync();
+
+      expect(controller.careFeedbackPending.value, isFalse);
+      expect(controller.careFeedbackConfirmedVersion.value, 1);
+      expect(controller.careFeedback, {'食事': 10.0, '清潔': 15.0});
+    });
+  }
+
+  test('端末の見込み増分がゼロでもサーバー確定後の差分を演出する', () async {
+    final provider = _FirstTeamTransitionProvider(
+      meterValue: 150,
+      confirmedParameters: {'cleanliness': 140.0},
+    );
+    Get.routing.args = provider.state('training');
+    final controller = TrainingGameController(
+      serverProvider: provider,
+      writePendingActions: (_) async => true,
+      clearPendingActions: () async => true,
+      archivePendingActions: (_) async => true,
+    );
+    addTearDown(() {
+      controller.onClose();
+      Get.routing.args = null;
+    });
+    controller.onInit();
+    await Future<void>.delayed(Duration.zero);
+    controller.perform(TrainingActionType.clean);
+
+    expect(controller.careFeedbackPending.value, isTrue);
+    expect(controller.careFeedback, isEmpty);
+    await TrainingGameProvider.waitForPendingSync();
+
+    expect(controller.careFeedbackPending.value, isFalse);
+    expect(controller.careFeedback['清潔'], -10);
+    expect(controller.careFeedbackConfirmedVersion.value, 1);
+  });
+
   test('ミニゲーム結果もホームのパラメーター変動演出へ渡す', () async {
     final provider = _FirstTeamTransitionProvider(meterValue: 80);
     Get.routing.args = provider.state('training');
@@ -287,7 +419,7 @@ void main() {
     );
 
     expect(controller.careFeedbackVersion.value, 1);
-    expect(controller.careFeedback['仕事'], 2.5);
+    expect(controller.careFeedback['仕事'], 3);
     await TrainingGameProvider.waitForPendingSync();
     expect(provider.syncedActionCodes, ['pass_run']);
   });
@@ -325,9 +457,13 @@ class _FirstTeamTransitionProvider extends TrainingGameProvider {
   _FirstTeamTransitionProvider({
     this.meterValue = 80,
     this.cooldownSeconds = const {},
+    this.syncWait,
+    this.confirmedParameters = const {},
   });
 
   final double meterValue;
+  final Future<void>? syncWait;
+  final Map<String, double> confirmedParameters;
   Object? cooldownSeconds;
   bool omitCooldownSeconds = false;
   Map<String, dynamic> cooldowns = const {};
@@ -387,7 +523,10 @@ class _FirstTeamTransitionProvider extends TrainingGameProvider {
   }) async {
     syncedStageCodes.add(stageCode);
     syncedActionCodes.add(actionCode);
-    return state(stageCode);
+    await syncWait;
+    final result = state(stageCode);
+    (result['parameters'] as Map).addAll(confirmedParameters);
+    return result;
   }
 }
 

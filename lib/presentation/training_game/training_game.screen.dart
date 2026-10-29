@@ -875,9 +875,12 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
             fontFamily: 'LINESeedJP', color: TrainingHomeStyle.navy),
         child: TrainingHomeMeter(
           name: entry.key,
-          value: entry.value,
-          feedbackVersion: controller.careFeedbackVersion.value,
+          value: controller.careFeedbackPending.value
+              ? controller.careFeedbackStartValues[entry.key] ?? entry.value
+              : entry.value,
+          feedbackVersion: controller.careFeedbackConfirmedVersion.value,
           delta: controller.careFeedback[entry.key] ?? 0,
+          feedbackStartValue: controller.careFeedbackStartValues[entry.key],
         ),
       );
 
