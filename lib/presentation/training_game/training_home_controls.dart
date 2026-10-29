@@ -12,17 +12,18 @@ abstract final class TrainingHomeStyle {
 
 /// 通常100・超過50の既存ゲージを、数値と同じ枠に表示します。
 class TrainingHomeMeter extends StatefulWidget {
-  const TrainingHomeMeter({
-    super.key,
-    required this.name,
-    required this.value,
-    this.feedbackVersion = 0,
-    this.delta = 0,
-  });
+  const TrainingHomeMeter(
+      {super.key,
+      required this.name,
+      required this.value,
+      this.feedbackVersion = 0,
+      this.feedbackStartValue,
+      this.delta = 0});
   final String name;
   final double value;
   final int feedbackVersion;
   final double delta;
+  final double? feedbackStartValue;
 
   @override
   State<TrainingHomeMeter> createState() => _TrainingHomeMeterState();
@@ -53,16 +54,17 @@ class _TrainingHomeMeterState extends State<TrainingHomeMeter>
     super.didUpdateWidget(oldWidget);
     if (widget.feedbackVersion != oldWidget.feedbackVersion &&
         widget.delta != 0) {
-      _from = widget.value - widget.delta;
+      _from = widget.feedbackStartValue ?? oldWidget.value;
       _target = widget.value;
       // The meter itself is displayed as a rounded integer, so the animated
       // change label must describe the same visible difference.
       _delta = (_target.round() - _from.round()).toDouble();
       _feedback.forward(from: 0);
     } else if (widget.value != oldWidget.value) {
-      // 演出中の自然減衰・同期は到達値だけに反映し、演出を再開しません。
+      // 演出の開始値を保持し、同期補正・自然減衰後も表示値の差と一致させます。
       if (_feedback.isAnimating) {
         _target = widget.value;
+        _delta = (_target.round() - _from.round()).toDouble();
       } else {
         _from = _target = widget.value;
         _delta = 0;
