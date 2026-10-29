@@ -124,7 +124,12 @@ void main() {
     }
   }
 
-  for (final targetName in ['案内文', '余白', 'キャラクター', '画面下部']) {
+  for (final targetName in [
+    '案内文のあった位置',
+    '余白',
+    'キャラクター',
+    '画面下部',
+  ]) {
     testWidgets('$targetName連打で待ち時間をスキップし、タップで1回戻る', (tester) async {
       final results = <bool?>[];
       await _openCare(tester, onResult: results.add);
@@ -135,7 +140,7 @@ void main() {
         '余白' => const Offset(2, 200),
         'キャラクター' => tester.getCenter(find.byType(SametarohAnimatedImage)),
         '画面下部' => const Offset(187.5, 780),
-        _ => tester.getCenter(find.text('5秒で自動完了します。画面タップでスキップ')),
+        _ => const Offset(187.5, 760),
       };
       await tester.tapAt(target);
       await tester.tapAt(target);
@@ -173,7 +178,7 @@ void main() {
       onResult: results.add,
       onCompletionSound: () => soundRequests++,
     );
-    await tester.tap(find.text('5秒で自動完了します。画面タップでスキップ'));
+    await tester.tapAt(const Offset(2, 200));
     await tester.runAsync(
       () => Future<void>.delayed(const Duration(milliseconds: 50)),
     );
@@ -204,7 +209,7 @@ void main() {
       final results = <bool?>[];
       await _openCare(tester, onResult: results.add);
       if (skip) {
-        await tester.tap(find.text('5秒で自動完了します。画面タップでスキップ'));
+        await tester.tapAt(const Offset(2, 200));
         await tester.pump();
       }
       await tester.pumpWidget(const SizedBox());
