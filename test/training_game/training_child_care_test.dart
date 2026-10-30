@@ -149,7 +149,7 @@ void main() {
       await tester.tapAt(const Offset(2, 200));
       await tester.pump();
       expect(_shownAsset(tester), frames[1].asset);
-      expect(find.text('1タップで時間・バーが1秒進みます。'), findsOneWidget);
+      expect(find.text('タップで短縮できます。'), findsOneWidget);
       await tester.pump(const Duration(seconds: 4));
       await tester.runAsync(
           () => Future<void>.delayed(const Duration(milliseconds: 50)));

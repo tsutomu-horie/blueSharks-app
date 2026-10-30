@@ -185,7 +185,7 @@ void main() {
                 closeTo(20 * size.height / 812, 0.01));
             // 1タップで1秒分進む案内を残し、スキップ専用ボタンは表示しない。
             expect(find.text('スキップ'), findsNothing);
-            expect(find.text('1タップで時間・バーが1秒進みます。'), findsOneWidget);
+            expect(find.text('タップで短縮できます。'), findsOneWidget);
             expect(find.text('5秒で自動完了します。画面タップでスキップ'), findsNothing);
             if (action == TrainingActionType.meal) {
               expect(find.text('食事中…'), findsOneWidget);

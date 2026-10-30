@@ -156,7 +156,7 @@ void main() {
           .value
           .replaceFirst('%', ''));
       expect(after - before, inInclusiveRange(19, 21));
-      expect(find.text('1タップで時間・バーが1秒進みます。'), findsOneWidget);
+      expect(find.text('タップで短縮できます。'), findsOneWidget);
       expect(find.byType(SametarohAnimatedImage), findsOneWidget);
       expect(results, isEmpty);
       await tester.pump(const Duration(seconds: 1));
