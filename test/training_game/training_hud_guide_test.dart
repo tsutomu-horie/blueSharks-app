@@ -117,6 +117,11 @@ void main() {
       await tester.pump(Duration.zero);
       await tester.pump(const Duration(milliseconds: 699));
       expect(find.byType(CircularProgressIndicator), findsOneWidget);
+      final ring = tester.getRect(find.byType(CircularProgressIndicator));
+      final button = tester.getRect(find.byType(TrainingHudGuidePressTarget));
+      expect(ring.center, button.center);
+      expect(ring.width, greaterThanOrEqualTo(76));
+
       expect(
         tester
             .widget<CircularProgressIndicator>(

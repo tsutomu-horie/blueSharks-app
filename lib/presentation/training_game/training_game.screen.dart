@@ -869,7 +869,7 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
   Widget _buildMeterByName(String name, BuildContext context) {
     final entry = MapEntry(name, controller.meters[name]!);
     final guideItem = _meterGuideItems[name];
-    if (controller.stageIndex.value != 1 || guideItem == null) {
+    if (controller.stageIndex.value < 1 || guideItem == null) {
       return _buildMeter(entry);
     }
 
@@ -880,7 +880,7 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
       unawaited(TrainingHudGuide.show(
         context,
         guideItem,
-        unlocked: name != '仕事',
+        unlocked: name != '仕事' || controller.stageIndex.value >= 2,
       ));
     }
 
