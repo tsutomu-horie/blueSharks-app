@@ -28,6 +28,7 @@ import 'training_evolution_page_switcher.dart';
 import 'training_dex_dialog.dart';
 import 'training_game_theme.dart';
 import 'training_screen_transitions.dart';
+import 'training_retirement_warning_panel.dart';
 
 /// 参照HTMLのスマートフォン画面部分だけをアプリ用に再現します。
 class TrainingGameScreen extends GetView<TrainingGameController> {
@@ -919,6 +920,36 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
         controller.stageIndex.value >= 2 && !controller.ended.value;
     return Stack(
       children: [
+        Positioned.fill(
+          child: Obx(() {
+            final warnings = controller.retirementWarnings;
+            if (warnings.isEmpty) return const SizedBox.shrink();
+            final warning = warnings.first;
+            final collapsed = controller.isRetirementWarningCollapsed(warning);
+            return LayoutBuilder(builder: (context, constraints) {
+              // Keep the warning above the character and outside all controls.
+              final height = constraints.maxHeight - 126.h - 184.h - 24.h;
+              if (height < 64) return const SizedBox.shrink();
+              return Align(
+                alignment: Alignment.topCenter,
+                child: Padding(
+                  padding: EdgeInsets.only(top: 12.h, left: 12.w, right: 12.w),
+                  child: SizedBox(
+                    height: height,
+                    child: TrainingRetirementWarningPanel(
+                      warning: warning,
+                      collapsed: collapsed,
+                      onCollapse: () =>
+                          controller.collapseRetirementWarning(warning),
+                      onExpand: () =>
+                          controller.expandRetirementWarning(warning),
+                    ),
+                  ),
+                ),
+              );
+            });
+          }),
+        ),
         Positioned.fill(
           child: TrainingHomeFloorLitter(
             cleanliness: controller.meters['清潔']!,
