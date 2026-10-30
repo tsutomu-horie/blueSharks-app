@@ -264,7 +264,7 @@ class _EvolutionLight extends CustomPainter {
     final peak = math.exp(-math.pow((t - 3.9) / .6, 2));
     if (!foreground) {
       canvas.drawOval(
-          Rect.fromCenter(center: foot, width: 150 * unit, height: 36 * unit),
+          Rect.fromCenter(center: foot, width: 190 * unit, height: 44 * unit),
           Paint()
             ..color = palette[1].withValues(alpha: .4 * strength)
             ..maskFilter = MaskFilter.blur(BlurStyle.normal, 12 * unit));
@@ -274,9 +274,10 @@ class _EvolutionLight extends CustomPainter {
         for (var n = 0; n <= 30; n++) {
           final q = n / 30 * rise;
           final x = foot.dx +
-              (side * (35 + 62 * q) + math.sin(q * 4 + t * 1.4 + j) * 5 * q) *
+              (side * (45 + 85 * q) + math.sin(q * 4 + t * 1.4 + j) * 5 * q) *
                   unit;
-          final y = foot.dy - q * (bodyBounds.height + 20 + 27 * math.cos(j));
+          final y = foot.dy -
+              q * (bodyBounds.height + 80 * unit + 32 * unit * math.cos(j));
           if (n == 0) {
             path.moveTo(x, y);
           } else {
@@ -289,17 +290,17 @@ class _EvolutionLight extends CustomPainter {
               ..color = palette[j % 3]
                   .withValues(alpha: (.18 + .25 * peak) * strength)
               ..style = PaintingStyle.stroke
-              ..strokeWidth = 2 * unit);
+              ..strokeWidth = 2.3 * unit);
       }
       for (var j = 0; j < 3; j++) {
         final q = (t * .36 + j / 3) % 1;
-        final rx = (38 + q * 83) * unit;
+        final rx = (46 + q * 98) * unit;
         canvas.drawOval(
             Rect.fromCenter(center: foot, width: rx * 2, height: rx * .46),
             Paint()
               ..color = palette[j].withValues(alpha: .59 * (1 - q) * strength)
               ..style = PaintingStyle.stroke
-              ..strokeWidth = 2 * unit);
+              ..strokeWidth = 2.3 * unit);
       }
       return;
     }
@@ -318,20 +319,20 @@ class _EvolutionLight extends CustomPainter {
           ..maskFilter = MaskFilter.blur(BlurStyle.normal, 10 * unit));
     canvas.drawOval(shell,
         Paint()..color = const Color(0xfff0fdff).withValues(alpha: cover));
-    for (var j = 0; j < 52; j++) {
+    for (var j = 0; j < 64; j++) {
       final a = ((j * .61803) % 1);
       final b = ((j * .41421) % 1);
       final q = (a + t * (.16 + .08 * b)) % 1;
       final point = Offset(
           foot.dx +
-              ((b - .5) * (180 - 35 * q) + math.sin(t * 1.1 + j + q * 3) * 6) *
+              ((b - .5) * (260 - 45 * q) + math.sin(t * 1.1 + j + q * 3) * 6) *
                   unit,
-          foot.dy + 12 * unit - q * (bodyBounds.height + 70 * unit) * rise);
+          foot.dy + 12 * unit - q * (bodyBounds.height + 115 * unit) * rise);
       final opacity = .7 * strength * math.sin(math.pi * q);
-      final length = (1.2 + 1.9 * b) * unit;
+      final length = (1.5 + 2.4 * b) * unit;
       final pen = Paint()
         ..color = palette[j % 4].withValues(alpha: opacity)
-        ..strokeWidth = 1.5 * unit
+        ..strokeWidth = 1.8 * unit
         ..strokeCap = StrokeCap.round;
       canvas.drawLine(
           point - Offset(length, 0), point + Offset(length, 0), pen);
@@ -339,16 +340,16 @@ class _EvolutionLight extends CustomPainter {
           point - Offset(0, length), point + Offset(0, length), pen);
     }
     final celebration = _smooth(t, 4.95, 5.4) * (1 - _smooth(t, 5.7, 6.65));
-    for (var j = 0; j < (firstTeam ? 16 : 12); j++) {
-      final angle = j * math.pi * 2 / (firstTeam ? 16 : 12);
-      final radius = (65 + math.max(0, t - 4.95) * 35) * unit;
+    for (var j = 0; j < (firstTeam ? 20 : 16); j++) {
+      final angle = j * math.pi * 2 / (firstTeam ? 20 : 16);
+      final radius = (95 + math.max(0, t - 4.95) * 35) * unit;
       final point = center +
           Offset(math.cos(angle) * radius, math.sin(angle) * radius * 1.15);
       final pen = Paint()
         ..color =
             palette[j % 3 == 0 ? 3 : 1].withValues(alpha: .65 * celebration)
         ..strokeWidth = 1.6 * unit;
-      final length = 2.6 * unit;
+      final length = 3.2 * unit;
       canvas.drawLine(
           point - Offset(length, 0), point + Offset(length, 0), pen);
       canvas.drawLine(
