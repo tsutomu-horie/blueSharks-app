@@ -148,6 +148,12 @@ void main() {
       expect(_shownAsset(tester), frames[1].asset);
       await tester.tapAt(const Offset(2, 200));
       await tester.pump();
+      expect(_shownAsset(tester), frames[1].asset);
+      expect(find.text('1タップで時間・バーが1秒進みます。'), findsOneWidget);
+      await tester.pump(const Duration(seconds: 4));
+      await tester.runAsync(
+          () => Future<void>.delayed(const Duration(milliseconds: 50)));
+      await tester.pump();
       expect(_shownAsset(tester), done.asset);
       final after = tester
           .widget<TrainingCareSceneView>(find.byType(TrainingCareSceneView))

@@ -88,6 +88,32 @@ class _TrainingGameCareActionScreenState
     _actionTimer = Timer(_actionDuration, _completeAction);
   }
 
+  /// 画面タップ1回につき、進捗を1秒分進めて残り時間も合わせて短縮します。
+  void _advanceActionProgressByOneSecond() {
+    if (_isCompleting) return;
+
+    // キャラクターのコマ送りは独立したタイマーに任せ、時間とバーだけを進めます。
+    final progressPerTap = 1 / _actionDuration.inSeconds;
+    final nextProgress = (_actionProgressController.value + progressPerTap)
+        .clamp(0.0, 1.0)
+        .toDouble();
+    if (nextProgress >= 1) {
+      _completeAction();
+      return;
+    }
+
+    final remainingDuration = Duration(
+      microseconds:
+          (_actionDuration.inMicroseconds * (1 - nextProgress)).round(),
+    );
+    _actionTimer?.cancel();
+    _actionProgressController
+      ..stop()
+      ..value = nextProgress
+      ..forward();
+    _actionTimer = Timer(remainingDuration, _completeAction);
+  }
+
   @override
   void dispose() {
     _actionTimer?.cancel();
@@ -191,7 +217,7 @@ class _TrainingGameCareActionScreenState
                 ? (_showCompletionFrame
                     ? () => Navigator.pop(context, true)
                     : null)
-                : _completeAction,
+                : _advanceActionProgressByOneSecond,
             child: SafeArea(
               child: Padding(
                 padding: EdgeInsets.all(20.w),
@@ -239,7 +265,7 @@ class _TrainingGameCareActionScreenState
                           ? 'タップして戻る'
                           : _isCompleting
                               ? '完了しています…'
-                              : '画面タップでスキップ。',
+                              : '1タップで時間・バーが1秒進みます。',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 14.sp,
