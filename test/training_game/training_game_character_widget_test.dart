@@ -390,7 +390,7 @@ void main() {
       // 光の中央で進化画面がマウントされてから、既存の演出を待つ。
       await tester.pump(const Duration(milliseconds: 900));
       await tester.pump();
-      await tester.pump(const Duration(milliseconds: 2700));
+      await tester.pump(TrainingEvolutionReveal.pageDuration(stage == 4));
 
       expect(find.text('進化'), findsOneWidget);
       expect(find.text(growthMessage),
@@ -426,7 +426,7 @@ void main() {
     expect(_evolutionAssetOpacity(tester, before), 1);
     expect(_evolutionAssetOpacity(tester, after), 0);
 
-    await tester.pump(const Duration(seconds: 2));
+    await tester.pump(const Duration(milliseconds: 4100));
     expect(_evolutionAssetOpacity(tester, before), 0);
     expect(_evolutionAssetOpacity(tester, after), 1);
     expect(tester.takeException(), isNull);
@@ -462,12 +462,12 @@ void main() {
 
     tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
     await tester.pumpWidget(host(screen));
-    await tester.pump(const Duration(seconds: 2));
+    await tester.pump(const Duration(milliseconds: 4100));
     expect(_evolutionAssetOpacity(tester, before), 0);
     expect(_evolutionAssetOpacity(tester, after), 1);
     await tester.pumpWidget(host(screen));
     expect(_evolutionAssetOpacity(tester, after), 1);
-    await tester.pump(const Duration(seconds: 2));
+    await tester.pump(const Duration(milliseconds: 4100));
     expect(_evolutionAssetOpacity(tester, after), 1);
 
     await tester.tap(find.text('次へ'));
@@ -498,7 +498,7 @@ void main() {
     expect(_evolutionAssetOpacity(tester, before), 1);
     expect(_evolutionAssetOpacity(tester, after), 0);
 
-    await tester.pump(const Duration(seconds: 2));
+    await tester.pump(const Duration(milliseconds: 4100));
     expect(_evolutionAssetOpacity(tester, before), 0);
     expect(_evolutionAssetOpacity(tester, after), 1);
     expect(find.text('ついに、一軍の舞台へ！'), findsOneWidget);
@@ -748,7 +748,7 @@ void main() {
       if (entry.value == null) {
         expect(shownAsset(tester), idle.first.asset);
       } else {
-        await tester.pump(const Duration(seconds: 2));
+        await tester.pump(const Duration(milliseconds: 4100));
         expect(_evolutionAssetOpacity(tester, idle.first), 1);
       }
       controller.evolutionStage.value = null;

@@ -121,7 +121,7 @@ void main() {
       ];
       double? footLineY;
       var elapsedMs = 0;
-      for (final sampleMs in [0, 350, 700, 1050, 1400, 1699]) {
+      for (final sampleMs in [0, 1200, 2800, 3999, 4000, 5650, 6999]) {
         if (sampleMs > elapsedMs) {
           await tester.pump(Duration(milliseconds: sampleMs - elapsedMs));
           elapsedMs = sampleMs;
@@ -147,7 +147,7 @@ void main() {
       );
       rows.add(_sampleRow(
         sequence.directory,
-        'completed_after_1719ms',
+        'completed_after_7019ms',
         tester,
         targetKey,
       ));

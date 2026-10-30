@@ -22,9 +22,9 @@ class TrainingEvolutionReveal extends StatefulWidget {
   })  : assert(afterVisual == null || afterSize != null),
         assert(animation == null || sceneDuration != null);
 
-  static const visualDuration = Duration(milliseconds: 1700);
+  static const visualDuration = Duration(milliseconds: 7000);
   static Duration pageDuration(bool firstTeam) =>
-      Duration(milliseconds: firstTeam ? 2700 : 2400);
+      Duration(milliseconds: firstTeam ? 8100 : 7800);
 
   final SametarohFrame beforeFrame;
   final SametarohFrame afterFrame;
@@ -145,21 +145,30 @@ class _TrainingEvolutionRevealState extends State<TrainingEvolutionReveal>
                 animation: widget.animation ?? _animation,
                 builder: (context, _) {
                   final t = widget.animation == null
-                      ? _animation.value * 1.7
+                      ? _animation.value * 7
                       : widget.animation!.value *
                           widget.sceneDuration!.inMilliseconds /
                           1000;
-                  if (t >= 1.7) {
-                    return Center(child: afterImage());
-                  }
-                  final light = _glow(t);
-                  final switched = t >= 1.05;
-                  final pulse = 1 +
-                      math.sin(_phase(t, .4, .6) * math.pi * 4) *
-                          .018 *
-                          (1 - _phase(t, .9, .15));
+                  if (t >= 7) return Center(child: afterImage());
+                  final switched = t >= 4;
+                  const pulse = 1.0;
                   // 進化後の通常表示の底辺に、進化前の素材もそろえます。
                   final bottom = (outerHeight - afterSize.height) / 2;
+                  final bodyBounds = Rect.fromLTRB(
+                    (outerWidth -
+                            math.max(beforeSize.width * widget.beforeScale,
+                                afterSize.width)) /
+                        2,
+                    outerHeight -
+                        bottom -
+                        math.max(beforeSize.height * widget.beforeScale,
+                            afterSize.height),
+                    (outerWidth +
+                            math.max(beforeSize.width * widget.beforeScale,
+                                afterSize.width)) /
+                        2,
+                    outerHeight - bottom,
+                  );
                   Widget frame(Widget image,
                           {required bool visible,
                           required double scale,
@@ -176,16 +185,27 @@ class _TrainingEvolutionRevealState extends State<TrainingEvolutionReveal>
                                       key: scaleKey,
                                       scale: scale,
                                       alignment: Alignment.bottomCenter,
-                                      child: ColorFiltered(
-                                          colorFilter: ColorFilter.mode(
-                                              Colors.white.withValues(
-                                                  alpha: light * .95),
-                                              BlendMode.srcATop),
+                                      child: ShaderMask(
+                                          blendMode: BlendMode.srcATop,
+                                          shaderCallback: (bounds) =>
+                                              LinearGradient(
+                                                begin: Alignment.topCenter,
+                                                end: Alignment.bottomCenter,
+                                                colors: [
+                                                  Colors.white.withValues(
+                                                      alpha:
+                                                          _bodyLight(t, .65)),
+                                                  Colors.white.withValues(
+                                                      alpha: _bodyLight(t, 0)),
+                                                ],
+                                              ).createShader(bounds),
                                           child: image)))));
-                  return Stack(alignment: Alignment.center, children: [
+                  return ClipRect(
+                      child: Stack(alignment: Alignment.center, children: [
                     CustomPaint(
-                        size: Size(width, height),
-                        painter: _EvolutionLight(t, widget.firstTeam, false)),
+                        size: Size(outerWidth, outerHeight),
+                        painter: _EvolutionLight(
+                            t, widget.firstTeam, false, bodyBounds)),
                     frame(
                         SametarohFrameImage(
                             frame: widget.beforeFrame,
@@ -197,106 +217,149 @@ class _TrainingEvolutionRevealState extends State<TrainingEvolutionReveal>
                         scale: widget.beforeScale * pulse),
                     frame(afterImage(),
                         visible: switched,
-                        scale: 1 + .045 * (1 - _ease(t, 1.1, .6)),
+                        scale: 1,
                         scaleKey:
                             const ValueKey('training-evolution-after-scale')),
                     IgnorePointer(
                         child: CustomPaint(
-                            size: Size(width, height),
-                            painter:
-                                _EvolutionLight(t, widget.firstTeam, true))),
-                  ]);
+                            size: Size(outerWidth, outerHeight),
+                            painter: _EvolutionLight(
+                                t, widget.firstTeam, true, bodyBounds))),
+                  ]));
                 }));
       });
 }
 
 double _phase(double t, double start, double span) =>
     ((t - start) / span).clamp(0.0, 1.0);
-double _ease(double t, double start, double span) =>
-    Curves.easeOutCubic.transform(_phase(t, start, span));
-double _glow(double t) => t < 1.05
-    ? Curves.easeInOut.transform(_phase(t, .45, .6))
-    : 1 - _ease(t, 1.05, .65);
+double _smooth(double t, double start, double end) {
+  final q = _phase(t, start, end - start);
+  return q * q * (3 - 2 * q);
+}
 
+double _bodyLight(double t, double delay) =>
+    _smooth(t, 1.65 + delay, 3.3 + delay * .38) * (1 - _smooth(t, 4.45, 5.65));
+
+/// 足元の予兆、上昇光、身体を完全に隠す光、余韻を同じ時計で描く。
 class _EvolutionLight extends CustomPainter {
-  _EvolutionLight(this.t, this.firstTeam, this.foreground);
+  _EvolutionLight(this.t, this.firstTeam, this.foreground, this.bodyBounds);
   final double t;
   final bool firstTeam;
   final bool foreground;
+  final Rect bodyBounds;
+  static const palette = [
+    Color(0xff30a9e5),
+    Color(0xff59d4ed),
+    Color(0xff9a90de),
+    Color(0xfff6d993)
+  ];
 
   @override
   void paint(Canvas canvas, Size size) {
-    final center = Offset(size.width / 2, size.height / 2);
-    final light = _glow(t);
-    final unit = math.min(size.width / 300, size.height / 390);
-    if (light > 0) {
-      final radius = (foreground ? 155 * light : 125 + light * 38) * unit;
-      final colors = foreground
-          ? [
-              Colors.white.withValues(alpha: light * .88),
-              Colors.white.withValues(alpha: light * .65),
-              Colors.white.withValues(alpha: 0),
-            ]
-          : [
-              const Color(0xffffe6a0).withValues(alpha: light * .68),
-              const Color(0xffffe6a0).withValues(alpha: light * .22),
-              const Color(0xffffe6a0).withValues(alpha: 0),
-            ];
-      canvas.drawCircle(
-          center,
-          radius,
+    final center = bodyBounds.center;
+    final foot = Offset(center.dx, bodyBounds.bottom);
+    final unit = math.min(size.width / 335, size.height / 390);
+    final strength = _smooth(t, .05, 1.2) * (1 - _smooth(t, 4.6, 6.4));
+    final rise = _smooth(t, .1, 1.8);
+    final peak = math.exp(-math.pow((t - 3.9) / .6, 2));
+    if (!foreground) {
+      canvas.drawOval(
+          Rect.fromCenter(center: foot, width: 150 * unit, height: 36 * unit),
           Paint()
-            ..shader = RadialGradient(
-                    colors: colors,
-                    stops: foreground ? const [0, .45, 1] : null)
-                .createShader(Rect.fromCircle(center: center, radius: radius)));
-    }
-    if (!foreground && t >= .45 && t < 1.05) {
-      final q = _phase(t, .45, .6);
-      for (var i = 0; i < 10; i++) {
-        final angle = i * math.pi / 5;
-        final radius = (140 * (1 - q) + 32) * unit;
-        canvas.drawCircle(
-            center +
-                Offset(
-                    math.cos(angle) * radius, math.sin(angle) * radius * .85),
-            (1.8 + 1.2 * q) * unit,
-            Paint()
-              ..color = const Color(0xffffd674)
-                  .withValues(alpha: math.sin(q * math.pi) * .9));
-      }
-    }
-    if (foreground && t >= 1.2 && t < 1.7) {
-      final a = math.sin(_phase(t, 1.2, .5) * math.pi);
-      canvas.drawCircle(
-          center,
-          (70 + 90 * _ease(t, 1.2, .5)) * unit,
-          Paint()
-            ..style = PaintingStyle.stroke
-            ..strokeWidth = (firstTeam ? 2 : 1.2) * unit
-            ..color = const Color(0xffffcf65)
-                .withValues(alpha: a * (firstTeam ? .8 : .38)));
-      if (firstTeam) {
-        for (final delta in const [
-          Offset(-98, -95),
-          Offset(105, -60),
-          Offset(90, 90)
-        ]) {
-          final point = center + delta * unit;
-          final length = 6 * a * unit;
-          final pen = Paint()
-            ..color = const Color(0xffe7b445).withValues(alpha: a)
-            ..strokeWidth = 1.5 * unit;
-          canvas.drawLine(
-              point - Offset(length, 0), point + Offset(length, 0), pen);
-          canvas.drawLine(
-              point - Offset(0, length), point + Offset(0, length), pen);
+            ..color = palette[1].withValues(alpha: .4 * strength)
+            ..maskFilter = MaskFilter.blur(BlurStyle.normal, 12 * unit));
+      for (var j = 0; j < 11; j++) {
+        final side = (j - 5) / 5;
+        final path = Path();
+        for (var n = 0; n <= 30; n++) {
+          final q = n / 30 * rise;
+          final x = foot.dx +
+              (side * (35 + 62 * q) + math.sin(q * 4 + t * 1.4 + j) * 5 * q) *
+                  unit;
+          final y = foot.dy - q * (bodyBounds.height + 20 + 27 * math.cos(j));
+          if (n == 0) {
+            path.moveTo(x, y);
+          } else {
+            path.lineTo(x, y);
+          }
         }
+        canvas.drawPath(
+            path,
+            Paint()
+              ..color = palette[j % 3]
+                  .withValues(alpha: (.18 + .25 * peak) * strength)
+              ..style = PaintingStyle.stroke
+              ..strokeWidth = 2 * unit);
       }
+      for (var j = 0; j < 3; j++) {
+        final q = (t * .36 + j / 3) % 1;
+        final rx = (38 + q * 83) * unit;
+        canvas.drawOval(
+            Rect.fromCenter(center: foot, width: rx * 2, height: rx * .46),
+            Paint()
+              ..color = palette[j].withValues(alpha: .59 * (1 - q) * strength)
+              ..style = PaintingStyle.stroke
+              ..strokeWidth = 2 * unit);
+      }
+      return;
+    }
+    final cover = _smooth(t, 2.85, 3.6) * (1 - _smooth(t, 4.4, 5.45));
+    // 固定した光の形で両画像の矩形全域を覆い、4秒の画像交換を隠す。
+    // 楕円の内側に矩形四隅も入るようsqrt(2)より広い1.6倍で確保する。
+    final shell = Rect.fromCenter(
+      center: center,
+      width: bodyBounds.width * 1.6,
+      height: bodyBounds.height * 1.6,
+    );
+    canvas.drawOval(
+        shell,
+        Paint()
+          ..color = palette[1].withValues(alpha: cover * .7)
+          ..maskFilter = MaskFilter.blur(BlurStyle.normal, 20 * unit));
+    canvas.drawOval(shell,
+        Paint()..color = const Color(0xfff0fdff).withValues(alpha: cover));
+    for (var j = 0; j < 52; j++) {
+      final a = ((j * .61803) % 1);
+      final b = ((j * .41421) % 1);
+      final q = (a + t * (.16 + .08 * b)) % 1;
+      final point = Offset(
+          foot.dx +
+              ((b - .5) * (180 - 35 * q) + math.sin(t * 1.1 + j + q * 3) * 6) *
+                  unit,
+          foot.dy + 12 * unit - q * (bodyBounds.height + 70 * unit) * rise);
+      final opacity = .7 * strength * math.sin(math.pi * q);
+      final length = (1.2 + 1.9 * b) * unit;
+      final pen = Paint()
+        ..color = palette[j % 4].withValues(alpha: opacity)
+        ..strokeWidth = 1.5 * unit
+        ..strokeCap = StrokeCap.round;
+      canvas.drawLine(
+          point - Offset(length, 0), point + Offset(length, 0), pen);
+      canvas.drawLine(
+          point - Offset(0, length), point + Offset(0, length), pen);
+    }
+    final celebration = _smooth(t, 4.95, 5.4) * (1 - _smooth(t, 5.7, 6.65));
+    for (var j = 0; j < (firstTeam ? 16 : 12); j++) {
+      final angle = j * math.pi * 2 / (firstTeam ? 16 : 12);
+      final radius = (65 + math.max(0, t - 4.95) * 35) * unit;
+      final point = center +
+          Offset(math.cos(angle) * radius, math.sin(angle) * radius * 1.15);
+      final pen = Paint()
+        ..color =
+            palette[j % 3 == 0 ? 3 : 1].withValues(alpha: .65 * celebration)
+        ..strokeWidth = 1.6 * unit;
+      final length = 2.6 * unit;
+      canvas.drawLine(
+          point - Offset(length, 0), point + Offset(length, 0), pen);
+      canvas.drawLine(
+          point - Offset(0, length), point + Offset(0, length), pen);
     }
   }
 
   @override
   bool shouldRepaint(covariant _EvolutionLight old) =>
-      old.t != t || old.firstTeam != firstTeam || old.foreground != foreground;
+      old.t != t ||
+      old.firstTeam != firstTeam ||
+      old.foreground != foreground ||
+      old.bodyBounds != bodyBounds;
 }
