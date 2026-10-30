@@ -276,8 +276,7 @@ class _EvolutionLight extends CustomPainter {
           final x = foot.dx +
               (side * (45 + 85 * q) + math.sin(q * 4 + t * 1.4 + j) * 5 * q) *
                   unit;
-          final y = foot.dy -
-              q * (bodyBounds.height + 80 * unit + 32 * unit * math.cos(j));
+          final y = foot.dy - q * (bodyBounds.height + 20 + 27 * math.cos(j));
           if (n == 0) {
             path.moveTo(x, y);
           } else {
