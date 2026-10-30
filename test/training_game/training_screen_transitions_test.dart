@@ -42,9 +42,19 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
       if (complete) {
-        await tester.tapAt(const Offset(2, 200));
+        // 1タップで1秒進むため、5秒の行動は5回のタップで完了させます。
+        for (var tap = 0; tap < 5; tap++) {
+          await tester.tapAt(const Offset(2, 200));
+          await tester.pump();
+          if (tap < 4) {
+            expect(find.text('タップして戻る'), findsNothing);
+          }
+        }
+        await tester.runAsync(
+            () => Future<void>.delayed(const Duration(milliseconds: 50)));
         await tester.pump();
         await tester.pump(const Duration(milliseconds: 500));
+        expect(find.text('タップして戻る'), findsOneWidget);
         await tester.tap(find.text('タップして戻る'));
         await tester.pump();
       } else {
