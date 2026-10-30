@@ -88,15 +88,21 @@ class TrainingRetirementWarning {
         continue;
       }
       final name = entry.key;
-      final action = switch (name) {
-        '食事' => 'ごはんで食事の数値を回復させましょう。',
-        '体調' => '休養で体調の数値を回復させましょう。',
-        _ => '掃除で清潔の数値を回復させましょう。',
+      final (title, body) = switch (name) {
+        '食事' => ('お腹が空いています', '空腹が続いています。このままでは、鮫太郎が引退するおそれがあります。ごはんをあげましょう。'),
+        '体調' => (
+            '体調が悪くなっています',
+            '体調が悪い状態が続いています。このままでは、鮫太郎が引退するおそれがあります。休養をとって、回復させましょう。'
+          ),
+        _ => (
+            '部屋が汚れています',
+            '部屋が汚れた状態が続いています。このままでは、鮫太郎が引退するおそれがあります。掃除をして、清潔にしましょう。'
+          ),
       };
       warnings.add(TrainingRetirementWarning(
         episode: '$scope:zero:$name:${elapsedHours - hours}',
-        title: '$nameの回復が必要です',
-        body: '$nameが0の状態が続いています。この状態が続くと、鮫太郎が引退するおそれがあります。$action',
+        title: title,
+        body: body,
         remainingHours: (entry.value - hours).toDouble(),
       ));
     }

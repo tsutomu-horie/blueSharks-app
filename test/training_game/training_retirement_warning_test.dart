@@ -101,12 +101,22 @@ void main() {
     expect(food.body,
         '食事の数値が高い状態が続いています。この状態が続くと、鮫太郎が引退するおそれがあります。ごはんを控え、数値が下がるのを待ちましょう。');
     expect(warnings(name: '仕事').single.body, contains('仕事の数値が増える練習を控え'));
-    for (final entry in {'食事': 'ごはん', '体調': '休養', '清潔': '掃除'}.entries) {
-      expect(
+    for (final entry in {
+      '食事': ('お腹が空いています', '空腹が続いています。このままでは、鮫太郎が引退するおそれがあります。ごはんをあげましょう。'),
+      '清潔': (
+        '部屋が汚れています',
+        '部屋が汚れた状態が続いています。このままでは、鮫太郎が引退するおそれがあります。掃除をして、清潔にしましょう。'
+      ),
+      '体調': (
+        '体調が悪くなっています',
+        '体調が悪い状態が続いています。このままでは、鮫太郎が引退するおそれがあります。休養をとって、回復させましょう。'
+      ),
+    }.entries) {
+      final warning =
           warnings(name: entry.key, value: 0, zero: entry.key == '清潔' ? 48 : 24)
-              .single
-              .body,
-          contains(entry.value));
+              .single;
+      expect(warning.title, entry.value.$1);
+      expect(warning.body, entry.value.$2);
     }
   });
 }
