@@ -38,6 +38,7 @@ class TrainingGameCareActionScreen extends StatefulWidget {
 class _TrainingGameCareActionScreenState
     extends State<TrainingGameCareActionScreen> with TickerProviderStateMixin {
   static const _actionDuration = Duration(seconds: 5);
+  static const _completionScaleDuration = Duration(milliseconds: 1000);
   static const _completionEffectDuration = Duration(milliseconds: 1400);
   Timer? _actionTimer;
   late final AnimationController _actionProgressController;
@@ -75,7 +76,16 @@ class _TrainingGameCareActionScreenState
         ).chain(CurveTween(curve: Curves.easeInOut)),
         weight: 38,
       ),
-    ]).animate(_completionEffectController);
+    ]).animate(
+      CurvedAnimation(
+        parent: _completionEffectController,
+        curve: Interval(
+          0,
+          _completionScaleDuration.inMilliseconds /
+              _completionEffectDuration.inMilliseconds,
+        ),
+      ),
+    );
     _startActionProgress();
   }
 
@@ -328,6 +338,7 @@ class _TrainingGameCareActionScreenState
                   painter: _CareActionCompletionEffectPainter(
                     progress: _completionEffectController.value,
                     scene: scene,
+                    isChild: widget.bodyKey == SametarohAssets.childBodyKey,
                   ),
                 ),
               ),
@@ -366,10 +377,8 @@ class _TrainingGameCareActionScreenState
     return AnimatedBuilder(
       animation: _completionEffectController,
       child: character,
-      builder: (context, child) => Transform.scale(
-        scale: _completionScale.value,
-        child: child,
-      ),
+      builder: (context, child) =>
+          Transform.scale(scale: _completionScale.value, child: child),
     );
   }
 
@@ -445,20 +454,28 @@ class _CareActionSeekBarPainter extends CustomPainter {
 
 /// 完了時に光の輪・紙吹雪・星を重ねて達成感を伝えます。
 class _CareActionCompletionEffectPainter extends CustomPainter {
-  const _CareActionCompletionEffectPainter(
-      {required this.progress, required this.scene});
+  const _CareActionCompletionEffectPainter({
+    required this.progress,
+    required this.scene,
+    required this.isChild,
+  });
   final double progress;
   final TrainingCareScene? scene;
+  final bool isChild;
 
   @override
   void paint(Canvas canvas, Size size) {
     if (progress >= 1) return;
-    final fitted =
-        applyBoxFit(BoxFit.contain, TrainingCareScene.sourceSize, size)
-            .destination;
+    final fitted = applyBoxFit(
+      BoxFit.contain,
+      TrainingCareScene.sourceSize,
+      size,
+    ).destination;
     final scale = fitted.width / TrainingCareScene.sourceSize.width;
     final offset = Offset(
-        (size.width - fitted.width) / 2, (size.height - fitted.height) / 2);
+      (size.width - fitted.width) / 2,
+      (size.height - fitted.height) / 2,
+    );
     final rect = scene?.characterRect;
     final center = rect == null
         ? Offset(size.width / 2, size.height / 2)
@@ -468,6 +485,12 @@ class _CareActionCompletionEffectPainter extends CustomPainter {
         : math.min(rect.width, rect.height) * scale;
     canvas.save();
     canvas.clipRect(Offset.zero & size);
+    // 幼体素材は透明余白を含むため、粒の大きさと広がりを中心基準で縮小します。
+    if (isChild) {
+      canvas.translate(center.dx, center.dy);
+      canvas.scale(0.65);
+      canvas.translate(-center.dx, -center.dy);
+    }
     // A brief halo marks completion before the confetti opens out.
     final haloLife = (progress / .58).clamp(0.0, 1.0).toDouble();
     final haloAlpha = math.sin(haloLife * math.pi) * .75;
@@ -475,28 +498,28 @@ class _CareActionCompletionEffectPainter extends CustomPainter {
         extent * (.28 + Curves.easeOutCubic.transform(haloLife) * .8);
     if (haloAlpha > 0) {
       canvas.drawCircle(
-          center,
-          haloRadius,
-          Paint()
-            ..shader = RadialGradient(colors: [
+        center,
+        haloRadius,
+        Paint()
+          ..shader = RadialGradient(
+            colors: [
               const Color(0xffffd66b).withValues(alpha: 0),
               const Color(0xffffd66b).withValues(alpha: haloAlpha * .18),
               Colors.white.withValues(alpha: 0),
-            ], stops: const [
-              0,
-              .75,
-              1
-            ]).createShader(
-                Rect.fromCircle(center: center, radius: haloRadius)));
+            ],
+            stops: const [0, .75, 1],
+          ).createShader(Rect.fromCircle(center: center, radius: haloRadius)),
+      );
       for (final width in [8.0, 3.0]) {
         canvas.drawCircle(
-            center,
-            haloRadius,
-            Paint()
-              ..color = (width == 8 ? Colors.white : const Color(0xffffc83d))
-                  .withValues(alpha: haloAlpha)
-              ..style = PaintingStyle.stroke
-              ..strokeWidth = width);
+          center,
+          haloRadius,
+          Paint()
+            ..color = (width == 8 ? Colors.white : const Color(0xffffc83d))
+                .withValues(alpha: haloAlpha)
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = width,
+        );
       }
     }
     // Uneven spacing and a short second wave avoid a rigid circular wreath.
@@ -505,8 +528,9 @@ class _CareActionCompletionEffectPainter extends CustomPainter {
       final life =
           ((progress - delay) / (1 - delay)).clamp(0.0, 1.0).toDouble();
       if (life <= 0 || life >= 1) continue;
-      final burst = Curves.easeOutCubic
-          .transform((life / .65).clamp(0.0, 1.0).toDouble());
+      final burst = Curves.easeOutCubic.transform(
+        (life / .65).clamp(0.0, 1.0).toDouble(),
+      );
       final angle =
           -math.pi / 2 + i * math.pi * 2 / 44 + math.sin(i * 2.4) * .09;
       final distance = extent * (.46 + burst * (.42 + (i % 5) * .09));
@@ -517,11 +541,12 @@ class _CareActionCompletionEffectPainter extends CustomPainter {
                 math.sin(life * math.pi) * 12 +
                 life * life * 27,
           );
-      final alpha = (Curves.easeOut
-              .transform((life * 9).clamp(0.0, 1.0).toDouble()) *
-          (1 -
-              Curves.easeIn
-                  .transform(((life - .55) / .45).clamp(0.0, 1.0).toDouble())));
+      final alpha =
+          (Curves.easeOut.transform((life * 9).clamp(0.0, 1.0).toDouble()) *
+              (1 -
+                  Curves.easeIn.transform(
+                    ((life - .55) / .45).clamp(0.0, 1.0).toDouble(),
+                  )));
       final isStar = i % 3 == 0;
       final particleScale =
           (.55 + .45 * math.sin(math.min(life * 5, math.pi / 2))) *
@@ -531,18 +556,20 @@ class _CareActionCompletionEffectPainter extends CustomPainter {
               : [
                   const Color(0xffffc83d),
                   const Color(0xff168ac2),
-                  const Color(0xffff8994)
+                  const Color(0xffff8994),
                 ][i % 3])
           .withValues(alpha: alpha);
       canvas.save();
       canvas.translate(position.dx, position.dy);
-      canvas.rotate(isStar
-          ? math.sin(life * 4 + i) * .18
-          : angle + life * (i.isEven ? 3 : -3));
+      canvas.rotate(
+        isStar
+            ? math.sin(life * 4 + i) * .18
+            : angle + life * (i.isEven ? 3 : -3),
+      );
       canvas.scale(
-          particleScale,
-          particleScale *
-              (isStar ? 1 : .65 + .35 * math.cos(life * 9 + i).abs()));
+        particleScale,
+        particleScale * (isStar ? 1 : .65 + .35 * math.cos(life * 9 + i).abs()),
+      );
       final path = Path();
       if (isStar) {
         final radius = i % 6 == 0 ? 17.0 : 11.0;
@@ -557,17 +584,21 @@ class _CareActionCompletionEffectPainter extends CustomPainter {
         }
         path.close();
       } else {
-        path.addRRect(RRect.fromRectAndRadius(
+        path.addRRect(
+          RRect.fromRectAndRadius(
             Rect.fromLTWH(-2.7, -5.5, 5.4, i.isEven ? 11 : 8),
-            const Radius.circular(1.5)));
+            const Radius.circular(1.5),
+          ),
+        );
       }
       canvas.drawPath(
-          path,
-          Paint()
-            ..color = Colors.white.withValues(alpha: alpha)
-            ..style = PaintingStyle.stroke
-            ..strokeWidth = 3
-            ..strokeJoin = StrokeJoin.round);
+        path,
+        Paint()
+          ..color = Colors.white.withValues(alpha: alpha)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 3
+          ..strokeJoin = StrokeJoin.round,
+      );
       canvas.drawPath(path, Paint()..color = color);
       canvas.restore();
     }
@@ -595,17 +626,18 @@ class _CareActionCompletionEffectPainter extends CustomPainter {
         }
         path.close();
         canvas.drawPath(
-            path,
-            Paint()
-              ..color = Colors.white.withValues(alpha: sparkleAlpha)
-              ..style = PaintingStyle.stroke
-              ..strokeWidth = 4
-              ..strokeJoin = StrokeJoin.round);
+          path,
+          Paint()
+            ..color = Colors.white.withValues(alpha: sparkleAlpha)
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = 4
+            ..strokeJoin = StrokeJoin.round,
+        );
         canvas.drawPath(
-            path,
-            Paint()
-              ..color =
-                  const Color(0xffffc83d).withValues(alpha: sparkleAlpha));
+          path,
+          Paint()
+            ..color = const Color(0xffffc83d).withValues(alpha: sparkleAlpha),
+        );
       }
     }
     canvas.restore();
@@ -613,8 +645,11 @@ class _CareActionCompletionEffectPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(
-          covariant _CareActionCompletionEffectPainter oldDelegate) =>
-      oldDelegate.progress != progress || oldDelegate.scene != scene;
+    covariant _CareActionCompletionEffectPainter oldDelegate,
+  ) =>
+      oldDelegate.progress != progress ||
+      oldDelegate.scene != scene ||
+      oldDelegate.isChild != isChild;
 }
 
 /// お世話画面で行動ごとに差し替える表示情報です。
