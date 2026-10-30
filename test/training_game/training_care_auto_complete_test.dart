@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:koto_blue_sharks/presentation/training_game/models/training_game_models.dart';
 import 'package:koto_blue_sharks/presentation/training_game/sametaroh_asset.dart';
 import 'package:koto_blue_sharks/presentation/training_game/training_care_scene.dart';
+import 'package:koto_blue_sharks/presentation/training_game/training_screen_transitions.dart';
 import 'package:koto_blue_sharks/presentation/training_game/training_game_care_action.screen.dart';
 
 const _actions = [
@@ -33,7 +34,8 @@ Future<void> _openCare(
         builder: (context) => Scaffold(
           body: ElevatedButton(
             onPressed: () async {
-              onResult(await Navigator.of(context).push<bool>(MaterialPageRoute(
+              onResult(await Navigator.of(context)
+                  .push<bool>(TrainingCareRoute<bool>(
                 builder: (_) => TrainingGameCareActionScreen(
                   actionType: action,
                   bodyKey: body,
@@ -133,7 +135,7 @@ void main() {
     testWidgets('$targetNameのタップで進捗が1秒分進む', (tester) async {
       final results = <bool?>[];
       final semantics = tester.ensureSemantics();
-            await _openCare(tester, onResult: results.add);
+      await _openCare(tester, onResult: results.add);
       final seekBar = find.bySemanticsLabel('お世話の進行状況');
       final before = int.parse(tester
           .getSemantics(seekBar)
@@ -165,10 +167,36 @@ void main() {
     });
   }
 
+  testWidgets('途中の1タップは残り時間だけを1秒短縮する', (tester) async {
+    final results = <bool?>[];
+    final semantics = tester.ensureSemantics();
+    await _openCare(tester, onResult: results.add);
+    await tester.pump(const Duration(milliseconds: 1700));
+    final seekBar = find.bySemanticsLabel('お世話の進行状況');
+    expect(tester.getSemantics(seekBar).getSemanticsData().value, '40%');
+
+    await tester.tapAt(const Offset(2, 200));
+    await tester.pump();
+    expect(tester.getSemantics(seekBar).getSemanticsData().value, '60%');
+    expect(find.byType(SametarohAnimatedImage), findsOneWidget);
+    expect(results, isEmpty);
+
+    await tester.pump(const Duration(milliseconds: 1999));
+    expect(find.text('タップして戻る'), findsNothing);
+    await tester.pump(const Duration(milliseconds: 1));
+    await tester.runAsync(
+      () => Future<void>.delayed(const Duration(milliseconds: 50)),
+    );
+    await tester.pump();
+    expect(find.text('タップして戻る'), findsOneWidget);
+    expect(results, isEmpty);
+    semantics.dispose();
+  });
+
   testWidgets('タップは鮫太郎のコマを飛ばさず自然経過で切り替える', (tester) async {
     final results = <bool?>[];
     final semantics = tester.ensureSemantics();
-        await _openCare(tester, onResult: results.add);
+    await _openCare(tester, onResult: results.add);
     final character = find.byType(SametarohFrameImage);
     final seekBar = find.bySemanticsLabel('お世話の進行状況');
     final frameBefore =
@@ -209,7 +237,7 @@ void main() {
   testWidgets('連打しても進捗は100%で止まり完了音を一度だけ鳴らす', (tester) async {
     final results = <bool?>[];
     final semantics = tester.ensureSemantics();
-        var soundRequests = 0;
+    var soundRequests = 0;
     await _openCare(
       tester,
       onResult: results.add,
