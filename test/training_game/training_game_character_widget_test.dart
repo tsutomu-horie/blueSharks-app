@@ -345,7 +345,12 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
     await tester.tapAt(const Offset(2, 200));
-    await tester.runAsync(() => Future<void>.delayed(Duration.zero));
+    await tester.pump();
+    expect(find.byType(SametarohAnimatedImage), findsOneWidget);
+    expect(find.text('タップして戻る'), findsNothing);
+    await tester.pump(const Duration(seconds: 4));
+    await tester.runAsync(
+        () => Future<void>.delayed(const Duration(milliseconds: 50)));
     await tester.pump();
     expect(
         tester
