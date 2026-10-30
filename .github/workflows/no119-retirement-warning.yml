@@ -69,3 +69,4 @@ jobs:
           test/training_game/training_over_state_test.dart
           test/training_game/training_home_controls_test.dart
           test/training_game/no84_current_settings_test.dart
+          test/training_game/training_first_team_evolution_routing_test.dart
