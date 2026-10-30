@@ -384,14 +384,22 @@ class TrainingGameController extends GetxController
       }
       return false;
     });
-    final active = ended.value || stageIndex.value < 2
+    final active = ended.value
         ? <String>{}
-        : TrainingRetirementWarning.activeEpisodes(
-            scope: scope,
-            meters: meters,
-            overStartedAt: _retirementOverStartedAt,
-            zeroHours: _zeroHours,
-            elapsedHours: elapsedHours.value);
+        : stageIndex.value < 2
+            ? {
+                for (final name in stageIndex.value == 0
+                    ? ['清潔', '体調']
+                    : ['食事', '清潔', '体調'])
+                  if (meters[name] == 0)
+                    '$scope:tutorial:${stageIndex.value}:$name'
+              }
+            : TrainingRetirementWarning.activeEpisodes(
+                scope: scope,
+                meters: meters,
+                overStartedAt: _retirementOverStartedAt,
+                zeroHours: _zeroHours,
+                elapsedHours: elapsedHours.value);
     final before = _collapsedRetirementEpisodes.length;
     _collapsedRetirementEpisodes.removeWhere((episode) {
       // A decay pass can run between elapsedHours++ and zeroHours++. Do not

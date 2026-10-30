@@ -57,8 +57,26 @@ class TrainingRetirementWarning {
     required int elapsedHours,
     DateTime? serverNow,
   }) {
-    if (stageIndex < 2 || stageIndex > 4 || ended) return const [];
+    if (stageIndex < 0 || stageIndex > 4 || ended) return const [];
     final warnings = <TrainingRetirementWarning>[];
+    if (stageIndex < 2) {
+      final names = stageIndex == 0 ? ['清潔', '体調'] : ['食事', '清潔', '体調'];
+      for (final name in names) {
+        if (meters[name] != 0) continue;
+        final (title, action) = switch (name) {
+          '食事' => ('お腹が空いています', 'ごはんをあげましょう。'),
+          '体調' => ('体調が悪くなっています', '休養をとって、回復させましょう。'),
+          _ => ('部屋が汚れています', '掃除をして、清潔にしましょう。'),
+        };
+        warnings.add(TrainingRetirementWarning(
+          episode: '$scope:tutorial:$stageIndex:$name',
+          title: title,
+          body: '$nameの数値が0です。このままではゲームオーバーになります。$action',
+          remainingHours: 0,
+        ));
+      }
+      return warnings;
+    }
     for (final name in ['食事', '仕事']) {
       final start = overStartedAt[name];
       if ((meters[name] ?? 0) <= 100 || start == null || serverNow == null) {

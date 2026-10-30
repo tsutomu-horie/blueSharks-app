@@ -25,7 +25,10 @@ class _WarningHomeFixture extends HomeControlsFixture {
         stageIndex: stageIndex.value,
         ended: ended.value,
         meters: meters,
-        overStartedAt: {'食事': DateTime.utc(2026, 10, 28)},
+        overStartedAt: {
+          '食事': DateTime.utc(2026, 10, 28),
+          '仕事': DateTime.utc(2026, 10, 28)
+        },
         zeroHours: {},
         elapsedHours: 0,
         serverNow: DateTime.utc(2026, 10, 30),
@@ -42,6 +45,31 @@ class _WarningHomeFixture extends HomeControlsFixture {
 }
 
 void main() {
+  testWidgets('multiple warnings can be reached by scrolling', (tester) async {
+    tester.view.physicalSize = const Size(320, 568);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    SharedPreferences.setMockInitialValues({});
+    await MySharedPref.init();
+    Get.testMode = true;
+    addTearDown(Get.reset);
+    final c = _WarningHomeFixture()
+      ..stageIndex.value = 2
+      ..isServerStateReady.value = true;
+    c.meters['食事'] = 145;
+    c.meters['仕事'] = 145;
+    Get.put<TrainingGameController>(c);
+    await tester.pumpWidget(homeControlsHost());
+    await tester.pump();
+    expect(find.text('警告 2件（横にスクロール）'), findsOneWidget);
+    expect(find.text('食事のバランスに注意'), findsOneWidget);
+    await tester.drag(find.byType(ListView).first, const Offset(-300, 0));
+    await tester.pumpAndSettle();
+    expect(find.text('仕事のバランスに注意'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+    await tester.pumpWidget(const SizedBox());
+  });
   for (final variant in [
     (size: const Size(375, 812), scale: 1.0),
     (size: const Size(320, 568), scale: 1.0),
