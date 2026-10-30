@@ -22,6 +22,7 @@ import 'training_home_roaming_character.dart';
 import 'training_sync_indicator.dart';
 import 'training_debug_menu.dart';
 import 'training_home_floor_litter.dart';
+import 'training_hud_guide.dart';
 import 'training_evolution_reveal.dart';
 import 'training_evolution_page_switcher.dart';
 import 'training_dex_dialog.dart';
@@ -30,6 +31,13 @@ import 'training_screen_transitions.dart';
 
 /// 参照HTMLのスマートフォン画面部分だけをアプリ用に再現します。
 class TrainingGameScreen extends GetView<TrainingGameController> {
+  static const _meterGuideItems = <String, TrainingHudGuideItem>{
+    '食事': TrainingHudGuideItem.food,
+    '仕事': TrainingHudGuideItem.work,
+    '清潔': TrainingHudGuideItem.cleanliness,
+    '体調': TrainingHudGuideItem.condition,
+  };
+
   /// 育成ゲーム画面を作成します。
   const TrainingGameScreen(
       {super.key,
@@ -782,7 +790,7 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
                 mainAxisSpacing: 8,
                 padding: EdgeInsets.zero,
                 children: const ['食事', '仕事', '清潔', '体調']
-                    .map((name) => _buildMeterByName(name))
+                    .map((name) => _buildMeterByName(name, context))
                     .toList(),
               ),
             ),
@@ -857,8 +865,37 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
   }
 
   /// メーター1項目を作成します。
-  Widget _buildMeterByName(String name) {
-    return _buildMeter(MapEntry(name, controller.meters[name]!));
+  Widget _buildMeterByName(String name, BuildContext context) {
+    final entry = MapEntry(name, controller.meters[name]!);
+    final guideItem = _meterGuideItems[name];
+    if (controller.stageIndex.value != 1 || guideItem == null) {
+      return _buildMeter(entry);
+    }
+
+    final value = controller.careFeedbackPending.value
+        ? controller.careFeedbackStartValues[name] ?? entry.value
+        : entry.value;
+    void showGuide() {
+      unawaited(TrainingHudGuide.show(
+        context,
+        guideItem,
+        unlocked: name != '仕事',
+      ));
+    }
+
+    return Semantics(
+      key: ValueKey<String>('training-home-meter-${guideItem.name}'),
+      label: '$name ${value.round()}',
+      button: true,
+      enabled: true,
+      onTap: showGuide,
+      child: InkWell(
+        excludeFromSemantics: true,
+        onTap: showGuide,
+        borderRadius: BorderRadius.circular(4),
+        child: ExcludeSemantics(child: _buildMeter(entry)),
+      ),
+    );
   }
 
   /// 通常100・超過50の表示と数値をまとめます。
@@ -1023,13 +1060,38 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
       );
 
-  Widget _buildTrainingMenuButton(BuildContext context, bool enabled) =>
-      TextButton.icon(
-        onPressed: enabled ? () => _showMiniGameSelection(context) : null,
-        style: _homeAuxiliaryStyle,
-        icon: const Icon(Icons.sports_rugby_outlined, size: 16),
-        label: const Text('練習 / MG'),
-      );
+  Widget _buildTrainingMenuButton(BuildContext context, bool enabled) {
+    void openMiniGameSelection() {
+      unawaited(_showMiniGameSelection(context));
+    }
+
+    final VoidCallback? onTap = enabled ? openMiniGameSelection : null;
+    void showGuide() {
+      unawaited(TrainingHudGuide.show(
+        context,
+        TrainingHudGuideItem.miniGame,
+        unlocked: enabled,
+      ));
+    }
+
+    final button = TextButton.icon(
+      onPressed: onTap,
+      style: _homeAuxiliaryStyle,
+      icon: const Icon(Icons.sports_rugby_outlined, size: 16),
+      label: const Text('練習 / MG'),
+    );
+    if (controller.stageIndex.value < 1 || controller.ended.value) {
+      return button;
+    }
+
+    return TrainingHudGuidePressTarget(
+      key: const ValueKey('training-home-training-menu-guide-target'),
+      semanticsLabel: '練習 / MG',
+      onTap: onTap,
+      onLongPressGuide: showGuide,
+      child: button,
+    );
+  }
 
   /// 選択画面を閉じた後、既存のゲーム開始処理へ渡します。
   Future<void> _showMiniGameSelection(BuildContext context) async {

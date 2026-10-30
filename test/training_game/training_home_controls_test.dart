@@ -9,6 +9,7 @@ import 'package:koto_blue_sharks/presentation/training_game/training_game_care_a
 import 'package:koto_blue_sharks/presentation/training_game/training_game.screen.dart';
 import 'package:koto_blue_sharks/presentation/training_game/training_home_background.dart';
 import 'package:koto_blue_sharks/presentation/training_game/training_home_controls.dart';
+import 'package:koto_blue_sharks/presentation/training_game/training_hud_guide.dart';
 import 'package:koto_blue_sharks/presentation/training_game/training_home_roaming_character.dart';
 
 /// 表示だけのfixture。実API、時計、永続化を起動しません。
@@ -50,6 +51,155 @@ Widget homeControlsHost({Key? captureKey, double textScale = 1}) =>
     );
 
 void main() {
+  testWidgets('第二段階の4メーターをタップすると対応するガイドを表示する', (tester) async {
+    tester.view.physicalSize = const Size(375, 812);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    Get.testMode = true;
+    addTearDown(Get.reset);
+    final controller = HomeControlsFixture()
+      ..stageIndex.value = 1
+      ..isServerStateReady.value = true;
+    Get.put<TrainingGameController>(controller);
+    final semantics = tester.ensureSemantics();
+    await tester.pumpWidget(homeControlsHost());
+    await tester.pump();
+    Future<void> pumpTransition() async {
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+    }
+
+    const guideStates = <TrainingHudGuideItem, bool>{
+      TrainingHudGuideItem.food: true,
+      TrainingHudGuideItem.work: false,
+      TrainingHudGuideItem.cleanliness: true,
+      TrainingHudGuideItem.condition: true,
+    };
+    for (final entry in guideStates.entries) {
+      final target =
+          find.byKey(ValueKey('training-home-meter-${entry.key.name}'));
+      expect(target, findsOneWidget);
+      if (entry.key == TrainingHudGuideItem.food) {
+        expect(
+          tester.getSemantics(target),
+          matchesSemantics(
+            label: '食事 100',
+            isButton: true,
+            hasEnabledState: true,
+            isEnabled: true,
+            isFocusable: true,
+            hasFocusAction: true,
+            hasTapAction: true,
+          ),
+        );
+      }
+
+      await tester.tap(target);
+      await pumpTransition();
+      expect(
+        find.text(
+            TrainingHudGuide.messageFor(entry.key, unlocked: entry.value)),
+        findsOneWidget,
+      );
+      await tester.tap(find.text('閉じる'));
+      await pumpTransition();
+      expect(find.byKey(const ValueKey('training-hud-guide-dialog')),
+          findsNothing);
+    }
+
+    controller.stageIndex.value = 2;
+    await tester.pump();
+    expect(
+      find.byKey(const ValueKey('training-home-meter-food')),
+      findsNothing,
+    );
+    await tester.tap(find.text('食事'));
+    await tester.pump();
+    expect(
+        find.byKey(const ValueKey('training-hud-guide-dialog')), findsNothing);
+    expect(tester.takeException(), isNull);
+    semantics.dispose();
+    await tester.pumpWidget(const SizedBox());
+  });
+
+  testWidgets('練習/MGの短タップと長押しが既存解放条件のまま動く', (tester) async {
+    tester.view.physicalSize = const Size(375, 812);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    Get.testMode = true;
+    addTearDown(Get.reset);
+    final controller = HomeControlsFixture()
+      ..stageIndex.value = 1
+      ..isServerStateReady.value = true;
+    Get.put<TrainingGameController>(controller);
+    await tester.pumpWidget(homeControlsHost());
+    await tester.pump();
+
+    final entry = find.text('練習 / MG');
+    await tester.tap(entry);
+    await tester.pump();
+    expect(find.text('ミニゲームを選ぶ'), findsNothing);
+    expect(
+        find.byKey(const ValueKey('training-hud-guide-dialog')), findsNothing);
+
+    final gesture = await tester.startGesture(tester.getCenter(entry));
+    await tester.pump(Duration.zero);
+    await tester.pump(const Duration(milliseconds: 699));
+    final ring = find.descendant(
+      of: find
+          .byKey(const ValueKey('training-home-training-menu-guide-target')),
+      matching: find.byType(CircularProgressIndicator),
+    );
+    expect(ring, findsOneWidget);
+    expect(tester.widget<CircularProgressIndicator>(ring).value, lessThan(1));
+    expect(find.text('長押し中'), findsNothing);
+    expect(
+        find.byKey(const ValueKey('training-hud-guide-dialog')), findsNothing);
+
+    await tester.pump(const Duration(milliseconds: 1));
+    const lockedMessage = 'もう少し育つと、ミニゲームで遊べるようになります。';
+    expect(find.text(lockedMessage), findsOneWidget);
+    expect(find.text('ミニゲームを選ぶ'), findsNothing);
+    await gesture.up();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.tap(find.text('閉じる'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    controller.stageIndex.value = 2;
+    await tester.pump();
+    await tester.tap(find.text('練習 / MG'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(find.text('ミニゲームを選ぶ'), findsOneWidget);
+    Navigator.of(tester.element(find.text('ミニゲームを選ぶ'))).pop();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    final unlockedGesture =
+        await tester.startGesture(tester.getCenter(find.text('練習 / MG')));
+    await tester.pump(Duration.zero);
+    await tester.pump(const Duration(milliseconds: 700));
+    expect(
+      find.text(
+        TrainingHudGuide.messageFor(TrainingHudGuideItem.miniGame),
+      ),
+      findsOneWidget,
+    );
+    await unlockedGesture.up();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(find.text('ミニゲームを選ぶ'), findsNothing);
+    expect(tester.takeException(), isNull);
+    await tester.tap(find.text('閉じる'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.pumpWidget(const SizedBox());
+  });
+
   for (final size in [
     const Size(375, 812),
     const Size(320, 568),
