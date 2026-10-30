@@ -38,7 +38,7 @@ class TrainingGameCareActionScreen extends StatefulWidget {
 class _TrainingGameCareActionScreenState
     extends State<TrainingGameCareActionScreen> with TickerProviderStateMixin {
   static const _actionDuration = Duration(seconds: 5);
-  static const _completionEffectDuration = Duration(milliseconds: 720);
+  static const _completionEffectDuration = Duration(milliseconds: 1400);
   Timer? _actionTimer;
   late final AnimationController _actionProgressController;
   late final AnimationController _completionEffectController;
@@ -417,112 +417,178 @@ class _CareActionSeekBarPainter extends CustomPainter {
       oldDelegate.progress != progress;
 }
 
-/// キャラクターの周りに一度だけ広がる光の輪ときらめきを描画します。
+/// 完了時に光の輪・紙吹雪・星を重ねて達成感を伝えます。
 class _CareActionCompletionEffectPainter extends CustomPainter {
-  const _CareActionCompletionEffectPainter({
-    required this.progress,
-    required this.scene,
-  });
-
+  const _CareActionCompletionEffectPainter(
+      {required this.progress, required this.scene});
   final double progress;
   final TrainingCareScene? scene;
 
   @override
   void paint(Canvas canvas, Size size) {
     if (progress >= 1) return;
-    final eased = Curves.easeOutCubic.transform(
-      progress.clamp(0.0, 1.0).toDouble(),
-    );
-    final opacity = (1 - eased).clamp(0.0, 1.0).toDouble();
-    final sceneSize = TrainingCareScene.sourceSize;
-    final fittedScene = scene == null
-        ? null
-        : applyBoxFit(BoxFit.contain, sceneSize, size).destination;
-    final sceneScale =
-        fittedScene == null ? 1.0 : fittedScene.width / sceneSize.width;
-    final sceneOffset = fittedScene == null
-        ? Offset.zero
-        : Offset(
-            (size.width - fittedScene.width) / 2,
-            (size.height - fittedScene.height) / 2,
-          );
-    final characterRect = scene?.characterRect;
-    final center = characterRect == null
+    final fitted =
+        applyBoxFit(BoxFit.contain, TrainingCareScene.sourceSize, size)
+            .destination;
+    final scale = fitted.width / TrainingCareScene.sourceSize.width;
+    final offset = Offset(
+        (size.width - fitted.width) / 2, (size.height - fitted.height) / 2);
+    final rect = scene?.characterRect;
+    final center = rect == null
         ? Offset(size.width / 2, size.height / 2)
-        : sceneOffset + characterRect.center * sceneScale;
-    final characterWidth = characterRect == null
+        : offset + rect.center * scale;
+    final extent = rect == null
         ? size.shortestSide * 0.4
-        : characterRect.width * sceneScale;
-    final characterHeight = characterRect == null
-        ? size.shortestSide * 0.4
-        : characterRect.height * sceneScale;
-    final characterExtent =
-        math.min(characterWidth, characterHeight).toDouble();
-    final radius = characterExtent * (0.3 + eased * 0.52);
-    final alpha = (opacity * 180).round();
-    canvas.drawCircle(
-      center,
-      radius,
-      Paint()
-        ..color = Color.fromARGB(alpha, 255, 199, 78)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 2 + opacity * 3,
-    );
-
-    for (var index = 0; index < 8; index++) {
-      final angle = -math.pi / 2 + index * math.pi / 4;
-      final distance = radius * (1.08 + (index.isEven ? 0.12 : 0));
-      final direction = Offset(math.cos(angle), math.sin(angle));
-      canvas.drawLine(
-        center + direction * (radius * 0.82),
-        center + direction * (distance + characterExtent * 0.08),
-        Paint()
-          ..color = Color.fromARGB((alpha * 0.75).round(), 255, 199, 78)
-          ..strokeWidth = 2,
-      );
-      final point = Offset(
-        center.dx + math.cos(angle) * distance,
-        center.dy + math.sin(angle) * distance,
-      );
-      _drawSparkle(
-        canvas,
-        point,
-        characterExtent * 0.055 * opacity,
-        alpha,
-      );
-    }
-  }
-
-  void _drawSparkle(Canvas canvas, Offset center, double radius, int alpha) {
-    if (radius <= 0 || alpha <= 0) return;
-    final path = Path();
-    for (var point = 0; point < 8; point++) {
-      final angle = -math.pi / 2 + point * math.pi / 4;
-      final pointRadius = point.isEven ? radius : radius * 0.28;
-      final position = Offset(
-        center.dx + math.cos(angle) * pointRadius,
-        center.dy + math.sin(angle) * pointRadius,
-      );
-      if (point == 0) {
-        path.moveTo(position.dx, position.dy);
-      } else {
-        path.lineTo(position.dx, position.dy);
+        : math.min(rect.width, rect.height) * scale;
+    canvas.save();
+    canvas.clipRect(Offset.zero & size);
+    // A brief halo marks completion before the confetti opens out.
+    final haloLife = (progress / .58).clamp(0.0, 1.0).toDouble();
+    final haloAlpha = math.sin(haloLife * math.pi) * .75;
+    final haloRadius =
+        extent * (.28 + Curves.easeOutCubic.transform(haloLife) * .8);
+    if (haloAlpha > 0) {
+      canvas.drawCircle(
+          center,
+          haloRadius,
+          Paint()
+            ..shader = RadialGradient(colors: [
+              const Color(0xffffd66b).withValues(alpha: 0),
+              const Color(0xffffd66b).withValues(alpha: haloAlpha * .18),
+              Colors.white.withValues(alpha: 0),
+            ], stops: const [
+              0,
+              .75,
+              1
+            ]).createShader(
+                Rect.fromCircle(center: center, radius: haloRadius)));
+      for (final width in [8.0, 3.0]) {
+        canvas.drawCircle(
+            center,
+            haloRadius,
+            Paint()
+              ..color = (width == 8 ? Colors.white : const Color(0xffffc83d))
+                  .withValues(alpha: haloAlpha)
+              ..style = PaintingStyle.stroke
+              ..strokeWidth = width);
       }
     }
-    path.close();
-    canvas.drawPath(
-      path,
-      Paint()
-        ..color = Color.fromARGB(alpha, 255, 200, 78)
-        ..style = PaintingStyle.fill,
-    );
+    // Uneven spacing and a short second wave avoid a rigid circular wreath.
+    for (var i = 0; i < 44; i++) {
+      final delay = i >= 28 ? .18 + (i % 4) * .022 : (i % 4) * .018;
+      final life =
+          ((progress - delay) / (1 - delay)).clamp(0.0, 1.0).toDouble();
+      if (life <= 0 || life >= 1) continue;
+      final burst = Curves.easeOutCubic
+          .transform((life / .65).clamp(0.0, 1.0).toDouble());
+      final angle =
+          -math.pi / 2 + i * math.pi * 2 / 44 + math.sin(i * 2.4) * .09;
+      final distance = extent * (.46 + burst * (.42 + (i % 5) * .09));
+      final position = center +
+          Offset(
+            math.cos(angle) * distance + math.sin(life * 7 + i) * life * 7,
+            math.sin(angle) * distance -
+                math.sin(life * math.pi) * 12 +
+                life * life * 27,
+          );
+      final alpha = (Curves.easeOut
+              .transform((life * 9).clamp(0.0, 1.0).toDouble()) *
+          (1 -
+              Curves.easeIn
+                  .transform(((life - .55) / .45).clamp(0.0, 1.0).toDouble())));
+      final isStar = i % 3 == 0;
+      final particleScale =
+          (.55 + .45 * math.sin(math.min(life * 5, math.pi / 2))) *
+              (1 - life * .18);
+      final color = (isStar
+              ? const Color(0xffffc83d)
+              : [
+                  const Color(0xffffc83d),
+                  const Color(0xff168ac2),
+                  const Color(0xffff8994)
+                ][i % 3])
+          .withValues(alpha: alpha);
+      canvas.save();
+      canvas.translate(position.dx, position.dy);
+      canvas.rotate(isStar
+          ? math.sin(life * 4 + i) * .18
+          : angle + life * (i.isEven ? 3 : -3));
+      canvas.scale(
+          particleScale,
+          particleScale *
+              (isStar ? 1 : .65 + .35 * math.cos(life * 9 + i).abs()));
+      final path = Path();
+      if (isStar) {
+        final radius = i % 6 == 0 ? 17.0 : 11.0;
+        for (var j = 0; j < 8; j++) {
+          final a = -math.pi / 2 + j * math.pi / 4;
+          final r = j.isEven ? radius : radius * .28;
+          if (j == 0) {
+            path.moveTo(math.cos(a) * r, math.sin(a) * r);
+          } else {
+            path.lineTo(math.cos(a) * r, math.sin(a) * r);
+          }
+        }
+        path.close();
+      } else {
+        path.addRRect(RRect.fromRectAndRadius(
+            Rect.fromLTWH(-2.7, -5.5, 5.4, i.isEven ? 11 : 8),
+            const Radius.circular(1.5)));
+      }
+      canvas.drawPath(
+          path,
+          Paint()
+            ..color = Colors.white.withValues(alpha: alpha)
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = 3
+            ..strokeJoin = StrokeJoin.round);
+      canvas.drawPath(path, Paint()..color = color);
+      canvas.restore();
+    }
+    // Delayed, larger sparkles give the burst a second beat.
+    final sparkleLife = ((progress - .2) / .68).clamp(0.0, 1.0).toDouble();
+    final sparkleAlpha = math.sin(sparkleLife * math.pi);
+    if (sparkleAlpha > 0) {
+      for (var i = 0; i < 5; i++) {
+        final angle = -math.pi * .92 + i * math.pi * .46;
+        final point = center +
+            Offset(math.cos(angle), math.sin(angle)) *
+                extent *
+                (1.02 + sparkleLife * .2);
+        final r = (i.isEven ? 19.0 : 14.0) * math.sin(sparkleLife * math.pi);
+        final path = Path();
+        for (var j = 0; j < 8; j++) {
+          final a = -math.pi / 2 + j * math.pi / 4;
+          final v = point +
+              Offset(math.cos(a), math.sin(a)) * (j.isEven ? r : r * .22);
+          if (j == 0) {
+            path.moveTo(v.dx, v.dy);
+          } else {
+            path.lineTo(v.dx, v.dy);
+          }
+        }
+        path.close();
+        canvas.drawPath(
+            path,
+            Paint()
+              ..color = Colors.white.withValues(alpha: sparkleAlpha)
+              ..style = PaintingStyle.stroke
+              ..strokeWidth = 4
+              ..strokeJoin = StrokeJoin.round);
+        canvas.drawPath(
+            path,
+            Paint()
+              ..color =
+                  const Color(0xffffc83d).withValues(alpha: sparkleAlpha));
+      }
+    }
+    canvas.restore();
   }
 
   @override
   bool shouldRepaint(
-    covariant _CareActionCompletionEffectPainter oldDelegate,
-  ) =>
-      oldDelegate.progress != progress;
+          covariant _CareActionCompletionEffectPainter oldDelegate) =>
+      oldDelegate.progress != progress || oldDelegate.scene != scene;
 }
 
 /// お世話画面で行動ごとに差し替える表示情報です。
