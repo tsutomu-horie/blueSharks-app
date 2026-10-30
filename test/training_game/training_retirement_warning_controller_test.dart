@@ -152,6 +152,29 @@ void main() {
     expect(provider.normalSaves, 0);
     child.onClose();
   });
+  test('tutorial warnings survive restore and reset after recovery', () async {
+    final provider = RetirementWarningProvider()
+      ..stageCode = 'child'
+      ..food = 0
+      ..overStart = null;
+    var c = QuietRetirementController(serverProvider: provider);
+    await c.retryRestoreServerState();
+    expect(c.retirementWarnings, hasLength(1));
+    c.collapseRetirementWarning(c.retirementWarnings.single);
+    await Future<void>.delayed(Duration.zero);
+    c.onClose();
+    c = QuietRetirementController(serverProvider: provider);
+    await c.retryRestoreServerState();
+    expect(c.isRetirementWarningCollapsed(c.retirementWarnings.single), isTrue);
+    provider.food = 50;
+    await c.retryRestoreServerState();
+    expect(c.retirementWarnings, isEmpty);
+    provider.food = 0;
+    await c.retryRestoreServerState();
+    expect(
+        c.isRetirementWarningCollapsed(c.retirementWarnings.single), isFalse);
+    c.onClose();
+  });
   test('local recovery invalidates the old server start before a second meal',
       () async {
     final provider = RetirementWarningProvider()..food = 105;

@@ -59,6 +59,34 @@ void main() {
         ),
         isEmpty);
   });
+  test('tutorial warns immediately for each active zero meter', () {
+    for (final stage in [0, 1]) {
+      final result = TrainingRetirementWarning.evaluate(
+        scope: 'tutorial',
+        stageIndex: stage,
+        ended: false,
+        meters: {'食事': 0, '清潔': 0, '体調': 0},
+        overStartedAt: {},
+        zeroHours: {},
+        elapsedHours: 0,
+      );
+      expect(result.length, stage == 0 ? 2 : 3);
+      expect(
+          result.every((warning) => warning.body.contains('ゲームオーバー')), isTrue);
+    }
+  });
+  test('multiple main game conditions produce separate warnings', () {
+    final result = TrainingRetirementWarning.evaluate(
+      scope: 'multi',
+      stageIndex: 2,
+      ended: false,
+      meters: {'食事': 0, '体調': 0, '清潔': 0},
+      overStartedAt: {},
+      zeroHours: {'食事': 24, '体調': 24, '清潔': 48},
+      elapsedHours: 48,
+    );
+    expect(result.map((warning) => warning.title).toSet(), hasLength(3));
+  });
   test('zero warnings use existing active counters, not wall-clock time', () {
     for (final entry in {'食事': 48, '体調': 48, '清潔': 72}.entries) {
       for (final hours in [
