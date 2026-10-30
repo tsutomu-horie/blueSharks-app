@@ -60,23 +60,26 @@ class _TrainingHomeFloorLitterState extends State<TrainingHomeFloorLitter> {
     _FloorPropSpec(
       assetPath:
           'assets/images/training_game/home_floor_litter/baby_bottle_candidate.png',
-      widthFactor: .82,
-      heightFactor: .82,
+      widthFactor: 1.12,
+      heightFactor: 1.12,
+      maxWidthFraction: .19,
       angle: math.pi / 2,
     ),
     _FloorPropSpec(
       assetPath:
           'assets/images/training_game/home_floor_litter/work_pc_candidate.png',
-      widthFactor: 1.35,
-      heightFactor: .68,
+      widthFactor: 1.70,
+      heightFactor: .86,
+      maxWidthFraction: .21,
       angle: -.035,
     ),
     _FloorPropSpec(
       assetPath:
           'assets/images/training_game/home_floor_litter/broom_candidate.png',
-      widthFactor: .74,
-      heightFactor: .74,
-      angle: 1.02,
+      widthFactor: 1.12,
+      heightFactor: 1.12,
+      maxWidthFraction: .21,
+      angle: 1.30,
     ),
     _FloorPropSpec(
       assetPath:
@@ -179,8 +182,8 @@ class _TrainingHomeFloorLitterState extends State<TrainingHomeFloorLitter> {
     final slots = [..._scatteredSlots]..shuffle(random);
     final unit = math
         .min(
-          math.min(size.width * .10, 44.0),
-          floorHeight * .60,
+          math.min(size.width * .15, 66.0),
+          floorHeight * .85,
         )
         .toDouble();
 
@@ -192,26 +195,52 @@ class _TrainingHomeFloorLitterState extends State<TrainingHomeFloorLitter> {
     final sideTop =
         math.max(0.0, size.height - grassDistanceFromBottom).toDouble();
     final sideHeight = math.max(0.0, floorBottom - sideTop).toDouble();
-    final tallestSideProp = props
-        .map((prop) => _rotatedSize(
-              unit * prop.widthFactor,
-              unit * prop.heightFactor,
-              prop.angle,
-            ).height)
-        .reduce((a, b) => math.max(a, b).toDouble());
-    final useScatteredGround = sideHeight >= tallestSideProp * 2.5;
+    // Keep the scattered layout independent of a single enlarged prop.
+    final useScatteredGround = sideHeight >= unit * 2.2;
     final columnWidth = size.width / _columnCount;
+    final broomSourceSize = math
+        .min(size.width * .2416 / .95455,
+            math.max(0.0, floorHeight - 4) / .33732)
+        .toDouble();
+    final broomHeight = broomSourceSize * .33732;
+    final fallbackRegularHeight =
+        math.max(0.0, floorHeight - broomHeight - 4).toDouble();
     final placements = <_PlacedFloorProp>[];
+    final sideSlots = slots.where((slot) => !slot.belowCharacter).toList();
+    var sideIndex = 0;
 
     for (var index = 0; index < props.length; index++) {
       final prop = props[index];
+      if (prop.assetPath.endsWith('broom_candidate.png')) {
+        // The 1.30rad-rotated source has a visible (alpha>=16) footprint
+        // 0.95455 x 0.33732 of the original square. Transparent corners
+        // must not force a life-size broom back into a small square slot.
+        final sourceSize = broomSourceSize;
+        final footprint = Size(sourceSize * .95455, sourceSize * .33732);
+        placements.add(_PlacedFloorProp(
+            spec: prop,
+            imageWidth: sourceSize,
+            imageHeight: sourceSize,
+            envelopeSize: footprint,
+            left: (size.width - footprint.width) / 2,
+            top: useScatteredGround
+                ? floorTop + (floorHeight - footprint.height) / 2
+                : floorBottom - footprint.height));
+        continue;
+      }
+      final assignedSlot = sideSlots[sideIndex++];
       var imageWidth = unit * prop.widthFactor;
       var imageHeight = unit * prop.heightFactor;
       var envelope = _rotatedSize(imageWidth, imageHeight, prop.angle);
 
       // 小さな画面や短い床では、列幅と安全な高さに合わせて縮めます。
-      final maxWidth = useScatteredGround ? size.width * .15 : columnWidth - 6;
-      final availableHeight = useScatteredGround ? sideHeight : floorHeight;
+      final maxWidth = useScatteredGround
+          ? size.width * prop.maxWidthFraction
+          : columnWidth - 6;
+      final availableHeight = useScatteredGround
+          ? math.min(sideHeight * .43,
+              assignedSlot.belowCharacter ? floorHeight : sideHeight)
+          : fallbackRegularHeight;
       final widthScale =
           math.min(1.0, math.max(0.0, maxWidth) / envelope.width).toDouble();
       final heightScale = math
@@ -225,7 +254,7 @@ class _TrainingHomeFloorLitterState extends State<TrainingHomeFloorLitter> {
       late double left;
       late double top;
       if (useScatteredGround) {
-        final slot = slots[index];
+        final slot = assignedSlot;
         if (slot.belowCharacter) {
           final topRange =
               math.max(0.0, floorHeight - envelope.height).toDouble();
@@ -238,7 +267,11 @@ class _TrainingHomeFloorLitterState extends State<TrainingHomeFloorLitter> {
           final laneCenter = size.width * slot.x;
           final jitter = size.width * .015 * (random.nextDouble() * 2 - 1);
           left = laneCenter - envelope.width / 2 + jitter;
-          left = left.clamp(0.0, size.width - envelope.width).toDouble();
+          left = slot.x < .5
+              ? left.clamp(0.0, size.width * .22 - envelope.width).toDouble()
+              : left
+                  .clamp(size.width * .78, size.width - envelope.width)
+                  .toDouble();
         }
       } else {
         // 極端に短い表示域では足元の帯を5列に分けて衝突を防ぎます。
@@ -248,7 +281,7 @@ class _TrainingHomeFloorLitterState extends State<TrainingHomeFloorLitter> {
             math.max(0.0, columnWidth - envelope.width).toDouble();
         left = cellLeft + horizontalRange * (.12 + random.nextDouble() * .76);
         final topRange =
-            math.max(0.0, floorHeight - envelope.height).toDouble();
+            math.max(0.0, fallbackRegularHeight - envelope.height).toDouble();
         top = floorTop + topRange * (.08 + random.nextDouble() * .84);
       }
       placements.add(
@@ -285,26 +318,38 @@ class _TrainingHomeFloorLitterState extends State<TrainingHomeFloorLitter> {
         key: ValueKey<String>('training-home-floor-litter-item-$index'),
         width: placement.envelopeSize.width,
         height: placement.envelopeSize.height,
-        child: Center(
-          child: Transform.rotate(
-            angle: placement.spec.angle,
-            child: DecoratedBox(
-              key: ValueKey<String>(
-                'training-home-floor-litter-asset-$index',
-              ),
-              decoration: BoxDecoration(
-                image: DecorationImage(
-                  image: ResizeImage(
-                    AssetImage(placement.spec.assetPath),
-                    width: cacheWidth,
+        child: ClipRect(
+          child: OverflowBox(
+            minWidth: 0,
+            minHeight: 0,
+            maxWidth: placement.imageWidth,
+            maxHeight: placement.imageHeight,
+            child: Transform.translate(
+              offset: placement.spec.assetPath.endsWith('broom_candidate.png')
+                  ? Offset(-.004386 * placement.imageWidth,
+                      -.017145 * placement.imageHeight)
+                  : Offset.zero,
+              child: Transform.rotate(
+                angle: placement.spec.angle,
+                child: DecoratedBox(
+                  key: ValueKey<String>(
+                    'training-home-floor-litter-asset-$index',
                   ),
-                  fit: BoxFit.contain,
-                  filterQuality: FilterQuality.medium,
+                  decoration: BoxDecoration(
+                    image: DecorationImage(
+                      image: ResizeImage(
+                        AssetImage(placement.spec.assetPath),
+                        width: cacheWidth,
+                      ),
+                      fit: BoxFit.contain,
+                      filterQuality: FilterQuality.medium,
+                    ),
+                  ),
+                  child: SizedBox(
+                    width: placement.imageWidth,
+                    height: placement.imageHeight,
+                  ),
                 ),
-              ),
-              child: SizedBox(
-                width: placement.imageWidth,
-                height: placement.imageHeight,
               ),
             ),
           ),
@@ -329,12 +374,14 @@ class _FloorPropSpec {
     required this.widthFactor,
     required this.heightFactor,
     required this.angle,
+    this.maxWidthFraction = .17,
   });
 
   final String assetPath;
   final double widthFactor;
   final double heightFactor;
   final double angle;
+  final double maxWidthFraction;
 }
 
 class _PlacedFloorProp {
