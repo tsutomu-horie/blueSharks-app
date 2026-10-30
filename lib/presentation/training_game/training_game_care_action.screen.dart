@@ -275,7 +275,7 @@ class _TrainingGameCareActionScreenState
                           ? 'タップして戻る'
                           : _isCompleting
                               ? '完了しています…'
-                              : '1タップで時間・バーが1秒進みます。',
+                              : 'タップで短縮できます。',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 14.sp,
