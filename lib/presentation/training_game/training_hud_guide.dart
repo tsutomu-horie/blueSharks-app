@@ -69,7 +69,7 @@ class TrainingHudGuidePressTarget extends StatefulWidget {
     required this.onLongPressGuide,
     this.onTap,
     this.holdDuration = const Duration(milliseconds: 700),
-    this.progressDiameter = 38,
+    this.progressDiameter = 88,
     super.key,
   }) : assert(progressDiameter > 0);
 
@@ -90,6 +90,7 @@ class _TrainingHudGuidePressTargetState
     with SingleTickerProviderStateMixin {
   late final AnimationController _progressController;
   Offset? _progressCenter;
+  OverlayEntry? _progressOverlay;
 
   @override
   void initState() {
@@ -110,6 +111,7 @@ class _TrainingHudGuidePressTargetState
 
   @override
   void dispose() {
+    _removeProgressOverlay();
     _progressController.dispose();
     super.dispose();
   }
@@ -119,22 +121,72 @@ class _TrainingHudGuidePressTargetState
     if (renderObject is! RenderBox) return;
 
     final radius = widget.progressDiameter / 2;
-    final size = renderObject.size;
-    final maxX = math.max(radius, size.width - radius);
-    final maxY = math.max(radius, size.height - radius);
-    final center = Offset(
-      details.localPosition.dx.clamp(math.min(radius, maxX), maxX).toDouble(),
-      details.localPosition.dy.clamp(math.min(radius, maxY), maxY).toDouble(),
-    );
-    setState(() => _progressCenter = center);
+    final origin = renderObject.localToGlobal(Offset.zero);
+    final media = MediaQuery.of(context);
+    final view = View.of(context);
+    final safeInsets =
+        EdgeInsets.fromViewPadding(view.padding, view.devicePixelRatio);
+    final globalX = (origin.dx + details.localPosition.dx)
+        .clamp(
+            safeInsets.left + radius + 8,
+            math.max(safeInsets.left + radius + 8,
+                media.size.width - safeInsets.right - radius - 8))
+        .toDouble();
+    final globalY = (origin.dy + details.localPosition.dy)
+        .clamp(
+            safeInsets.top + radius + 8,
+            math.max(safeInsets.top + radius + 8,
+                media.size.height - safeInsets.bottom - radius - 8))
+        .toDouble();
+    final overlay = Overlay.of(context, rootOverlay: true);
+    final overlayBox = overlay.context.findRenderObject() as RenderBox;
+    final center = overlayBox.globalToLocal(Offset(globalX, globalY));
+    _removeProgressOverlay();
+    _progressCenter = center;
+    _progressOverlay = OverlayEntry(
+        builder: (_) => Positioned(
+              left: center.dx - radius,
+              top: center.dy - radius,
+              width: widget.progressDiameter,
+              height: widget.progressDiameter,
+              child: IgnorePointer(
+                  child: AnimatedBuilder(
+                animation: _progressController,
+                builder: (_, __) => DecoratedBox(
+                  decoration: const BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(color: Color(0x55000000), blurRadius: 4)
+                      ]),
+                  child: Padding(
+                      padding: const EdgeInsets.all(5),
+                      child: CircularProgressIndicator(
+                          key: const ValueKey('training-hud-guide-progress'),
+                          value: _progressController.value,
+                          strokeWidth: 7,
+                          color: const Color(0xff005a9c),
+                          backgroundColor: const Color(0xffcbd5e1))),
+                ),
+              )),
+            ));
+    overlay.insert(_progressOverlay!);
     _progressController.forward(from: 0);
+  }
+
+  void _removeProgressOverlay() {
+    final entry = _progressOverlay;
+    _progressOverlay = null;
+    entry?.remove();
+    entry?.dispose();
   }
 
   void _clearProgress() {
     if (_progressCenter == null) return;
     _progressController.stop();
     _progressController.value = 0;
-    setState(() => _progressCenter = null);
+    _removeProgressOverlay();
+    _progressCenter = null;
   }
 
   void _completeLongPress(LongPressStartDetails details) {
@@ -165,49 +217,7 @@ class _TrainingHudGuidePressTargetState
                 ..onLongPressEnd = (_) => _clearProgress(),
             ),
           },
-          child: AnimatedBuilder(
-            animation: _progressController,
-            builder: (context, child) {
-              final center = _progressCenter;
-              return Stack(
-                clipBehavior: Clip.none,
-                children: [
-                  if (child != null) child,
-                  if (center != null)
-                    Positioned(
-                      left: center.dx - widget.progressDiameter / 2,
-                      top: center.dy - widget.progressDiameter / 2,
-                      width: widget.progressDiameter,
-                      height: widget.progressDiameter,
-                      child: IgnorePointer(
-                        child: DecoratedBox(
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: .94),
-                            shape: BoxShape.circle,
-                            boxShadow: const [
-                              BoxShadow(
-                                color: Color(0x55000000),
-                                blurRadius: 4,
-                              ),
-                            ],
-                          ),
-                          child: Padding(
-                            padding: const EdgeInsets.all(3),
-                            child: CircularProgressIndicator(
-                              value: _progressController.value,
-                              strokeWidth: 3,
-                              color: const Color(0xffe4872b),
-                              backgroundColor: const Color(0xffdce5ee),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                ],
-              );
-            },
-            child: widget.child,
-          ),
+          child: widget.child,
         ),
       ),
     );

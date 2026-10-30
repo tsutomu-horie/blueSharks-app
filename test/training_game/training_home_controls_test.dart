@@ -108,16 +108,19 @@ void main() {
           findsNothing);
     }
 
-    controller.stageIndex.value = 2;
-    await tester.pump();
-    expect(
-      find.byKey(const ValueKey('training-home-meter-food')),
-      findsNothing,
-    );
-    await tester.tap(find.text('食事'));
-    await tester.pump();
-    expect(
-        find.byKey(const ValueKey('training-hud-guide-dialog')), findsNothing);
+    for (final stage in [2, 3, 4]) {
+      controller.stageIndex.value = stage;
+      await tester.pump();
+      for (final item in guideStates.keys) {
+        await tester
+            .tap(find.byKey(ValueKey('training-home-meter-${item.name}')));
+        await pumpTransition();
+        expect(find.text(TrainingHudGuide.messageFor(item, unlocked: true)),
+            findsOneWidget);
+        await tester.tap(find.text('閉じる'));
+        await pumpTransition();
+      }
+    }
     expect(tester.takeException(), isNull);
     semantics.dispose();
     await tester.pumpWidget(const SizedBox());
@@ -147,11 +150,7 @@ void main() {
     final gesture = await tester.startGesture(tester.getCenter(entry));
     await tester.pump(Duration.zero);
     await tester.pump(const Duration(milliseconds: 699));
-    final ring = find.descendant(
-      of: find
-          .byKey(const ValueKey('training-home-training-menu-guide-target')),
-      matching: find.byType(CircularProgressIndicator),
-    );
+    final ring = find.byKey(const ValueKey('training-hud-guide-progress'));
     expect(ring, findsOneWidget);
     expect(tester.widget<CircularProgressIndicator>(ring).value, lessThan(1));
     expect(find.text('長押し中'), findsNothing);
