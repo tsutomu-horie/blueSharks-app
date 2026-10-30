@@ -1031,6 +1031,9 @@ void main() {
 }
 
 class _RateLimitedTrainingGameProvider extends TrainingGameProvider {
+  @override
+  Future<void> notifyTrainingPresence({int? expectedSessionVersion}) async {}
+
   _RateLimitedTrainingGameProvider({
     this.alwaysRateLimited = false,
     this.retryAfter = Duration.zero,

@@ -84,9 +84,11 @@ void main() {
       (t) async {
     final p = P();
     final c = await open(t, p);
+    expect(p.presenceRequests.last, isTrue);
     c.didChangeAppLifecycleState(AppLifecycleState.paused);
     await t.pump();
     await t.pump();
+    expect(p.presenceRequests.last, isFalse);
     c.tickTutorialTimer();
     expect(c.meters['清潔'], 75);
     p.values['cleanliness'] = 69;
@@ -96,6 +98,7 @@ void main() {
     await t.pump();
     await t.pump();
     expect(p.fetches, greaterThan(0));
+    expect(p.presenceRequests.last, isTrue);
     expect(c.meters['清潔'], 69);
     expect(c.isTutorialTimeActive, true);
     c.tickTutorialTimer();
@@ -229,18 +232,22 @@ void main() {
     }
   });
 
-  testWidgets('foreground refresh poll adopts new rate within60 ticks',
+  testWidgets('foreground refresh poll adopts new rate within 30 ticks',
       (t) async {
     final p = P();
     final c = await open(t, p);
+    final initialFetches = p.fetches;
+    final initialPresenceRequests = p.presenceRequests.length;
     final map = p.policy as Map;
     map['rates']['child']['cleanliness'] = .3;
     map['revision'] = 'poll';
     p.values['cleanliness'] = 57;
-    await t.pump(const Duration(seconds: 60));
+    await t.pump(const Duration(seconds: 30));
     await t.pump();
     await t.pump();
-    expect(p.fetches, 1);
+    expect(p.fetches, initialFetches + 1);
+    expect(p.presenceRequests.length, initialPresenceRequests + 1);
+    expect(p.presenceRequests.last, isTrue);
     expect(c.meters['清潔'], 57);
     c.tickTutorialTimer();
     expect(c.meters['清潔'], closeTo(56.7, 1e-8));
@@ -541,6 +548,8 @@ class P extends TrainingGameProvider {
   bool useFakeClock = false;
   int fakeElapsed = 0;
   int elapsed = 0, fetches = 0;
+  bool? presence;
+  final presenceRequests = <bool?>[];
   bool includePolicy = true, failFetch = false;
   bool includePlayFloor = true;
   Object? playFloor = 0;
@@ -589,6 +598,16 @@ class P extends TrainingGameProvider {
   Future<List<String>> fetchUnlockedPositions(
           {int? expectedSessionVersion}) async =>
       [];
+  @override
+  void setTrainingPresence(bool foreground) {
+    presence = foreground;
+  }
+
+  @override
+  Future<void> notifyTrainingPresence({int? expectedSessionVersion}) async {
+    presenceRequests.add(presence);
+  }
+
   @override
   Future<Map<String, dynamic>?> fetchCurrent(
       {int? expectedSessionVersion}) async {

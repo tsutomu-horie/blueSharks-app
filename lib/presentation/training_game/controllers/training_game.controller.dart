@@ -1826,6 +1826,7 @@ class TrainingGameController extends GetxController
   @override
   void onInit() {
     super.onInit();
+    _serverProvider.setTrainingPresence(true);
     WidgetsBinding.instance.addObserver(this);
     logs.add('段階1「卵」からスタート。お世話をして時間を進めましょう。');
     final initialState = Get.arguments;
@@ -1846,7 +1847,7 @@ class TrainingGameController extends GetxController
         unawaited(_restoreInitialServerState(state));
       }
     } else {
-      unawaited(_restoreServerState());
+      unawaited(_restoreThenStartPresence());
     }
     _tutorialTimer = Timer.periodic(const Duration(seconds: 1), (_) {
       tickTutorialTimer();
@@ -1855,13 +1856,28 @@ class TrainingGameController extends GetxController
       cooldownTick.value++;
       if (isServerStateReady.value &&
           !_isAppInBackground &&
+          !ended.value &&
+          _hasDecayContract &&
+          ++_decayRefreshTicks >= 30) {
+        _decayRefreshTicks = 0;
+        unawaited(_notifyTrainingPresence());
+        if (evolutionStage.value == null &&
+            _pendingStageIndex == null &&
+            !_syncRunning &&
+            pendingSyncActionCount == 0 &&
+            !_debugTimeSavePending &&
+            !debugPositionBusy.value &&
+            syncStatus.value == TrainingSyncStatus.idle) {
+          unawaited(refreshDecaySettings());
+        }
+      }
+      if (isServerStateReady.value &&
+          !_isAppInBackground &&
           evolutionStage.value == null &&
           !ended.value) {
         _advanceActiveMainProgress();
         _updateElapsedTimeFromStart();
         _mainClockTick.value++;
-        if (_hasDecayContract && ++_decayRefreshTicks >= 60)
-          unawaited(refreshDecaySettings());
       }
     });
   }
@@ -1892,6 +1908,7 @@ class TrainingGameController extends GetxController
       }
       await _restorePersistedPendingActions();
       if (_ownsSession(_ownedSessionVersion)) {
+        if (!_isAppInBackground) unawaited(_notifyTrainingPresence());
         isServerStateReady.value = true;
       }
     } catch (_) {
@@ -1914,6 +1931,8 @@ class TrainingGameController extends GetxController
   /// Controller破棄時にチュートリアルのリアルタイム進行を停止します。
   @override
   void onClose() {
+    _serverProvider.setTrainingPresence(false);
+    unawaited(_notifyTrainingPresence());
     // 破棄後は待機中の再送を止め、新しい同期要求を作らないよう先に無効化します。
     _isDisposed = true;
     _squatStageSubscription.cancel();
@@ -2117,6 +2136,8 @@ class TrainingGameController extends GetxController
   /// 育成画面を離れる前にローカルのリアルタイム進行を停止します。
   void pauseLocalProgress() {
     _isAppInBackground = true;
+    _serverProvider.setTrainingPresence(false);
+    unawaited(_notifyTrainingPresence());
     _waitingForServerRestore = true;
     _activeMainProgressBaseSeconds = null;
     _restoreLocalCountersOnNextServerState = true;
@@ -2147,6 +2168,8 @@ class TrainingGameController extends GetxController
         _isAppInBackground =
             lifecycle != null && lifecycle != AppLifecycleState.resumed;
         if (!_isAppInBackground && isServerStateReady.value) {
+          _serverProvider.setTrainingPresence(true);
+          unawaited(_notifyTrainingPresence());
           _waitingForServerRestore = false;
           _resetActiveMainProgressBaseline();
         }
@@ -2162,6 +2185,8 @@ class TrainingGameController extends GetxController
         state == AppLifecycleState.paused ||
         state == AppLifecycleState.detached) {
       _isAppInBackground = true;
+      _serverProvider.setTrainingPresence(false);
+      unawaited(_notifyTrainingPresence());
       _waitingForServerRestore = true;
       _activeMainProgressBaseSeconds = null;
       _restoreLocalCountersOnNextServerState = true;
@@ -2169,20 +2194,39 @@ class TrainingGameController extends GetxController
     }
     if (state == AppLifecycleState.resumed && !ended.value) {
       _isAppInBackground = false;
+      _serverProvider.setTrainingPresence(true);
       if (evolutionStage.value != null) {
         // 演出中は時間を進めませんが、OS割り込み中のサーバー状態は復元します。
-        unawaited(_restoreServerState());
+        unawaited(_restoreThenStartPresence());
         return;
       }
       // 復帰直後は、直前に同期したサーバー時刻から表示だけを先に再開します。
       _updateElapsedTimeFromStart();
       _mainClockTick.value++;
       // オフライン中の精算はサーバー状態の再取得へ一元化し、端末側の二重減衰を防ぎます。
-      unawaited(_restoreServerState());
+      unawaited(_restoreThenStartPresence());
     }
   }
 
-  /// Refresh current admin rates and canonical values together, at most once/minute.
+  /// オフライン時間を精算してから新しい前面区間を開始します。
+  Future<void> _restoreThenStartPresence() async {
+    await _restoreServerState();
+    if (!_isDisposed && !_isAppInBackground && isServerStateReady.value) {
+      await _notifyTrainingPresence();
+    }
+  }
+
+  /// 通知に失敗した場合はサーバーの前面期限で自動的に終了します。
+  Future<void> _notifyTrainingPresence() async {
+    try {
+      await _serverProvider.notifyTrainingPresence(
+          expectedSessionVersion: _ownedSessionVersion);
+    } catch (_) {
+      // 復帰時の通常取得で状態を再同期します。
+    }
+  }
+
+  /// Refresh current admin rates and canonical values together, at most every 30 seconds.
   Future<void> refreshDecaySettings() async {
     if (!_hasDecayContract ||
         _decayRefreshRunning ||
