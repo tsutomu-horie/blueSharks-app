@@ -269,7 +269,8 @@ void main() {
 
         await tester.tap(find.text('次へ'));
         await tester.pump();
-        await tester.pump(const Duration(milliseconds: 350));
+        await tester.pump(const Duration(milliseconds: 700));
+        await tester.pump();
         expect(find.byType(TrainingEvolutionReveal), findsNothing);
         expect(find.byType(TrainingHomeCharacterAnimation), findsOneWidget);
         final regularTarget = _homeFrameImage(homeFrame.asset);
@@ -575,7 +576,8 @@ void main() {
     await tester.pump();
     expect(controller.endingStep.value, 1);
     expect(find.text('ポジション確定'), findsOneWidget);
-    await tester.pump(const Duration(milliseconds: 350));
+    await tester.pump(const Duration(milliseconds: 700));
+    await tester.pump();
 
     await tester.tap(find.text('次へ'), warnIfMissed: false);
     await tester.pump();
