@@ -305,18 +305,16 @@ class _EvolutionLight extends CustomPainter {
     }
     final cover = _smooth(t, 2.85, 3.6) * (1 - _smooth(t, 4.4, 5.45));
     // 固定した光の形で両画像の矩形全域を覆い、4秒の画像交換を隠す。
-    // 楕円の内側に矩形四隅も入るようsqrt(2)より広い1.6倍で確保する。
-    final shell = Rect.fromCenter(
-      center: center,
-      width: bodyBounds.width * 1.6,
-      height: bodyBounds.height * 1.6,
-    );
-    canvas.drawOval(
+    // 身体の外にだけ小さな余白を取り、両画像の矩形四隅も光で覆う。
+    // 半径24に対して余白8なら、元の四隅も角丸円の内側に収まる。
+    final shell = RRect.fromRectAndRadius(
+        bodyBounds.inflate(8 * unit), Radius.circular(24 * unit));
+    canvas.drawRRect(
         shell,
         Paint()
-          ..color = palette[1].withValues(alpha: cover * .7)
-          ..maskFilter = MaskFilter.blur(BlurStyle.normal, 20 * unit));
-    canvas.drawOval(shell,
+          ..color = palette[1].withValues(alpha: cover * .55)
+          ..maskFilter = MaskFilter.blur(BlurStyle.normal, 10 * unit));
+    canvas.drawRRect(shell,
         Paint()..color = const Color(0xfff0fdff).withValues(alpha: cover));
     for (var j = 0; j < 52; j++) {
       final a = ((j * .61803) % 1);

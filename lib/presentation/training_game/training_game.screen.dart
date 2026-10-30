@@ -314,26 +314,26 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
       // 未確定時は推測ユニフォームを避け、現在の姿で成長演出します。
       afterFrame: confirmedFirstTeamFrame ?? currentBodyFrame,
       afterVisual: confirmedFirstTeamFrame == null
-          ? _buildEvolutionHomeFirstFrame(_bodyKey)
+          ? _buildEvolutionHomeFirstFrame(_bodyKey, size: _firstTeamBodySize)
           : _buildPositionStatic(controller.position),
       beforeScale: 1,
-      beforeSize: Size(128.w, 184.h),
+      beforeSize: _firstTeamBodySize,
       afterSize: confirmedFirstTeamFrame == null
-          ? Size(128.w, 184.h)
-          : Size(250.w, 250.h),
+          ? _firstTeamBodySize
+          : _positionDisplaySize(confirmedFirstTeamFrame),
       firstTeam: true,
       soundFactory: evolutionSoundFactory,
     );
   }
 
-  /// 進化演出の終端を、育成ホームが最初に描くidleフレームと同じ寸法で描きます。
-  Widget _buildEvolutionHomeFirstFrame(String? bodyKey) {
+  /// ホーム初フレームを使い、一軍の仮表示では指定した演出サイズにそろえます。
+  Widget _buildEvolutionHomeFirstFrame(String? bodyKey, {Size? size}) {
     final frame =
         TrainingHomeCharacterFrameSet.forBodyKey(bodyKey).idleFrames.first;
     return TrainingHomeCharacterFrameImage(
       frame: frame,
-      width: 128.w,
-      height: 184.h,
+      width: size?.width ?? 128.w,
+      height: size?.height ?? 184.h,
       semanticLabel: '鮫太朗',
     );
   }
@@ -1040,9 +1040,23 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
         alignment: Alignment.bottomCenter,
       );
 
+  // 旧進化前184と旧ユニフォーム250の中間高で両方をそろえます。
+  Size get _firstTeamBodySize => Size(128.w * 217 / 184, 217.h);
+
+  // 端末の縦横倍率に依存せず、ポジション原画の比率を保ちます。
+  Size _positionDisplaySize(SametarohFrame frame) =>
+      Size(217.h * frame.canvasSize.aspectRatio, 217.h);
+
   Widget? _buildPositionStatic(String position) {
     final frame = SametarohAssets.positionFrameFor(position);
-    return frame == null ? null : _buildSuppliedStatic(frame);
+    if (frame == null) return null;
+    final size = _positionDisplaySize(frame);
+    return SametarohFrameImage(
+      frame: frame,
+      width: size.width,
+      height: size.height,
+      alignment: Alignment.bottomCenter,
+    );
   }
 
   /// ⑤ミニゲーム選択画面を開く練習ボタンを作成します。
