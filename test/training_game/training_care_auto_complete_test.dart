@@ -130,12 +130,16 @@ void main() {
     'キャラクター',
     '画面下部',
   ]) {
-    testWidgets('$targetName連打で待ち時間をスキップし、タップで1回戻る', (tester) async {
+    testWidgets('$targetNameのタップで進捗が1秒分進む', (tester) async {
       final results = <bool?>[];
-      await _openCare(tester, onResult: results.add);
-      if (targetName != 'キャラクター') {
-        await tester.pump(const Duration(milliseconds: 4699));
-      }
+      final semantics = tester.ensureSemantics();
+            await _openCare(tester, onResult: results.add);
+      final seekBar = find.bySemanticsLabel('お世話の進行状況');
+      final before = int.parse(tester
+          .getSemantics(seekBar)
+          .getSemanticsData()
+          .value
+          .replaceFirst('%', ''));
       final target = switch (targetName) {
         '余白' => const Offset(2, 200),
         'キャラクター' => tester.getCenter(find.byType(SametarohAnimatedImage)),
@@ -143,34 +147,122 @@ void main() {
         _ => const Offset(187.5, 760),
       };
       await tester.tapAt(target);
-      await tester.tapAt(target);
-      await tester.runAsync(() => Future<void>.delayed(Duration.zero));
       await tester.pump();
-      expect(find.byType(SametarohAnimatedImage), findsNothing);
-      expect(find.text('タップして戻る'), findsOneWidget);
-      expect(tester.widget<PopScope>(find.byType(PopScope)).canPop, isFalse);
-      expect(
-          tester
-              .widget<IconButton>(find.ancestor(
-                of: find.byTooltip('完了して戻る'),
-                matching: find.byType(IconButton),
-              ))
-              .onPressed,
-          isNotNull);
-      // 5秒の境界を跨いでも再度完了処理を開始しない。
-      await tester.pump(const Duration(seconds: 1));
+      final after = int.parse(tester
+          .getSemantics(seekBar)
+          .getSemanticsData()
+          .value
+          .replaceFirst('%', ''));
+      expect(after - before, inInclusiveRange(19, 21));
+      expect(find.text('1タップで時間・バーが1秒進みます。'), findsOneWidget);
+      expect(find.byType(SametarohAnimatedImage), findsOneWidget);
       expect(results, isEmpty);
-      await tester.tap(find.text('タップして戻る'));
-      await tester.pumpAndSettle();
-      expect(results, [true]);
-      await tester.pump(const Duration(seconds: 6));
-      expect(results, [true]);
-      expect(find.text('open care'), findsOneWidget);
+      await tester.pump(const Duration(seconds: 1));
+      expect(find.text('タップして戻る'), findsNothing);
+      expect(results, isEmpty);
       expect(tester.takeException(), isNull);
+      semantics.dispose();
     });
   }
 
-  testWidgets('完了フレーム表示時に完了SEを一度だけ要求する', (tester) async {
+  testWidgets('タップは鮫太郎のコマを飛ばさず自然経過で切り替える', (tester) async {
+    final results = <bool?>[];
+    final semantics = tester.ensureSemantics();
+        await _openCare(tester, onResult: results.add);
+    final character = find.byType(SametarohFrameImage);
+    final seekBar = find.bySemanticsLabel('お世話の進行状況');
+    final frameBefore =
+        tester.widget<SametarohFrameImage>(character).frame.asset;
+    final progressBefore = int.parse(tester
+        .getSemantics(seekBar)
+        .getSemanticsData()
+        .value
+        .replaceFirst('%', ''));
+
+    await tester.tapAt(const Offset(2, 200));
+    await tester.pump();
+    final frameAfterTap =
+        tester.widget<SametarohFrameImage>(character).frame.asset;
+    final progressAfterTap = int.parse(tester
+        .getSemantics(seekBar)
+        .getSemanticsData()
+        .value
+        .replaceFirst('%', ''));
+    expect(frameAfterTap, frameBefore);
+    expect(progressAfterTap - progressBefore, inInclusiveRange(19, 21));
+
+    await tester.pump(const Duration(milliseconds: 700));
+    final frameAfterNaturalInterval =
+        tester.widget<SametarohFrameImage>(character).frame.asset;
+    final progressAfterNaturalInterval = int.parse(tester
+        .getSemantics(seekBar)
+        .getSemanticsData()
+        .value
+        .replaceFirst('%', ''));
+    expect(frameAfterNaturalInterval, isNot(frameBefore));
+    expect(progressAfterNaturalInterval, greaterThan(progressAfterTap));
+    expect(results, isEmpty);
+    expect(tester.takeException(), isNull);
+    semantics.dispose();
+  });
+
+  testWidgets('連打しても進捗は100%で止まり完了音を一度だけ鳴らす', (tester) async {
+    final results = <bool?>[];
+    final semantics = tester.ensureSemantics();
+        var soundRequests = 0;
+    await _openCare(
+      tester,
+      onResult: results.add,
+      onCompletionSound: () => soundRequests++,
+    );
+    final seekBar = find.bySemanticsLabel('お世話の進行状況');
+
+    for (var tap = 0; tap < 5; tap++) {
+      await tester.tapAt(const Offset(2, 200));
+      await tester.pump(const Duration(milliseconds: 1));
+    }
+    await tester.runAsync(
+      () => Future<void>.delayed(const Duration(milliseconds: 50)),
+    );
+    await tester.pump();
+
+    expect(tester.getSemantics(seekBar).getSemanticsData().value, '100%');
+    expect(find.text('タップして戻る'), findsOneWidget);
+    expect(soundRequests, 1);
+    expect(results, isEmpty);
+    await tester.pump(const Duration(seconds: 6));
+    expect(soundRequests, 1);
+    expect(results, isEmpty);
+    expect(tester.takeException(), isNull);
+    semantics.dispose();
+  });
+
+  testWidgets('自然完了直前のタップでも完了は一度だけ', (tester) async {
+    final results = <bool?>[];
+    var soundRequests = 0;
+    await _openCare(
+      tester,
+      onResult: results.add,
+      onCompletionSound: () => soundRequests++,
+    );
+    await tester.pump(const Duration(milliseconds: 4400));
+    await tester.tapAt(const Offset(2, 200));
+    await tester.pump();
+    await tester.runAsync(
+      () => Future<void>.delayed(const Duration(milliseconds: 50)),
+    );
+    await tester.pump();
+    expect(find.text('タップして戻る'), findsOneWidget);
+    expect(soundRequests, 1);
+
+    // 元の自然完了予定時刻を越えても、キャンセル済みタイマーで再完了しない。
+    await tester.pump(const Duration(milliseconds: 500));
+    expect(soundRequests, 1);
+    expect(results, isEmpty);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('バックグラウンドから復帰しても完了処理は一度だけ', (tester) async {
     final results = <bool?>[];
     var soundRequests = 0;
     await _openCare(
@@ -179,6 +271,43 @@ void main() {
       onCompletionSound: () => soundRequests++,
     );
     await tester.tapAt(const Offset(2, 200));
+    await tester.pump();
+
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+    await tester.pump(const Duration(milliseconds: 700));
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    await tester.pump();
+    expect(find.byType(TrainingGameCareActionScreen), findsOneWidget);
+    expect(results, isEmpty);
+
+    await tester.pump(const Duration(seconds: 5));
+    await tester.runAsync(
+      () => Future<void>.delayed(const Duration(milliseconds: 50)),
+    );
+    await tester.pump();
+    expect(find.text('タップして戻る'), findsOneWidget);
+    expect(soundRequests, 1);
+    await tester.pump(const Duration(seconds: 2));
+    expect(soundRequests, 1);
+    expect(results, isEmpty);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('1タップ後は約4秒で完了し、完了SEを一度だけ要求する', (tester) async {
+    final results = <bool?>[];
+    var soundRequests = 0;
+    await _openCare(
+      tester,
+      onResult: results.add,
+      onCompletionSound: () => soundRequests++,
+    );
+    await tester.tapAt(const Offset(2, 200));
+    await tester.pump(const Duration(milliseconds: 3600));
+    expect(find.byType(SametarohAnimatedImage), findsOneWidget);
+    expect(find.text('タップして戻る'), findsNothing);
+    expect(results, isEmpty);
+    await tester.pump(const Duration(milliseconds: 200));
     await tester.runAsync(
       () => Future<void>.delayed(const Duration(milliseconds: 50)),
     );
@@ -192,9 +321,11 @@ void main() {
     expect(results, [true]);
   });
 
-  testWidgets('中止後に5秒経過してもホームを閉じず効果を確定しない', (tester) async {
+  testWidgets('進捗タップ後に中止しても効果を確定しない', (tester) async {
     final results = <bool?>[];
     await _openCare(tester, onResult: results.add);
+    await tester.tapAt(const Offset(2, 200));
+    await tester.pump();
     await tester.tap(find.byTooltip('お世話を中止'));
     await tester.pumpAndSettle();
     expect(results, [false]);
