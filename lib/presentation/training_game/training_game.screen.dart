@@ -95,7 +95,10 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
                     : shouldShowEvolution
                         ? 'evolution-${controller.evolutionStage.value}'
                         : controller.ended.value
-                            ? 'ending-${controller.endingStep.value}'
+                            ? controller.clearPosition.value != null &&
+                                    controller.endingStep.value == 0
+                                ? 'evolution-ending-0'
+                                : 'ending-${controller.endingStep.value}'
                             : 'home';
                 return Stack(
                   children: [
