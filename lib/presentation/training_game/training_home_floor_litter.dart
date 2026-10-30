@@ -288,17 +288,24 @@ class _TrainingHomeFloorLitterState extends State<TrainingHomeFloorLitter> {
         child: Center(
           child: Transform.rotate(
             angle: placement.spec.angle,
-            child: Image.asset(
-              placement.spec.assetPath,
+            child: DecoratedBox(
               key: ValueKey<String>(
                 'training-home-floor-litter-asset-$index',
               ),
-              width: placement.imageWidth,
-              height: placement.imageHeight,
-              cacheWidth: cacheWidth,
-              fit: BoxFit.contain,
-              filterQuality: FilterQuality.medium,
-              gaplessPlayback: true,
+              decoration: BoxDecoration(
+                image: DecorationImage(
+                  image: ResizeImage(
+                    AssetImage(placement.spec.assetPath),
+                    width: cacheWidth,
+                  ),
+                  fit: BoxFit.contain,
+                  filterQuality: FilterQuality.medium,
+                ),
+              ),
+              child: SizedBox(
+                width: placement.imageWidth,
+                height: placement.imageHeight,
+              ),
             ),
           ),
         ),

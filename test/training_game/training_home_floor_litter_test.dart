@@ -66,7 +66,7 @@ void main() {
     );
     final firstLayout =
         itemKeys.map((key) => tester.getRect(find.byKey(key))).toList();
-    expect(find.byType(Image), findsNWidgets(5));
+    expect(_floorPropAssets(), findsNWidgets(5));
 
     update(() => cleanliness = 10);
     await tester.pump();
@@ -76,14 +76,14 @@ void main() {
 
     update(() => cleanliness = 64);
     await tester.pump();
-    expect(find.byType(Image), findsNWidgets(2));
+    expect(_floorPropAssets(), findsNWidgets(2));
     expect(tester.getRect(find.byKey(itemKeys[0])), firstLayout[0]);
     expect(tester.getRect(find.byKey(itemKeys[1])), firstLayout[1]);
     expect(find.byKey(itemKeys[2]), findsNothing);
 
     update(() => cleanliness = 100);
     await tester.pump();
-    expect(find.byType(Image), findsNothing);
+    expect(_floorPropAssets(), findsNothing);
     expect(tester.takeException(), isNull);
   });
 
@@ -119,10 +119,11 @@ void main() {
     final actualAssets = <String>{};
     final rects = <Rect>[];
     for (var index = 0; index < 5; index++) {
-      final image = tester.widget<Image>(find.byKey(ValueKey<String>(
+      final prop = tester.widget<DecoratedBox>(find.byKey(ValueKey<String>(
         'training-home-floor-litter-asset-$index',
       )));
-      var provider = image.image;
+      final decoration = prop.decoration as BoxDecoration;
+      var provider = decoration.image!.image;
       while (provider is ResizeImage) {
         provider = provider.imageProvider;
       }
@@ -298,3 +299,10 @@ void _setViewport(WidgetTester tester, Size size) {
   addTearDown(tester.view.resetPhysicalSize);
   addTearDown(tester.view.resetDevicePixelRatio);
 }
+
+Finder _floorPropAssets() => find.byWidgetPredicate((widget) {
+      if (widget is! DecoratedBox) return false;
+      final key = widget.key;
+      return key is ValueKey<String> &&
+          key.value.startsWith('training-home-floor-litter-asset-');
+    });
