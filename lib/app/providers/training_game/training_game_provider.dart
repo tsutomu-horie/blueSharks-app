@@ -7,9 +7,21 @@ import 'package:koto_blue_sharks/app/services/auth_session_manager.dart';
 import 'package:koto_blue_sharks/app/services/server_time_clock.dart';
 import 'package:koto_blue_sharks/utils/constant.dart';
 import 'package:koto_blue_sharks/utils/app_environment.dart';
+import 'dart:math';
 
 /// 育成ゲームのサーバー同期APIを担当します。
 class TrainingGameProvider extends GetConnect {
+  final String _presenceId =
+      List.generate(32, (_) => Random.secure().nextInt(16).toRadixString(16))
+          .join();
+  String? _presence;
+  Future<void> _presenceFetchChain = Future<void>.value();
+
+  /// 育成画面単位の前面状態を次の状態取得に付与します。
+  void setTrainingPresence(bool foreground) {
+    _presence = foreground ? 'foreground' : 'background';
+  }
+
   static final _clock = Stopwatch()..start();
   static Future<void> _pendingSync = Future<void>.value();
 
@@ -32,12 +44,27 @@ class TrainingGameProvider extends GetConnect {
   Future<Map<String, dynamic>?> fetchCurrent({
     int? expectedSessionVersion,
   }) async {
-    // 直前のバックグラウンド保存を待ってから最新状態を取得します。
     await _pendingWrite;
     final headers = await _headers(expectedSessionVersion);
     _assertSessionVersion(expectedSessionVersion);
     final response = await get('game', headers: headers);
     return _data(response, requestHeaders: headers);
+  }
+
+  /// 操作キューとは独立して、前面・背景の通知を送信順に処理します。
+  Future<void> notifyTrainingPresence({int? expectedSessionVersion}) async {
+    final presence = _presence;
+    if (presence == null) return;
+    final request = _presenceFetchChain.then((_) async {
+      final headers = await _headers(expectedSessionVersion);
+      headers['X-Training-Presence'] = presence;
+      headers['X-Training-Presence-Id'] = _presenceId;
+      _assertSessionVersion(expectedSessionVersion);
+      await _data(await post('game/presence', null, headers: headers),
+          requestHeaders: headers);
+    });
+    _presenceFetchChain = request.then<void>((_) {}, onError: (_, __) {});
+    await request;
   }
 
   /// DBのクリア履歴から解放済みポジションを取得します。
