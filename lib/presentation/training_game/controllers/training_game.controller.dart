@@ -16,6 +16,7 @@ import '../models/mini_game_settings.dart';
 import '../models/training_game_models.dart';
 import '../models/training_workout_requirement.dart';
 import '../models/current_decay_policy.dart';
+import '../models/training_retirement_warning.dart';
 
 enum TrainingSyncStatus {
   idle,
@@ -277,6 +278,154 @@ class TrainingGameController extends GetxController
   int _lowConditionTraining = 0;
   bool _dayCared = false;
   final _zeroHours = <String, int>{'食事': 0, '清潔': 0, '体調': 0, '仕事': 0};
+  final _retirementOverStartedAt = <String, DateTime>{};
+  final _invalidatedRetirementStarts = <String, String>{};
+  bool _retirementServerPlaying = false;
+  final _collapsedRetirementEpisodes = <String>{};
+  final _retirementPresentationTick = 0.obs;
+  String? _retirementPresentationScope;
+
+  String? get _retirementScope => _serverPlayerId == null ||
+          _serverCycleNo == null ||
+          _serverGameStartedAt == null
+      ? null
+      : '$_serverPlayerId:$_serverCycleNo:${_serverGameStartedAt!.toUtc().toIso8601String()}';
+
+  List<TrainingRetirementWarning> get retirementWarnings {
+    _mainClockTick.value;
+    _retirementPresentationTick.value;
+    final scope = _retirementScope;
+    if (scope == null ||
+        !isServerStateReady.value ||
+        !_retirementServerPlaying) {
+      return const [];
+    }
+    return TrainingRetirementWarning.evaluate(
+      scope: scope,
+      stageIndex: stageIndex.value,
+      ended: ended.value,
+      meters: meters,
+      overStartedAt: _retirementOverStartedAt,
+      zeroHours: _zeroHours,
+      elapsedHours: elapsedHours.value,
+      serverNow: ServerTimeClock.instance.isSynchronized
+          ? ServerTimeClock.instance.now
+          : null,
+    );
+  }
+
+  bool isRetirementWarningCollapsed(TrainingRetirementWarning warning) {
+    _retirementPresentationTick.value;
+    return _collapsedRetirementEpisodes.contains(warning.episode);
+  }
+
+  void collapseRetirementWarning(TrainingRetirementWarning warning) {
+    _collapsedRetirementEpisodes.add(warning.episode);
+    _retirementPresentationTick.value++;
+    _saveRetirementPresentation();
+  }
+
+  void expandRetirementWarning(TrainingRetirementWarning warning) {
+    _collapsedRetirementEpisodes.remove(warning.episode);
+    _retirementPresentationTick.value++;
+    _saveRetirementPresentation();
+  }
+
+  void _saveRetirementPresentation() {
+    if (_retirementPresentationScope == null) return;
+    unawaited(MySharedPref.setTrainingRetirementWarningPresentation(jsonEncode({
+      'scope': _retirementPresentationScope,
+      'collapsed': _collapsedRetirementEpisodes.toList(),
+      'invalidated_over_starts': _invalidatedRetirementStarts,
+    })));
+  }
+
+  void _refreshRetirementEpisodes() {
+    final scope = _retirementScope;
+    if (scope == null) return;
+    if (_retirementPresentationScope != scope) {
+      _retirementPresentationScope = scope;
+      _collapsedRetirementEpisodes.clear();
+      _invalidatedRetirementStarts.clear();
+      try {
+        final raw = MySharedPref.getTrainingRetirementWarningPresentation();
+        final data = raw == null ? null : jsonDecode(raw);
+        if (data is Map &&
+            data['scope'] == scope &&
+            data['collapsed'] is List) {
+          _collapsedRetirementEpisodes
+              .addAll((data['collapsed'] as List).whereType<String>());
+          final invalidated = data['invalidated_over_starts'];
+          if (invalidated is Map) {
+            for (final entry in invalidated.entries) {
+              if (entry.key is String && entry.value is String) {
+                _invalidatedRetirementStarts[entry.key as String] =
+                    entry.value as String;
+              }
+            }
+          }
+        }
+      } on FormatException {/* Ignore old or incomplete presentation data. */}
+    }
+    // Observed recovery invalidates the old server episode immediately. A
+    // subsequent local meal must wait for a newly confirmed server start.
+    var invalidationChanged = false;
+    _retirementOverStartedAt.removeWhere((name, at) {
+      final identity = at.toUtc().toIso8601String();
+      if ((meters[name] ?? 0) <= 100) {
+        invalidationChanged = invalidationChanged ||
+            _invalidatedRetirementStarts[name] != identity;
+        _invalidatedRetirementStarts[name] = identity;
+        return true;
+      }
+      if (_invalidatedRetirementStarts[name] == identity) return true;
+      if (_invalidatedRetirementStarts.remove(name) != null) {
+        invalidationChanged = true;
+      }
+      return false;
+    });
+    final active = ended.value || stageIndex.value < 2
+        ? <String>{}
+        : TrainingRetirementWarning.activeEpisodes(
+            scope: scope,
+            meters: meters,
+            overStartedAt: _retirementOverStartedAt,
+            zeroHours: _zeroHours,
+            elapsedHours: elapsedHours.value);
+    final before = _collapsedRetirementEpisodes.length;
+    _collapsedRetirementEpisodes.removeWhere((episode) {
+      // A decay pass can run between elapsedHours++ and zeroHours++. Do not
+      // mistake that intermediate tick for recovery or a new zero episode.
+      if (!ended.value && stageIndex.value >= 2 && episode.contains(':zero:')) {
+        final name = episode.split(':zero:').last.split(':').first;
+        return meters[name] != 0;
+      }
+      return !active.contains(episode);
+    });
+    if (invalidationChanged || before != _collapsedRetirementEpisodes.length) {
+      _saveRetirementPresentation();
+    }
+  }
+
+  void _restoreRetirementOverState(Map<String, dynamic> data) {
+    _retirementOverStartedAt.clear();
+    final state = data['over_state'];
+    final starts =
+        state is Map && state['schema'] == 1 ? state['started_at'] : null;
+    if (starts is! Map) return;
+    for (final entry in {'hunger': '食事', 'work': '仕事'}.entries) {
+      final raw = starts[entry.key];
+      // A timestamp without an offset would depend on the device timezone.
+      if (raw is! String ||
+          !RegExp(r'(Z|[+-]\d{2}:\d{2})$', caseSensitive: false)
+              .hasMatch(raw)) {
+        continue;
+      }
+      final at = DateTime.tryParse(raw);
+      if (at != null) _retirementOverStartedAt[entry.value] = at.toUtc();
+    }
+  }
+
   final _tutorialZeroSeconds = <String, int>{'食事': 0, '清潔': 0, '体調': 0};
   final _actionGate = TrainingActionGate(
     now: () => ServerTimeClock.instance.now,
@@ -1820,6 +1969,11 @@ class TrainingGameController extends GetxController
     _lowConditionTraining = 0;
     _dayCared = false;
     _zeroHours.updateAll((key, value) => 0);
+    _retirementOverStartedAt.clear();
+    _invalidatedRetirementStarts.clear();
+    _retirementServerPlaying = false;
+    _retirementPresentationScope = null;
+    _collapsedRetirementEpisodes.clear();
     _tutorialZeroSeconds.updateAll((key, value) => 0);
     _actionGate.clear();
     _releasePendingGameQueueClaim();
@@ -2368,6 +2522,10 @@ class TrainingGameController extends GetxController
       discardPreservedTypes: changedCooldownTypes,
     );
     _restoreEndedState(data);
+    _restoreRetirementOverState(data);
+    _retirementServerPlaying = data['status'] == 'playing';
+    _refreshRetirementEpisodes();
+    _retirementPresentationTick.value++;
     // 一軍で未確定だった進化先が応答で決まった場合も、通常の進化演出へ進めます。
     // 「次へ」から既存の完了同期を使い、次のお世話や翌日を待たせません。
     if (wasUndecidedFirstTeam &&
@@ -4040,6 +4198,7 @@ class TrainingGameController extends GetxController
         _playFloor.toDouble(),
       );
     });
+    _refreshRetirementEpisodes();
   }
 
   /// メーターを範囲内に収めて更新します。
@@ -4047,6 +4206,7 @@ class TrainingGameController extends GetxController
     _markLocalStateChanged();
     // プレイ中の下限は管理画面のgame_settingsをサーバーから受け取ります。
     meters[name] = (meters[name]! + amount).clamp(_playFloor, 150).toDouble();
+    _refreshRetirementEpisodes();
   }
 
   /// 行動完了時点からクールタイムを開始します。
@@ -4206,6 +4366,7 @@ class TrainingGameController extends GetxController
       }
     }
     _zeroHours.updateAll((name, hours) => meters[name]! <= 0 ? hours + 1 : 0);
+    _refreshRetirementEpisodes();
     _dayCared = _dayCared ||
         ['食事', '清潔', '体調', '仕事'].every((name) => meters[name]! >= 20);
     // 育成期は実時間24時間をゲーム内の1日として扱います。
@@ -4413,6 +4574,7 @@ class TrainingGameController extends GetxController
   }) {
     if (ended.value) return;
     ended.value = true;
+    _refreshRetirementEpisodes();
     this.endingStep.value = endingStep;
     endingMessage.value = message;
     this.clearPosition.value = clearPosition;

@@ -27,6 +27,8 @@ class MySharedPref {
   static const String _trainingGameDebugElapsedSeconds =
       'trainingGameDebugElapsedSeconds';
   static const String _trainingGameLocalState = 'trainingGameLocalState';
+  static const String _trainingRetirementWarningPresentation =
+      'trainingRetirementWarningPresentation';
   static const String _trainingGamePendingActions =
       'trainingGamePendingActions';
   static const String _trainingGamePendingActionsArchive =
@@ -144,6 +146,14 @@ class MySharedPref {
   /// 新規育成サイクル開始時に以前の進行状態を削除します。
   static Future<void> clearTrainingGameLocalState() =>
       _sharedPreferences.remove(_trainingGameLocalState);
+
+  /// 警告の開閉だけを保持します。ゲームの状態や経過時間には使用しません。
+  static String? getTrainingRetirementWarningPresentation() =>
+      _sharedPreferences.getString(_trainingRetirementWarningPresentation);
+
+  static Future<void> setTrainingRetirementWarningPresentation(String value) =>
+      _sharedPreferences.setString(
+          _trainingRetirementWarningPresentation, value);
 
   /// 未確定アクションの冪等キーと内容をプロセス再起動後も保持します。
   static Future<bool> setTrainingGamePendingActions(String value) =>

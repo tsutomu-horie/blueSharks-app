@@ -1,0 +1,71 @@
+name: No119 in-app retirement warning
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/no119-retirement-warning.yml'
+      - 'lib/presentation/training_game/**'
+      - 'lib/utils/my_shared_pref.dart'
+      - 'test/training_game/**'
+      - 'pubspec.yaml'
+      - 'pubspec.lock'
+
+permissions:
+  contents: read
+
+jobs:
+  warning-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install validated Flutter
+        shell: bash
+        run: |
+          git clone --depth 1 --branch 3.47.2 https://github.com/flutter/flutter.git "$RUNNER_TEMP/flutter"
+          test "$(git -C "$RUNNER_TEMP/flutter" rev-parse HEAD)" = d3b14c876900e553bc736ca19295fc09e3853e8e
+          echo "$RUNNER_TEMP/flutter/bin" >> "$GITHUB_PATH"
+      - name: Compile-only compatibility, with Firebase forbidden
+        shell: bash
+        run: |
+          ln -s constant.dart lib/utils/Constant.dart
+          ln -s string+extensions.dart lib/utils/String+extensions.dart
+          cat > lib/firebase_options.dart <<'DART'
+          import 'package:firebase_core/firebase_core.dart';
+          class DefaultFirebaseOptions {
+            static FirebaseOptions get currentPlatform =>
+                throw StateError('Firebase initialization is forbidden in this CI');
+          }
+          DART
+      - run: flutter pub get --enforce-lockfile
+      - name: Check warning formatting
+        run: >-
+          dart format --output=none --set-exit-if-changed
+          lib/presentation/training_game/models/training_retirement_warning.dart
+          lib/presentation/training_game/training_retirement_warning_panel.dart
+          lib/presentation/training_game/controllers/training_game.controller.dart
+          lib/presentation/training_game/training_game.screen.dart
+          lib/utils/my_shared_pref.dart
+          test/training_game/training_retirement_warning_test.dart
+          test/training_game/training_retirement_warning_controller_test.dart
+          test/training_game/training_retirement_warning_widget_test.dart
+      - name: Analyze warning changes
+        run: >-
+          flutter analyze --no-pub --no-fatal-infos
+          lib/presentation/training_game/models/training_retirement_warning.dart
+          lib/presentation/training_game/training_retirement_warning_panel.dart
+          lib/presentation/training_game/controllers/training_game.controller.dart
+          lib/presentation/training_game/training_game.screen.dart
+          lib/utils/my_shared_pref.dart
+          test/training_game/training_retirement_warning_test.dart
+          test/training_game/training_retirement_warning_controller_test.dart
+          test/training_game/training_retirement_warning_widget_test.dart
+      - name: Fake-only warning and existing game regressions
+        run: >-
+          flutter test --no-pub
+          test/training_game/training_retirement_warning_test.dart
+          test/training_game/training_retirement_warning_controller_test.dart
+          test/training_game/training_retirement_warning_widget_test.dart
+          test/training_game/training_over_state_test.dart
+          test/training_game/training_home_controls_test.dart
+          test/training_game/no84_current_settings_test.dart

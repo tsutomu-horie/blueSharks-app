@@ -28,6 +28,7 @@ import 'training_evolution_page_switcher.dart';
 import 'training_dex_dialog.dart';
 import 'training_game_theme.dart';
 import 'training_screen_transitions.dart';
+import 'training_retirement_warning_panel.dart';
 
 /// 参照HTMLのスマートフォン画面部分だけをアプリ用に再現します。
 class TrainingGameScreen extends GetView<TrainingGameController> {
@@ -917,85 +918,110 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
   Widget _buildRoom(BuildContext context) {
     final canTrain =
         controller.stageIndex.value >= 2 && !controller.ended.value;
-    return Stack(
-      children: [
-        Positioned.fill(
-          child: TrainingHomeFloorLitter(
-            cleanliness: controller.meters['清潔']!,
-            characterFootClearance: 126.h,
-            controlsClearance: 64.h > 12.h + 44 ? 64.h : 12.h + 44,
-          ),
-        ),
-        Positioned(
-          left: 12.w,
-          bottom: 12.h,
-          child: TextButton.icon(
-            key: const ValueKey('training-home-dex'),
-            onPressed: () => _showDex(context),
-            style: _homeAuxiliaryStyle,
-            icon: const Icon(Icons.menu_book_outlined, size: 16),
-            label: const Text('ずかん'),
-          ),
-        ),
-        Positioned(
-          left: 0,
-          right: 0,
-          bottom: 126.h,
-          child: TrainingHomeRoamingCharacter(
-            soundFactory: homeTapSoundFactory,
-            reactToTap:
-                controller.stageIndex.value >= 1 && !controller.ended.value,
-            enabled: canTrain,
-            width: 220.w,
-            height: 184.h,
-            travelDistance: 28.w,
-            preparationKey: _bodyKey ?? 'normal',
-            prepareWalk: (context) =>
-                TrainingHomeCharacterFrameSet.forBodyKey(_bodyKey)
-                    .precache(context),
-            builder: (context, isWalking) => Align(
-              alignment: Alignment.bottomCenter,
-              child: _buildCharacterVisual(isWalking: isWalking),
+    return Obx(() {
+      final warnings = controller.retirementWarnings;
+      final collapsed = warnings.isNotEmpty &&
+          controller.isRetirementWarningCollapsed(warnings.first);
+      return LayoutBuilder(builder: (context, constraints) {
+        // Character occupies bottom 126.h + 184.h. Keep a further 12.h gap;
+        // the warning can scroll inside the remaining space, never over controls.
+        final warningHeight = constraints.maxHeight - 126.h - 184.h - 24.h;
+        return Stack(
+          children: [
+            if (warnings.isNotEmpty && warningHeight >= 64)
+              Positioned(
+                left: 12.w,
+                right: 12.w,
+                top: 12.h,
+                height: warningHeight,
+                child: TrainingRetirementWarningPanel(
+                  warning: warnings.first,
+                  collapsed: collapsed,
+                  onCollapse: () =>
+                      controller.collapseRetirementWarning(warnings.first),
+                  onExpand: () =>
+                      controller.expandRetirementWarning(warnings.first),
+                ),
+              ),
+            Positioned.fill(
+              child: TrainingHomeFloorLitter(
+                cleanliness: controller.meters['清潔']!,
+                characterFootClearance: 126.h,
+                controlsClearance: 64.h > 12.h + 44 ? 64.h : 12.h + 44,
+              ),
             ),
-          ),
-        ),
-        Positioned(
-          right: 8.w,
-          bottom: 12.h,
-          child: _buildTrainingMenuButton(context, canTrain),
-        ),
-        if (controller.ended.value)
-          Positioned.fill(
-            child: Center(
-              child: Container(
-                margin: EdgeInsets.all(24.w),
-                padding: EdgeInsets.all(14.w),
-                color: Colors.white.withOpacity(.94),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      controller.clearPosition.value == null
-                          ? 'ゲームオーバー'
-                          : '育成完了',
-                      style: TextStyle(
-                          fontSize: 18.sp, fontWeight: FontWeight.w700),
-                    ),
-                    SizedBox(height: 8.h),
-                    Text(controller.endingMessage.value,
-                        textAlign: TextAlign.center),
-                    SizedBox(height: 10.h),
-                    ElevatedButton(
-                      onPressed: _openNewEgg,
-                      child: const Text('卵からやりなおす'),
-                    ),
-                  ],
+            Positioned(
+              left: 12.w,
+              bottom: 12.h,
+              child: TextButton.icon(
+                key: const ValueKey('training-home-dex'),
+                onPressed: () => _showDex(context),
+                style: _homeAuxiliaryStyle,
+                icon: const Icon(Icons.menu_book_outlined, size: 16),
+                label: const Text('ずかん'),
+              ),
+            ),
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 126.h,
+              child: TrainingHomeRoamingCharacter(
+                soundFactory: homeTapSoundFactory,
+                reactToTap:
+                    controller.stageIndex.value >= 1 && !controller.ended.value,
+                enabled: canTrain,
+                width: 220.w,
+                height: 184.h,
+                travelDistance: 28.w,
+                preparationKey: _bodyKey ?? 'normal',
+                prepareWalk: (context) =>
+                    TrainingHomeCharacterFrameSet.forBodyKey(_bodyKey)
+                        .precache(context),
+                builder: (context, isWalking) => Align(
+                  alignment: Alignment.bottomCenter,
+                  child: _buildCharacterVisual(isWalking: isWalking),
                 ),
               ),
             ),
-          ),
-      ],
-    );
+            Positioned(
+              right: 8.w,
+              bottom: 12.h,
+              child: _buildTrainingMenuButton(context, canTrain),
+            ),
+            if (controller.ended.value)
+              Positioned.fill(
+                child: Center(
+                  child: Container(
+                    margin: EdgeInsets.all(24.w),
+                    padding: EdgeInsets.all(14.w),
+                    color: Colors.white.withOpacity(.94),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          controller.clearPosition.value == null
+                              ? 'ゲームオーバー'
+                              : '育成完了',
+                          style: TextStyle(
+                              fontSize: 18.sp, fontWeight: FontWeight.w700),
+                        ),
+                        SizedBox(height: 8.h),
+                        Text(controller.endingMessage.value,
+                            textAlign: TextAlign.center),
+                        SizedBox(height: 10.h),
+                        ElevatedButton(
+                          onPressed: _openNewEgg,
+                          child: const Text('卵からやりなおす'),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        );
+      });
+    });
   }
 
   /// 確定した大別の立ち絵を表示し、未判定はノーマルを保持します。
