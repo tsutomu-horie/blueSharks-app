@@ -59,7 +59,7 @@ void main() {
               await image.toByteData(format: ui.ImageByteFormat.rawRgba);
           // 以前の1.6倍楕円では白光が残る、身体から離れた領域。
           if (covered) {
-            final outside = (65 * image.width + 150) * 4;
+            final outside = (52 * image.width + 150) * 4;
             expect(data!.getUint8(outside), lessThan(240));
           }
           for (final point in [
