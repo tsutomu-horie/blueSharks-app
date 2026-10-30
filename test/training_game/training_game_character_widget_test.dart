@@ -349,8 +349,8 @@ void main() {
     expect(find.byType(SametarohAnimatedImage), findsOneWidget);
     expect(find.text('タップして戻る'), findsNothing);
     await tester.pump(const Duration(seconds: 4));
-    await tester.runAsync(
-        () => Future<void>.delayed(const Duration(milliseconds: 50)));
+    await tester
+        .runAsync(() => Future<void>.delayed(const Duration(milliseconds: 50)));
     await tester.pump();
     expect(
         tester
