@@ -128,10 +128,10 @@ void main() {
     await tester.pump(const Duration(milliseconds: 650));
     expect(_opacity(tester, before), 1);
     expect(_opacity(tester, after), 0);
-    await tester.pump(const Duration(milliseconds: 450));
+    await tester.pump(const Duration(milliseconds: 3450));
     expect(_opacity(tester, before), 0);
     expect(_opacity(tester, after), 1);
-    await tester.pump(const Duration(seconds: 2));
+    await tester.pump(const Duration(milliseconds: 4200));
     expect(_opacity(tester, before), 0);
     expect(_opacity(tester, after), 1);
     expect(tester.takeException(), isNull);
@@ -161,7 +161,7 @@ void main() {
     expect(reveal.beforeFrame.asset, before.asset);
     expect(reveal.afterFrame.asset, after.asset);
 
-    await tester.pump(const Duration(milliseconds: 1100));
+    await tester.pump(const Duration(milliseconds: 4100));
     final scale = tester
         .widget<Transform>(
           find.byKey(const ValueKey('training-evolution-after-scale')),
@@ -210,7 +210,7 @@ void main() {
         final target = _homeFrameImage(homeFrame.asset);
         expect(target, findsOneWidget);
 
-        await tester.pump(const Duration(milliseconds: 1200));
+        await tester.pump(const Duration(milliseconds: 5600));
         final at1200 = tester.getRect(target);
         final scaleAt1200 = tester
             .widget<Transform>(
@@ -220,7 +220,7 @@ void main() {
             .entry(0, 0);
         final measurements = <String>[
           'sample,scale,left,top,width,height,bottom',
-          _screenGeometryRow('1200ms', at1200, scaleAt1200),
+          _screenGeometryRow('5600ms', at1200, scaleAt1200),
         ];
 
         await tester.pump(const Duration(milliseconds: 50));
@@ -231,14 +231,14 @@ void main() {
             )
             .transform
             .entry(0, 0);
-        measurements.add(_screenGeometryRow('1250ms', at1250, scaleAt1250));
+        measurements.add(_screenGeometryRow('5650ms', at1250, scaleAt1250));
         expect(scaleAt1250, lessThanOrEqualTo(scaleAt1200));
         expect(scaleAt1250, greaterThanOrEqualTo(1));
         expect(scaleAt1250, lessThanOrEqualTo(1.045));
         expect(at1250.width / at1200.width, lessThanOrEqualTo(1.02));
         expect(at1250.height / at1200.height, lessThanOrEqualTo(1.02));
 
-        await tester.pump(const Duration(milliseconds: 449));
+        await tester.pump(const Duration(milliseconds: 1349));
         expect(
           find.byKey(const ValueKey('training-evolution-after-scale')),
           findsOneWidget,
@@ -251,7 +251,7 @@ void main() {
             .transform
             .entry(0, 0);
         measurements.add(
-          _screenGeometryRow('1699ms', lastRevealRect, lastScale),
+          _screenGeometryRow('6999ms', lastRevealRect, lastScale),
         );
         await tester.pump(const Duration(milliseconds: 20));
         expect(
@@ -314,7 +314,7 @@ void main() {
     final target = _sametarohFrameImage(after.asset);
     expect(target, findsOneWidget);
 
-    await tester.pump(const Duration(milliseconds: 1200));
+    await tester.pump(const Duration(milliseconds: 5600));
     final at1200 = tester.getRect(target);
     final scaleAt1200 = tester
         .widget<Transform>(
@@ -336,15 +336,15 @@ void main() {
     expect(at1250.width / at1200.width, lessThanOrEqualTo(1.02));
     expect(at1250.height / at1200.height, lessThanOrEqualTo(1.02));
 
-    await tester.pump(const Duration(milliseconds: 449));
+    await tester.pump(const Duration(milliseconds: 1349));
     // 録画1.220→1.236667秒の約11%ジャンプに対応する完了tick前後。
-    // fixtureのcontroller開始を基準に1699→1719msで分岐を跨ぐ。
+    // fixtureのcontroller開始を基準に1699→7019msで分岐を跨ぐ。
     final lastRevealRect = tester.getRect(target);
     final rows = <String>[
       'sample,scale,left,top,width,height,bottom',
-      _screenGeometryRow('1200ms', at1200, scaleAt1200),
-      _screenGeometryRow('1250ms', at1250, scaleAt1250),
-      _screenGeometryRow('completion_before_1699ms', lastRevealRect, 1)
+      _screenGeometryRow('5600ms', at1200, scaleAt1200),
+      _screenGeometryRow('5650ms', at1250, scaleAt1250),
+      _screenGeometryRow('completion_before_6999ms', lastRevealRect, 1)
     ];
     await tester.pump(const Duration(milliseconds: 20));
     expect(
@@ -352,13 +352,13 @@ void main() {
       findsNothing,
     );
     final completedRect = tester.getRect(target);
-    rows.add(_screenGeometryRow('completion_after_1719ms', completedRect, 1));
+    rows.add(_screenGeometryRow('completion_after_7019ms', completedRect, 1));
     expect(completedRect.width, closeTo(lastRevealRect.width, 0.01));
     expect(completedRect.height, closeTo(lastRevealRect.height, 0.01));
     expect(completedRect.left, closeTo(lastRevealRect.left, 0.01));
     expect(completedRect.top, closeTo(lastRevealRect.top, 0.01));
 
-    await tester.pump(const Duration(milliseconds: 1000));
+    await tester.pump(const Duration(milliseconds: 4000));
 
     await tester.tap(find.text('次へ'));
     await tester.pump();
@@ -409,7 +409,7 @@ void main() {
         await tester.pumpWidget(_host());
         await tester.pump();
         await _preload(tester, [after]);
-        await tester.pump(const Duration(milliseconds: 1699));
+        await tester.pump(const Duration(milliseconds: 6999));
         final target = _sametarohFrameImage(after.asset);
         final before = tester.getRect(target);
         await tester.pump(const Duration(milliseconds: 20));
@@ -422,7 +422,7 @@ void main() {
         ]) {
           expect(delta.abs(), lessThanOrEqualTo(1));
         }
-        await tester.pump(const Duration(milliseconds: 1000));
+        await tester.pump(const Duration(milliseconds: 1300));
         await tester.tap(find.text('次へ'));
         await tester.pump();
         await tester.pump(const Duration(milliseconds: 900));
@@ -450,9 +450,11 @@ void main() {
     await tester.pumpWidget(_host());
     await tester.pump();
     await _preload(tester, [before, after]);
-    await tester.pump(const Duration(seconds: 2));
+    await tester.pump(const Duration(milliseconds: 7200));
 
     expect(find.byType(TrainingEvolutionReveal), findsOneWidget);
+    await tester.tap(find.text('次へ'), warnIfMissed: false);
+    expect(controller.endingStep.value, 0);
     await tester.pump(const Duration(milliseconds: 1000));
     await tester.tap(find.text('次へ'));
     // 同一frame内の連打で次の終了画面まで飛ばさない。
@@ -592,11 +594,11 @@ void main() {
     );
     expect(_opacity(tester, before), 1);
     expect(_opacity(tester, after), 0);
-    await tester.pump(const Duration(seconds: 2));
+    await tester.pump(const Duration(milliseconds: 4200));
     expect(_opacity(tester, before), 0);
     expect(_opacity(tester, after), 1);
 
-    await tester.pump(const Duration(milliseconds: 1000));
+    await tester.pump(const Duration(milliseconds: 4000));
 
     await tester.tap(find.text('次へ'));
     await tester.pump();

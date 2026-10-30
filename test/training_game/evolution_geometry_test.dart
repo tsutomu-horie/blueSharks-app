@@ -110,7 +110,7 @@ void main() {
           closeTo(scale, 0.001));
       expect(find.byType(TrainingEvolutionReveal), findsOneWidget);
     }
-    await tester.pump(const Duration(seconds: 2));
+    await tester.pump(TrainingEvolutionReveal.visualDuration);
     expect(find.byKey(_afterScaleKey), findsNothing);
     expect(tester.takeException(), isNull);
   });
@@ -131,7 +131,7 @@ void main() {
     await tester.pump();
     expect(tester.getRect(find.byKey(_targetKey)).bottom,
         closeTo(before.bottom, 1));
-    await tester.pump(const Duration(seconds: 2));
+    await tester.pump(TrainingEvolutionReveal.visualDuration);
     expect(find.byKey(_afterScaleKey), findsNothing);
     tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
     tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
@@ -259,7 +259,7 @@ void main() {
       );
 
       // 完了直前の最後のanimation frameと、isCompleted分岐の最初のframe。
-      await tester.pump(const Duration(milliseconds: 1699));
+      await tester.pump(const Duration(milliseconds: 6999));
       expect(find.byKey(_afterScaleKey), findsOneWidget);
       final lastScale = tester.widget<Transform>(find.byKey(_afterScaleKey));
       final lastRect = tester.getRect(find.byKey(_targetKey));

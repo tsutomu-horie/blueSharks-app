@@ -654,6 +654,8 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
         : TrainingEvolutionReveal.pageDuration(evolution.firstTeam);
     final seconds = pageDuration.inMilliseconds / 1000;
     final hold = evolution?.firstTeam == true ? .3 : 0.0;
+    final revealSeconds =
+        TrainingEvolutionReveal.visualDuration.inMilliseconds / 1000;
     return TrainingEndingEntrance(
         duration: pageDuration,
         soundFactory: evolution?.soundFactory,
@@ -672,7 +674,9 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
                     alignment: Alignment.centerLeft,
                     child: TrainingEndingItem(
                         animation: animation,
-                        start: evolution == null ? .2 : (1.75 + hold) / seconds,
+                        start: evolution == null
+                            ? .2
+                            : (revealSeconds + .05 + hold) / seconds,
                         span: evolution == null ? .3 : .3 / seconds,
                         child: Text(title,
                             style: TextStyle(
@@ -702,7 +706,9 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
                     SizedBox(height: 16.h),
                     TrainingEndingItem(
                         animation: animation,
-                        start: evolution == null ? .45 : (1.9 + hold) / seconds,
+                        start: evolution == null
+                            ? .45
+                            : (revealSeconds + .2 + hold) / seconds,
                         span: evolution == null ? .3 : .3 / seconds,
                         child: Text(message,
                             textAlign: TextAlign.center,
@@ -715,7 +721,9 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
                     height: 52.h,
                     child: TrainingEndingItem(
                         animation: animation,
-                        start: evolution == null ? .7 : (2.1 + hold) / seconds,
+                        start: evolution == null
+                            ? .7
+                            : (revealSeconds + .4 + hold) / seconds,
                         span: evolution == null ? .3 : .3 / seconds,
                         child: guardRapidTap
                             ? _EndingStepAdvanceButton(
