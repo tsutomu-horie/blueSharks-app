@@ -20,21 +20,23 @@ void main() {
                   child: SizedBox(
                       width: 300,
                       height: 390,
-                      child: TrainingEvolutionReveal(
-                        beforeFrame: SametarohAssets.newbornFrame,
-                        afterFrame: SametarohAssets.newbornFrame,
-                        beforeSize: const Size(128, 184),
-                        afterSize: const Size(128, 184),
-                        afterVisual: const SizedBox(
-                            key: afterKey,
-                            width: 128,
-                            height: 184,
-                            child: ColoredBox(color: Color(0xffff0000))),
-                        animation: externalClock ? clock : null,
-                        sceneDuration: externalClock
-                            ? TrainingEvolutionReveal.pageDuration(false)
-                            : null,
-                      ))))));
+                      child: ColoredBox(
+                          color: Color(0xffe2e5e8),
+                          child: TrainingEvolutionReveal(
+                            beforeFrame: SametarohAssets.newbornFrame,
+                            afterFrame: SametarohAssets.newbornFrame,
+                            beforeSize: const Size(128, 184),
+                            afterSize: const Size(128, 184),
+                            afterVisual: const SizedBox(
+                                key: afterKey,
+                                width: 128,
+                                height: 184,
+                                child: ColoredBox(color: Color(0xffff0000))),
+                            animation: externalClock ? clock : null,
+                            sceneDuration: externalClock
+                                ? TrainingEvolutionReveal.pageDuration(false)
+                                : null,
+                          )))))));
       await tester.pump();
       var elapsed = 0;
       Future<void> at(int milliseconds) async {
@@ -55,7 +57,14 @@ void main() {
           final image = await boundary.toImage();
           final data =
               await image.toByteData(format: ui.ImageByteFormat.rawRgba);
+          // 以前の1.6倍楕円では白光が残る、身体から離れた領域。
+          if (covered) {
+            final outside = (52 * image.width + 150) * 4;
+            expect(data!.getUint8(outside), lessThan(240));
+          }
           for (final point in [
+            const Offset(87, 104),
+            const Offset(212, 286),
             const Offset(100, 120),
             const Offset(200, 270)
           ]) {

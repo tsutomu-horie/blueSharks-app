@@ -409,6 +409,17 @@ void main() {
         await tester.pumpWidget(_host());
         await tester.pump();
         await _preload(tester, [after]);
+        final reveal = tester.widget<TrainingEvolutionReveal>(
+            find.byKey(const ValueKey('training-evolution-4')));
+        expect(
+            reveal.afterSize!.height, closeTo(reveal.beforeSize!.height, .01));
+        expect(reveal.afterSize!.aspectRatio,
+            closeTo(after.canvasSize.aspectRatio, .0001));
+        final image = tester
+            .widget<SametarohFrameImage>(_sametarohFrameImage(after.asset));
+        expect(image.height, closeTo(reveal.beforeSize!.height, .01));
+        expect(image.width / image.height,
+            closeTo(after.canvasSize.aspectRatio, .0001));
         await tester.pump(const Duration(milliseconds: 6999));
         final target = _sametarohFrameImage(after.asset);
         final before = tester.getRect(target);
