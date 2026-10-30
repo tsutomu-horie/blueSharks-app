@@ -21,6 +21,7 @@ import 'training_home_controls.dart';
 import 'training_home_roaming_character.dart';
 import 'training_sync_indicator.dart';
 import 'training_debug_menu.dart';
+import 'training_home_floor_litter.dart';
 import 'training_evolution_reveal.dart';
 import 'training_evolution_page_switcher.dart';
 import 'training_dex_dialog.dart';
@@ -881,6 +882,13 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
         controller.stageIndex.value >= 2 && !controller.ended.value;
     return Stack(
       children: [
+        Positioned.fill(
+          child: TrainingHomeFloorLitter(
+            cleanliness: controller.meters['清潔']!,
+            characterFootClearance: 126.h,
+            controlsClearance: 64.h > 12.h + 44 ? 64.h : 12.h + 44,
+          ),
+        ),
         Positioned(
           left: 12.w,
           bottom: 12.h,
