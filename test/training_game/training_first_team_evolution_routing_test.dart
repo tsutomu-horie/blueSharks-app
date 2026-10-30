@@ -269,7 +269,8 @@ void main() {
 
         await tester.tap(find.text('次へ'));
         await tester.pump();
-        await tester.pump(const Duration(milliseconds: 350));
+        await tester.pump(const Duration(milliseconds: 700));
+        await tester.pump();
         expect(find.byType(TrainingEvolutionReveal), findsNothing);
         expect(find.byType(TrainingHomeCharacterAnimation), findsOneWidget);
         final regularTarget = _homeFrameImage(homeFrame.asset);
@@ -541,6 +542,32 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('終了フロー経由の進化画面も光の中央で登場する', (tester) async {
+    final controller = _EvolutionFixtureController()
+      ..isServerStateReady.value = true
+      ..stageIndex.value = 4;
+    Get.put<TrainingGameController>(controller);
+    await tester.pumpWidget(_host());
+    await tester.pump();
+    controller.ended.value = true;
+    controller.clearPosition.value = 'ウイング';
+    controller.endingStep.value = 0;
+    await tester.pump();
+    expect(find.byType(TrainingEvolutionReveal), findsNothing);
+    await tester.pump(const Duration(milliseconds: 450));
+    expect(find.byType(TrainingEvolutionReveal), findsOneWidget);
+    expect(
+        tester
+            .widget<Opacity>(
+                find.byKey(const ValueKey('evolution-transition-light')))
+            .opacity,
+        1);
+    await tester.pump(const Duration(milliseconds: 450));
+    expect(
+        find.byKey(const ValueKey('evolution-transition-light')), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('positive-end（デバッグ完了を含む）も演出後に既存の次画面へ進む', (tester) async {
     final controller = _EvolutionFixtureController()
       ..isServerStateReady.value = true
@@ -574,8 +601,13 @@ void main() {
     await tester.tap(find.text('次へ'));
     await tester.pump();
     expect(controller.endingStep.value, 1);
+    expect(find.byKey(const ValueKey('evolution-transition-light')),
+        findsOneWidget);
+    expect(find.text('進化'), findsOneWidget);
+    await tester.pump(const Duration(milliseconds: 350));
     expect(find.text('ポジション確定'), findsOneWidget);
     await tester.pump(const Duration(milliseconds: 350));
+    await tester.pump();
 
     await tester.tap(find.text('次へ'), warnIfMissed: false);
     await tester.pump();

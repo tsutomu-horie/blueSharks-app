@@ -387,6 +387,9 @@ void main() {
       await tester.pumpWidget(host(const TrainingGameScreen(
           evolutionSoundFactory: silentTrainingGameSound)));
       await tester.pump();
+      // 光の中央で進化画面がマウントされてから、既存の演出を待つ。
+      await tester.pump(const Duration(milliseconds: 900));
+      await tester.pump();
       await tester.pump(const Duration(milliseconds: 2700));
 
       expect(find.text('進化'), findsOneWidget);
@@ -399,6 +402,8 @@ void main() {
       await tester.tap(find.text('次へ'));
       expect(controller.evolutionStage.value, isNull);
       expect(controller.stageIndex.value, stage);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 700));
       expect(tester.takeException(), isNull);
     }
   });
@@ -554,6 +559,7 @@ void main() {
     expect(shownAsset(tester), SametarohAssets.newbornFrame.asset);
     controller.evolutionStage.value = 1;
     await tester.pump();
+    await tester.pump(const Duration(milliseconds: 900));
     expect(shownAsset(tester), SametarohAssets.newbornFrame.asset);
     expect(find.text('次へ'), findsOneWidget);
     expect(tester.takeException(), isNull);
@@ -737,7 +743,8 @@ void main() {
       expect(animation.frameSet.walkFrames.first.asset, move.first.asset);
       controller.evolutionStage.value = 3;
       await tester.pump();
-      await tester.pump(const Duration(milliseconds: 350));
+      await tester.pump(const Duration(milliseconds: 900));
+      await tester.pump();
       if (entry.value == null) {
         expect(shownAsset(tester), idle.first.asset);
       } else {
@@ -749,7 +756,7 @@ void main() {
       controller.clearPosition.value = 'プロップ';
       controller.endingStep.value = 2;
       await tester.pump();
-      await tester.pump(const Duration(milliseconds: 350));
+      await tester.pump(const Duration(milliseconds: 700));
       await preload(tester, move);
       expect(shownAsset(tester), move.first.asset);
       expect(tester.takeException(), isNull, reason: '${entry.key}');

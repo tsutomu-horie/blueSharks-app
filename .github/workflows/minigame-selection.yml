@@ -6,6 +6,8 @@ on:
       - '.github/workflows/minigame-selection.yml'
       - 'lib/presentation/training_game/training_game.screen.dart'
       - 'lib/presentation/training_game/training_screen_transitions.dart'
+      - 'lib/presentation/training_game/training_evolution_page_switcher.dart'
+      - 'test/training_game/training_evolution_page_switcher_test.dart'
       - 'lib/presentation/training_game/training_evolution_reveal.dart'
       - 'test/training_game/training_evolution_audio_test.dart'
       - 'test/training_game/training_screen_transitions_test.dart'
@@ -56,6 +58,6 @@ jobs:
           test/assets/asset_inputs_test.dart
       - name: Check training screen transitions
         run: |
-          dart format --output=none --set-exit-if-changed lib/presentation/training_game/training_screen_transitions.dart test/training_game/training_screen_transitions_test.dart test/training_game/training_first_team_evolution_routing_test.dart
-          flutter analyze --no-pub --no-fatal-infos lib/presentation/training_game/training_screen_transitions.dart test/training_game/training_screen_transitions_test.dart
-          flutter test --no-pub test/training_game/training_screen_transitions_test.dart test/training_game/training_first_team_evolution_routing_test.dart test/training_game/training_workout_scene_test.dart test/training_game/training_evolution_audio_test.dart test/training_game/evolution_geometry_test.dart
+          dart format --output=none --set-exit-if-changed lib/presentation/training_game/training_screen_transitions.dart lib/presentation/training_game/training_evolution_page_switcher.dart test/training_game/training_evolution_page_switcher_test.dart test/training_game/training_screen_transitions_test.dart test/training_game/training_first_team_evolution_routing_test.dart
+          flutter analyze --no-pub --no-fatal-infos lib/presentation/training_game/training_screen_transitions.dart lib/presentation/training_game/training_evolution_page_switcher.dart test/training_game/training_evolution_page_switcher_test.dart test/training_game/training_screen_transitions_test.dart
+          flutter test --no-pub test/training_game/training_evolution_page_switcher_test.dart test/training_game/training_screen_transitions_test.dart test/training_game/training_first_team_evolution_routing_test.dart test/training_game/training_workout_scene_test.dart test/training_game/training_evolution_audio_test.dart test/training_game/evolution_geometry_test.dart

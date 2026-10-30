@@ -22,6 +22,7 @@ import 'training_home_roaming_character.dart';
 import 'training_sync_indicator.dart';
 import 'training_debug_menu.dart';
 import 'training_evolution_reveal.dart';
+import 'training_evolution_page_switcher.dart';
 import 'training_dex_dialog.dart';
 import 'training_game_theme.dart';
 import 'training_screen_transitions.dart';
@@ -94,34 +95,16 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
                     : shouldShowEvolution
                         ? 'evolution-${controller.evolutionStage.value}'
                         : controller.ended.value
-                            ? 'ending-${controller.endingStep.value}'
+                            ? controller.clearPosition.value != null &&
+                                    controller.endingStep.value == 0
+                                ? 'evolution-ending-0'
+                                : 'ending-${controller.endingStep.value}'
                             : 'home';
-                final reduceMotion = MediaQuery.disableAnimationsOf(context);
                 return Stack(
                   children: [
-                    AnimatedSwitcher(
-                      duration: reduceMotion
-                          ? Duration.zero
-                          : const Duration(milliseconds: 300),
-                      switchInCurve: Curves.easeOutCubic,
-                      switchOutCurve: Curves.easeInCubic,
-                      transitionBuilder: (child, animation) => FadeTransition(
-                        opacity: animation,
-                        child: AnimatedBuilder(
-                          animation: animation,
-                          child: child,
-                          builder: (context, child) {
-                            final leaving =
-                                animation.status == AnimationStatus.reverse;
-                            return IgnorePointer(
-                                ignoring: leaving,
-                                child: ExcludeSemantics(
-                                    excluding: leaving, child: child!));
-                          },
-                        ),
-                      ),
-                      child:
-                          KeyedSubtree(key: ValueKey(pageKey), child: content),
+                    TrainingEvolutionPageSwitcher(
+                      pageKey: pageKey,
+                      child: content,
                     ),
                     if (controller.isReturningHome.value)
                       _buildReturningHomeOverlay(),
