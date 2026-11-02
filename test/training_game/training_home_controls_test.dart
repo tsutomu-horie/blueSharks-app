@@ -153,7 +153,8 @@ void main() {
     await tester.pump(const Duration(seconds: 2));
     expect(find.byKey(const ValueKey('training-hud-guide-progress')),
         findsNothing);
-    expect(find.byKey(const ValueKey('training-hud-guide-dialog')), findsNothing);
+    expect(
+        find.byKey(const ValueKey('training-hud-guide-dialog')), findsNothing);
 
     final gesture = await tester.startGesture(tester.getCenter(entry));
     await tester.pump(Duration.zero);
