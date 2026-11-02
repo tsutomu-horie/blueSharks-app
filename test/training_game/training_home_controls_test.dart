@@ -148,7 +148,7 @@ void main() {
         find.byKey(const ValueKey('training-hud-guide-dialog')), findsNothing);
 
     final cancelledGesture = await tester.startGesture(tester.getCenter(entry));
-    await tester.pump(const Duration(seconds: 1));
+    await tester.pump(const Duration(milliseconds: 100));
     await cancelledGesture.up();
     await tester.pump(const Duration(seconds: 2));
     expect(find.byKey(const ValueKey('training-hud-guide-progress')),
@@ -158,7 +158,7 @@ void main() {
 
     final gesture = await tester.startGesture(tester.getCenter(entry));
     await tester.pump(Duration.zero);
-    await tester.pump(const Duration(milliseconds: 1999));
+    await tester.pump(const Duration(milliseconds: 249));
     final ring = find.byKey(const ValueKey('training-hud-guide-progress'));
     expect(ring, findsNothing);
     await tester.pump(const Duration(milliseconds: 1));
@@ -193,7 +193,7 @@ void main() {
     final unlockedGesture =
         await tester.startGesture(tester.getCenter(find.text('練習 / MG')));
     await tester.pump(Duration.zero);
-    await tester.pump(const Duration(milliseconds: 2700));
+    await tester.pump(const Duration(milliseconds: 950));
     expect(
       find.text(
         TrainingHudGuide.messageFor(TrainingHudGuideItem.miniGame),
