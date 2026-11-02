@@ -71,8 +71,20 @@ void main() {
         elapsedHours: 0,
       );
       expect(result.length, stage == 0 ? 2 : 3);
-      expect(
-          result.every((warning) => warning.body.contains('ゲームオーバー')), isTrue);
+      if (stage == 0) {
+        expect(result.every((warning) => warning.body.contains('ゲームオーバー')),
+            isTrue);
+      } else {
+        for (final warning in result) {
+          final main = warnings(
+            name: warning.meterName,
+            value: 0,
+            zero: warning.meterName == '清潔' ? 48 : 24,
+          ).single;
+          expect(warning.title, main.title);
+          expect(warning.body, main.body);
+        }
+      }
     }
   });
   test('multiple main game conditions produce separate warnings', () {

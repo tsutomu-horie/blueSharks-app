@@ -22,6 +22,18 @@ class TrainingRetirementWarning {
 
   static const _zeroLimits = {'食事': 48, '体調': 48, '清潔': 72};
 
+  static (String, String) _zeroCopy(String name) => switch (name) {
+        '食事' => ('お腹が空いています', '空腹が続いています。このままでは、鮫太郎が引退するおそれがあります。ごはんをあげましょう。'),
+        '体調' => (
+            '体調が悪くなっています',
+            '体調が悪い状態が続いています。このままでは、鮫太郎が引退するおそれがあります。休養をとって、回復させましょう。'
+          ),
+        _ => (
+            '部屋が汚れています',
+            '部屋が汚れた状態が続いています。このままでは、鮫太郎が引退するおそれがあります。掃除をして、清潔にしましょう。'
+          ),
+      };
+
   /// Includes not-yet-due episodes so a clock resync cannot reopen a dismissed
   /// card. Recovery, a new cycle, and the existing end state remove episodes.
   static Set<String> activeEpisodes({
@@ -70,11 +82,14 @@ class TrainingRetirementWarning {
           '体調' => ('体調が悪くなっています', '休養をとって、回復させましょう。'),
           _ => ('部屋が汚れています', '掃除をして、清潔にしましょう。'),
         };
+        final (sharedTitle, sharedBody) = _zeroCopy(name);
         warnings.add(TrainingRetirementWarning(
           episode: '$scope:tutorial:$stageIndex:$name',
           meterName: name,
-          title: title,
-          body: '$nameの数値が0です。このままではゲームオーバーになります。$action',
+          title: stageIndex == 1 ? sharedTitle : title,
+          body: stageIndex == 1
+              ? sharedBody
+              : '$nameの数値が0です。このままではゲームオーバーになります。$action',
           remainingHours: 0,
         ));
       }
@@ -110,17 +125,7 @@ class TrainingRetirementWarning {
         continue;
       }
       final name = entry.key;
-      final (title, body) = switch (name) {
-        '食事' => ('お腹が空いています', '空腹が続いています。このままでは、鮫太郎が引退するおそれがあります。ごはんをあげましょう。'),
-        '体調' => (
-            '体調が悪くなっています',
-            '体調が悪い状態が続いています。このままでは、鮫太郎が引退するおそれがあります。休養をとって、回復させましょう。'
-          ),
-        _ => (
-            '部屋が汚れています',
-            '部屋が汚れた状態が続いています。このままでは、鮫太郎が引退するおそれがあります。掃除をして、清潔にしましょう。'
-          ),
-      };
+      final (title, body) = _zeroCopy(name);
       warnings.add(TrainingRetirementWarning(
         episode: '$scope:zero:$name:${elapsedHours - hours}',
         meterName: name,
