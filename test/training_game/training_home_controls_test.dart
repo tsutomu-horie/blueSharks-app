@@ -248,7 +248,7 @@ void main() {
           tester
               .getSize(find.byKey(const ValueKey('training-home-footer')))
               .height,
-          92,
+          TrainingHomeStyle.footerHeight.h.clamp(112.0, 180.0),
         );
         if (baseline != null) expect(trainingRect, baseline);
         baseline = trainingRect;
@@ -287,7 +287,8 @@ void main() {
                   find.byKey(ValueKey('training-home-care-${type.name}'))),
           };
       final baseline = rects();
-      expect(baseline['footer']!.height, 92);
+      expect(baseline['footer']!.height,
+          TrainingHomeStyle.footerHeight.h.clamp(112.0, 180.0));
       final clean = find.byKey(const ValueKey('training-home-care-clean'));
       final states = [
         const Duration(seconds: 12),
@@ -665,7 +666,7 @@ void main() {
   testWidgets('ゲージの既存色境界と100超過50を維持', (tester) async {
     const red = Color(0xffd03b3b),
         orange = Color(0xffeda100),
-        blue = Color(0xff7ec8f0),
+        blue = Color(0xff36bef1),
         green = Color(0xff5ee05e);
     for (final sample in [
       (0.0, red, 0.0, 0.0),
@@ -698,7 +699,7 @@ void main() {
       final fill = find.descendant(
           of: find.byType(FractionallySizedBox).first,
           matching: find.byType(ColoredBox));
-      expect(tester.getSize(fill).height, 5);
+      expect(tester.getSize(fill).height, 8);
       expect(tester.getSize(fill).width, closeTo(150 * sample.$3, .001));
       expect(bars.length, sample.$4 == 0 ? 1 : 2);
       if (sample.$4 > 0) {

@@ -39,7 +39,11 @@ void main() {
         addTearDown(Get.reset);
         Get.put<TrainingGameController>(HomeControlsFixture()
           ..stageIndex.value = 2
-          ..isServerStateReady.value = true);
+          ..isServerStateReady.value = true
+          ..meters['食事'] = 55
+          ..meters['仕事'] = 20
+          ..meters['清潔'] = 97
+          ..meters['体調'] = 20);
         final key = GlobalKey();
         await tester
             .pumpWidget(homeControlsHost(captureKey: key, textScale: scale));
