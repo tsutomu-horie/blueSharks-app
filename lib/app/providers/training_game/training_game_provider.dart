@@ -16,7 +16,8 @@ class TrainingGameProvider extends GetConnect {
           .join();
   String? _presence;
   Map<String, String>? _presenceIdentity;
-  String? get presenceCycleToken => _presenceIdentity?['X-Training-Cycle-Token'];
+  String? get presenceCycleToken =>
+      _presenceIdentity?['X-Training-Cycle-Token'];
   Future<void> _presenceFetchChain = Future<void>.value();
 
   /// 育成画面単位の前面状態を次の状態取得に付与します。
@@ -30,16 +31,23 @@ class TrainingGameProvider extends GetConnect {
     final cycle = data['cycle_no'];
     final startedAt = data['started_at'];
     final token = data['presence_cycle_token'];
-    final valid = id is int && id > 0 && cycle is int && cycle > 0 &&
-        startedAt is String && startedAt.isNotEmpty &&
-        token is String && RegExp(r'^[0-9a-f]{32}$').hasMatch(token);
+    final valid = id is int &&
+        id > 0 &&
+        cycle is int &&
+        cycle > 0 &&
+        startedAt is String &&
+        startedAt.isNotEmpty &&
+        token is String &&
+        RegExp(r'^[0-9a-f]{32}$').hasMatch(token);
     if (!valid) return false;
-    final identity = valid ? <String, String>{
-      'X-Training-Player-Id': '$id',
-      'X-Training-Cycle': '$cycle',
-      'X-Training-Started-At': startedAt as String,
-      'X-Training-Cycle-Token': token as String,
-    } : null;
+    final identity = valid
+        ? <String, String>{
+            'X-Training-Player-Id': '$id',
+            'X-Training-Cycle': '$cycle',
+            'X-Training-Started-At': startedAt,
+            'X-Training-Cycle-Token': token,
+          }
+        : null;
     final changed = _presenceIdentity?.toString() != identity?.toString();
     _presenceIdentity = identity;
     return changed && identity != null;
