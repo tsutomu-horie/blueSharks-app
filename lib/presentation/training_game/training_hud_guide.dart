@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/gestures.dart';
@@ -69,6 +70,7 @@ class TrainingHudGuidePressTarget extends StatefulWidget {
     required this.onLongPressGuide,
     this.onTap,
     this.holdDuration = const Duration(milliseconds: 700),
+    this.progressDelay = Duration.zero,
     this.progressDiameter = 88,
     super.key,
   }) : assert(progressDiameter > 0);
@@ -78,6 +80,7 @@ class TrainingHudGuidePressTarget extends StatefulWidget {
   final VoidCallback? onTap;
   final VoidCallback onLongPressGuide;
   final Duration holdDuration;
+  final Duration progressDelay;
   final double progressDiameter;
 
   @override
@@ -91,6 +94,7 @@ class _TrainingHudGuidePressTargetState
   late final AnimationController _progressController;
   Offset? _progressCenter;
   OverlayEntry? _progressOverlay;
+  Timer? _progressTimer;
 
   @override
   void initState() {
@@ -111,9 +115,19 @@ class _TrainingHudGuidePressTargetState
 
   @override
   void dispose() {
+    _progressTimer?.cancel();
     _removeProgressOverlay();
     _progressController.dispose();
     super.dispose();
+  }
+
+  void _scheduleProgress(LongPressDownDetails details) {
+    _progressTimer?.cancel();
+    if (widget.progressDelay == Duration.zero) {
+      _startProgress(details);
+    } else {
+      _progressTimer = Timer(widget.progressDelay, () => _startProgress(details));
+    }
   }
 
   void _startProgress(LongPressDownDetails details) {
@@ -182,6 +196,8 @@ class _TrainingHudGuidePressTargetState
   }
 
   void _clearProgress() {
+    _progressTimer?.cancel();
+    _progressTimer = null;
     if (_progressCenter == null) return;
     _progressController.stop();
     _progressController.value = 0;
@@ -209,9 +225,10 @@ class _TrainingHudGuidePressTargetState
           gestures: {
             LongPressGestureRecognizer: GestureRecognizerFactoryWithHandlers<
                 LongPressGestureRecognizer>(
-              () => LongPressGestureRecognizer(duration: widget.holdDuration),
+              () => LongPressGestureRecognizer(
+                  duration: widget.progressDelay + widget.holdDuration),
               (recognizer) => recognizer
-                ..onLongPressDown = _startProgress
+                ..onLongPressDown = _scheduleProgress
                 ..onLongPressStart = _completeLongPress
                 ..onLongPressCancel = _clearProgress
                 ..onLongPressEnd = (_) => _clearProgress(),
