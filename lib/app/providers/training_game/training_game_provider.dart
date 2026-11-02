@@ -15,11 +15,34 @@ class TrainingGameProvider extends GetConnect {
       List.generate(32, (_) => Random.secure().nextInt(16).toRadixString(16))
           .join();
   String? _presence;
+  Map<String, String>? _presenceIdentity;
+  String? get presenceCycleToken => _presenceIdentity?['X-Training-Cycle-Token'];
   Future<void> _presenceFetchChain = Future<void>.value();
 
   /// 育成画面単位の前面状態を次の状態取得に付与します。
   void setTrainingPresence(bool foreground) {
     _presence = foreground ? 'foreground' : 'background';
+  }
+
+  /// 前面状態の通信に使う、サーバー発行の周期識別子です。
+  bool setTrainingPresenceIdentity(Map<String, dynamic> data) {
+    final id = data['id'];
+    final cycle = data['cycle_no'];
+    final startedAt = data['started_at'];
+    final token = data['presence_cycle_token'];
+    final valid = id is int && id > 0 && cycle is int && cycle > 0 &&
+        startedAt is String && startedAt.isNotEmpty &&
+        token is String && RegExp(r'^[0-9a-f]{32}$').hasMatch(token);
+    if (!valid) return false;
+    final identity = valid ? <String, String>{
+      'X-Training-Player-Id': '$id',
+      'X-Training-Cycle': '$cycle',
+      'X-Training-Started-At': startedAt as String,
+      'X-Training-Cycle-Token': token as String,
+    } : null;
+    final changed = _presenceIdentity?.toString() != identity?.toString();
+    _presenceIdentity = identity;
+    return changed && identity != null;
   }
 
   static final _clock = Stopwatch()..start();
@@ -54,11 +77,13 @@ class TrainingGameProvider extends GetConnect {
   /// 操作キューとは独立して、前面・背景の通知を送信順に処理します。
   Future<void> notifyTrainingPresence({int? expectedSessionVersion}) async {
     final presence = _presence;
-    if (presence == null) return;
+    final identity = _presenceIdentity;
+    if (presence == null || identity == null) return;
     final request = _presenceFetchChain.then((_) async {
       final headers = await _headers(expectedSessionVersion);
       headers['X-Training-Presence'] = presence;
       headers['X-Training-Presence-Id'] = _presenceId;
+      headers.addAll(identity);
       _assertSessionVersion(expectedSessionVersion);
       await _data(await post('game/presence', null, headers: headers),
           requestHeaders: headers);
