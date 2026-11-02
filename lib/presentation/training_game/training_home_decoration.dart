@@ -275,17 +275,29 @@ class TrainingHomeBrand extends StatelessWidget {
   const TrainingHomeBrand({super.key});
 
   @override
-  Widget build(BuildContext context) => Semantics(
-        label: 'KOTO BLUE SHARKS',
-        image: true,
-        child: ExcludeSemantics(
-          child: SvgPicture.asset(
-            'assets/vectors/app_logo_label.svg',
-            width: 154,
-            height: 34,
-            alignment: Alignment.centerLeft,
-            colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
+  Widget build(BuildContext context) {
+    final width =
+        (MediaQuery.sizeOf(context).width * .38).clamp(0.0, 144.0).toDouble();
+    return Semantics(
+      label: 'KOTO BLUE SHARKS',
+      image: true,
+      child: ExcludeSemantics(
+        child: SizedBox(
+          width: width,
+          height: width * 33 / 205,
+          child: FittedBox(
+            fit: BoxFit.contain,
+            alignment: Alignment.topLeft,
+            child: SvgPicture.asset(
+              'assets/vectors/app_logo_label.svg',
+              width: 205,
+              height: 33,
+              colorFilter:
+                  const ColorFilter.mode(Colors.white, BlendMode.srcIn),
+            ),
           ),
         ),
-      );
+      ),
+    );
+  }
 }

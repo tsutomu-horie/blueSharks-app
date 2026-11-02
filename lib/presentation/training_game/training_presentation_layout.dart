@@ -12,14 +12,18 @@ AppBar trainingPresentationAppBar({
   required Widget title,
   required IconData icon,
   bool primary = true,
+  bool automaticallyImplyLeading = false,
+  double toolbarHeight = 64,
+  List<Widget>? actions,
 }) =>
     AppBar(
       primary: primary,
       backgroundColor: TrainingHomeStyle.navy,
       foregroundColor: Colors.white,
       elevation: 0,
-      toolbarHeight: 64,
-      automaticallyImplyLeading: false,
+      toolbarHeight: toolbarHeight,
+      automaticallyImplyLeading: automaticallyImplyLeading,
+      actions: actions,
       flexibleSpace: const TrainingHomeRibbon(),
       title: Row(children: [
         Icon(icon, size: 24, color: Colors.white),

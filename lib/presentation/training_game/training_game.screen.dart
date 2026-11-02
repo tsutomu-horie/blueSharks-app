@@ -499,16 +499,16 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
               Container(
                 key: const ValueKey('training-completion-title-pill'),
                 padding: EdgeInsets.symmetric(horizontal: 22.w, vertical: 7.h),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  border: Border.all(color: TrainingHomeStyle.border),
-                  borderRadius: BorderRadius.circular(24.r),
+                decoration: const ShapeDecoration(
+                  color: TrainingHomeStyle.navy,
+                  shape: BeveledRectangleBorder(
+                      borderRadius: BorderRadius.all(Radius.circular(10))),
                 ),
                 child: Text(
                   '図鑑・クリア履歴',
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    color: TrainingHomeStyle.navy,
+                    color: Colors.white,
                     fontFamily: 'LINESeedJP',
                     fontSize: 20.sp,
                     fontWeight: FontWeight.w700,
@@ -519,9 +519,10 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
               Container(
                 key: const ValueKey('training-completion-count-pill'),
                 padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 4.h),
-                decoration: BoxDecoration(
-                  color: const Color(0xffe4f4fb),
-                  borderRadius: BorderRadius.circular(18.r),
+                decoration: const ShapeDecoration(
+                  color: Color(0xffe4f4fb),
+                  shape: BeveledRectangleBorder(
+                      borderRadius: BorderRadius.all(Radius.circular(8))),
                 ),
                 child: Text(
                   '到達 $registeredCount/10',
@@ -572,16 +573,11 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
                                 semanticLabel: position,
                               );
 
-                        return Container(
+                        return MiniGameSelectionFrame(
                           key: ValueKey('training-completion-position-$index'),
                           padding: EdgeInsets.symmetric(
                             horizontal: 5.w,
                             vertical: 3.h,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            border: Border.all(color: const Color(0xffd4e2ec)),
-                            borderRadius: BorderRadius.circular(12.r),
                           ),
                           child: Semantics(
                             label: '$position、${unlocked ? '到達済み' : '未到達'}',
@@ -638,9 +634,10 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
                     backgroundColor: Colors.white,
                     foregroundColor: TrainingHomeStyle.navy,
                     elevation: 0,
-                    side: const BorderSide(color: Color(0xffb8deee)),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12.r),
+                    side: const BorderSide(
+                        color: TrainingHomeStyle.navy, width: 2),
+                    shape: const BeveledRectangleBorder(
+                      borderRadius: BorderRadius.all(Radius.circular(10)),
                     ),
                   ),
                   child: Text(

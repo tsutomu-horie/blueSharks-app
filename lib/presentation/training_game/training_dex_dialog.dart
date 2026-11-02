@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 
 import 'sametaroh_asset.dart';
 import 'training_game_theme.dart';
+import 'training_home_controls.dart';
+import 'mini_games/mini_game_selection_frame.dart';
 
-/// 図鑑の表示専用部品。取得・保存と解放判定は呼び出し元が担当します。
-/// 呼び出し元の Obx 内で生成し、取得後の登録状態を反映してください。
+/// 表示とスクロールだけを担当し、取得・保存・解放判定は呼び出し元で管理します。
 class TrainingDexDialog extends StatelessWidget {
   const TrainingDexDialog({
     required this.registeredCount,
@@ -16,195 +17,170 @@ class TrainingDexDialog extends StatelessWidget {
   final bool Function(String positionName) isPositionUnlocked;
 
   @override
-  Widget build(BuildContext context) {
-    return TrainingGameTheme(
-      child: Dialog(
-        backgroundColor: Colors.white,
-        insetPadding: EdgeInsets.symmetric(horizontal: 22, vertical: 24),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        child: ConstrainedBox(
-          constraints: BoxConstraints(
-            maxWidth: 520,
-            maxHeight: MediaQuery.of(context).size.height * .8,
-          ),
-          child: Padding(
-            padding: EdgeInsets.fromLTRB(20, 18, 20, 14),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Expanded(
-                  child: SingleChildScrollView(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Row(
-                          children: [
-                            Container(
-                              width: 4,
-                              height: 22,
-                              decoration: BoxDecoration(
-                                color: const Color(0xff1f6feb),
-                                borderRadius: BorderRadius.circular(2),
-                              ),
-                            ),
-                            SizedBox(width: 9),
-                            Icon(Icons.menu_book_rounded,
-                                color: Color(0xff1f6feb), size: 20),
-                            SizedBox(width: 6),
+  Widget build(BuildContext context) => TrainingGameTheme(
+        child: Dialog(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          insetPadding:
+              const EdgeInsets.symmetric(horizontal: 12, vertical: 20),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+                maxWidth: 520,
+                maxHeight: MediaQuery.sizeOf(context).height * .84),
+            child: MiniGameSelectionFrame(
+              surface: MiniGameSelectionSurface.window,
+              padding: const EdgeInsets.all(4),
+              child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    ClipPath(
+                      clipper: const ShapeBorderClipper(
+                          shape: BeveledRectangleBorder(
+                              borderRadius: BorderRadius.only(
+                                  topLeft: Radius.circular(12),
+                                  topRight: Radius.circular(12)))),
+                      child: ColoredBox(
+                        color: TrainingHomeStyle.navy,
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 16),
+                          child: Row(children: [
+                            const Icon(Icons.menu_book,
+                                color: Colors.white, size: 26),
+                            const SizedBox(width: 12),
                             Expanded(
-                              child: Text(
-                                'ずかん（$registeredCount/10 登録）',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                            ),
-                          ],
+                                child: Text('ずかん（$registeredCount/10 登録）',
+                                    style: const TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.w700,
+                                        color: Colors.white))),
+                          ]),
                         ),
-                        SizedBox(height: 8),
-                        Text(
-                          registeredCount == 0
-                              ? '一軍で待っている10のポジション。\nいまはまだすべて未解放です。育て方しだいで、どれか1つに到達します。'
-                              : '一軍で待っている10のポジション。\n解放したポジションは登録済みとして表示されます。',
-                          style: TextStyle(
-                            color: const Color(0xff5b6672),
-                            fontSize: 14,
-                            height: 1.75,
-                          ),
-                        ),
-                        SizedBox(height: 8),
-                        ..._dexPositions.map((position) => _buildDexCard(
-                            position, isPositionUnlocked(position.name))),
-                      ],
+                      ),
                     ),
-                  ),
-                ),
-                TextButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  style: TextButton.styleFrom(minimumSize: const Size(48, 48)),
-                  child: const Text('閉じる'),
-                ),
-              ],
+                    Container(height: 3, color: const Color(0xff39bdf5)),
+                    Expanded(
+                        child: SingleChildScrollView(
+                      padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
+                      child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            ..._dexPositions.map((position) => _buildDexCard(
+                                position, isPositionUnlocked(position.name))),
+                          ]),
+                    )),
+                    Padding(
+                      padding: const EdgeInsets.all(12),
+                      child: MiniGameSelectionFrame(
+                        surface: MiniGameSelectionSurface.close,
+                        child: TextButton(
+                          onPressed: () => Navigator.of(context).pop(),
+                          style: TextButton.styleFrom(
+                              minimumSize: const Size(48, 48),
+                              foregroundColor: TrainingHomeStyle.navy,
+                              shape: const BeveledRectangleBorder(
+                                  borderRadius:
+                                      BorderRadius.all(Radius.circular(8)))),
+                          child: const Text('閉じる',
+                              style: TextStyle(
+                                  fontSize: 16, fontWeight: FontWeight.w700)),
+                        ),
+                      ),
+                    ),
+                  ]),
             ),
           ),
         ),
-      ),
-    );
-  }
+      );
 
-  /// シミュレータHTMLの図鑑カードと同じ構成でポジションを表示します。
   Widget _buildDexCard(_DexPosition position, bool unlocked) {
-    // 未解放の進化先も元の姿をシルエットで示すため、常に同じ素材を使います。
     final frame = SametarohAssets.positionFrameFor(position.name);
-    final borderColor =
-        unlocked ? const Color(0xff1f6feb) : const Color(0xffdfe4ea);
-    final backgroundColor =
-        unlocked ? const Color(0xffe8f0fe) : const Color(0xfffafbfc);
-    return Opacity(
-      opacity: 1,
-      child: Container(
-        width: double.infinity,
-        margin: EdgeInsets.symmetric(vertical: 3),
-        padding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-        decoration: BoxDecoration(
-          color: backgroundColor,
-          border: Border.all(color: borderColor),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+    final statusColor =
+        unlocked ? const Color(0xff0076bc) : const Color(0xff667b96);
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: MiniGameSelectionFrame(
+        padding: const EdgeInsets.all(12),
+        child: DefaultTextStyle.merge(
+          style: const TextStyle(color: TrainingHomeStyle.navy),
+          child:
+              Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Wrap(
-              spacing: 6,
-              runSpacing: 4,
-              crossAxisAlignment: WrapCrossAlignment.center,
-              children: [
-                Container(
-                  padding: EdgeInsets.symmetric(horizontal: 6, vertical: 1),
-                  decoration: BoxDecoration(
+                spacing: 8,
+                runSpacing: 6,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: [
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                    decoration: const ShapeDecoration(
+                        color: TrainingHomeStyle.navy,
+                        shape: BeveledRectangleBorder(
+                            borderRadius:
+                                BorderRadius.all(Radius.circular(4)))),
+                    child: Text(position.number,
+                        style:
+                            const TextStyle(color: Colors.white, fontSize: 12)),
+                  ),
+                  Text(position.name,
+                      style: const TextStyle(
+                          fontSize: 17, fontWeight: FontWeight.w700)),
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
                     color: unlocked
-                        ? const Color(0xff1554b0)
-                        : const Color(0xff5b6672),
-                    borderRadius: BorderRadius.circular(4),
+                        ? const Color(0xffe0f2fd)
+                        : const Color(0xffe9eef4),
+                    child: Row(mainAxisSize: MainAxisSize.min, children: [
+                      Icon(unlocked ? Icons.check_circle : Icons.lock_outline,
+                          size: 14, color: statusColor),
+                      const SizedBox(width: 4),
+                      Text(unlocked ? '登録済み' : '未解放',
+                          style: TextStyle(
+                              color: statusColor,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700)),
+                    ]),
                   ),
-                  child: Text(
-                    position.number,
-                    style: TextStyle(color: Colors.white, fontSize: 12),
-                  ),
-                ),
-                Text(
-                  position.name,
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                Text(
-                  unlocked ? '✅ 登録済み' : '🔒 未解放',
-                  style: TextStyle(
-                    color: unlocked
-                        ? const Color(0xff1554b0)
-                        : const Color(0xff5b6672),
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ],
-            ),
+                ]),
             if (frame != null)
               Align(
                 alignment: Alignment.center,
                 child: unlocked
                     ? SametarohFrameImage(
-                        alignment: Alignment.bottomCenter,
                         frame: frame,
                         width: 84,
                         height: 112,
-                      )
+                        alignment: Alignment.bottomCenter)
                     : ColorFiltered(
                         colorFilter: const ColorFilter.mode(
-                          Color(0xffc5cbd2),
-                          BlendMode.srcIn,
-                        ),
-                        child: Opacity(
-                          opacity: .72,
-                          child: SametarohFrameImage(
-                            alignment: Alignment.bottomCenter,
+                            Color(0xff8c9db6), BlendMode.srcIn),
+                        child: SametarohFrameImage(
                             frame: frame,
                             width: 84,
                             height: 112,
-                          ),
-                        ),
-                      ),
+                            alignment: Alignment.bottomCenter)),
               ),
-            SizedBox(height: 5),
+            const SizedBox(height: 5),
             _buildDexDetail('役割', position.role),
             _buildDexDetail('資質', position.talent),
-          ],
+          ]),
         ),
       ),
     );
   }
 
-  /// 図鑑カード内の説明行を表示します。
-  Widget _buildDexDetail(String label, String value) {
-    return Padding(
-      padding: EdgeInsets.only(top: 2),
-      child: Text.rich(
-        TextSpan(
-          children: [
-            TextSpan(
-              text: '$label  ',
-              style: const TextStyle(color: Color(0xff5b6672)),
-            ),
-            TextSpan(text: value),
-          ],
-        ),
-        style: TextStyle(fontSize: 13, height: 1.65),
-      ),
-    );
-  }
+  Widget _buildDexDetail(String label, String value) => Padding(
+        padding: const EdgeInsets.only(top: 2),
+        child: Text.rich(
+            TextSpan(children: [
+              TextSpan(
+                  text: '$label  ',
+                  style: const TextStyle(color: Color(0xff0076bc))),
+              TextSpan(text: value),
+            ]),
+            style: const TextStyle(fontSize: 13, height: 1.65)),
+      );
 }
 
 /// 図鑑に表示するポジション説明です。
