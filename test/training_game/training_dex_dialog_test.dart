@@ -40,8 +40,8 @@ void main() {
   testWidgets('未解放10件の説明、最終項目へのスクロール、閉じる', (tester) async {
     await open(tester);
     expect(find.textContaining('0/10 登録'), findsOneWidget);
-    expect(find.text('🔒 未解放'), findsNWidgets(10));
-    expect(find.text('✅ 登録済み'), findsNothing);
+    expect(find.text('未解放'), findsNWidgets(10));
+    expect(find.text('登録済み'), findsNothing);
     expect(find.byType(SametarohFrameImage), findsNWidgets(10));
     expect(find.byType(ColorFiltered), findsNWidgets(10));
     await tester.scrollUntilVisible(find.text('フルバック'), 250,
@@ -56,8 +56,8 @@ void main() {
   testWidgets('登録済みだけ支給素材と登録表示になる', (tester) async {
     await open(tester, unlocked: true);
     expect(find.textContaining('1/10 登録'), findsOneWidget);
-    expect(find.text('✅ 登録済み'), findsOneWidget);
-    expect(find.text('🔒 未解放'), findsNWidgets(9));
+    expect(find.text('登録済み'), findsOneWidget);
+    expect(find.text('未解放'), findsNWidgets(9));
     expect(find.byType(SametarohFrameImage), findsNWidgets(10));
     expect(find.byType(ColorFiltered), findsNWidgets(9));
     expect(tester.takeException(), isNull);

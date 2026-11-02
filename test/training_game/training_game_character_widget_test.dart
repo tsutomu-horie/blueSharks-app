@@ -933,7 +933,7 @@ void main() {
     controller.unlockedPositions.assignAll(['prop', 'hooker']);
     await tester.pump();
     expect(find.textContaining('2/10 登録'), findsOneWidget);
-    expect(find.text('✅ 登録済み'), findsNWidgets(2));
+    expect(find.text('登録済み'), findsNWidgets(2));
     await tester.tap(find.text('閉じる'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
@@ -994,10 +994,10 @@ void main() {
         findsNWidgets(failure ? 9 : 10),
       );
       expect(
-        find.text('✅ 登録済み'),
+        find.text('登録済み'),
         failure ? findsOneWidget : findsNothing,
       );
-      expect(find.text('🔒 未解放'), findsNWidgets(failure ? 9 : 10));
+      expect(find.text('未解放'), findsNWidgets(failure ? 9 : 10));
       expect(controller.callbackTrace, ['refreshUnlockedPositions']);
       if (!failure) {
         expect(controller.dexRefreshGate!.isCompleted, isFalse);
