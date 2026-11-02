@@ -73,47 +73,7 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
                         ? _buildEvolutionFlow()
                         : controller.ended.value
                             ? _buildEndingFlow(context)
-                            : Column(
-                                children: [
-                                  Expanded(
-                                    child: Stack(
-                                      children: [
-                                        const Positioned.fill(
-                                          child: TrainingHomeBackground(),
-                                        ),
-                                        Column(
-                                          children: [
-                                            SizedBox(
-                                              height: 74.h.clamp(58.0, 110.0),
-                                              width: double.infinity,
-                                              child: TrainingHomeRibbon(
-                                                child: Align(
-                                                  alignment: Alignment.topLeft,
-                                                  child: Padding(
-                                                    padding: EdgeInsets.only(
-                                                        left: 16.w, top: 16.h),
-                                                    child:
-                                                        const TrainingHomeBrand(),
-                                                  ),
-                                                ),
-                                              ),
-                                            ),
-                                            if (controller.syncStatusMessage
-                                                    .value.isNotEmpty &&
-                                                controller.syncStatus.value !=
-                                                    TrainingSyncStatus.syncing)
-                                              _buildSyncStatusBanner(context),
-                                            _buildHud(context),
-                                            Expanded(
-                                                child: _buildRoom(context)),
-                                          ],
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  _buildCareBar(context),
-                                ],
-                              )
+                            : _buildHome(context)
                     : controller.serverErrorMessage.value.isEmpty
                         ? const Center(child: CircularProgressIndicator())
                         : _buildConnectionError();
@@ -143,6 +103,68 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
         ),
       ),
     );
+  }
+
+  /// 縦幅が足りない横画面では、ホーム全体をスクロールして操作を保ちます。
+  Widget _buildHome(BuildContext context) {
+    final syncBanner = controller.syncStatusMessage.value.isNotEmpty &&
+            controller.syncStatus.value != TrainingSyncStatus.syncing
+        ? _buildSyncStatusBanner(context)
+        : null;
+    final content = Column(
+      children: [
+        Expanded(
+          child: Stack(
+            children: [
+              const Positioned.fill(
+                child: TrainingHomeBackground(),
+              ),
+              Column(
+                children: [
+                  SizedBox(
+                    height: 74.h.clamp(58.0, 110.0),
+                    width: double.infinity,
+                    child: TrainingHomeRibbon(
+                      child: Align(
+                        alignment: Alignment.topLeft,
+                        child: Padding(
+                          padding: EdgeInsets.only(left: 16.w, top: 16.h),
+                          child: const TrainingHomeBrand(),
+                        ),
+                      ),
+                    ),
+                  ),
+                  _buildHud(context),
+                  Expanded(child: _buildRoom(context)),
+                ],
+              ),
+            ],
+          ),
+        ),
+        _buildCareBar(context),
+      ],
+    );
+    final textExtra =
+        (MediaQuery.textScalerOf(context).scale(14) - 14).clamp(0.0, 28.0);
+    final minimumHeight = 74.h.clamp(58.0, 110.0) +
+        154.h.clamp(144.0, 208.0) +
+        textExtra * 4 +
+        TrainingHomeStyle.footerHeight.h.clamp(112.0, 180.0) +
+        304.h.clamp(130.0, 420.0);
+    return LayoutBuilder(builder: (context, constraints) {
+      if (syncBanner == null && constraints.maxHeight >= minimumHeight) {
+        return content;
+      }
+      return SingleChildScrollView(
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          if (syncBanner != null) syncBanner,
+          SizedBox(
+            height: constraints.maxHeight.clamp(minimumHeight, double.infinity),
+            child: content,
+          ),
+        ]),
+      );
+    });
   }
 
   /// ホーム遷移中は画面操作を抑止し、ロード中であることを表示します。
