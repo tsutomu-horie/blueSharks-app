@@ -18,6 +18,12 @@ on:
       - 'test/training_game/training_workout_scene_test.dart'
       - 'lib/presentation/training_game/training_presentation_layout.dart'
       - 'lib/presentation/training_game/mini_games/mini_game_selection*.dart'
+      - 'lib/presentation/training_game/mini_games/mini_game_chrome.dart'
+      - 'lib/presentation/training_game/training_dex_dialog.dart'
+      - 'lib/presentation/training_game/training_home_decoration.dart'
+      - 'test/training_game/mini_games_and_dex_design_render_test.dart'
+      - 'test/training_game/training_game_text_render_test.dart'
+      - 'test/training_game/training_dex_dialog_test.dart'
       - 'test/training_game/mini_game_selection*'
       - 'assets/images/training_game/selection/**'
       - 'pubspec.yaml'
@@ -45,24 +51,39 @@ jobs:
           dart format --output=none --set-exit-if-changed
           lib/presentation/training_game/mini_games/mini_game_selection_sheet.dart
           lib/presentation/training_game/mini_games/mini_game_selection_frame.dart
+          lib/presentation/training_game/mini_games/mini_game_chrome.dart
+          lib/presentation/training_game/training_dex_dialog.dart
+          lib/presentation/training_game/training_home_decoration.dart
           lib/presentation/training_game/training_game.screen.dart
           test/training_game/mini_game_selection_sheet_test.dart
           test/training_game/mini_game_selection_integration_test.dart
           test/training_game/mini_game_selection_render_test.dart
+          test/training_game/mini_games_and_dex_design_render_test.dart
+          test/training_game/training_game_text_render_test.dart
+          test/training_game/training_dex_dialog_test.dart
       - name: Analyze selection widget and tests
         run: >-
           flutter analyze --no-pub
           lib/presentation/training_game/mini_games/mini_game_selection_sheet.dart
           lib/presentation/training_game/mini_games/mini_game_selection_frame.dart
+          lib/presentation/training_game/mini_games/mini_game_chrome.dart
+          lib/presentation/training_game/training_dex_dialog.dart
+          lib/presentation/training_game/training_home_decoration.dart
           test/training_game/mini_game_selection_sheet_test.dart
           test/training_game/mini_game_selection_integration_test.dart
           test/training_game/mini_game_selection_render_test.dart
+          test/training_game/mini_games_and_dex_design_render_test.dart
+          test/training_game/training_game_text_render_test.dart
+          test/training_game/training_dex_dialog_test.dart
       - name: Test selection, navigation and existing HOME controls
         run: >-
           flutter test --no-pub
           test/training_game/mini_game_selection_sheet_test.dart
           test/training_game/mini_game_selection_integration_test.dart
           test/training_game/mini_game_selection_render_test.dart
+          test/training_game/mini_games_and_dex_design_render_test.dart
+          test/training_game/training_game_text_render_test.dart
+          test/training_game/training_dex_dialog_test.dart
           test/training_game/training_home_controls_test.dart
           test/assets/asset_inputs_test.dart
       - name: Check training screen transitions
