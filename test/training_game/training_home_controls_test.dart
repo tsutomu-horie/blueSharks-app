@@ -354,9 +354,15 @@ void main() {
       ),
     ));
     expect(find.text('9/10'), findsOneWidget);
-    expect(tester.getSemantics(find.byType(TrainingHomeCareButton)),
-        matchesSemantics(label: '筋トレ', value: '9/10', isButton: true,
-            hasEnabledState: true, isEnabled: true, hasTapAction: true));
+    expect(
+        tester.getSemantics(find.byType(TrainingHomeCareButton)),
+        matchesSemantics(
+            label: '筋トレ',
+            value: '9/10',
+            isButton: true,
+            hasEnabledState: true,
+            isEnabled: true,
+            hasTapAction: true));
     semantics.dispose();
   });
 
