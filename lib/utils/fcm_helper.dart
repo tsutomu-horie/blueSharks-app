@@ -25,6 +25,7 @@ class FcmHelper {
   static bool _sessionListenerAdded = false;
   static bool _lifecycleObserverAdded = false;
   static bool _sessionValidationInProgress = false;
+  static Timer? _sessionValidationTimer;
   static final _sessionLifecycleObserver = _SessionLifecycleObserver();
   static final _tokenSync = NotificationTokenSync(
     currentSession: () => AuthToken.sessionVersion,
@@ -56,6 +57,7 @@ class FcmHelper {
     if (!_lifecycleObserverAdded) {
       WidgetsBinding.instance.addObserver(_sessionLifecycleObserver);
       _lifecycleObserverAdded = true;
+      _startSessionValidation();
     }
     if (!_sessionListenerAdded) {
       AuthToken.addSessionChangeListener((_) => _tokenSync.cancel());
@@ -142,6 +144,16 @@ class FcmHelper {
     }
   }
 
+  // FCM delivery is best effort. Check periodically while the app is active
+  // so a device is still signed out if push delivery or registration fails.
+  static void _startSessionValidation() {
+    _sessionValidationTimer?.cancel();
+    _sessionValidationTimer = Timer.periodic(
+      const Duration(seconds: 30),
+      (_) => unawaited(_validateCurrentSession()),
+    );
+  }
+
   static Future<void> _validateCurrentSession() async {
     if (_sessionValidationInProgress) return;
     _sessionValidationInProgress = true;
@@ -168,7 +180,11 @@ class _SessionLifecycleObserver extends WidgetsBindingObserver {
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
+      FcmHelper._startSessionValidation();
       unawaited(FcmHelper._validateCurrentSession());
+    } else {
+      FcmHelper._sessionValidationTimer?.cancel();
+      FcmHelper._sessionValidationTimer = null;
     }
   }
 }

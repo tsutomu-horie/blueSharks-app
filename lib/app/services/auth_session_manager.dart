@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:koto_blue_sharks/app/services/auth_token.dart';
 import 'package:koto_blue_sharks/infrastructure/navigation/routes.dart';
+import 'package:koto_blue_sharks/presentation/training_game/training_game_theme.dart';
 
 class AuthSessionManager {
   AuthSessionManager._();
@@ -56,26 +57,45 @@ class AuthSessionManager {
 
     _noticePendingOrVisible = true;
     try {
-      if (Get.currentRoute != Routes.LOGIN) {
-        await Get.offAllNamed(Routes.LOGIN);
-      }
-      await Get.dialog<void>(
-        AlertDialog(
-          title: const Text('別の端末でログインされました'),
-          content: const Text(
-            'データ保全のため、この端末からログアウトしました。再度利用するにはログインしてください。',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Get.back<void>(),
-              child: const Text('ログイン画面へ'),
-            ),
-          ],
-        ),
-        barrierDismissible: false,
-      );
+      // Navigation futures complete when the destination is removed, so do not
+      // wait for that future while processing an API response.
+      unawaited(Get.offAll<void>(() => const SessionReplacedScreen()));
     } finally {
       _noticePendingOrVisible = false;
     }
+  }
+}
+
+class SessionReplacedScreen extends StatelessWidget {
+  const SessionReplacedScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return TrainingGameTheme(
+      child: PopScope(
+        canPop: false,
+        child: Scaffold(
+          body: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text(
+                    '別端末でのログインを検知しました。\nデータ保全のため自動ログアウトしました。',
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: () => Get.offAllNamed(Routes.LOGIN),
+                    child: const Text('ログイン画面へ'),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }
