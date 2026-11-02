@@ -15,6 +15,7 @@ class PositionProvider extends TrainingGameProvider {
     'stage_code': 'training',
     'status': 'playing',
     'started_at': '2026-10-23T12:00:00.000Z',
+    'presence_cycle_token': 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
     'server_time': '2026-10-23T12:00:00.000Z',
     'elapsed_seconds': 0,
     'work_available': true,
@@ -32,6 +33,16 @@ class PositionProvider extends TrainingGameProvider {
   bool failBook = false;
   Completer<void>? gate;
   Completer<void>? readGate;
+  bool snapshotBeforeReadGate = false;
+  bool failAfterReadGate = false;
+  int nullTokenReads = 0;
+  final readStarted = Completer<void>();
+  final presenceTokens = <String?>[];
+  @override
+  Future<void> notifyTrainingPresence({int? expectedSessionVersion}) async {
+    presenceTokens.add(presenceCycleToken);
+  }
+
   @override
   Future<Map<String, dynamic>> start(
           {required String stageCode,
@@ -42,8 +53,17 @@ class PositionProvider extends TrainingGameProvider {
   @override
   Future<Map<String, dynamic>?> fetchCurrent(
       {int? expectedSessionVersion}) async {
+    final snapshot = Map<String, dynamic>.from(data);
+    if (readGate != null && !readStarted.isCompleted) readStarted.complete();
     await readGate?.future;
-    return Map.from(data);
+    if (failAfterReadGate) throw StateError('old request failed');
+    final result =
+        snapshotBeforeReadGate ? snapshot : Map<String, dynamic>.from(data);
+    if (nullTokenReads > 0) {
+      nullTokenReads--;
+      result['presence_cycle_token'] = null;
+    }
+    return result;
   }
 
   @override
@@ -94,6 +114,72 @@ void main() {
     await c.debugStartAtTraining();
     return c;
   }
+
+  test('同一秒に育成を再開始しても新しい周期で直ちに在室連絡する', () async {
+    final p = PositionProvider();
+    final c = await open(p);
+    p.setTrainingPresence(true);
+    p.presenceTokens.clear();
+    p.data['presence_cycle_token'] = 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb';
+    await c.debugStartAtTraining();
+    await Future<void>.delayed(Duration.zero);
+    expect(p.presenceTokens, contains('bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'));
+  }, skip: !AppEnvironment.showsTrainingDebugUi);
+
+  test('再開始前に開始した取得の古い応答で周期を戻さない', () async {
+    final p = PositionProvider();
+    final c = await open(p);
+    p.readGate = Completer<void>();
+    p.snapshotBeforeReadGate = true;
+    final oldFetch = c.retryRestoreServerState();
+    await p.readStarted.future;
+    p.data['presence_cycle_token'] = 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb';
+    await c.debugStartAtTraining();
+    p.readGate!.complete();
+    await oldFetch;
+    expect(p.presenceCycleToken, 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb');
+  }, skip: !AppEnvironment.showsTrainingDebugUi);
+
+  test('再開始前の取得失敗で新しい周期をエラーにしない', () async {
+    final p = PositionProvider();
+    final c = await open(p);
+    p.readGate = Completer<void>();
+    p.failAfterReadGate = true;
+    final oldFetch = c.retryRestoreServerState();
+    await p.readStarted.future;
+    p.data['presence_cycle_token'] = 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb';
+    await c.debugStartAtTraining();
+    p.readGate!.complete();
+    await oldFetch;
+    expect(c.isServerStateReady.value, isTrue);
+    expect(c.serverErrorMessage.value, isEmpty);
+  }, skip: !AppEnvironment.showsTrainingDebugUi);
+
+  test('不完全な周期情報の応答でメーターを上書きしない', () async {
+    final p = PositionProvider();
+    final c = await open(p);
+    p.data['presence_cycle_token'] = null;
+    p.data['parameters'] = {
+      'hunger': 0,
+      'cleanliness': 0,
+      'condition': 0,
+      'work': 0
+    };
+    await c.retryRestoreServerState();
+    expect(p.presenceCycleToken, 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa');
+    expect(c.meters['清潔'], 100);
+  }, skip: !AppEnvironment.showsTrainingDebugUi);
+
+  test('不完全な周期情報は一度再取得して時計を再開する', () async {
+    final p = PositionProvider();
+    final c = await open(p);
+    p.nullTokenReads = 1;
+    await c.retryRestoreServerState();
+    expect(p.nullTokenReads, 0);
+    expect(c.isServerStateReady.value, isTrue);
+    expect(c.serverErrorMessage.value, isEmpty);
+    expect(p.presenceCycleToken, 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa');
+  }, skip: !AppEnvironment.showsTrainingDebugUi);
 
   test('固定と解除はサーバー結果だけを表示し、完了時に図鑑を更新する', () async {
     final p = PositionProvider();

@@ -237,6 +237,26 @@ void main() {
     }
   });
 
+  test('在室連絡の周期は有効なサーバー識別子だけで更新される', () {
+    final p = TrainingGameProvider();
+    final data = <String, dynamic>{
+      'id': 7,
+      'cycle_no': 1,
+      'started_at': '2026-10-27T00:00:00Z',
+      'presence_cycle_token': 'a' * 32,
+    };
+    expect(p.setTrainingPresenceIdentity(data), isTrue);
+    expect(p.setTrainingPresenceIdentity(data), isFalse);
+    expect(
+        p.setTrainingPresenceIdentity(
+            {...data, 'presence_cycle_token': 'b' * 32}),
+        isTrue);
+    expect(
+        p.setTrainingPresenceIdentity({...data, 'presence_cycle_token': null}),
+        isFalse);
+    expect(p.presenceCycleToken, 'b' * 32);
+  });
+
   testWidgets('foreground refresh poll adopts new rate within 30 ticks',
       (t) async {
     final p = P();

@@ -543,6 +543,8 @@ class TrainingGameController extends GetxController
   }
 
   int _serverLockVersion = 0;
+  bool _presenceNeedsAnnouncement = false;
+  int _presenceStateGeneration = 0;
   double? _serverRequiredWorkValue;
   int? _serverRequiredElapsedHours;
   String? _serverNextStageCode;
@@ -2231,6 +2233,7 @@ class TrainingGameController extends GetxController
 
   /// 通知に失敗した場合はサーバーの前面期限で自動的に終了します。
   Future<void> _notifyTrainingPresence() async {
+    _presenceNeedsAnnouncement = false;
     try {
       await _serverProvider.notifyTrainingPresence(
           expectedSessionVersion: _ownedSessionVersion);
@@ -2270,6 +2273,7 @@ class TrainingGameController extends GetxController
   Future<void> _restoreServerState() async {
     if (debugPositionBusy.value) return;
     if (!_ownsSession(_ownedSessionVersion)) return;
+    final presenceGeneration = _presenceStateGeneration;
     serverErrorMessage.value = '';
     // 復帰イベントが短時間に複数回発生しても、取得処理を直列化します。
     _restoreChain = _restoreChain.then((_) async {
@@ -2285,10 +2289,22 @@ class TrainingGameController extends GetxController
       var data = await _serverProvider.fetchCurrent(
         expectedSessionVersion: _ownedSessionVersion,
       );
-      if (!_ownsSession(_ownedSessionVersion)) return;
+      if (!_ownsSession(_ownedSessionVersion) ||
+          presenceGeneration != _presenceStateGeneration) return;
       if (data != null) {
         data = await _importLegacyProgressIfNeeded(data);
-        if (!_ownsSession(_ownedSessionVersion)) return;
+        if (!_ownsSession(_ownedSessionVersion) ||
+            presenceGeneration != _presenceStateGeneration) return;
+        if (_hasInvalidPresenceToken(data)) {
+          data = await _serverProvider.fetchCurrent(
+            expectedSessionVersion: _ownedSessionVersion,
+          );
+          if (!_ownsSession(_ownedSessionVersion) ||
+              presenceGeneration != _presenceStateGeneration) return;
+          if (data == null || _hasInvalidPresenceToken(data)) {
+            throw StateError('育成状態の再取得に失敗しました。');
+          }
+        }
         final hasPendingActions = _hasPersistedPendingActionsFor(data);
         if (!_initializeServerState(
           data,
@@ -2305,7 +2321,8 @@ class TrainingGameController extends GetxController
       isServerStateReady.value = true;
     }).catchError((_) {
       // 仕様どおり、通信不可時はローカル状態だけでプレイを継続しません。
-      if (_ownsSession(_ownedSessionVersion)) {
+      if (_ownsSession(_ownedSessionVersion) &&
+          presenceGeneration == _presenceStateGeneration) {
         isServerStateReady.value = false;
         serverErrorMessage.value = '通信状態を確認して、もう一度お試しください。';
       }
@@ -2401,7 +2418,7 @@ class TrainingGameController extends GetxController
     _serverCycleNo = (data['cycle_no'] as num?)?.toInt();
     _serverGameStartedAt = _gameStartedAtFrom(data['started_at']);
     _serverLockVersion = (data['lock_version'] as num?)?.toInt() ?? 0;
-    _applyServerState(data);
+    _applyServerState(data, allowPresenceCycleChange: true);
     _refreshUnlockedPositionsInBackground();
   }
 
@@ -2411,6 +2428,7 @@ class TrainingGameController extends GetxController
     bool forceNewCycle = false,
     bool? restoreLocalStateOverride,
   }) {
+    if (_hasInvalidPresenceToken(data)) return false;
     final serverCycleNo = (data['cycle_no'] as num?)?.toInt();
     final serverStartedAt = _gameStartedAtFrom(data['started_at']);
     final isNewCycle = forceNewCycle ||
@@ -2435,6 +2453,7 @@ class TrainingGameController extends GetxController
       restoreLocalState:
           restoreLocalStateOverride ?? (!isNewCycle && !hasStaleLocalCycle),
       restoreDebugElapsed: !isNewCycle && !hasStaleLocalCycle,
+      allowPresenceCycleChange: true,
     )) {
       return false;
     }
@@ -2443,6 +2462,9 @@ class TrainingGameController extends GetxController
     careFeedback.clear();
     _syncBlockedUntilServerRestore = false;
     isServerStateReady.value = true;
+    if (_presenceNeedsAnnouncement && !_isAppInBackground) {
+      unawaited(_notifyTrainingPresence());
+    }
     _refreshUnlockedPositionsInBackground();
     return true;
   }
@@ -2465,7 +2487,15 @@ class TrainingGameController extends GetxController
     Map<String, dynamic> data, {
     bool restoreLocalState = true,
     bool restoreDebugElapsed = true,
+    bool allowPresenceCycleChange = false,
   }) {
+    if (_hasInvalidPresenceToken(data)) return false;
+    final currentToken = _serverProvider.presenceCycleToken;
+    final responseToken = data['presence_cycle_token'];
+    if (!allowPresenceCycleChange &&
+        currentToken != null &&
+        responseToken is String &&
+        responseToken != currentToken) return false;
     final previousStageIndex = stageIndex.value;
     final wasUndecidedFirstTeam = previousStageIndex == stages.length - 1 &&
         _serverPositionCode.value == null &&
@@ -2483,6 +2513,12 @@ class TrainingGameController extends GetxController
         serverStageIndex != null &&
         serverStageIndex < _pendingStageIndex!) {
       return false;
+    }
+    if (_serverProvider.setTrainingPresenceIdentity(data)) {
+      _presenceNeedsAnnouncement = true;
+      if (isServerStateReady.value && !_isAppInBackground) {
+        unawaited(_notifyTrainingPresence());
+      }
     }
     _pendingProgressEventId =
         progressEvent is Map && progressEvent['id'] is String
@@ -2603,6 +2639,13 @@ class TrainingGameController extends GetxController
       _showEvolutionForCurrentStage();
     }
     return true;
+  }
+
+  bool _hasInvalidPresenceToken(Map<String, dynamic> data) {
+    if (_serverProvider.presenceCycleToken == null ||
+        !data.containsKey('presence_cycle_token')) return false;
+    final token = data['presence_cycle_token'];
+    return token is! String || !RegExp(r'^[0-9a-f]{32}$').hasMatch(token);
   }
 
   /// サーバー時計と同一サイクルの経過時間だけを画面状態へ反映します。
@@ -4215,6 +4258,8 @@ class TrainingGameController extends GetxController
     if (debugPositionBusy.value) return;
     if (_pendingStageIndex != null || !_ownsSession(_ownedSessionVersion))
       return;
+    _presenceStateGeneration++;
+    debugPositionBusy.value = true;
     try {
       final data = await _serverProvider.start(
         stageCode: 'training',
@@ -4239,6 +4284,8 @@ class TrainingGameController extends GetxController
       if (_ownsSession(_ownedSessionVersion)) {
         logs.insert(0, '育成期のデバッグ開始に失敗しました。');
       }
+    } finally {
+      debugPositionBusy.value = false;
     }
   }
 
