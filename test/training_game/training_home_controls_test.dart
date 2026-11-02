@@ -51,6 +51,33 @@ Widget homeControlsHost({Key? captureKey, double textScale = 1}) =>
     );
 
 void main() {
+  testWidgets('横画面で同期バナーと拡大文字があってもホーム全体をスクロールできる', (tester) async {
+    tester.view.physicalSize = const Size(568, 320);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    Get.testMode = true;
+    addTearDown(Get.reset);
+    const message =
+        '別の画面で同じ育成の操作を処理中です。順序を守るため、この画面の操作を止めています。処理終了後に再試行してください。';
+    Get.put<TrainingGameController>(HomeControlsFixture()
+      ..stageIndex.value = 2
+      ..isServerStateReady.value = true
+      ..syncStatus.value = TrainingSyncStatus.stopped
+      ..syncStatusMessage.value = message);
+    await tester.pumpWidget(homeControlsHost(textScale: 2));
+    await tester.pump();
+    expect(find.text(message).hitTestable(), findsOneWidget);
+    expect(tester.takeException(), isNull);
+    final footer = find.byKey(const ValueKey('training-home-footer'));
+    await tester.ensureVisible(footer);
+    await tester.pump();
+    expect(tester.getRect(footer).bottom, lessThanOrEqualTo(320.001));
+    expect(find.text('練習 / MG').hitTestable(), findsOneWidget);
+    expect(tester.takeException(), isNull);
+    await tester.pumpWidget(const SizedBox());
+  });
+
   testWidgets('第二段階の4メーターをタップすると対応するガイドを表示する', (tester) async {
     tester.view.physicalSize = const Size(375, 812);
     tester.view.devicePixelRatio = 1;
