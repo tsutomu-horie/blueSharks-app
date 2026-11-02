@@ -72,7 +72,7 @@ void main() {
       await tester.pump(const Duration(milliseconds: 300));
       expect(find.byType(TrainingGameCareActionScreen), findsOneWidget);
       if (scenario == 'cancel-reenter') {
-        await tester.tap(find.byTooltip('お世話を中止'));
+        await tester.binding.handlePopRoute();
         await tester.pump();
         await tester.pump(const Duration(milliseconds: 400));
         await tester.pump();

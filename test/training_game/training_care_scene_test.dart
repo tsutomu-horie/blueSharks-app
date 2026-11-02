@@ -8,6 +8,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:koto_blue_sharks/presentation/training_game/models/training_game_models.dart';
 import 'package:koto_blue_sharks/presentation/training_game/sametaroh_asset.dart';
 import 'package:koto_blue_sharks/presentation/training_game/training_care_scene.dart';
+import 'package:koto_blue_sharks/presentation/training_game/mini_games/mini_game_selection_frame.dart';
 import 'package:koto_blue_sharks/presentation/training_game/training_game_care_action.screen.dart';
 
 const _careActions = [
@@ -154,7 +155,7 @@ void main() {
                 tester.getRect(find.byType(SametarohAnimatedImage));
             expect(panel.contains(character.topLeft), isTrue);
             expect(panel.contains(character.bottomRight), isTrue);
-            // 写真枠や下部キャプションで縮めず、利用可能な領域へ最大contain。
+            // 背景と人物を同じ座標系のまま、利用可能な領域へ最大contain。
             final expectedSize = applyBoxFit(
               BoxFit.contain,
               TrainingCareScene.sourceSize,
@@ -178,11 +179,26 @@ void main() {
             final progressChip = tester.getRect(find
                 .ancestor(
                   of: find.text(progressLabel),
-                  matching: find.byType(Container),
+                  matching: find.byType(MiniGameSelectionFrame),
                 )
                 .first);
-            expect(progressChip.top - sceneBounds.bottom,
-                closeTo(20 * size.height / 812, 0.01));
+            final illustrationFrame = tester.getRect(find
+                .ancestor(
+                  of: find.byType(TrainingCareSceneView),
+                  matching: find.byType(MiniGameSelectionFrame),
+                )
+                .first);
+            // 枠と画像を同じ寸法にし、白い下地の隙間を残しません。
+            expect(sceneBounds, illustrationFrame);
+            expect(illustrationFrame.size.aspectRatio,
+                closeTo(TrainingCareScene.sourceSize.aspectRatio, .001));
+            final bottomPadding = (12 * size.width / 375).clamp(10.0, 20.0);
+            expect(
+                progressChip.center.dy,
+                closeTo(
+                    (illustrationFrame.bottom + size.height - bottomPadding) /
+                        2,
+                    0.01));
             // 1タップで1秒分進む案内を残し、スキップ専用ボタンは表示しない。
             expect(find.text('スキップ'), findsNothing);
             expect(find.text('タップで短縮できます。'), findsOneWidget);
