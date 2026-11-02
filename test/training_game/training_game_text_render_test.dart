@@ -62,12 +62,10 @@ void main() {
         });
         await tester.pump(const Duration(milliseconds: 100));
         expect(tester.takeException(), isNull);
-        final brand = tester.getRect(find.byType(TrainingHomeBrand));
-        final ribbon = tester.getRect(find.byType(TrainingHomeRibbon).first);
-        final bottomFraction = (brand.bottom - ribbon.top) / ribbon.height;
-        final navyRight =
-            ribbon.left + ribbon.width * (.63 - .17 * bottomFraction / .7);
-        expect(brand.right, lessThanOrEqualTo(navyRight - 12));
+        expect(find.byType(TrainingHomeBrand), findsNothing);
+        final panel = tester.getRect(
+            find.byKey(const ValueKey('training-home-parameter-panel')));
+        expect(panel.top, closeTo(0, .001));
         const output = String.fromEnvironment('GAME_TEXT_CAPTURE_DIR');
         if (output.isNotEmpty) {
           await tester.runAsync(() async {
