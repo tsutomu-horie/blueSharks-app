@@ -115,12 +115,16 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
         ? _buildSyncStatusBanner(context)
         : null;
     // Build reactive children here so the surrounding Obx tracks their reads.
-    final hud = _buildHud(context);
+    final topPadding = 12.h.clamp(8.0, 16.0);
+    final hud = Padding(
+      padding: EdgeInsets.only(top: topPadding),
+      child: _buildHud(context),
+    );
     final room = _buildRoom(context);
     final footer = _buildCareBar(context);
     final textExtra =
         (MediaQuery.textScalerOf(context).scale(14) - 14).clamp(0.0, 28.0);
-    final minimumHeight = 74.h.clamp(58.0, 110.0) +
+    final minimumHeight = topPadding +
         154.h.clamp(144.0, 208.0) +
         textExtra * 4 +
         TrainingHomeStyle.footerHeight.h.clamp(112.0, 180.0) +
@@ -138,17 +142,6 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
             child: Stack(children: [
           const Positioned.fill(child: TrainingHomeBackground()),
           Column(children: [
-            SizedBox(
-              height: 74.h.clamp(58.0, 110.0),
-              width: double.infinity,
-              child: TrainingHomeRibbon(
-                  child: Align(
-                alignment: Alignment.topLeft,
-                child: Padding(
-                    padding: EdgeInsets.only(left: 16.w, top: 16.h),
-                    child: const TrainingHomeBrand()),
-              )),
-            ),
             if (syncBanner != null)
               ConstrainedBox(
                 constraints: BoxConstraints(maxHeight: bannerHeight),
