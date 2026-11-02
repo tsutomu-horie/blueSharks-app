@@ -16,6 +16,7 @@ on:
       - 'test/training_game/training_screen_transitions_test.dart'
       - 'test/training_game/training_first_team_evolution_routing_test.dart'
       - 'test/training_game/training_workout_scene_test.dart'
+      - 'lib/presentation/training_game/training_presentation_layout.dart'
       - 'lib/presentation/training_game/mini_games/mini_game_selection*.dart'
       - 'test/training_game/mini_game_selection*'
       - 'assets/images/training_game/selection/**'
