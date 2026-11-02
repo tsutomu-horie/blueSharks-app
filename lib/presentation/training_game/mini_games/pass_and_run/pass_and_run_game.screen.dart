@@ -13,6 +13,10 @@ import 'pass_and_run_catch_feedback.dart';
 import 'pass_and_run_direction_guide.dart';
 import '../../models/training_game_clock.dart';
 import '../../training_game_theme.dart';
+import '../../training_presentation_layout.dart';
+import '../../training_home_controls.dart';
+import '../mini_game_selection_frame.dart';
+import '../mini_game_chrome.dart';
 import '../../models/mini_game_settings.dart';
 import 'pass_and_run_logic.dart';
 import 'pass_and_run_sparse_flick.dart';
@@ -1427,62 +1431,71 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
       0,
       _motion.roundSeconds,
     );
-    return Scaffold(
-      backgroundColor: const Color(0xffe9f4e5),
-      appBar: AppBar(
+    return MiniGameButtonTheme(
+        child: Scaffold(
+      backgroundColor: TrainingHomeStyle.navy,
+      appBar: trainingPresentationAppBar(
         title: const Text('パス＆ラン'),
-        backgroundColor: const Color(0xff153d5b),
-        foregroundColor: Colors.white,
+        icon: Icons.sports_rugby,
+        automaticallyImplyLeading: true,
+        toolbarHeight: 53,
         actions: [
           if (_phase == _PassGamePhase.playing)
-            IconButton(
-              onPressed: _isPaused ? _resumeGame : _pauseGame,
-              tooltip: _isPaused ? '再開' : '一時停止',
-              icon: Icon(_isPaused ? Icons.play_arrow : Icons.pause),
-            ),
+            miniGamePauseControl(
+                paused: _isPaused,
+                onPressed: _isPaused ? _resumeGame : _pauseGame),
         ],
       ),
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            children: [
-              if (_phase != _PassGamePhase.result)
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      _isOutbound ? '往路' : '復路',
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w800,
+      body: DecoratedBox(
+        decoration: const BoxDecoration(gradient: miniGameBackground),
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              children: [
+                if (_phase != _PassGamePhase.result)
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        _isOutbound ? '往路' : '復路',
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w800,
+                          color: Colors.white,
+                        ),
                       ),
-                    ),
-                    Flexible(
-                      child: Text(
-                        '残り ${remainingSeconds.toStringAsFixed(1)}s　PASS $_totalScore',
-                        textAlign: TextAlign.right,
-                        style: const TextStyle(fontWeight: FontWeight.w700),
+                      Flexible(
+                        child: Text(
+                          '残り ${remainingSeconds.toStringAsFixed(1)}s　PASS $_totalScore',
+                          textAlign: TextAlign.right,
+                          style: const TextStyle(
+                              fontWeight: FontWeight.w700, color: Colors.white),
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-              const SizedBox(height: 12),
-              Expanded(
-                child: ValueListenableBuilder<int>(
-                  valueListenable: _fieldTick,
-                  builder: (context, _, child) => _buildField(),
-                ),
-              ),
-              if (_phase != _PassGamePhase.result) ...[
+                    ],
+                  ),
                 const SizedBox(height: 12),
-                _buildStatusPanel(),
+                Expanded(
+                  child: ValueListenableBuilder<int>(
+                    valueListenable: _fieldTick,
+                    builder: (context, _, child) => _buildField(),
+                  ),
+                ),
+                if (_phase != _PassGamePhase.result) ...[
+                  const SizedBox(height: 12),
+                  MiniGameSelectionFrame(
+                      clipContent: true,
+                      child: DefaultTextStyle.merge(
+                          style: const TextStyle(color: TrainingHomeStyle.navy),
+                          child: _buildStatusPanel())),
+                ],
               ],
-            ],
+            ),
           ),
         ),
       ),
-    );
+    ));
   }
 
   /// 2本の縦レーンと並走する2人を表示します。
@@ -1515,168 +1528,175 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
               _dragCurrent = null;
             });
           },
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(16),
-            child: Stack(
-              children: [
-                Positioned.fill(
-                  child: const DecoratedBox(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.centerLeft,
-                        end: Alignment.centerRight,
-                        colors: [
-                          Color(0xff73b33c),
-                          Color(0xff83bd42),
-                          Color(0xff83bd42),
-                          Color(0xff73b33c),
-                        ],
-                        stops: [0, .25, .75, 1],
-                      ),
-                    ),
-                  ),
-                ),
-                Positioned(
-                  left: constraints.maxWidth * .25 - 2,
-                  top: 16,
-                  bottom: 16,
-                  child: _LaneLine(offset: _floorOffset),
-                ),
-                Positioned(
-                  left: constraints.maxWidth * .75 - 2,
-                  top: 16,
-                  bottom: 16,
-                  child: _LaneLine(offset: _floorOffset),
-                ),
-                if (_phase == _PassGamePhase.playing &&
-                    !_isPaused &&
-                    _playerHolding)
+          child: MiniGameSelectionFrame(
+            clipContent: true,
+            child: ClipRRect(
+              borderRadius: BorderRadius.zero,
+              child: Stack(
+                children: [
                   Positioned.fill(
-                    child: IgnorePointer(
-                      child: CustomPaint(
-                        key: const Key('pass-direction-guide'),
-                        painter: PassRunDirectionGuidePainter(
-                          center: player,
-                          attackUp: _isOutbound,
-                          seconds: _motionSeconds,
+                    child: const DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.centerLeft,
+                          end: Alignment.centerRight,
+                          colors: [
+                            Color(0xff73b33c),
+                            Color(0xff83bd42),
+                            Color(0xff83bd42),
+                            Color(0xff73b33c),
+                          ],
+                          stops: [0, .25, .75, 1],
                         ),
                       ),
                     ),
                   ),
-                if (_dragStart != null && _dragCurrent != null)
-                  CustomPaint(
-                    key: const Key('pass-flick-guide'),
-                    size: constraints.biggest,
-                    painter: _FlickGuidePainter(
-                      start: _dragStart!,
-                      end: _dragCurrent!,
-                    ),
-                  ),
-                if (_showFlightTrail)
-                  CustomPaint(
-                    key: const Key('pass-ball-trail'),
-                    size: constraints.biggest,
-                    painter: _BallTrailPainter(
-                      start: _ballTrailStart,
-                      current: ball,
-                    ),
-                  ),
-                if (_showFlightBall && _ballBehindActor)
                   Positioned(
-                    key: const Key('pass-ball'),
-                    left: ball.dx - ballGeometry.extent / 2,
-                    top: ball.dy - ballGeometry.extent / 2,
-                    child: PassAndRunBallVisual(geometry: ballGeometry),
+                    left: constraints.maxWidth * .25 - 2,
+                    top: 16,
+                    bottom: 16,
+                    child: _LaneLine(offset: _floorOffset),
                   ),
-                Positioned(
-                  left: player.dx - actorSize / 2,
-                  top: player.dy - actorSize / 2,
-                  child: PassAndRunCharacterVisual(
-                    key: const Key('pass-player'),
-                    character: PassRunCharacter.normal,
-                    holding: _playerHoldingVisual,
-                    frame: _frameAt(_motionSeconds, PassRunCharacter.normal),
-                    facing: _spriteFacing(PassRunCharacter.normal),
-                    size: actorSize,
-                    visualScale: _characterVisualScale,
-                    ballKey: const Key('pass-ball'),
+                  Positioned(
+                    left: constraints.maxWidth * .75 - 2,
+                    top: 16,
+                    bottom: 16,
+                    child: _LaneLine(offset: _floorOffset),
                   ),
-                ),
-                Positioned(
-                  left: player.dx - actorSize / 2,
-                  top: player.dy - actorSize / 2 - 20 * labelScale - 2,
-                  width: actorSize,
-                  child: IgnorePointer(
-                    child: Center(
-                      child: Container(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 6 * labelScale,
-                          vertical: 2 * labelScale,
+                  if (_phase == _PassGamePhase.playing &&
+                      !_isPaused &&
+                      _playerHolding)
+                    Positioned.fill(
+                      child: IgnorePointer(
+                        child: CustomPaint(
+                          key: const Key('pass-direction-guide'),
+                          painter: PassRunDirectionGuidePainter(
+                            center: player,
+                            attackUp: _isOutbound,
+                            seconds: _motionSeconds,
+                          ),
                         ),
-                        decoration: BoxDecoration(
-                          color: const Color(0xff153d5b),
-                          borderRadius: BorderRadius.circular(5),
-                        ),
-                        child: Text(
-                          '鮫太郎',
-                          key: Key('pass-player-label'),
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 12 * labelScale,
-                            height: 1.2,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.white,
+                      ),
+                    ),
+                  if (_dragStart != null && _dragCurrent != null)
+                    CustomPaint(
+                      key: const Key('pass-flick-guide'),
+                      size: constraints.biggest,
+                      painter: _FlickGuidePainter(
+                        start: _dragStart!,
+                        end: _dragCurrent!,
+                      ),
+                    ),
+                  if (_showFlightTrail)
+                    CustomPaint(
+                      key: const Key('pass-ball-trail'),
+                      size: constraints.biggest,
+                      painter: _BallTrailPainter(
+                        start: _ballTrailStart,
+                        current: ball,
+                      ),
+                    ),
+                  if (_showFlightBall && _ballBehindActor)
+                    Positioned(
+                      key: const Key('pass-ball'),
+                      left: ball.dx - ballGeometry.extent / 2,
+                      top: ball.dy - ballGeometry.extent / 2,
+                      child: PassAndRunBallVisual(geometry: ballGeometry),
+                    ),
+                  Positioned(
+                    left: player.dx - actorSize / 2,
+                    top: player.dy - actorSize / 2,
+                    child: PassAndRunCharacterVisual(
+                      key: const Key('pass-player'),
+                      character: PassRunCharacter.normal,
+                      holding: _playerHoldingVisual,
+                      frame: _frameAt(_motionSeconds, PassRunCharacter.normal),
+                      facing: _spriteFacing(PassRunCharacter.normal),
+                      size: actorSize,
+                      visualScale: _characterVisualScale,
+                      ballKey: const Key('pass-ball'),
+                    ),
+                  ),
+                  Positioned(
+                    left: player.dx - actorSize / 2,
+                    top: player.dy - actorSize / 2 - 20 * labelScale - 2,
+                    width: actorSize,
+                    child: IgnorePointer(
+                      child: Center(
+                        child: Container(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 6 * labelScale,
+                            vertical: 2 * labelScale,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(0xff153d5b),
+                            borderRadius: BorderRadius.circular(5),
+                          ),
+                          child: Text(
+                            '鮫太郎',
+                            key: Key('pass-player-label'),
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 12 * labelScale,
+                              height: 1.2,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white,
+                            ),
                           ),
                         ),
                       ),
                     ),
                   ),
-                ),
-                Positioned(
-                  left: mate.dx - actorSize / 2,
-                  top: mate.dy - actorSize / 2,
-                  child: PassAndRunCharacterVisual(
-                    key: const Key('pass-mate'),
-                    character: PassRunCharacter.companion,
-                    holding: _mateHoldingVisual,
-                    frame: _frameAt(_motionSeconds, PassRunCharacter.companion),
-                    facing: _spriteFacing(PassRunCharacter.companion),
-                    size: actorSize,
-                    visualScale: _characterVisualScale,
-                    ballKey: const Key('pass-ball'),
-                  ),
-                ),
-                if (_showFlightBall && !_ballBehindActor)
                   Positioned(
-                    key: const Key('pass-ball'),
-                    left: ball.dx - ballGeometry.extent / 2,
-                    top: ball.dy - ballGeometry.extent / 2,
-                    child: PassAndRunBallVisual(geometry: ballGeometry),
-                  ),
-                if (_phase == _PassGamePhase.playing &&
-                    !_isPaused &&
-                    _catchFeedbackStartedAt != null &&
-                    _now().difference(_catchFeedbackStartedAt!).inMilliseconds <
-                        660)
-                  Positioned.fill(
-                    child: IgnorePointer(
-                      child: PassRunCatchFeedback(
-                        progress: _now()
-                                .difference(_catchFeedbackStartedAt!)
-                                .inMicroseconds /
-                            660000,
-                        receiver: mate,
-                        reducedMotion: MediaQuery.disableAnimationsOf(context),
-                      ),
+                    left: mate.dx - actorSize / 2,
+                    top: mate.dy - actorSize / 2,
+                    child: PassAndRunCharacterVisual(
+                      key: const Key('pass-mate'),
+                      character: PassRunCharacter.companion,
+                      holding: _mateHoldingVisual,
+                      frame:
+                          _frameAt(_motionSeconds, PassRunCharacter.companion),
+                      facing: _spriteFacing(PassRunCharacter.companion),
+                      size: actorSize,
+                      visualScale: _characterVisualScale,
+                      ballKey: const Key('pass-ball'),
                     ),
                   ),
-                if (_phase == _PassGamePhase.waiting) _buildStartOverlay(),
-                MiniGameResultTransition(
-                  visible: _phase == _PassGamePhase.result,
-                  child: _buildResultOverlay(),
-                ),
-                if (_isPaused) _buildPauseOverlay(),
-              ],
+                  if (_showFlightBall && !_ballBehindActor)
+                    Positioned(
+                      key: const Key('pass-ball'),
+                      left: ball.dx - ballGeometry.extent / 2,
+                      top: ball.dy - ballGeometry.extent / 2,
+                      child: PassAndRunBallVisual(geometry: ballGeometry),
+                    ),
+                  if (_phase == _PassGamePhase.playing &&
+                      !_isPaused &&
+                      _catchFeedbackStartedAt != null &&
+                      _now()
+                              .difference(_catchFeedbackStartedAt!)
+                              .inMilliseconds <
+                          660)
+                    Positioned.fill(
+                      child: IgnorePointer(
+                        child: PassRunCatchFeedback(
+                          progress: _now()
+                                  .difference(_catchFeedbackStartedAt!)
+                                  .inMicroseconds /
+                              660000,
+                          receiver: mate,
+                          reducedMotion:
+                              MediaQuery.disableAnimationsOf(context),
+                        ),
+                      ),
+                    ),
+                  if (_phase == _PassGamePhase.waiting) _buildStartOverlay(),
+                  MiniGameResultTransition(
+                    visible: _phase == _PassGamePhase.result,
+                    child: _buildResultOverlay(),
+                  ),
+                  if (_isPaused) _buildPauseOverlay(),
+                ],
+              ),
             ),
           ),
         );
@@ -1687,8 +1707,7 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
   /// ルールとスタートボタンをゲーム画面へ重ねます。
   Widget _buildStartOverlay() {
     return Positioned.fill(
-      child: ColoredBox(
-        color: Colors.white.withValues(alpha: .86),
+      child: MiniGameOverlayPanel(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -1727,8 +1746,8 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
 
   /// 往復の成功回数とメイン画面へ戻る操作を表示します。
   Widget _buildResultOverlay() {
-    return ColoredBox(
-      color: const Color(0xff153d5b).withValues(alpha: .93),
+    return MiniGameOverlayPanel(
+      dark: true,
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
@@ -1765,8 +1784,8 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
   /// 一時停止中の入力を遮断し、再開操作を表示します。
   Widget _buildPauseOverlay() {
     return Positioned.fill(
-      child: ColoredBox(
-        color: Colors.black.withValues(alpha: .68),
+      child: MiniGameOverlayPanel(
+        dark: true,
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -1811,7 +1830,7 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
       alignment: Alignment.center,
       decoration: BoxDecoration(
         color: _isPenalized ? const Color(0xffffdddd) : Colors.white,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.zero,
       ),
       child: Text(
         message,
