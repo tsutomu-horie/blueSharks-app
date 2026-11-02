@@ -3322,7 +3322,7 @@ class TrainingGameController extends GetxController
       syncStatusMessage.value = error is TrainingGameApiException &&
               error.message.contains('クールタイム')
           ? 'サーバーがクールタイム解除を受け付けませんでした。今回の効果は保存されていません。後続の未送信操作は破棄しました。サーバー状態を確認してから続けてください。'
-          : 'サーバーが操作を拒否しました。後続の未送信操作は破棄しました。サーバー状態を確認してから続けてください。';
+          : '操作を反映できませんでした。続けて行った操作も反映されていない場合があります。画面の状態を確認してから、もう一度お試しください。';
     } else {
       _hasUnknownSyncOutcome = true;
       syncStatus.value = TrainingSyncStatus.outcomeUnknown;
