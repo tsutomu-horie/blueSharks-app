@@ -1152,6 +1152,7 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
     return TrainingHudGuidePressTarget(
       key: const ValueKey('training-home-training-menu-guide-target'),
       semanticsLabel: '練習 / MG',
+      progressDelay: const Duration(seconds: 2),
       onTap: onTap,
       onLongPressGuide: showGuide,
       child: button,
