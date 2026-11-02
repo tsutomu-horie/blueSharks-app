@@ -83,7 +83,7 @@ class _ResultRevealState extends State<_ResultReveal>
             final reveal = Curves.easeOutCubic
                 .transform(((progress - .64) / .36).clamp(0.0, 1.0));
             return ColoredBox(
-              color: const Color(0xff153d5b),
+              color: const Color(0xff002b6d),
               child: Opacity(
                 key: const Key('mini-game-result-reveal-content'),
                 opacity: reveal,
@@ -107,7 +107,7 @@ class _ResultRevealState extends State<_ResultReveal>
               Curves.easeOutBack.transform((progress / .45).clamp(0.0, 1.0));
           return ColoredBox(
             key: const Key('mini-game-result-prelude'),
-            color: const Color(0xff153d5b),
+            color: const Color(0xff002b6d),
             child: Center(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
