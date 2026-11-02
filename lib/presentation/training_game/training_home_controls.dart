@@ -211,7 +211,7 @@ class TrainingHomeCareButton extends StatelessWidget {
     };
     return Semantics(
       label: waiting ? '$label、待機中、あと $time' : label,
-      value: trainingCount == null ? null : '$trainingCount/15',
+      value: trainingCount == null ? null : '$trainingCount/$requiredChildTrainingCount',
       button: true,
       enabled: enabled,
       onTap: onPressed,
@@ -276,7 +276,7 @@ class TrainingHomeCareButton extends StatelessWidget {
                 Positioned(
                     top: 0,
                     right: 2,
-                    child: Text('$trainingCount/15',
+                    child: Text('$trainingCount/$requiredChildTrainingCount',
                         style: const TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w700,
