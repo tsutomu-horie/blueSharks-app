@@ -11,17 +11,47 @@ class MiniGameSelectionFrame extends StatelessWidget {
     required this.child,
     this.surface = MiniGameSelectionSurface.card,
     this.padding = EdgeInsets.zero,
+    this.clipContent = false,
   });
 
   final Widget child;
   final MiniGameSelectionSurface surface;
   final EdgeInsetsGeometry padding;
+  final bool clipContent;
 
   @override
   Widget build(BuildContext context) => CustomPaint(
         painter: _SelectionFramePainter(surface),
-        child: Padding(padding: padding, child: child),
+        child: clipContent
+            ? ClipPath(
+                clipper: const _SelectionFrameClipper(),
+                child: Padding(padding: padding, child: child),
+              )
+            : Padding(padding: padding, child: child),
       );
+}
+
+Path _framePath(Size size, double inset) {
+  final rect = (Offset.zero & size).deflate(inset);
+  final cut = 12.0.clamp(0.0, rect.shortestSide / 2);
+  return Path()
+    ..moveTo(rect.left + cut, rect.top)
+    ..lineTo(rect.right - cut, rect.top)
+    ..lineTo(rect.right, rect.top + cut)
+    ..lineTo(rect.right, rect.bottom - cut)
+    ..lineTo(rect.right - cut, rect.bottom)
+    ..lineTo(rect.left + cut, rect.bottom)
+    ..lineTo(rect.left, rect.bottom - cut)
+    ..lineTo(rect.left, rect.top + cut)
+    ..close();
+}
+
+class _SelectionFrameClipper extends CustomClipper<Path> {
+  const _SelectionFrameClipper();
+  @override
+  Path getClip(Size size) => _framePath(size, 3);
+  @override
+  bool shouldReclip(_SelectionFrameClipper oldClipper) => false;
 }
 
 class _SelectionFramePainter extends CustomPainter {
@@ -32,16 +62,7 @@ class _SelectionFramePainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final rect = (Offset.zero & size).deflate(2);
     final cut = 12.0.clamp(0.0, rect.shortestSide / 2);
-    final path = Path()
-      ..moveTo(rect.left + cut, rect.top)
-      ..lineTo(rect.right - cut, rect.top)
-      ..lineTo(rect.right, rect.top + cut)
-      ..lineTo(rect.right, rect.bottom - cut)
-      ..lineTo(rect.right - cut, rect.bottom)
-      ..lineTo(rect.left + cut, rect.bottom)
-      ..lineTo(rect.left, rect.bottom - cut)
-      ..lineTo(rect.left, rect.top + cut)
-      ..close();
+    final path = _framePath(size, 2);
     final colors = switch (surface) {
       MiniGameSelectionSurface.window => const [
           Color(0xff001e51),
