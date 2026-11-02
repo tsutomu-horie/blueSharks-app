@@ -2295,6 +2295,16 @@ class TrainingGameController extends GetxController
         data = await _importLegacyProgressIfNeeded(data);
         if (!_ownsSession(_ownedSessionVersion) ||
             presenceGeneration != _presenceStateGeneration) return;
+        if (_hasInvalidPresenceToken(data)) {
+          data = await _serverProvider.fetchCurrent(
+            expectedSessionVersion: _ownedSessionVersion,
+          );
+          if (!_ownsSession(_ownedSessionVersion) ||
+              presenceGeneration != _presenceStateGeneration) return;
+          if (data == null || _hasInvalidPresenceToken(data)) {
+            throw StateError('育成状態の再取得に失敗しました。');
+          }
+        }
         final hasPendingActions = _hasPersistedPendingActionsFor(data);
         if (!_initializeServerState(
           data,
@@ -2482,8 +2492,10 @@ class TrainingGameController extends GetxController
     if (_hasInvalidPresenceToken(data)) return false;
     final currentToken = _serverProvider.presenceCycleToken;
     final responseToken = data['presence_cycle_token'];
-    if (!allowPresenceCycleChange && currentToken != null &&
-        responseToken is String && responseToken != currentToken) return false;
+    if (!allowPresenceCycleChange &&
+        currentToken != null &&
+        responseToken is String &&
+        responseToken != currentToken) return false;
     final previousStageIndex = stageIndex.value;
     final wasUndecidedFirstTeam = previousStageIndex == stages.length - 1 &&
         _serverPositionCode.value == null &&
