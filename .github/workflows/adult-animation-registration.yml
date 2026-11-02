@@ -41,6 +41,7 @@ jobs:
           test/training_game/adult_frame_registration_test.dart
           test/training_game/sametaroh_asset_test.dart
           test/training_game/training_care_scene_test.dart
+          test/training_game/training_care_design_render_test.dart
           test/training_game/training_care_auto_complete_test.dart
           test/training_game/training_home_roaming_character_test.dart
           test/training_game/training_child_care_test.dart
