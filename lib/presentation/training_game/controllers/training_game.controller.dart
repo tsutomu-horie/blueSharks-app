@@ -1289,7 +1289,7 @@ class TrainingGameController extends GetxController
       isServerStateReady.value = false;
       syncStatus.value = TrainingSyncStatus.outcomeUnknown;
       syncStatusMessage.value =
-          '別端末の更新がありましたが、最新状態を取得できません。操作は同じIDで保留し、状態確認まで再送しません。';
+          '別の端末でデータが更新されました。最新の状態を確認できなかったため、通信環境を確認して「再試行」を押してください。';
       serverErrorMessage.value = syncStatusMessage.value;
     }
   }
