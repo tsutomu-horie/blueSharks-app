@@ -65,7 +65,8 @@ void main() {
         expect(find.byType(TrainingHomeBrand), findsNothing);
         final panel = tester.getRect(
             find.byKey(const ValueKey('training-home-parameter-panel')));
-        expect(panel.top, closeTo(0, .001));
+        final expectedTop = (12 * size.height / 812).clamp(8.0, 16.0);
+        expect(panel.top, closeTo(expectedTop, .001));
         const output = String.fromEnvironment('GAME_TEXT_CAPTURE_DIR');
         if (output.isNotEmpty) {
           await tester.runAsync(() async {
