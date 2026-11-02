@@ -120,8 +120,7 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
     final footer = _buildCareBar(context);
     final textExtra =
         (MediaQuery.textScalerOf(context).scale(14) - 14).clamp(0.0, 28.0);
-    final minimumHeight = 74.h.clamp(58.0, 110.0) +
-        154.h.clamp(144.0, 208.0) +
+    final minimumHeight = 154.h.clamp(144.0, 208.0) +
         textExtra * 4 +
         TrainingHomeStyle.footerHeight.h.clamp(112.0, 180.0) +
         304.h.clamp(130.0, 420.0);
@@ -138,17 +137,6 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
             child: Stack(children: [
           const Positioned.fill(child: TrainingHomeBackground()),
           Column(children: [
-            SizedBox(
-              height: 74.h.clamp(58.0, 110.0),
-              width: double.infinity,
-              child: TrainingHomeRibbon(
-                  child: Align(
-                alignment: Alignment.topLeft,
-                child: Padding(
-                    padding: EdgeInsets.only(left: 16.w, top: 16.h),
-                    child: const TrainingHomeBrand()),
-              )),
-            ),
             if (syncBanner != null)
               ConstrainedBox(
                 constraints: BoxConstraints(maxHeight: bannerHeight),

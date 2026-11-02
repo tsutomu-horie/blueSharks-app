@@ -287,17 +287,6 @@ class TrainingHomeCareButton extends StatelessWidget {
                                         ? Colors.white
                                         : const Color(0xffa9bdd8))))),
                   ])),
-              if (type == TrainingActionType.meal && !waiting)
-                Positioned(
-                  left: 12,
-                  right: 12,
-                  bottom: 1,
-                  child: Container(
-                      height: 4,
-                      decoration: BoxDecoration(
-                          color: const Color(0xff0099ed),
-                          borderRadius: BorderRadius.circular(4))),
-                ),
               if (waiting)
                 Positioned(
                   left: 7,
