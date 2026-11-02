@@ -48,7 +48,7 @@ void main() {
     expect(find.text('タックル'), findsOneWidget);
     expect(find.text('パス＆ラン'), findsOneWidget);
     expect(find.text('フェイントを見抜いて\n相手の動く方向をタップ'), findsOneWidget);
-    expect(find.text('仲間をねらってフリック\nパスをつないで走ろう'), findsOneWidget);
+    expect(find.text('仲間に向けてフリック\n　パスをつないで走ろう'), findsOneWidget);
     expect(find.textContaining('秒'), findsNothing);
     expect(find.textContaining('全3セット'), findsNothing);
     expect(find.textContaining('少しお休み'), findsNothing);
@@ -112,12 +112,16 @@ void main() {
     });
   }
 
-  for (final method in ['back', 'barrier', 'drag']) {
+  for (final method in ['back', 'barrier', 'drag', 'close']) {
     testWidgets('戻る・外側タップ・下スワイプは選択せず閉じ、再表示できる $method', (tester) async {
       final results = <TrainingActionType?>[];
       await host(tester, onResult: results.add);
       await open(tester);
       switch (method) {
+        case 'close':
+          final close = find.byKey(const ValueKey('mini-game-selection-close'));
+          expect(tester.getSize(close).shortestSide, greaterThanOrEqualTo(44));
+          await tester.tap(close);
         case 'back':
           await tester.binding.handlePopRoute();
         case 'barrier':

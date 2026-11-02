@@ -354,11 +354,11 @@ void main() {
     await _openCare(tester, onResult: results.add);
     await tester.tapAt(const Offset(2, 200));
     await tester.pump();
-    await tester.tap(find.byTooltip('お世話を中止'));
+    await tester.binding.handlePopRoute();
     await tester.pumpAndSettle();
-    expect(results, [false]);
+    expect(results, [null]);
     await tester.pump(const Duration(seconds: 6));
-    expect(results, [false]);
+    expect(results, [null]);
     expect(find.text('open care'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });

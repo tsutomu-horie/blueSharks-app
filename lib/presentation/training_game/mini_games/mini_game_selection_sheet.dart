@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../models/training_game_models.dart';
 import '../training_home_controls.dart';
 import '../training_game_theme.dart';
+import 'mini_game_selection_frame.dart';
 
 /// 選択だけを返し、ゲームの開始・報酬・待機時間は呼び出し元へ委ねます。
 Future<TrainingActionType?> showMiniGameSelectionSheet(BuildContext context) {
@@ -14,16 +15,15 @@ Future<TrainingActionType?> showMiniGameSelectionSheet(BuildContext context) {
     context: context,
     isScrollControlled: true,
     useSafeArea: true,
-    backgroundColor: Colors.white,
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-    ),
-    clipBehavior: Clip.antiAlias,
+    backgroundColor: Colors.transparent,
+    barrierColor: TrainingHomeStyle.navy.withValues(alpha: .55),
+    elevation: 0,
+    constraints: const BoxConstraints(maxWidth: 480),
     builder: (_) => const MiniGameSelectionSheet(),
   );
 }
 
-/// 承認済みA案の、素材と短い操作説明を並べた選択カードです。
+/// 承認済みの濃紺グラデーション案で、2種類の練習を選びます。
 class MiniGameSelectionSheet extends StatefulWidget {
   const MiniGameSelectionSheet({super.key});
 
@@ -34,7 +34,7 @@ class MiniGameSelectionSheet extends StatefulWidget {
 class _MiniGameSelectionSheetState extends State<MiniGameSelectionSheet> {
   bool _selected = false;
 
-  void _select(TrainingActionType type) {
+  void _select(TrainingActionType? type) {
     // 閉じるアニメーション中の二度目のタップでHOMEまでpopしません。
     if (_selected || ModalRoute.of(context)?.isCurrent != true) return;
     _selected = true;
@@ -42,58 +42,109 @@ class _MiniGameSelectionSheetState extends State<MiniGameSelectionSheet> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    return TrainingGameTheme(
-      child: SafeArea(
-        top: false,
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(16, 24, 16, 24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const Text(
-                'ミニゲームを選ぶ',
-                style: TextStyle(
-                  fontFamily: 'LINESeedJP',
-                  fontSize: 19,
-                  fontWeight: FontWeight.w700,
-                  color: TrainingHomeStyle.navy,
-                ),
+  Widget build(BuildContext context) => TrainingGameTheme(
+        child: SafeArea(
+          top: false,
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(12, 0, 12, 20),
+            child: MiniGameSelectionFrame(
+              surface: MiniGameSelectionSurface.window,
+              padding: const EdgeInsets.all(4),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _header(),
+                  Container(height: 3, color: const Color(0xff39bdf5)),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(12, 16, 12, 18),
+                    child: Column(children: [
+                      _SelectionCard(
+                        type: TrainingActionType.tackle,
+                        number: '01',
+                        title: 'タックル',
+                        category: '反応・タイミング',
+                        description: 'フェイントを見抜いて\n相手の動く方向をタップ',
+                        asset:
+                            'assets/images/training_game/minigames/tackle_attack_normal.png',
+                        imageSize: const Size(63, 96),
+                        onSelected: _select,
+                      ),
+                      const SizedBox(height: 14),
+                      _SelectionCard(
+                        type: TrainingActionType.passAndRun,
+                        number: '02',
+                        title: 'パス＆ラン',
+                        category: 'フリック・パス',
+                        description: '仲間に向けてフリック\n　パスをつないで走ろう',
+                        asset:
+                            'assets/images/training_game/selection/pass_run_ball.png',
+                        imageSize: const Size(74, 68),
+                        onSelected: _select,
+                      ),
+                    ]),
+                  ),
+                ],
               ),
-              const SizedBox(height: 24),
-              _SelectionCard(
-                type: TrainingActionType.tackle,
-                title: 'タックル',
-                category: '反応・タイミング',
-                description: 'フェイントを見抜いて\n相手の動く方向をタップ',
-                asset:
-                    'assets/images/training_game/minigames/tackle_attack_normal.png',
-                imageSize: const Size(66, 94),
-                onSelected: _select,
-              ),
-              const SizedBox(height: 12),
-              _SelectionCard(
-                type: TrainingActionType.passAndRun,
-                title: 'パス＆ラン',
-                category: 'フリック・パス',
-                description: '仲間をねらってフリック\nパスをつないで走ろう',
-                asset:
-                    'assets/images/training_game/selection/pass_run_ball.png',
-                imageSize: const Size(70, 58),
-                onSelected: _select,
-              ),
-            ],
+            ),
           ),
         ),
-      ),
-    );
-  }
+      );
+
+  Widget _header() => ClipPath(
+        clipper: const ShapeBorderClipper(
+          shape: BeveledRectangleBorder(
+            borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(12),
+              topRight: Radius.circular(12),
+            ),
+          ),
+        ),
+        child: ColoredBox(
+          color: TrainingHomeStyle.navy,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 18, 12, 16),
+            child: Row(children: [
+              const Icon(Icons.sports_rugby, size: 28, color: Colors.white),
+              const SizedBox(width: 12),
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('ミニゲームを選ぶ',
+                        style: TextStyle(fontSize: 19, color: Colors.white)),
+                    SizedBox(height: 5),
+                    Text('チャレンジする練習を選ぼう',
+                        style:
+                            TextStyle(fontSize: 11, color: Color(0xff9edcff))),
+                  ],
+                ),
+              ),
+              MiniGameSelectionFrame(
+                surface: MiniGameSelectionSurface.close,
+                child: SizedBox(
+                  width: 44,
+                  height: 44,
+                  child: IconButton(
+                    key: const ValueKey('mini-game-selection-close'),
+                    tooltip: '閉じる',
+                    padding: EdgeInsets.zero,
+                    onPressed: () => _select(null),
+                    icon: const Icon(Icons.close,
+                        size: 21, color: TrainingHomeStyle.navy),
+                  ),
+                ),
+              ),
+            ]),
+          ),
+        ),
+      );
 }
 
 class _SelectionCard extends StatelessWidget {
   const _SelectionCard({
     required this.type,
+    required this.number,
     required this.title,
     required this.category,
     required this.description,
@@ -103,6 +154,7 @@ class _SelectionCard extends StatelessWidget {
   });
 
   final TrainingActionType type;
+  final String number;
   final String title;
   final String category;
   final String description;
@@ -111,78 +163,86 @@ class _SelectionCard extends StatelessWidget {
   final ValueChanged<TrainingActionType> onSelected;
 
   @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: const Color(0xfff5f7fa),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(10),
-        side: const BorderSide(color: Color(0xffd1d9e2)),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        key: ValueKey('mini-game-selection-${type.name}'),
-        onTap: () => onSelected(type),
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Container(
-                width: 82,
-                height: 108,
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: const Color(0xffe8f1f8),
-                  borderRadius: BorderRadius.circular(7),
-                ),
-                child: Image.asset(
-                  asset,
-                  width: imageSize.width,
-                  height: imageSize.height,
-                  fit: BoxFit.contain,
-                  excludeFromSemantics: true,
-                ),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: DefaultTextStyle(
-                  style: const TextStyle(
-                    fontFamily: 'LINESeedJP',
-                    fontWeight: FontWeight.w700,
-                    color: TrainingHomeStyle.navy,
-                    fontSize: 14,
-                    height: 1.5,
+  Widget build(BuildContext context) => MiniGameSelectionFrame(
+        child: Material(
+          color: Colors.transparent,
+          shape: const BeveledRectangleBorder(
+              borderRadius: BorderRadius.all(Radius.circular(12))),
+          clipBehavior: Clip.antiAlias,
+          child: InkWell(
+            key: ValueKey('mini-game-selection-${type.name}'),
+            onTap: () => onSelected(type),
+            child: Padding(
+              padding: const EdgeInsets.all(9),
+              child: Row(children: [
+                Container(
+                  width: 88,
+                  height: 140,
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [Color(0xffe1f7ff), Color(0xff94d5f4)],
+                    ),
+                    borderRadius: BorderRadius.circular(6),
                   ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Text(title,
-                                style: const TextStyle(
-                                    fontSize: 17, fontWeight: FontWeight.w700)),
-                          ),
-                          const SizedBox(width: 4),
-                          const Icon(Icons.chevron_right,
-                              size: 20, color: TrainingHomeStyle.navy),
-                        ],
-                      ),
-                      const SizedBox(height: 2),
-                      Text(category,
-                          style: const TextStyle(
-                              fontSize: 12, color: Color(0xff5e6c7e))),
-                      const SizedBox(height: 12),
-                      Text(description),
-                    ],
+                  child: Stack(children: [
+                    Positioned(
+                      top: 4,
+                      left: 7,
+                      child: ExcludeSemantics(
+                          child: Text(number,
+                              style: const TextStyle(
+                                  fontFamily: 'Inter',
+                                  fontSize: 12,
+                                  color: Color(0xff4d9ac3)))),
+                    ),
+                    Center(
+                        child: Image.asset(asset,
+                            width: imageSize.width,
+                            height: imageSize.height,
+                            fit: BoxFit.contain,
+                            excludeFromSemantics: true)),
+                  ]),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: DefaultTextStyle.merge(
+                    style: const TextStyle(color: TrainingHomeStyle.navy),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(title, style: const TextStyle(fontSize: 20)),
+                        const SizedBox(height: 5),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 7, vertical: 3),
+                          color: const Color(0xffe2f3fd),
+                          child: Text(category,
+                              style: const TextStyle(
+                                  fontSize: 10, color: Color(0xff0076bc))),
+                        ),
+                        const SizedBox(height: 11),
+                        Text(description,
+                            style: const TextStyle(fontSize: 11, height: 1.6)),
+                        const SizedBox(height: 8),
+                        const Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            Text('プレイ', style: TextStyle(fontSize: 12)),
+                            SizedBox(width: 4),
+                            Icon(Icons.arrow_forward,
+                                size: 17, color: TrainingHomeStyle.navy),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ]),
+            ),
           ),
         ),
-      ),
-    );
-  }
+      );
 }

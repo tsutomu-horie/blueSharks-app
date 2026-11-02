@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
 import 'package:koto_blue_sharks/presentation/training_game/controllers/training_game.controller.dart';
+import 'package:koto_blue_sharks/presentation/training_game/training_home_decoration.dart';
 
 import 'training_home_controls_test.dart'
     show HomeControlsFixture, homeControlsHost;
@@ -39,7 +40,11 @@ void main() {
         addTearDown(Get.reset);
         Get.put<TrainingGameController>(HomeControlsFixture()
           ..stageIndex.value = 2
-          ..isServerStateReady.value = true);
+          ..isServerStateReady.value = true
+          ..meters['食事'] = 55
+          ..meters['仕事'] = 20
+          ..meters['清潔'] = 97
+          ..meters['体調'] = 20);
         final key = GlobalKey();
         await tester
             .pumpWidget(homeControlsHost(captureKey: key, textScale: scale));
@@ -57,6 +62,12 @@ void main() {
         });
         await tester.pump(const Duration(milliseconds: 100));
         expect(tester.takeException(), isNull);
+        final brand = tester.getRect(find.byType(TrainingHomeBrand));
+        final ribbon = tester.getRect(find.byType(TrainingHomeRibbon).first);
+        final bottomFraction = (brand.bottom - ribbon.top) / ribbon.height;
+        final navyRight =
+            ribbon.left + ribbon.width * (.63 - .17 * bottomFraction / .7);
+        expect(brand.right, lessThanOrEqualTo(navyRight - 12));
         const output = String.fromEnvironment('GAME_TEXT_CAPTURE_DIR');
         if (output.isNotEmpty) {
           await tester.runAsync(() async {

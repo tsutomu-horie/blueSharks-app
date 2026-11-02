@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:koto_blue_sharks/app/services/training_game_sound_service.dart';
 
@@ -18,6 +19,9 @@ import 'models/training_game_models.dart';
 import 'sametaroh_asset.dart';
 import 'training_home_background.dart';
 import 'training_home_controls.dart';
+import 'training_home_decoration.dart';
+import 'training_presentation_layout.dart';
+import 'mini_games/mini_game_selection_frame.dart';
 import 'training_home_roaming_character.dart';
 import 'training_sync_indicator.dart';
 import 'training_debug_menu.dart';
@@ -72,32 +76,7 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
                         ? _buildEvolutionFlow()
                         : controller.ended.value
                             ? _buildEndingFlow(context)
-                            : Column(
-                                children: [
-                                  Expanded(
-                                    child: Stack(
-                                      children: [
-                                        const Positioned.fill(
-                                          child: TrainingHomeBackground(),
-                                        ),
-                                        Column(
-                                          children: [
-                                            if (controller.syncStatusMessage
-                                                    .value.isNotEmpty &&
-                                                controller.syncStatus.value !=
-                                                    TrainingSyncStatus.syncing)
-                                              _buildSyncStatusBanner(context),
-                                            _buildHud(context),
-                                            Expanded(
-                                                child: _buildRoom(context)),
-                                          ],
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  _buildCareBar(context),
-                                ],
-                              )
+                            : _buildHome(context)
                     : controller.serverErrorMessage.value.isEmpty
                         ? const Center(child: CircularProgressIndicator())
                         : _buildConnectionError();
@@ -127,6 +106,64 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
         ),
       ),
     );
+  }
+
+  /// 縦幅が足りない横画面では、ホーム全体をスクロールして操作を保ちます。
+  Widget _buildHome(BuildContext context) {
+    final syncBanner = controller.syncStatusMessage.value.isNotEmpty &&
+            controller.syncStatus.value != TrainingSyncStatus.syncing
+        ? _buildSyncStatusBanner(context)
+        : null;
+    // Build reactive children here so the surrounding Obx tracks their reads.
+    final hud = _buildHud(context);
+    final room = _buildRoom(context);
+    final footer = _buildCareBar(context);
+    final textExtra =
+        (MediaQuery.textScalerOf(context).scale(14) - 14).clamp(0.0, 28.0);
+    final minimumHeight = 74.h.clamp(58.0, 110.0) +
+        154.h.clamp(144.0, 208.0) +
+        textExtra * 4 +
+        TrainingHomeStyle.footerHeight.h.clamp(112.0, 180.0) +
+        304.h.clamp(130.0, 420.0);
+    return LayoutBuilder(builder: (context, constraints) {
+      final bannerHeight = syncBanner == null
+          ? 0.0
+          : constraints.maxHeight >= minimumHeight
+              ? (constraints.maxHeight - minimumHeight).clamp(24.0, 200.0)
+              : 64.0;
+      final height =
+          math.max(constraints.maxHeight, minimumHeight + bannerHeight);
+      final content = Column(children: [
+        Expanded(
+            child: Stack(children: [
+          const Positioned.fill(child: TrainingHomeBackground()),
+          Column(children: [
+            SizedBox(
+              height: 74.h.clamp(58.0, 110.0),
+              width: double.infinity,
+              child: TrainingHomeRibbon(
+                  child: Align(
+                alignment: Alignment.topLeft,
+                child: Padding(
+                    padding: EdgeInsets.only(left: 16.w, top: 16.h),
+                    child: const TrainingHomeBrand()),
+              )),
+            ),
+            if (syncBanner != null)
+              ConstrainedBox(
+                constraints: BoxConstraints(maxHeight: bannerHeight),
+                child: SingleChildScrollView(child: syncBanner),
+              ),
+            hud,
+            Expanded(child: room),
+          ]),
+        ])),
+        footer,
+      ]);
+      if (height <= constraints.maxHeight) return content;
+      return SingleChildScrollView(
+          child: SizedBox(height: height, child: content));
+    });
   }
 
   /// ホーム遷移中は画面操作を抑止し、ロード中であることを表示します。
@@ -263,14 +300,14 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
     final visualWidget = isFirstTeam
         ? _buildFirstTeamEvolutionReveal()
         : switch (evolutionStage) {
-            1 => _buildSuppliedStatic(SametarohAssets.newbornFrame),
+            1 => _buildPresentationStatic(SametarohAssets.newbornFrame),
             2 => TrainingEvolutionReveal(
                 key: const ValueKey('training-evolution-2'),
                 beforeFrame: SametarohAssets.newbornFrame,
                 afterFrame: currentBodyFrame,
                 beforeScale: 1,
-                beforeSize: Size(128.w, 184.h),
-                afterSize: Size(128.w, 184.h),
+                beforeSize: _presentationBodySize,
+                afterSize: _presentationBodySize,
                 soundFactory: evolutionSoundFactory,
                 afterVisual: _buildEvolutionHomeFirstFrame(_bodyKey),
               ),
@@ -280,12 +317,12 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
                 afterFrame: currentBodyFrame,
                 // 分岐未確定時も通常形を保ち、成長の差はサイズで見せます。
                 beforeScale: 1,
-                beforeSize: Size(128.w, 184.h),
-                afterSize: Size(128.w, 184.h),
+                beforeSize: _presentationBodySize,
+                afterSize: _presentationBodySize,
                 soundFactory: evolutionSoundFactory,
                 afterVisual: _buildEvolutionHomeFirstFrame(_bodyKey),
               ),
-            _ => _buildSuppliedStatic(currentBodyFrame),
+            _ => _buildPresentationStatic(currentBodyFrame),
           };
     final message = isFirstTeam
         ? 'ついに、一軍の舞台へ！'
@@ -316,13 +353,13 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
       // 未確定時は推測ユニフォームを避け、現在の姿で成長演出します。
       afterFrame: confirmedFirstTeamFrame ?? currentBodyFrame,
       afterVisual: confirmedFirstTeamFrame == null
-          ? _buildEvolutionHomeFirstFrame(_bodyKey, size: _firstTeamBodySize)
+          ? _buildEvolutionHomeFirstFrame(_bodyKey, size: _presentationBodySize)
           : _buildPositionStatic(controller.position),
       beforeScale: 1,
-      beforeSize: _firstTeamBodySize,
+      beforeSize: _presentationBodySize,
       afterSize: confirmedFirstTeamFrame == null
-          ? _firstTeamBodySize
-          : _positionDisplaySize(confirmedFirstTeamFrame),
+          ? _presentationBodySize
+          : _presentationFrameSize(confirmedFirstTeamFrame),
       firstTeam: true,
       soundFactory: evolutionSoundFactory,
     );
@@ -334,8 +371,8 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
         TrainingHomeCharacterFrameSet.forBodyKey(bodyKey).idleFrames.first;
     return TrainingHomeCharacterFrameImage(
       frame: frame,
-      width: size?.width ?? 128.w,
-      height: size?.height ?? 184.h,
+      width: size?.width ?? _presentationBodySize.width,
+      height: size?.height ?? _presentationBodySize.height,
       semanticLabel: '鮫太朗',
     );
   }
@@ -375,13 +412,9 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
           : controller.stageIndex.value >= 2
               ? SametarohAssets.idleFramesForBodyKey(_bodyKey)
               : null;
-      final hasBody = _bodyKey != null;
-      final endingFit = isPositive || hasBody ? BoxFit.contain : BoxFit.cover;
-      final endingWidth = isPositive
-          ? 250.w
-          : hasBody
-              ? 160.w
-              : 128.w;
+      final endingSize = endingFrames == null
+          ? _presentationBodySize
+          : _presentationFrameSize(endingFrames.first);
       final isSyncPending = controller.isEndingSyncPending.value;
       final syncError = controller.endingSyncError.value;
       final canStartNextCycle = !isSyncPending && syncError.isEmpty;
@@ -390,16 +423,14 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
         visual: endingVisual,
         visualWidget: endingFrames == null
             ? controller.stageIndex.value == 1
-                ? _buildSuppliedStatic(SametarohAssets.newbornFrame)
+                ? _buildPresentationStatic(SametarohAssets.newbornFrame)
                 : null
             : SametarohAnimatedImage(
                 frames: endingFrames,
-                width: endingWidth,
-                height: 250.h,
-                fit: endingFit,
-                alignment: isPositive || hasBody
-                    ? Alignment.bottomCenter
-                    : Alignment.center,
+                width: endingSize.width,
+                height: endingSize.height,
+                fit: BoxFit.contain,
+                alignment: Alignment.bottomCenter,
                 semanticLabel: isPositive ? '旅立つ鮫太朗' : '鮫太朗',
               ),
         message: [
@@ -468,16 +499,16 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
               Container(
                 key: const ValueKey('training-completion-title-pill'),
                 padding: EdgeInsets.symmetric(horizontal: 22.w, vertical: 7.h),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  border: Border.all(color: TrainingHomeStyle.border),
-                  borderRadius: BorderRadius.circular(24.r),
+                decoration: const ShapeDecoration(
+                  color: TrainingHomeStyle.navy,
+                  shape: BeveledRectangleBorder(
+                      borderRadius: BorderRadius.all(Radius.circular(10))),
                 ),
                 child: Text(
                   '図鑑・クリア履歴',
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    color: TrainingHomeStyle.navy,
+                    color: Colors.white,
                     fontFamily: 'LINESeedJP',
                     fontSize: 20.sp,
                     fontWeight: FontWeight.w700,
@@ -488,9 +519,10 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
               Container(
                 key: const ValueKey('training-completion-count-pill'),
                 padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 4.h),
-                decoration: BoxDecoration(
-                  color: const Color(0xffe4f4fb),
-                  borderRadius: BorderRadius.circular(18.r),
+                decoration: const ShapeDecoration(
+                  color: Color(0xffe4f4fb),
+                  shape: BeveledRectangleBorder(
+                      borderRadius: BorderRadius.all(Radius.circular(8))),
                 ),
                 child: Text(
                   '到達 $registeredCount/10',
@@ -541,16 +573,11 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
                                 semanticLabel: position,
                               );
 
-                        return Container(
+                        return MiniGameSelectionFrame(
                           key: ValueKey('training-completion-position-$index'),
                           padding: EdgeInsets.symmetric(
                             horizontal: 5.w,
                             vertical: 3.h,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            border: Border.all(color: const Color(0xffd4e2ec)),
-                            borderRadius: BorderRadius.circular(12.r),
                           ),
                           child: Semantics(
                             label: '$position、${unlocked ? '到達済み' : '未到達'}',
@@ -607,9 +634,10 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
                     backgroundColor: Colors.white,
                     foregroundColor: TrainingHomeStyle.navy,
                     elevation: 0,
-                    side: const BorderSide(color: Color(0xffb8deee)),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12.r),
+                    side: const BorderSide(
+                        color: TrainingHomeStyle.navy, width: 2),
+                    shape: const BeveledRectangleBorder(
+                      borderRadius: BorderRadius.all(Radius.circular(10)),
                     ),
                   ),
                   child: Text(
@@ -677,78 +705,91 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
                 : TrainingGameSoundEffect.evolutionNormal,
         key: ValueKey(
             'ending-entrance-${controller.evolutionStage.value}-${controller.endingStep.value}-$title'),
-        builder: (context, animation) => Padding(
-              padding: EdgeInsets.all(20.w),
-              child: Column(
-                children: [
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: TrainingEndingItem(
-                        animation: animation,
-                        start: evolution == null
-                            ? .2
-                            : (revealSeconds + .05 + hold) / seconds,
-                        span: evolution == null ? .3 : .3 / seconds,
-                        child: Text(title,
-                            style: TextStyle(
-                                fontSize: 22.sp, fontWeight: FontWeight.w700))),
+        builder: (context, animation) => Column(children: [
+              SizedBox(
+                height: 67,
+                child: trainingPresentationAppBar(
+                  primary: false,
+                  icon: title == '進化'
+                      ? Icons.auto_awesome
+                      : title == 'ポジション確定'
+                          ? Icons.emoji_events
+                          : Icons.directions_walk,
+                  title: TrainingEndingItem(
+                    animation: animation,
+                    start: evolution == null
+                        ? .2
+                        : (revealSeconds + .05 + hold) / seconds,
+                    span: evolution == null ? .3 : .3 / seconds,
+                    child: Text(title),
                   ),
-                  SizedBox(height: 18.h),
-                  Expanded(
-                    child: Container(
-                      width: double.infinity,
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(
-                        color: const Color(0xffe2e5e8),
-                        borderRadius: BorderRadius.circular(12.r),
-                      ),
-                      child: evolution?.drivenBy(animation, pageDuration) ??
-                          TrainingEndingItem(
-                              animation: animation,
-                              start: 0,
-                              child: visualWidget ??
-                                  Text(visual,
-                                      textAlign: TextAlign.center,
-                                      style: TextStyle(
-                                          fontSize: 30.sp, height: 1.5))),
-                    ),
-                  ),
-                  if (message != null) ...[
-                    SizedBox(height: 16.h),
-                    TrainingEndingItem(
-                        animation: animation,
-                        start: evolution == null
-                            ? .45
-                            : (revealSeconds + .2 + hold) / seconds,
-                        span: evolution == null ? .3 : .3 / seconds,
-                        child: Text(message,
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                                fontSize: 16.sp, fontWeight: FontWeight.w700))),
-                  ],
-                  SizedBox(height: 20.h),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 52.h,
-                    child: TrainingEndingItem(
-                        animation: animation,
-                        start: evolution == null
-                            ? .7
-                            : (revealSeconds + .4 + hold) / seconds,
-                        span: evolution == null ? .3 : .3 / seconds,
-                        child: guardRapidTap
-                            ? _EndingStepAdvanceButton(
-                                label: buttonLabel,
-                                onPressed: onPressed,
-                              )
-                            : ElevatedButton(
-                                onPressed: onPressed,
-                                child: Text(buttonLabel),
-                              )),
-                  ),
-                ],
+                ),
               ),
-            ));
+              Expanded(
+                  child: TrainingPresentationBody(
+                illustration: evolution?.drivenBy(animation, pageDuration) ??
+                    TrainingEndingItem(
+                      animation: animation,
+                      start: 0,
+                      child: visualWidget ??
+                          Text(visual,
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                  fontSize: 30.sp,
+                                  height: 1.5,
+                                  color: TrainingHomeStyle.navy)),
+                    ),
+                panel: MiniGameSelectionFrame(
+                  padding:
+                      EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
+                  child: ElevatedButtonTheme(
+                    data: ElevatedButtonThemeData(
+                        style: ElevatedButton.styleFrom(
+                      backgroundColor: TrainingHomeStyle.navy,
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      shape: const BeveledRectangleBorder(
+                          borderRadius: BorderRadius.all(Radius.circular(8))),
+                    )),
+                    child: Column(mainAxisSize: MainAxisSize.min, children: [
+                      if (message != null) ...[
+                        TrainingEndingItem(
+                          animation: animation,
+                          start: evolution == null
+                              ? .45
+                              : (revealSeconds + .2 + hold) / seconds,
+                          span: evolution == null ? .3 : .3 / seconds,
+                          child: Text(message,
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                  fontSize: 16.sp.clamp(14.0, 20.0),
+                                  fontWeight: FontWeight.w700,
+                                  color: TrainingHomeStyle.navy)),
+                        ),
+                        SizedBox(height: 14.h),
+                      ],
+                      SizedBox(
+                        width: double.infinity,
+                        height: 52.h,
+                        child: TrainingEndingItem(
+                          animation: animation,
+                          start: evolution == null
+                              ? .7
+                              : (revealSeconds + .4 + hold) / seconds,
+                          span: evolution == null ? .3 : .3 / seconds,
+                          child: guardRapidTap
+                              ? _EndingStepAdvanceButton(
+                                  label: buttonLabel, onPressed: onPressed)
+                              : ElevatedButton(
+                                  onPressed: onPressed,
+                                  child: Text(buttonLabel)),
+                        ),
+                      ),
+                    ]),
+                  ),
+                ),
+              )),
+            ]));
   }
 
   /// パラメータと退出ボタン、検証環境限定の開発操作を表示します。
@@ -758,7 +799,7 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
         _buildHudContent(context),
         if (controller.syncStatus.value == TrainingSyncStatus.syncing)
           Positioned(
-            top: 16.h + 52.w + 3.h,
+            top: 50,
             right: 22.w,
             child: const IgnorePointer(child: TrainingSyncIndicator()),
           ),
@@ -767,67 +808,82 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
   }
 
   Widget _buildHudContent(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.fromLTRB(8.w, 16.h, 8.w, 8.w),
+    final textExtra =
+        (MediaQuery.textScalerOf(context).scale(14) - 14).clamp(0.0, 28.0);
+    final panelHeight = 154.h.clamp(144.0, 208.0) + textExtra * 4;
+    return Padding(
+      padding: EdgeInsets.fromLTRB(12.w, 0, 10.w, 0),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Expanded(
-            child: Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                border: Border.all(color: TrainingHomeStyle.border),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: GridView.count(
-                crossAxisCount: 2,
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                childAspectRatio: 2.7,
-                mainAxisExtent: MediaQuery.textScalerOf(context).scale(14) > 14
-                    ? MediaQuery.textScalerOf(context).scale(14) * 3 + 12
-                    : null,
-                crossAxisSpacing: 20,
-                mainAxisSpacing: 8,
-                padding: EdgeInsets.zero,
-                children: const ['食事', '仕事', '清潔', '体調']
-                    .map((name) => _buildMeterByName(name, context))
-                    .toList(),
+            child: TrainingHomeFrame(
+              key: const ValueKey('training-home-parameter-panel'),
+              header: true,
+              padding: const EdgeInsets.fromLTRB(14, 26, 14, 14),
+              child: SizedBox(
+                height: panelHeight - 40,
+                child: Stack(
+                  children: [
+                    const Positioned.fill(
+                      child: Column(children: [
+                        Expanded(child: SizedBox()),
+                        Divider(height: 1, color: Color(0xffd2dbe5)),
+                        Expanded(child: SizedBox()),
+                      ]),
+                    ),
+                    const Positioned.fill(
+                      child: Row(children: [
+                        Expanded(child: SizedBox()),
+                        VerticalDivider(width: 1, color: Color(0xffd2dbe5)),
+                        Expanded(child: SizedBox()),
+                      ]),
+                    ),
+                    GridView.count(
+                      crossAxisCount: 2,
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      mainAxisExtent: (panelHeight - 56) / 2,
+                      crossAxisSpacing: 20,
+                      mainAxisSpacing: 16,
+                      padding: EdgeInsets.zero,
+                      children: const ['食事', '仕事', '清潔', '体調']
+                          .map((name) => _buildMeterByName(name, context))
+                          .toList(),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
-          SizedBox(width: 8.w),
+          SizedBox(width: 6.w),
           Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              SizedBox(
-                width: 44,
-                height: 44,
-                child: ElevatedButton(
-                  key: const ValueKey('training-home-exit'),
-                  onPressed: controller.isReturningHome.value
-                      ? null
-                      : () => _returnHomeAfterSync(context),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.white,
-                    foregroundColor: TrainingHomeStyle.navy,
-                    elevation: 0,
-                    padding: EdgeInsets.zero,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(6.r),
+              TrainingHomeFrame(
+                child: SizedBox(
+                  width: 44,
+                  height: 44,
+                  child: TextButton(
+                    key: const ValueKey('training-home-exit'),
+                    onPressed: controller.isReturningHome.value
+                        ? null
+                        : () => _returnHomeAfterSync(context),
+                    style: TextButton.styleFrom(
+                      foregroundColor: TrainingHomeStyle.navy,
+                      padding: EdgeInsets.zero,
+                      shape: const BeveledRectangleBorder(
+                          borderRadius: BorderRadius.all(Radius.circular(8))),
                     ),
+                    child: controller.isReturningHome.value
+                        ? const SizedBox(
+                            width: 22,
+                            height: 22,
+                            child: CircularProgressIndicator(strokeWidth: 2))
+                        : const Tooltip(
+                            message: '戻る',
+                            child: Icon(Icons.arrow_back, size: 28)),
                   ),
-                  child: controller.isReturningHome.value
-                      ? SizedBox(
-                          width: 22.w,
-                          height: 22.w,
-                          child:
-                              const CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Tooltip(
-                          message: '戻る',
-                          child: Icon(Icons.arrow_back, size: 20)),
                 ),
               ),
               if (AppEnvironment.showsTrainingDebugUi) ...[
@@ -919,134 +975,168 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
   Widget _buildRoom(BuildContext context) {
     final canTrain =
         controller.stageIndex.value >= 2 && !controller.ended.value;
-    return Stack(
-      children: [
-        Positioned.fill(
-          child: Obx(() {
-            final warnings = controller.retirementWarnings;
-            if (warnings.isEmpty) return const SizedBox.shrink();
-            final collapsed = {
-              for (final warning in warnings)
-                warning.episode:
-                    controller.isRetirementWarningCollapsed(warning),
-            };
-            return LayoutBuilder(builder: (context, constraints) {
-              final availableHeight =
-                  constraints.maxHeight - 126.h - 184.h - 24.h;
-              final minimumHeight = warnings.length == 1 ? 64.0 : 110.0;
-              final height = availableHeight.clamp(
-                  minimumHeight,
-                  constraints.maxHeight < minimumHeight
-                      ? minimumHeight
-                      : constraints.maxHeight);
-              Widget panel(TrainingRetirementWarning warning) =>
-                  TrainingRetirementWarningPanel(
-                    warning: warning,
-                    collapsed: collapsed[warning.episode]!,
-                    onCollapse: () =>
-                        controller.collapseRetirementWarning(warning),
-                    onExpand: () => controller.expandRetirementWarning(warning),
-                  );
-              return Align(
-                alignment: Alignment.topCenter,
-                child: Padding(
-                  padding: EdgeInsets.only(top: 12.h, left: 12.w, right: 12.w),
-                  child: SizedBox(
-                    height: height,
-                    child: warnings.length == 1
-                        ? panel(warnings.first)
-                        : TrainingRetirementWarningsPanel(
-                            warnings: warnings,
-                            collapsed: collapsed.values.every((value) => value),
-                            onCollapse: () => controller
-                                .setRetirementWarningsCollapsed(warnings, true),
-                            onExpand: () =>
-                                controller.setRetirementWarningsCollapsed(
-                                    warnings, false),
-                          ),
+    final warningCount = controller.retirementWarnings.length;
+    return LayoutBuilder(builder: (context, roomConstraints) {
+      final characterBottom = 108.h;
+      final warningMinimum = warningCount > 1 ? 110.0 : 64.0;
+      // 小画面でも警告の操作領域を確保し、キャラクターと重ねません。
+      final characterHeight = warningCount == 0
+          ? 184.h
+          : (roomConstraints.maxHeight -
+                  characterBottom -
+                  warningMinimum -
+                  24.h)
+              .clamp(0.0, 184.h);
+      return Stack(
+        children: [
+          Positioned.fill(
+            child: Obx(() {
+              final warnings = controller.retirementWarnings;
+              if (warnings.isEmpty) return const SizedBox.shrink();
+              final collapsed = {
+                for (final warning in warnings)
+                  warning.episode:
+                      controller.isRetirementWarningCollapsed(warning),
+              };
+              return LayoutBuilder(builder: (context, constraints) {
+                final availableHeight = constraints.maxHeight -
+                    characterBottom -
+                    characterHeight -
+                    24.h;
+                final minimumHeight = warnings.length == 1 ? 64.0 : 110.0;
+                final height = availableHeight.clamp(
+                    minimumHeight,
+                    constraints.maxHeight < minimumHeight
+                        ? minimumHeight
+                        : constraints.maxHeight);
+                Widget panel(TrainingRetirementWarning warning) =>
+                    TrainingRetirementWarningPanel(
+                      warning: warning,
+                      collapsed: collapsed[warning.episode]!,
+                      onCollapse: () =>
+                          controller.collapseRetirementWarning(warning),
+                      onExpand: () =>
+                          controller.expandRetirementWarning(warning),
+                    );
+                return Align(
+                  alignment: Alignment.topCenter,
+                  child: Padding(
+                    padding:
+                        EdgeInsets.only(top: 12.h, left: 12.w, right: 12.w),
+                    child: SizedBox(
+                      height: height,
+                      child: warnings.length == 1
+                          ? panel(warnings.first)
+                          : TrainingRetirementWarningsPanel(
+                              warnings: warnings,
+                              collapsed:
+                                  collapsed.values.every((value) => value),
+                              onCollapse: () =>
+                                  controller.setRetirementWarningsCollapsed(
+                                      warnings, true),
+                              onExpand: () =>
+                                  controller.setRetirementWarningsCollapsed(
+                                      warnings, false),
+                            ),
+                    ),
                   ),
-                ),
-              );
-            });
-          }),
-        ),
-        Positioned.fill(
-          child: TrainingHomeFloorLitter(
-            cleanliness: controller.meters['清潔']!,
-            characterFootClearance: 126.h,
-            controlsClearance: 64.h > 12.h + 44 ? 64.h : 12.h + 44,
+                );
+              });
+            }),
           ),
-        ),
-        Positioned(
-          left: 12.w,
-          bottom: 12.h,
-          child: TextButton.icon(
-            key: const ValueKey('training-home-dex'),
-            onPressed: () => _showDex(context),
-            style: _homeAuxiliaryStyle,
-            icon: const Icon(Icons.menu_book_outlined, size: 16),
-            label: const Text('ずかん'),
-          ),
-        ),
-        Positioned(
-          left: 0,
-          right: 0,
-          bottom: 126.h,
-          child: TrainingHomeRoamingCharacter(
-            soundFactory: homeTapSoundFactory,
-            reactToTap:
-                controller.stageIndex.value >= 1 && !controller.ended.value,
-            enabled: canTrain,
-            width: 220.w,
-            height: 184.h,
-            travelDistance: 28.w,
-            preparationKey: _bodyKey ?? 'normal',
-            prepareWalk: (context) =>
-                TrainingHomeCharacterFrameSet.forBodyKey(_bodyKey)
-                    .precache(context),
-            builder: (context, isWalking) => Align(
-              alignment: Alignment.bottomCenter,
-              child: _buildCharacterVisual(isWalking: isWalking),
+          Positioned.fill(
+            child: TrainingHomeFloorLitter(
+              cleanliness: controller.meters['清潔']!,
+              characterFootClearance: characterBottom,
+              controlsClearance: 64.h > 12.h + 44 ? 64.h : 12.h + 44,
             ),
           ),
-        ),
-        Positioned(
-          right: 8.w,
-          bottom: 12.h,
-          child: _buildTrainingMenuButton(context, canTrain),
-        ),
-        if (controller.ended.value)
-          Positioned.fill(
-            child: Center(
-              child: Container(
-                margin: EdgeInsets.all(24.w),
-                padding: EdgeInsets.all(14.w),
-                color: Colors.white.withOpacity(.94),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      controller.clearPosition.value == null
-                          ? 'ゲームオーバー'
-                          : '育成完了',
-                      style: TextStyle(
-                          fontSize: 18.sp, fontWeight: FontWeight.w700),
-                    ),
-                    SizedBox(height: 8.h),
-                    Text(controller.endingMessage.value,
-                        textAlign: TextAlign.center),
-                    SizedBox(height: 10.h),
-                    ElevatedButton(
-                      onPressed: _openNewEgg,
-                      child: const Text('卵からやりなおす'),
-                    ),
-                  ],
+          Positioned(
+            left: 12.w,
+            bottom: 12.h,
+            child: TrainingHomeFrame(
+              child: SizedBox(
+                width: 144.w.clamp(125.0, 230.0),
+                height: 44,
+                child: TextButton(
+                  key: const ValueKey('training-home-dex'),
+                  onPressed: () => _showDex(context),
+                  style: _homeAuxiliaryStyle,
+                  child: const FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Row(mainAxisSize: MainAxisSize.min, children: [
+                      Icon(Icons.menu_book, size: 24),
+                      SizedBox(width: 10),
+                      Text('ずかん'),
+                      SizedBox(width: 16),
+                      Icon(Icons.chevron_right, size: 20),
+                    ]),
+                  ),
                 ),
               ),
             ),
           ),
-      ],
-    );
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: characterBottom,
+            child: TrainingHomeRoamingCharacter(
+              soundFactory: homeTapSoundFactory,
+              reactToTap:
+                  controller.stageIndex.value >= 1 && !controller.ended.value,
+              enabled: canTrain,
+              width: 220.w,
+              height: characterHeight,
+              travelDistance: 28.w,
+              preparationKey: _bodyKey ?? 'normal',
+              prepareWalk: (context) =>
+                  TrainingHomeCharacterFrameSet.forBodyKey(_bodyKey)
+                      .precache(context),
+              builder: (context, isWalking) => Align(
+                alignment: Alignment.bottomCenter,
+                child: _buildCharacterVisual(isWalking: isWalking),
+              ),
+            ),
+          ),
+          Positioned(
+            right: 12.w,
+            bottom: 12.h,
+            child: _buildTrainingMenuButton(context, canTrain),
+          ),
+          if (controller.ended.value)
+            Positioned.fill(
+              child: Center(
+                child: Container(
+                  margin: EdgeInsets.all(24.w),
+                  padding: EdgeInsets.all(14.w),
+                  color: Colors.white.withOpacity(.94),
+                  child: SingleChildScrollView(
+                      child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        controller.clearPosition.value == null
+                            ? 'ゲームオーバー'
+                            : '育成完了',
+                        style: TextStyle(
+                            fontSize: 18.sp, fontWeight: FontWeight.w700),
+                      ),
+                      SizedBox(height: 8.h),
+                      Text(controller.endingMessage.value,
+                          textAlign: TextAlign.center),
+                      SizedBox(height: 10.h),
+                      ElevatedButton(
+                        onPressed: _openNewEgg,
+                        child: const Text('卵からやりなおす'),
+                      ),
+                    ],
+                  )),
+                ),
+              ),
+            ),
+        ],
+      );
+    });
   }
 
   /// 確定した大別の立ち絵を表示し、未判定はノーマルを保持します。
@@ -1091,17 +1181,32 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
         alignment: Alignment.bottomCenter,
       );
 
-  // 旧進化前184と旧ユニフォーム250の中間高で両方をそろえます。
-  Size get _firstTeamBodySize => Size(128.w * 217 / 184, 217.h);
+  // 小さかった進化後184と大きかった旅立ち250の中間サイズです。
+  Size get _presentationBodySize => Size(
+        128.w * TrainingPresentationBody.characterHeight / 184,
+        TrainingPresentationBody.characterHeight.h,
+      );
 
-  // 端末の縦横倍率に依存せず、ポジション原画の比率を保ちます。
-  Size _positionDisplaySize(SametarohFrame frame) =>
-      Size(217.h * frame.canvasSize.aspectRatio, 217.h);
+  Size _presentationFrameSize(SametarohFrame frame) => Size(
+        TrainingPresentationBody.characterHeight.h *
+            frame.canvasSize.aspectRatio,
+        TrainingPresentationBody.characterHeight.h,
+      );
+
+  Widget _buildPresentationStatic(SametarohFrame frame) {
+    final size = _presentationFrameSize(frame);
+    return SametarohFrameImage(
+        frame: frame,
+        width: size.width,
+        height: size.height,
+        fit: BoxFit.contain,
+        alignment: Alignment.bottomCenter);
+  }
 
   Widget? _buildPositionStatic(String position) {
     final frame = SametarohAssets.positionFrameFor(position);
     if (frame == null) return null;
-    final size = _positionDisplaySize(frame);
+    final size = _presentationFrameSize(frame);
     return SametarohFrameImage(
       frame: frame,
       width: size.width,
@@ -1113,16 +1218,16 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
   /// ⑤ミニゲーム選択画面を開く練習ボタンを作成します。
   ButtonStyle get _homeAuxiliaryStyle => TextButton.styleFrom(
         foregroundColor: TrainingHomeStyle.navy,
-        backgroundColor: Colors.white,
-        disabledForegroundColor: const Color(0xff888888),
+        disabledForegroundColor: const Color(0xff8192a6),
         minimumSize: const Size(48, 44),
-        padding: const EdgeInsets.symmetric(horizontal: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 8),
         textStyle: const TextStyle(
           fontFamily: 'LINESeedJP',
-          fontSize: 12,
+          fontSize: 15,
           fontWeight: FontWeight.w700,
         ),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+        shape: const BeveledRectangleBorder(
+            borderRadius: BorderRadius.all(Radius.circular(8))),
       );
 
   Widget _buildTrainingMenuButton(BuildContext context, bool enabled) {
@@ -1139,11 +1244,25 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
       ));
     }
 
-    final button = TextButton.icon(
-      onPressed: onTap,
-      style: _homeAuxiliaryStyle,
-      icon: const Icon(Icons.sports_rugby_outlined, size: 16),
-      label: const Text('練習 / MG'),
+    final button = TrainingHomeFrame(
+      child: SizedBox(
+        width: 144.w.clamp(125.0, 230.0),
+        height: 44,
+        child: TextButton(
+          onPressed: onTap,
+          style: _homeAuxiliaryStyle,
+          child: const FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Row(mainAxisSize: MainAxisSize.min, children: [
+              Icon(Icons.sports_rugby, size: 24),
+              SizedBox(width: 8),
+              Text('練習 / MG'),
+              SizedBox(width: 4),
+              Icon(Icons.chevron_right, size: 20),
+            ]),
+          ),
+        ),
+      ),
     );
     if (controller.stageIndex.value < 1 || controller.ended.value) {
       return button;
@@ -1177,20 +1296,20 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
     ];
     return SizedBox(
       key: const ValueKey('training-home-footer'),
-      height: TrainingHomeStyle.footerHeight,
-      child: Container(
-        decoration: const BoxDecoration(
-            color: Colors.white,
-            border: Border(top: BorderSide(color: Color(0xffe0e0e0)))),
-        padding: const EdgeInsets.fromLTRB(12, 8, 12, 16),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: careActions
-              .where((type) =>
-                  controller.stageIndex.value != 1 ||
-                  SametarohAssets.childCareActions.contains(type))
-              .map((type) => Expanded(child: _buildCareButton(context, type)))
-              .toList(),
+      height: TrainingHomeStyle.footerHeight.h.clamp(112.0, 180.0),
+      child: TrainingHomeRibbon(
+        footer: true,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(12, 12, 12, 22),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: careActions
+                .where((type) =>
+                    controller.stageIndex.value != 1 ||
+                    SametarohAssets.childCareActions.contains(type))
+                .map((type) => Expanded(child: _buildCareButton(context, type)))
+                .toList(),
+          ),
         ),
       ),
     );

@@ -9,6 +9,9 @@ import 'sametaroh_asset.dart';
 import 'sametaroh_clean_warp.dart';
 import 'training_care_scene.dart';
 import 'training_game_theme.dart';
+import 'training_home_controls.dart';
+import 'training_presentation_layout.dart';
+import 'mini_games/mini_game_selection_frame.dart';
 
 /// ④-a〜④-eのお世話実行中画面を共通レイアウトで表示します。
 class TrainingGameCareActionScreen extends StatefulWidget {
@@ -206,20 +209,10 @@ class _TrainingGameCareActionScreenState
       child: PopScope(
         canPop: !_isCompleting,
         child: Scaffold(
-          backgroundColor: Colors.white,
-          appBar: AppBar(
-            title: Text(
-              'お世話 ｜ ${presentation.title}',
-              style: const TextStyle(fontWeight: FontWeight.w700),
-            ),
-            leading: IconButton(
-              // 完了演出の準備中は、行動確定前に閉じられないようにします。
-              onPressed: _isCompleting && !_showCompletionFrame
-                  ? null
-                  : () => Navigator.pop(context, _showCompletionFrame),
-              icon: const Icon(Icons.close),
-              tooltip: _showCompletionFrame ? '完了して戻る' : 'お世話を中止',
-            ),
+          backgroundColor: TrainingHomeStyle.navy,
+          appBar: trainingPresentationAppBar(
+            title: Text('お世話 ｜ ${presentation.title}'),
+            icon: _actionIcon,
           ),
           body: GestureDetector(
             behavior: HitTestBehavior.opaque,
@@ -228,69 +221,68 @@ class _TrainingGameCareActionScreenState
                     ? () => Navigator.pop(context, true)
                     : null)
                 : _advanceActionProgressByOneSecond,
-            child: SafeArea(
-              child: Padding(
-                padding: EdgeInsets.all(20.w),
-                child: Column(
-                  children: [
-                    Expanded(
-                      child: SizedBox(
-                        width: double.infinity,
-                        child: _buildIllustration(presentation),
-                      ),
-                    ),
-                    SizedBox(height: 20.h),
-                    Container(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 16.w,
-                        vertical: 10.h,
-                      ),
-                      decoration: BoxDecoration(
-                        color: const Color(0xfff4f4f4),
-                        borderRadius: BorderRadius.circular(999.r),
-                      ),
-                      child: Text(
-                        presentation.progressLabel,
-                        style: TextStyle(
-                          fontSize: 16.sp,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ),
-                    SizedBox(height: 8.h),
-                    _buildActionSeekBar(),
-                    SizedBox(height: 12.h),
-                    Text(
-                      presentation.description,
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 14.sp,
-                        height: 1.5,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    SizedBox(height: 12.h),
-                    Text(
-                      _showCompletionFrame
-                          ? 'タップして戻る'
-                          : _isCompleting
-                              ? '完了しています…'
-                              : 'タップで短縮できます。',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 14.sp,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+            child: TrainingPresentationBody(
+              illustration: _buildIllustration(presentation),
+              illustrationAspectRatio: TrainingCareScene.sourceSize.aspectRatio,
+              clipIllustration: true,
+              illustrationSurface: MiniGameSelectionSurface.window,
+              panel: _buildCareStatus(presentation),
             ),
           ),
         ),
       ),
     );
   }
+
+  IconData get _actionIcon => switch (widget.actionType) {
+        TrainingActionType.meal => Icons.restaurant,
+        TrainingActionType.clean => Icons.cleaning_services,
+        TrainingActionType.squat => Icons.fitness_center,
+        TrainingActionType.work => Icons.work,
+        TrainingActionType.rest => Icons.bed,
+        _ => Icons.sports_rugby,
+      };
+
+  Widget _buildCareStatus(_CareActionPresentation presentation) =>
+      MiniGameSelectionFrame(
+        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+        child: DefaultTextStyle.merge(
+          style: const TextStyle(color: TrainingHomeStyle.navy),
+          child: Column(mainAxisSize: MainAxisSize.min, children: [
+            Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+              Icon(_showCompletionFrame ? Icons.check_circle : _actionIcon,
+                  color: const Color(0xff008fd8), size: 20),
+              const SizedBox(width: 8),
+              Flexible(
+                  child: Text(presentation.progressLabel,
+                      style: TextStyle(
+                          fontSize: 16.sp.clamp(14.0, 20.0),
+                          fontWeight: FontWeight.w700))),
+            ]),
+            SizedBox(height: 8.h),
+            _buildActionSeekBar(),
+            SizedBox(height: 8.h),
+            Text(presentation.description,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                    fontSize: 14.sp.clamp(12.0, 16.0),
+                    height: 1.5,
+                    fontWeight: FontWeight.w700)),
+            SizedBox(height: 10.h),
+            Text(
+                _showCompletionFrame
+                    ? 'タップして戻る'
+                    : _isCompleting
+                        ? '完了しています…'
+                        : 'タップで短縮できます。',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                    fontSize: 14.sp.clamp(12.0, 16.0),
+                    fontWeight: FontWeight.w700,
+                    color: const Color(0xff0076bc))),
+          ]),
+        ),
+      );
 
   Widget _buildIllustration(_CareActionPresentation presentation) {
     final scene = TrainingCareScene.forAction(
@@ -411,7 +403,7 @@ class _CareActionSeekBarPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     const inset = 8.0;
-    const trackHeight = 4.0;
+    const trackHeight = 6.0;
     const thumbRadius = 6.0;
     final trackWidth = math.max(0.0, size.width - inset * 2).toDouble();
     final trackTop = (size.height - trackHeight) / 2;
@@ -426,8 +418,8 @@ class _CareActionSeekBarPainter extends CustomPainter {
       const Radius.circular(trackHeight),
     );
     canvas
-      ..drawRRect(trackRect, Paint()..color = const Color(0xffd9e8e6))
-      ..drawRRect(activeRect, Paint()..color = const Color(0xff178d83));
+      ..drawRRect(trackRect, Paint()..color = const Color(0xffd0dfe9))
+      ..drawRRect(activeRect, Paint()..color = const Color(0xff009eed));
     final thumbCenter = Offset(inset + progressWidth, size.height / 2);
     canvas
       ..drawCircle(
@@ -441,7 +433,7 @@ class _CareActionSeekBarPainter extends CustomPainter {
         thumbCenter,
         thumbRadius,
         Paint()
-          ..color = const Color(0xff178d83)
+          ..color = const Color(0xff009eed)
           ..style = PaintingStyle.stroke
           ..strokeWidth = 2,
       );

@@ -58,7 +58,7 @@ void main() {
         await tester.tap(find.text('タップして戻る'));
         await tester.pump();
       } else {
-        await tester.tap(find.byTooltip('お世話を中止'));
+        await tester.binding.handlePopRoute();
       }
       await tester.pump();
       expect(controller.performed, 0);

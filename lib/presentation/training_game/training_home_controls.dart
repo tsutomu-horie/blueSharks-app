@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 
 import 'models/training_game_models.dart';
+import 'training_home_decoration.dart';
 
-/// 既存HOMEの文字・白地・細い枠に合わせる育成専用の表示定数です。
+/// 育成ホームのチームカラーと操作領域の表示定数です。
 abstract final class TrainingHomeStyle {
   static const navy = Color(0xff002b6d);
   static const border = Color(0xffcccccc);
-  static const footerHeight = 92.0;
-  static const buttonHeight = 67.0;
+  static const footerHeight = 136.0;
+  static const buttonHeight = 88.0;
 }
 
 /// 通常100・超過50の既存ゲージを、数値と同じ枠に表示します。
@@ -93,7 +94,7 @@ class _TrainingHomeMeterState extends State<TrainingHomeMeter>
                 : value < 50
                     ? const Color(0xffeda100)
                     : value < 80
-                        ? const Color(0xff7ec8f0)
+                        ? const Color(0xff36bef1)
                         : const Color(0xff5ee05e);
             final visible = _delta != 0 && _feedback.value < 1;
             final opacity = (1 - ((_feedback.value - .7) / .3).clamp(0.0, 1.0));
@@ -102,49 +103,73 @@ class _TrainingHomeMeterState extends State<TrainingHomeMeter>
               children: [
                 Row(
                   children: [
+                    Container(
+                      width: 28,
+                      height: 28,
+                      decoration: const BoxDecoration(
+                          color: TrainingHomeStyle.navy,
+                          shape: BoxShape.circle),
+                      child: Icon(
+                          switch (widget.name) {
+                            '食事' => Icons.restaurant,
+                            '仕事' => Icons.work,
+                            '清潔' => Icons.auto_awesome,
+                            _ => Icons.monitor_heart,
+                          },
+                          color: Colors.white,
+                          size: 18),
+                    ),
+                    const SizedBox(width: 8),
                     Expanded(
-                      child: Text(
-                        widget.name,
-                        style: const TextStyle(fontSize: 14),
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.centerLeft,
+                        child: Text(widget.name,
+                            style: const TextStyle(
+                                fontSize: 14, fontWeight: FontWeight.w700)),
                       ),
                     ),
                     if (visible)
-                      Padding(
-                        padding: const EdgeInsets.only(right: 4),
-                        child: Opacity(
-                          opacity: opacity,
-                          child: Text(
-                            '${_delta > 0 ? '+' : ''}${_delta.toStringAsFixed(_delta == _delta.roundToDouble() ? 0 : 1)}',
-                            key: ValueKey('meter-delta-${widget.name}'),
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w700,
-                              color: _delta > 0
-                                  ? const Color(0xff16805d)
-                                  : const Color(0xffb44235),
-                            ),
-                          ),
-                        ),
-                      ),
-                    Text(
-                      '${value.round()}',
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
+                      Flexible(
+                          child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: Padding(
+                                padding: const EdgeInsets.only(right: 4),
+                                child: Opacity(
+                                  opacity: opacity,
+                                  child: Text(
+                                    '${_delta > 0 ? '+' : ''}${_delta.toStringAsFixed(_delta == _delta.roundToDouble() ? 0 : 1)}',
+                                    key: ValueKey('meter-delta-${widget.name}'),
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w700,
+                                      color: _delta > 0
+                                          ? const Color(0xff16805d)
+                                          : const Color(0xffb44235),
+                                    ),
+                                  ),
+                                ),
+                              ))),
+                    Flexible(
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text('${value.round()}',
+                            style: const TextStyle(
+                                fontSize: 18, fontWeight: FontWeight.w700)),
                       ),
                     ),
                   ],
                 ),
                 const SizedBox(height: 6),
                 ClipRRect(
-                  borderRadius: BorderRadius.circular(2),
+                  borderRadius: BorderRadius.circular(8),
                   child: SizedBox(
-                    height: 5,
+                    height: 8,
                     child: Stack(
                       fit: StackFit.expand,
                       children: [
                         const Positioned.fill(
-                          child: ColoredBox(color: Color(0xffe8edf2)),
+                          child: ColoredBox(color: Color(0xffd8dfe5)),
                         ),
                         FractionallySizedBox(
                           alignment: Alignment.centerLeft,
@@ -202,11 +227,11 @@ class TrainingHomeCareButton extends StatelessWidget {
     final time =
         '${(seconds ~/ 60).toString().padLeft(2, '0')}:${(seconds % 60).toString().padLeft(2, '0')}';
     final icon = switch (type) {
-      TrainingActionType.meal => Icons.restaurant_outlined,
-      TrainingActionType.clean => Icons.cleaning_services_outlined,
-      TrainingActionType.squat => Icons.fitness_center_outlined,
-      TrainingActionType.work => Icons.work_outline,
-      TrainingActionType.rest => Icons.bed_outlined,
+      TrainingActionType.meal => Icons.restaurant,
+      TrainingActionType.clean => Icons.cleaning_services,
+      TrainingActionType.squat => Icons.fitness_center,
+      TrainingActionType.work => Icons.work,
+      TrainingActionType.rest => Icons.bed,
       _ => Icons.sports_rugby_outlined,
     };
     return Semantics(
@@ -228,33 +253,51 @@ class TrainingHomeCareButton extends StatelessWidget {
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(4),
             ),
-            foregroundColor: TrainingHomeStyle.navy,
+            foregroundColor: Colors.white,
           ),
           child: Stack(
             children: [
-              Center(
+              Align(
+                  alignment: Alignment.topCenter,
                   child: Column(mainAxisSize: MainAxisSize.min, children: [
-                Icon(
-                  icon,
-                  size: 24,
-                  color: enabled
-                      ? TrainingHomeStyle.navy
-                      : const Color(0xff888888),
+                    const SizedBox(height: 6),
+                    TrainingHomeFrame(
+                      hexagon: true,
+                      child: SizedBox(
+                        width: 46,
+                        height: 50,
+                        child: Icon(icon,
+                            size: 28,
+                            color: enabled
+                                ? TrainingHomeStyle.navy
+                                : const Color(0xff8192a6)),
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    SizedBox(
+                        height: 16,
+                        child: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Text(waiting ? 'あと $time' : label,
+                                style: TextStyle(
+                                    fontFamily: 'LINESeedJP',
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w700,
+                                    color: waiting || enabled
+                                        ? Colors.white
+                                        : const Color(0xffa9bdd8))))),
+                  ])),
+              if (type == TrainingActionType.meal && !waiting)
+                Positioned(
+                  left: 12,
+                  right: 12,
+                  bottom: 1,
+                  child: Container(
+                      height: 4,
+                      decoration: BoxDecoration(
+                          color: const Color(0xff0099ed),
+                          borderRadius: BorderRadius.circular(4))),
                 ),
-                const SizedBox(height: 6),
-                SizedBox(
-                    height: 16,
-                    child: FittedBox(
-                        fit: BoxFit.scaleDown,
-                        child: Text(waiting ? 'あと $time' : label,
-                            style: TextStyle(
-                                fontFamily: 'LINESeedJP',
-                                fontSize: 12,
-                                fontWeight: FontWeight.w700,
-                                color: waiting || enabled
-                                    ? TrainingHomeStyle.navy
-                                    : const Color(0xff616161))))),
-              ])),
               if (waiting)
                 Positioned(
                   left: 7,
@@ -282,7 +325,7 @@ class TrainingHomeCareButton extends StatelessWidget {
                         style: const TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w700,
-                            color: TrainingHomeStyle.navy))),
+                            color: Colors.white))),
             ],
           ),
         ),

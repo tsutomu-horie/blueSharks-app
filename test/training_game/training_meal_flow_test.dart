@@ -77,8 +77,11 @@ void main() {
       expect(_shownAsset(tester), frames[1].asset);
       await tester.pump(const Duration(milliseconds: 650));
       expect(_shownAsset(tester), frames[0].asset);
-      await tester.tapAt(const Offset(2, 200));
-      await tester.pump();
+      // 1回で1秒短縮する既存仕様のまま、完了まで4回タップします。
+      for (var tap = 0; tap < 4; tap++) {
+        await tester.tapAt(const Offset(2, 200));
+        await tester.pump();
+      }
       expect(_shownAsset(tester), done.asset);
       await tester.pump(const Duration(milliseconds: 499));
       expect(result, isNull);
@@ -95,9 +98,10 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
       expect(_shownAsset(tester), frames[0].asset);
-      await tester.tap(find.byTooltip('お世話を中止'));
+      await tester.binding.handlePopRoute();
       await tester.pumpAndSettle();
-      expect(result, isFalse);
+      expect(result, isNull);
+      expect(find.byType(TrainingGameCareActionScreen), findsNothing);
       await tester.pumpWidget(const SizedBox());
       await tester.pump(const Duration(seconds: 2));
       expect(tester.takeException(), isNull);

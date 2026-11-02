@@ -182,7 +182,7 @@ void main() {
         _ => throw StateError('Unsupported fixture body: $bodyKey'),
       };
 
-      testWidgets('実画面stage$stage/$bodyKey: 1.20→1.25秒と完了tickで外形が跳ねず通常idleへ続く',
+      testWidgets('実画面stage$stage/$bodyKey: 中間サイズで演出を終え、同じidle素材でHOMEへ戻る',
           (tester) async {
         _useDesignViewport(tester);
         final controller = _EvolutionFixtureController(fixtureBranch: branch)
@@ -282,8 +282,11 @@ void main() {
             closeTo(regularFrame.frame.canvasSize.height, 0.001));
         final regularRect = tester.getRect(regularTarget);
         measurements.add(_screenGeometryRow('regular_idle', regularRect, 1));
-        expect(regularRect.width, closeTo(completedRect.width, 0.01));
-        expect(regularRect.height, closeTo(completedRect.height, 0.01));
+        // HOMEの184に対し、案内画面は承認済みの中間サイズ217です。
+        expect(
+            completedRect.width / regularRect.width, closeTo(217 / 184, .001));
+        expect(completedRect.height / regularRect.height,
+            closeTo(217 / 184, .001));
         expect(tester.takeException(), isNull);
 
         final file = File(

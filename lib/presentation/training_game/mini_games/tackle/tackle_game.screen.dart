@@ -8,6 +8,10 @@ import '../models/mini_game_result.dart';
 import '../mini_game_result_transition.dart';
 import '../../models/mini_game_settings.dart';
 import '../../training_game_theme.dart';
+import '../../training_presentation_layout.dart';
+import '../../training_home_controls.dart';
+import '../mini_game_selection_frame.dart';
+import '../mini_game_chrome.dart';
 import 'tackle_player_visual.dart';
 import 'tackle_opponent_visual.dart';
 import 'tackle_contact_geometry.dart';
@@ -700,51 +704,59 @@ class _TackleGameScreenState extends State<TackleGameScreen>
   @override
   Widget build(BuildContext context) {
     return TrainingGameTheme(
-      child: Scaffold(
-        backgroundColor: const Color(0xffe8f3e8),
-        appBar: AppBar(
+      child: MiniGameButtonTheme(
+          child: Scaffold(
+        backgroundColor: TrainingHomeStyle.navy,
+        appBar: trainingPresentationAppBar(
           title: const Text('タックル'),
-          backgroundColor: const Color(0xff123d28),
-          foregroundColor: Colors.white,
+          icon: Icons.sports_rugby,
+          automaticallyImplyLeading: true,
+          toolbarHeight: 53,
           actions: [
             if (_phase == _TacklePhase.approach ||
                 _phase == _TacklePhase.feint ||
                 _phase == _TacklePhase.input)
-              IconButton(
-                onPressed: _isPaused ? _resumeGame : _pauseGame,
-                tooltip: _isPaused ? '再開' : '一時停止',
-                icon: Icon(_isPaused ? Icons.play_arrow : Icons.pause),
-              ),
+              miniGamePauseControl(
+                  paused: _isPaused,
+                  onPressed: _isPaused ? _resumeGame : _pauseGame),
           ],
         ),
-        body: Listener(
-          behavior: HitTestBehavior.opaque,
-          onPointerDown: _recordBodyPointerDown,
-          onPointerUp: _recordBodyPointerUp,
-          onPointerCancel: _recordBodyPointerCancel,
-          child: SafeArea(
-            child: GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              // 判定表示後は、下部パネル以外を含む画面全体のタップで次セットへ進めます。
-              onTap: _phase == _TacklePhase.attemptResult
-                  ? _advanceAfterAttempt
-                  : null,
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  children: [
-                    _buildHeader(),
-                    const SizedBox(height: 12),
-                    Expanded(child: _buildField()),
-                    const SizedBox(height: 12),
-                    _buildBottomPanel(),
-                  ],
+        body: DecoratedBox(
+          decoration: const BoxDecoration(gradient: miniGameBackground),
+          child: Listener(
+            behavior: HitTestBehavior.opaque,
+            onPointerDown: _recordBodyPointerDown,
+            onPointerUp: _recordBodyPointerUp,
+            onPointerCancel: _recordBodyPointerCancel,
+            child: SafeArea(
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                // 判定表示後は、下部パネル以外を含む画面全体のタップで次セットへ進めます。
+                onTap: _phase == _TacklePhase.attemptResult
+                    ? _advanceAfterAttempt
+                    : null,
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    children: [
+                      _buildHeader(),
+                      const SizedBox(height: 12),
+                      Expanded(child: _buildField()),
+                      const SizedBox(height: 12),
+                      MiniGameSelectionFrame(
+                          clipContent: true,
+                          child: DefaultTextStyle.merge(
+                              style: const TextStyle(
+                                  color: TrainingHomeStyle.navy),
+                              child: _buildBottomPanel())),
+                    ],
+                  ),
                 ),
               ),
             ),
           ),
         ),
-      ),
+      )),
     );
   }
 
@@ -755,85 +767,94 @@ class _TackleGameScreenState extends State<TackleGameScreen>
       children: [
         Text(
           'SET $_setNumber / ${_settings.setCount}',
-          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+          style: const TextStyle(
+              fontSize: 18, fontWeight: FontWeight.w800, color: Colors.white),
         ),
-        Text('判定猶予 ${_settings.inputLimitMs / 1000}秒'),
+        Text('判定猶予 ${_settings.inputLimitMs / 1000}秒',
+            style: const TextStyle(color: Colors.white)),
       ],
     );
   }
 
   /// 接近する相手と上下の入力領域を表示します。
   Widget _buildField() {
-    return ClipRRect(
-      key: _contactFieldKey,
-      borderRadius: BorderRadius.circular(16),
-      child: Stack(
-        children: [
-          Positioned.fill(
-              child: CustomPaint(
-                  painter: TacklePitchPainter(
-                      zoom: 14, quarterTurns: 1, longitudinalOffsetMeters: 5))),
-          const Positioned.fill(
-              child: IgnorePointer(
-                  child: CustomPaint(painter: TackleInputDividerPainter()))),
-          Positioned.fill(
-              child: Column(children: [
-            Expanded(child: _buildInputTarget(TackleDirection.up)),
-            Expanded(child: _buildInputTarget(TackleDirection.down)),
-          ])),
-          AnimatedAlign(
-            duration: _successAt == null ? _playerDuration : Duration.zero,
-            curve: Curves.easeOut,
-            alignment: _paintPlayerAlignment,
-            child: KeyedSubtree(
-              key: _contactPlayerKey,
-              child: TacklePlayerVisual(
-                key: const Key('tackle-player'),
-                visualScale: TacklePlayerVisual.candidateVisualScale,
-                attacking: _attemptSucceeded == true || _playerAlignment.y != 0,
-                downward: _attemptSucceeded == true
-                    ? _actualDirection == TackleDirection.down
-                    : _playerAlignment.y > 0,
-              ),
-            ),
-          ),
-          AnimatedAlign(
-            duration: _runningRoute == null ? _opponentDuration : Duration.zero,
-            curve: _runningRoute == null ? _opponentCurve : Curves.linear,
-            alignment: _paintOpponent,
-            child: KeyedSubtree(
-              key: _contactOpponentKey,
+    return MiniGameSelectionFrame(
+      clipContent: true,
+      child: ClipRRect(
+        key: _contactFieldKey,
+        borderRadius: BorderRadius.zero,
+        child: Stack(
+          children: [
+            Positioned.fill(
+                child: CustomPaint(
+                    painter: TacklePitchPainter(
+                        zoom: 14,
+                        quarterTurns: 1,
+                        longitudinalOffsetMeters: 5))),
+            const Positioned.fill(
+                child: IgnorePointer(
+                    child: CustomPaint(painter: TackleInputDividerPainter()))),
+            Positioned.fill(
+                child: Column(children: [
+              Expanded(child: _buildInputTarget(TackleDirection.up)),
+              Expanded(child: _buildInputTarget(TackleDirection.down)),
+            ])),
+            AnimatedAlign(
+              duration: _successAt == null ? _playerDuration : Duration.zero,
+              curve: Curves.easeOut,
+              alignment: _paintPlayerAlignment,
               child: KeyedSubtree(
-                key: _runningRoute == null
-                    ? null
-                    : Key(
-                        !_inputClockStarted
-                            ? 'tackle-running-feint'
-                            : (_actualDirection == TackleDirection.up
-                                ? 'tackle-running-up'
-                                : 'tackle-running-down'),
-                      ),
-                child: TackleOpponentVisual(
-                  key: const Key('tackle-opponent'),
-                  running: _opponentIsRunning,
+                key: _contactPlayerKey,
+                child: TacklePlayerVisual(
+                  key: const Key('tackle-player'),
+                  visualScale: TacklePlayerVisual.candidateVisualScale,
+                  attacking:
+                      _attemptSucceeded == true || _playerAlignment.y != 0,
+                  downward: _attemptSucceeded == true
+                      ? _actualDirection == TackleDirection.down
+                      : _playerAlignment.y > 0,
                 ),
               ),
             ),
-          ),
-          if (_attemptSucceeded != null) _buildResolutionOverlay(),
-          if (_phase == _TacklePhase.waiting)
-            _buildOverlay(
-              title: 'タックル練習',
-              detail: '全${_settings.setCount}セット',
-              buttonLabel: 'スタート',
-              onPressed: _startAttempt,
+            AnimatedAlign(
+              duration:
+                  _runningRoute == null ? _opponentDuration : Duration.zero,
+              curve: _runningRoute == null ? _opponentCurve : Curves.linear,
+              alignment: _paintOpponent,
+              child: KeyedSubtree(
+                key: _contactOpponentKey,
+                child: KeyedSubtree(
+                  key: _runningRoute == null
+                      ? null
+                      : Key(
+                          !_inputClockStarted
+                              ? 'tackle-running-feint'
+                              : (_actualDirection == TackleDirection.up
+                                  ? 'tackle-running-up'
+                                  : 'tackle-running-down'),
+                        ),
+                  child: TackleOpponentVisual(
+                    key: const Key('tackle-opponent'),
+                    running: _opponentIsRunning,
+                  ),
+                ),
+              ),
             ),
-          MiniGameResultTransition(
-            visible: _phase == _TacklePhase.gameResult,
-            child: _buildResultOverlay(),
-          ),
-          if (_isPaused) _buildPauseOverlay(),
-        ],
+            if (_attemptSucceeded != null) _buildResolutionOverlay(),
+            if (_phase == _TacklePhase.waiting)
+              _buildOverlay(
+                title: 'タックル練習',
+                detail: '全${_settings.setCount}セット',
+                buttonLabel: 'スタート',
+                onPressed: _startAttempt,
+              ),
+            MiniGameResultTransition(
+              visible: _phase == _TacklePhase.gameResult,
+              child: _buildResultOverlay(),
+            ),
+            if (_isPaused) _buildPauseOverlay(),
+          ],
+        ),
       ),
     );
   }
@@ -919,8 +940,7 @@ class _TackleGameScreenState extends State<TackleGameScreen>
     required VoidCallback onPressed,
   }) {
     return Positioned.fill(
-      child: ColoredBox(
-        color: Colors.white.withValues(alpha: .82),
+      child: MiniGameOverlayPanel(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -959,8 +979,8 @@ class _TackleGameScreenState extends State<TackleGameScreen>
     final averageLabel = average == null
         ? '―'
         : '${(average.inMicroseconds / Duration.microsecondsPerSecond).toStringAsFixed(2)}秒';
-    return ColoredBox(
-      color: const Color(0xff123d28).withValues(alpha: .92),
+    return MiniGameOverlayPanel(
+      dark: true,
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
@@ -1005,8 +1025,8 @@ class _TackleGameScreenState extends State<TackleGameScreen>
   /// 一時停止中のタップを遮断し、再開操作を表示します。
   Widget _buildPauseOverlay() {
     return Positioned.fill(
-      child: ColoredBox(
-        color: Colors.black.withValues(alpha: .68),
+      child: MiniGameOverlayPanel(
+        dark: true,
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -1059,7 +1079,7 @@ class _TackleGameScreenState extends State<TackleGameScreen>
       height: 96,
       child: InkWell(
         onTap: _advanceAfterAttempt,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.zero,
         child: Container(
           width: double.infinity,
           padding: const EdgeInsets.all(12),
@@ -1067,7 +1087,7 @@ class _TackleGameScreenState extends State<TackleGameScreen>
             color: _latestAttempt!.isCorrect
                 ? const Color(0xffdff5df)
                 : const Color(0xffffe1e1),
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.zero,
           ),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
