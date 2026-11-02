@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:koto_blue_sharks/app/services/training_game_sound_service.dart';
 
@@ -19,6 +20,8 @@ import 'sametaroh_asset.dart';
 import 'training_home_background.dart';
 import 'training_home_controls.dart';
 import 'training_home_decoration.dart';
+import 'training_presentation_layout.dart';
+import 'mini_games/mini_game_selection_frame.dart';
 import 'training_home_roaming_character.dart';
 import 'training_sync_indicator.dart';
 import 'training_debug_menu.dart';
@@ -111,39 +114,10 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
             controller.syncStatus.value != TrainingSyncStatus.syncing
         ? _buildSyncStatusBanner(context)
         : null;
-    final content = Column(
-      children: [
-        Expanded(
-          child: Stack(
-            children: [
-              const Positioned.fill(
-                child: TrainingHomeBackground(),
-              ),
-              Column(
-                children: [
-                  SizedBox(
-                    height: 74.h.clamp(58.0, 110.0),
-                    width: double.infinity,
-                    child: TrainingHomeRibbon(
-                      child: Align(
-                        alignment: Alignment.topLeft,
-                        child: Padding(
-                          padding: EdgeInsets.only(left: 16.w, top: 16.h),
-                          child: const TrainingHomeBrand(),
-                        ),
-                      ),
-                    ),
-                  ),
-                  _buildHud(context),
-                  Expanded(child: _buildRoom(context)),
-                ],
-              ),
-            ],
-          ),
-        ),
-        _buildCareBar(context),
-      ],
-    );
+    // Build reactive children here so the surrounding Obx tracks their reads.
+    final hud = _buildHud(context);
+    final room = _buildRoom(context);
+    final footer = _buildCareBar(context);
     final textExtra =
         (MediaQuery.textScalerOf(context).scale(14) - 14).clamp(0.0, 28.0);
     final minimumHeight = 74.h.clamp(58.0, 110.0) +
@@ -152,18 +126,43 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
         TrainingHomeStyle.footerHeight.h.clamp(112.0, 180.0) +
         304.h.clamp(130.0, 420.0);
     return LayoutBuilder(builder: (context, constraints) {
-      if (syncBanner == null && constraints.maxHeight >= minimumHeight) {
-        return content;
-      }
+      final bannerHeight = syncBanner == null
+          ? 0.0
+          : constraints.maxHeight >= minimumHeight
+              ? (constraints.maxHeight - minimumHeight).clamp(24.0, 200.0)
+              : 64.0;
+      final height =
+          math.max(constraints.maxHeight, minimumHeight + bannerHeight);
+      final content = Column(children: [
+        Expanded(
+            child: Stack(children: [
+          const Positioned.fill(child: TrainingHomeBackground()),
+          Column(children: [
+            SizedBox(
+              height: 74.h.clamp(58.0, 110.0),
+              width: double.infinity,
+              child: TrainingHomeRibbon(
+                  child: Align(
+                alignment: Alignment.topLeft,
+                child: Padding(
+                    padding: EdgeInsets.only(left: 16.w, top: 16.h),
+                    child: const TrainingHomeBrand()),
+              )),
+            ),
+            if (syncBanner != null)
+              ConstrainedBox(
+                constraints: BoxConstraints(maxHeight: bannerHeight),
+                child: SingleChildScrollView(child: syncBanner),
+              ),
+            hud,
+            Expanded(child: room),
+          ]),
+        ])),
+        footer,
+      ]);
+      if (height <= constraints.maxHeight) return content;
       return SingleChildScrollView(
-        child: Column(mainAxisSize: MainAxisSize.min, children: [
-          if (syncBanner != null) syncBanner,
-          SizedBox(
-            height: constraints.maxHeight.clamp(minimumHeight, double.infinity),
-            child: content,
-          ),
-        ]),
-      );
+          child: SizedBox(height: height, child: content));
     });
   }
 
@@ -301,14 +300,14 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
     final visualWidget = isFirstTeam
         ? _buildFirstTeamEvolutionReveal()
         : switch (evolutionStage) {
-            1 => _buildSuppliedStatic(SametarohAssets.newbornFrame),
+            1 => _buildPresentationStatic(SametarohAssets.newbornFrame),
             2 => TrainingEvolutionReveal(
                 key: const ValueKey('training-evolution-2'),
                 beforeFrame: SametarohAssets.newbornFrame,
                 afterFrame: currentBodyFrame,
                 beforeScale: 1,
-                beforeSize: Size(128.w, 184.h),
-                afterSize: Size(128.w, 184.h),
+                beforeSize: _presentationBodySize,
+                afterSize: _presentationBodySize,
                 soundFactory: evolutionSoundFactory,
                 afterVisual: _buildEvolutionHomeFirstFrame(_bodyKey),
               ),
@@ -318,12 +317,12 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
                 afterFrame: currentBodyFrame,
                 // 分岐未確定時も通常形を保ち、成長の差はサイズで見せます。
                 beforeScale: 1,
-                beforeSize: Size(128.w, 184.h),
-                afterSize: Size(128.w, 184.h),
+                beforeSize: _presentationBodySize,
+                afterSize: _presentationBodySize,
                 soundFactory: evolutionSoundFactory,
                 afterVisual: _buildEvolutionHomeFirstFrame(_bodyKey),
               ),
-            _ => _buildSuppliedStatic(currentBodyFrame),
+            _ => _buildPresentationStatic(currentBodyFrame),
           };
     final message = isFirstTeam
         ? 'ついに、一軍の舞台へ！'
@@ -354,13 +353,13 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
       // 未確定時は推測ユニフォームを避け、現在の姿で成長演出します。
       afterFrame: confirmedFirstTeamFrame ?? currentBodyFrame,
       afterVisual: confirmedFirstTeamFrame == null
-          ? _buildEvolutionHomeFirstFrame(_bodyKey, size: _firstTeamBodySize)
+          ? _buildEvolutionHomeFirstFrame(_bodyKey, size: _presentationBodySize)
           : _buildPositionStatic(controller.position),
       beforeScale: 1,
-      beforeSize: _firstTeamBodySize,
+      beforeSize: _presentationBodySize,
       afterSize: confirmedFirstTeamFrame == null
-          ? _firstTeamBodySize
-          : _positionDisplaySize(confirmedFirstTeamFrame),
+          ? _presentationBodySize
+          : _presentationFrameSize(confirmedFirstTeamFrame),
       firstTeam: true,
       soundFactory: evolutionSoundFactory,
     );
@@ -372,8 +371,8 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
         TrainingHomeCharacterFrameSet.forBodyKey(bodyKey).idleFrames.first;
     return TrainingHomeCharacterFrameImage(
       frame: frame,
-      width: size?.width ?? 128.w,
-      height: size?.height ?? 184.h,
+      width: size?.width ?? _presentationBodySize.width,
+      height: size?.height ?? _presentationBodySize.height,
       semanticLabel: '鮫太朗',
     );
   }
@@ -413,13 +412,9 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
           : controller.stageIndex.value >= 2
               ? SametarohAssets.idleFramesForBodyKey(_bodyKey)
               : null;
-      final hasBody = _bodyKey != null;
-      final endingFit = isPositive || hasBody ? BoxFit.contain : BoxFit.cover;
-      final endingWidth = isPositive
-          ? 250.w
-          : hasBody
-              ? 160.w
-              : 128.w;
+      final endingSize = endingFrames == null
+          ? _presentationBodySize
+          : _presentationFrameSize(endingFrames.first);
       final isSyncPending = controller.isEndingSyncPending.value;
       final syncError = controller.endingSyncError.value;
       final canStartNextCycle = !isSyncPending && syncError.isEmpty;
@@ -428,16 +423,14 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
         visual: endingVisual,
         visualWidget: endingFrames == null
             ? controller.stageIndex.value == 1
-                ? _buildSuppliedStatic(SametarohAssets.newbornFrame)
+                ? _buildPresentationStatic(SametarohAssets.newbornFrame)
                 : null
             : SametarohAnimatedImage(
                 frames: endingFrames,
-                width: endingWidth,
-                height: 250.h,
-                fit: endingFit,
-                alignment: isPositive || hasBody
-                    ? Alignment.bottomCenter
-                    : Alignment.center,
+                width: endingSize.width,
+                height: endingSize.height,
+                fit: BoxFit.contain,
+                alignment: Alignment.bottomCenter,
                 semanticLabel: isPositive ? '旅立つ鮫太朗' : '鮫太朗',
               ),
         message: [
@@ -715,78 +708,91 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
                 : TrainingGameSoundEffect.evolutionNormal,
         key: ValueKey(
             'ending-entrance-${controller.evolutionStage.value}-${controller.endingStep.value}-$title'),
-        builder: (context, animation) => Padding(
-              padding: EdgeInsets.all(20.w),
-              child: Column(
-                children: [
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: TrainingEndingItem(
-                        animation: animation,
-                        start: evolution == null
-                            ? .2
-                            : (revealSeconds + .05 + hold) / seconds,
-                        span: evolution == null ? .3 : .3 / seconds,
-                        child: Text(title,
-                            style: TextStyle(
-                                fontSize: 22.sp, fontWeight: FontWeight.w700))),
+        builder: (context, animation) => Column(children: [
+              SizedBox(
+                height: 67,
+                child: trainingPresentationAppBar(
+                  primary: false,
+                  icon: title == '進化'
+                      ? Icons.auto_awesome
+                      : title == 'ポジション確定'
+                          ? Icons.emoji_events
+                          : Icons.directions_walk,
+                  title: TrainingEndingItem(
+                    animation: animation,
+                    start: evolution == null
+                        ? .2
+                        : (revealSeconds + .05 + hold) / seconds,
+                    span: evolution == null ? .3 : .3 / seconds,
+                    child: Text(title),
                   ),
-                  SizedBox(height: 18.h),
-                  Expanded(
-                    child: Container(
-                      width: double.infinity,
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(
-                        color: const Color(0xffe2e5e8),
-                        borderRadius: BorderRadius.circular(12.r),
-                      ),
-                      child: evolution?.drivenBy(animation, pageDuration) ??
-                          TrainingEndingItem(
-                              animation: animation,
-                              start: 0,
-                              child: visualWidget ??
-                                  Text(visual,
-                                      textAlign: TextAlign.center,
-                                      style: TextStyle(
-                                          fontSize: 30.sp, height: 1.5))),
-                    ),
-                  ),
-                  if (message != null) ...[
-                    SizedBox(height: 16.h),
-                    TrainingEndingItem(
-                        animation: animation,
-                        start: evolution == null
-                            ? .45
-                            : (revealSeconds + .2 + hold) / seconds,
-                        span: evolution == null ? .3 : .3 / seconds,
-                        child: Text(message,
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                                fontSize: 16.sp, fontWeight: FontWeight.w700))),
-                  ],
-                  SizedBox(height: 20.h),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 52.h,
-                    child: TrainingEndingItem(
-                        animation: animation,
-                        start: evolution == null
-                            ? .7
-                            : (revealSeconds + .4 + hold) / seconds,
-                        span: evolution == null ? .3 : .3 / seconds,
-                        child: guardRapidTap
-                            ? _EndingStepAdvanceButton(
-                                label: buttonLabel,
-                                onPressed: onPressed,
-                              )
-                            : ElevatedButton(
-                                onPressed: onPressed,
-                                child: Text(buttonLabel),
-                              )),
-                  ),
-                ],
+                ),
               ),
-            ));
+              Expanded(
+                  child: TrainingPresentationBody(
+                illustration: evolution?.drivenBy(animation, pageDuration) ??
+                    TrainingEndingItem(
+                      animation: animation,
+                      start: 0,
+                      child: visualWidget ??
+                          Text(visual,
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                  fontSize: 30.sp,
+                                  height: 1.5,
+                                  color: TrainingHomeStyle.navy)),
+                    ),
+                panel: MiniGameSelectionFrame(
+                  padding:
+                      EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
+                  child: ElevatedButtonTheme(
+                    data: ElevatedButtonThemeData(
+                        style: ElevatedButton.styleFrom(
+                      backgroundColor: TrainingHomeStyle.navy,
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      shape: const BeveledRectangleBorder(
+                          borderRadius: BorderRadius.all(Radius.circular(8))),
+                    )),
+                    child: Column(mainAxisSize: MainAxisSize.min, children: [
+                      if (message != null) ...[
+                        TrainingEndingItem(
+                          animation: animation,
+                          start: evolution == null
+                              ? .45
+                              : (revealSeconds + .2 + hold) / seconds,
+                          span: evolution == null ? .3 : .3 / seconds,
+                          child: Text(message,
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                  fontSize: 16.sp.clamp(14.0, 20.0),
+                                  fontWeight: FontWeight.w700,
+                                  color: TrainingHomeStyle.navy)),
+                        ),
+                        SizedBox(height: 14.h),
+                      ],
+                      SizedBox(
+                        width: double.infinity,
+                        height: 52.h,
+                        child: TrainingEndingItem(
+                          animation: animation,
+                          start: evolution == null
+                              ? .7
+                              : (revealSeconds + .4 + hold) / seconds,
+                          span: evolution == null ? .3 : .3 / seconds,
+                          child: guardRapidTap
+                              ? _EndingStepAdvanceButton(
+                                  label: buttonLabel, onPressed: onPressed)
+                              : ElevatedButton(
+                                  onPressed: onPressed,
+                                  child: Text(buttonLabel)),
+                        ),
+                      ),
+                    ]),
+                  ),
+                ),
+              )),
+            ]));
   }
 
   /// パラメータと退出ボタン、検証環境限定の開発操作を表示します。
@@ -1107,7 +1113,8 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
                   margin: EdgeInsets.all(24.w),
                   padding: EdgeInsets.all(14.w),
                   color: Colors.white.withOpacity(.94),
-                  child: Column(
+                  child: SingleChildScrollView(
+                      child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
@@ -1126,7 +1133,7 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
                         child: const Text('卵からやりなおす'),
                       ),
                     ],
-                  ),
+                  )),
                 ),
               ),
             ),
@@ -1177,17 +1184,32 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
         alignment: Alignment.bottomCenter,
       );
 
-  // 旧進化前184と旧ユニフォーム250の中間高で両方をそろえます。
-  Size get _firstTeamBodySize => Size(128.w * 217 / 184, 217.h);
+  // 小さかった進化後184と大きかった旅立ち250の中間サイズです。
+  Size get _presentationBodySize => Size(
+        128.w * TrainingPresentationBody.characterHeight / 184,
+        TrainingPresentationBody.characterHeight.h,
+      );
 
-  // 端末の縦横倍率に依存せず、ポジション原画の比率を保ちます。
-  Size _positionDisplaySize(SametarohFrame frame) =>
-      Size(217.h * frame.canvasSize.aspectRatio, 217.h);
+  Size _presentationFrameSize(SametarohFrame frame) => Size(
+        TrainingPresentationBody.characterHeight.h *
+            frame.canvasSize.aspectRatio,
+        TrainingPresentationBody.characterHeight.h,
+      );
+
+  Widget _buildPresentationStatic(SametarohFrame frame) {
+    final size = _presentationFrameSize(frame);
+    return SametarohFrameImage(
+        frame: frame,
+        width: size.width,
+        height: size.height,
+        fit: BoxFit.contain,
+        alignment: Alignment.bottomCenter);
+  }
 
   Widget? _buildPositionStatic(String position) {
     final frame = SametarohAssets.positionFrameFor(position);
     if (frame == null) return null;
-    final size = _positionDisplaySize(frame);
+    final size = _presentationFrameSize(frame);
     return SametarohFrameImage(
       frame: frame,
       width: size.width,

@@ -10,7 +10,7 @@ import 'sametaroh_clean_warp.dart';
 import 'training_care_scene.dart';
 import 'training_game_theme.dart';
 import 'training_home_controls.dart';
-import 'training_home_decoration.dart';
+import 'training_presentation_layout.dart';
 import 'mini_games/mini_game_selection_frame.dart';
 
 /// ④-a〜④-eのお世話実行中画面を共通レイアウトで表示します。
@@ -210,31 +210,9 @@ class _TrainingGameCareActionScreenState
         canPop: !_isCompleting,
         child: Scaffold(
           backgroundColor: TrainingHomeStyle.navy,
-          appBar: AppBar(
-            backgroundColor: TrainingHomeStyle.navy,
-            foregroundColor: Colors.white,
-            elevation: 0,
-            toolbarHeight: 64,
-            automaticallyImplyLeading: false,
-            flexibleSpace: const TrainingHomeRibbon(),
-            title: Row(children: [
-              Icon(_actionIcon, size: 24, color: Colors.white),
-              const SizedBox(width: 12),
-              Expanded(
-                  child: FittedBox(
-                fit: BoxFit.scaleDown,
-                alignment: Alignment.centerLeft,
-                child: Text('お世話 ｜ ${presentation.title}',
-                    style: const TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.white)),
-              )),
-            ]),
-            bottom: PreferredSize(
-              preferredSize: const Size.fromHeight(3),
-              child: Container(height: 3, color: const Color(0xff39bdf5)),
-            ),
+          appBar: trainingPresentationAppBar(
+            title: Text('お世話 ｜ ${presentation.title}'),
+            icon: _actionIcon,
           ),
           body: GestureDetector(
             behavior: HitTestBehavior.opaque,
@@ -243,66 +221,12 @@ class _TrainingGameCareActionScreenState
                     ? () => Navigator.pop(context, true)
                     : null)
                 : _advanceActionProgressByOneSecond,
-            child: DecoratedBox(
-              decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [Color(0xff002b6d), Color(0xff006cb0)],
-              )),
-              child: Stack(fit: StackFit.expand, children: [
-                SafeArea(child: LayoutBuilder(builder: (context, constraints) {
-                  final contentPadding = 12.w.clamp(10.0, 20.0);
-                  final artworkHeight =
-                      math.max(160.0, constraints.maxHeight * .66);
-                  final artworkWidth = math.min(
-                    constraints.maxWidth - contentPadding * 2,
-                    artworkHeight * TrainingCareScene.sourceSize.aspectRatio,
-                  );
-                  final remainingHeight = math.max(
-                      0.0,
-                      constraints.maxHeight -
-                          contentPadding * 2 -
-                          artworkHeight);
-                  return SingleChildScrollView(
-                    child: ConstrainedBox(
-                      constraints:
-                          BoxConstraints(minHeight: constraints.maxHeight),
-                      child: Padding(
-                        padding: EdgeInsets.all(contentPadding),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.start,
-                          children: [
-                            SizedBox(
-                              height: artworkHeight,
-                              width: double.infinity,
-                              child: Center(
-                                  child: SizedBox(
-                                width: artworkWidth,
-                                height: artworkHeight,
-                                child: MiniGameSelectionFrame(
-                                  surface: MiniGameSelectionSurface.window,
-                                  clipContent: true,
-                                  child: _buildIllustration(presentation),
-                                ),
-                              )),
-                            ),
-                            ConstrainedBox(
-                              constraints:
-                                  BoxConstraints(minHeight: remainingHeight),
-                              child: Padding(
-                                padding: EdgeInsets.symmetric(vertical: 12.h),
-                                child: Center(
-                                    child: _buildCareStatus(presentation)),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  );
-                })),
-              ]),
+            child: TrainingPresentationBody(
+              illustration: _buildIllustration(presentation),
+              illustrationAspectRatio: TrainingCareScene.sourceSize.aspectRatio,
+              clipIllustration: true,
+              illustrationSurface: MiniGameSelectionSurface.window,
+              panel: _buildCareStatus(presentation),
             ),
           ),
         ),
