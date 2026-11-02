@@ -1283,13 +1283,13 @@ class TrainingGameController extends GetxController
       }
       syncStatus.value = TrainingSyncStatus.outcomeUnknown;
       syncStatusMessage.value =
-          '別端末の更新を確認しました。最新状態を取得しました。操作結果は未確定なので、同じ操作IDで再確認してください。';
+          '別の端末でデータが更新されました。最新の状態を取得しましたが、操作が反映されたか確認できませんでした。「再試行」を押してください。';
     } catch (_) {
       if (!_ownsSession(_ownedSessionVersion)) return;
       isServerStateReady.value = false;
       syncStatus.value = TrainingSyncStatus.outcomeUnknown;
       syncStatusMessage.value =
-          '別端末の更新がありましたが、最新状態を取得できません。操作は同じIDで保留し、状態確認まで再送しません。';
+          '別の端末でデータが更新されました。最新の状態を確認できなかったため、通信環境を確認して「再試行」を押してください。';
       serverErrorMessage.value = syncStatusMessage.value;
     }
   }

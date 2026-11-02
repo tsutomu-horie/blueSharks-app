@@ -856,7 +856,7 @@ void main() {
 
     expect(controller.syncStatus.value, TrainingSyncStatus.outcomeUnknown);
     expect(controller.pendingSyncActionCount, 1);
-    expect(controller.syncStatusMessage.value, contains('最新状態を取得しました'));
+    expect(controller.syncStatusMessage.value, contains('最新の状態を取得しました'));
     expect(provider.currentFetches, 2);
 
     await controller.retryPendingSync();
