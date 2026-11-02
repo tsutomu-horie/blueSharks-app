@@ -4404,7 +4404,7 @@ class TrainingGameController extends GetxController
             ? secondsInStage.value >= 180 &&
                 meters['清潔']! >= 60 &&
                 meters['体調']! >= 60
-            : trainingCount.value >= 15 &&
+            : trainingCount.value >= requiredChildTrainingCount &&
                 ['食事', '清潔', '体調'].every((name) => meters[name]! >= 60);
     if (!ready) return;
     _pendingStageIndex =

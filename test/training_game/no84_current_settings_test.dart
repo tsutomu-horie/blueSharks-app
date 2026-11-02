@@ -64,7 +64,12 @@ void main() {
       (t) async {
     final p = P();
     final c = await open(t, p);
-    c.trainingCount.value = 15;
+    c.trainingCount.value = 9;
+    c.tickTutorial(1);
+    await t.pump();
+    expect(c.stageIndex.value, 1);
+    expect(p.stage, 'child');
+    c.trainingCount.value = 10;
     c.meters['清潔'] = 60;
     c.tickTutorial(1);
     await t.pump();
@@ -110,7 +115,7 @@ void main() {
   testWidgets('exact cleanliness 60 includes growth boundary', (t) async {
     final p = P();
     final c = await open(t, p);
-    c.trainingCount.value = 15;
+    c.trainingCount.value = 10;
     c.meters['清潔'] = 60.1;
     c.tickTutorial(1);
     expect(c.meters['清潔'], 60.0);

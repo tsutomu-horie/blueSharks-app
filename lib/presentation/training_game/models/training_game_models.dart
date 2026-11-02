@@ -1,3 +1,6 @@
+/// 幼体からの進化に必要な筋トレ回数です。
+const requiredChildTrainingCount = 10;
+
 /// 育成ゲームで実行できる行動の種類です。
 enum TrainingActionType {
   meal,

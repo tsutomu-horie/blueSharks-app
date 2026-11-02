@@ -340,6 +340,32 @@ void main() {
     });
   }
 
+  testWidgets('幼体の筋トレ回数を10回を目標として表示する', (tester) async {
+    final semantics = tester.ensureSemantics();
+    await tester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: TrainingHomeCareButton(
+          type: TrainingActionType.squat,
+          label: '筋トレ',
+          remaining: Duration.zero,
+          trainingCount: 9,
+          onPressed: () {},
+        ),
+      ),
+    ));
+    expect(find.text('9/10'), findsOneWidget);
+    expect(
+        tester.getSemantics(find.byType(TrainingHomeCareButton)),
+        matchesSemantics(
+            label: '筋トレ',
+            value: '9/10',
+            isButton: true,
+            hasEnabledState: true,
+            isEnabled: true,
+            hasTapAction: true));
+    semantics.dispose();
+  });
+
   testWidgets('30秒設定を100%として残り時間と設定変更を反映する', (tester) async {
     Future<void> show(int remaining, int configured) =>
         tester.pumpWidget(MaterialApp(
