@@ -175,6 +175,30 @@ void main() {
         c.isRetirementWarningCollapsed(c.retirementWarnings.single), isFalse);
     c.onClose();
   });
+  test('group collapse persists and newly active warning opens the group',
+      () async {
+    final provider = RetirementWarningProvider()
+      ..stageCode = 'child'
+      ..food = 0
+      ..condition = 0
+      ..overStart = null;
+    var c = QuietRetirementController(serverProvider: provider);
+    await c.retryRestoreServerState();
+    expect(c.retirementWarnings, hasLength(2));
+    c.setRetirementWarningsCollapsed(c.retirementWarnings, true);
+    await Future<void>.delayed(Duration.zero);
+    c.onClose();
+    c = QuietRetirementController(serverProvider: provider);
+    await c.retryRestoreServerState();
+    expect(c.retirementWarnings.every(c.isRetirementWarningCollapsed), isTrue);
+    provider.cleanliness = 0;
+    await c.retryRestoreServerState();
+    expect(c.retirementWarnings, hasLength(3));
+    expect(c.retirementWarnings.every(c.isRetirementWarningCollapsed), isFalse);
+    c.setRetirementWarningsCollapsed(c.retirementWarnings, false);
+    expect(c.retirementWarnings.any(c.isRetirementWarningCollapsed), isFalse);
+    c.onClose();
+  });
   test('local recovery invalidates the old server start before a second meal',
       () async {
     final provider = RetirementWarningProvider()..food = 105;

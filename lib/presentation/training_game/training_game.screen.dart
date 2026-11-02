@@ -955,26 +955,14 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
                     height: height,
                     child: warnings.length == 1
                         ? panel(warnings.first)
-                        : Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text('警告 ${warnings.length}件（横にスクロール）',
-                                  style: const TextStyle(
-                                      color: Color(0xff243c52),
-                                      fontWeight: FontWeight.bold)),
-                              Expanded(
-                                child: ListView.separated(
-                                  scrollDirection: Axis.horizontal,
-                                  itemCount: warnings.length,
-                                  separatorBuilder: (_, __) =>
-                                      const SizedBox(width: 8),
-                                  itemBuilder: (context, index) => SizedBox(
-                                    width: constraints.maxWidth - 56.w,
-                                    child: panel(warnings[index]),
-                                  ),
-                                ),
-                              ),
-                            ],
+                        : TrainingRetirementWarningsPanel(
+                            warnings: warnings,
+                            collapsed: collapsed.values.every((value) => value),
+                            onCollapse: () => controller
+                                .setRetirementWarningsCollapsed(warnings, true),
+                            onExpand: () =>
+                                controller.setRetirementWarningsCollapsed(
+                                    warnings, false),
                           ),
                   ),
                 ),

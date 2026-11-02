@@ -331,6 +331,19 @@ class TrainingGameController extends GetxController
     _saveRetirementPresentation();
   }
 
+  void setRetirementWarningsCollapsed(
+      List<TrainingRetirementWarning> warnings, bool collapsed) {
+    for (final warning in warnings) {
+      if (collapsed) {
+        _collapsedRetirementEpisodes.add(warning.episode);
+      } else {
+        _collapsedRetirementEpisodes.remove(warning.episode);
+      }
+    }
+    _retirementPresentationTick.value++;
+    _saveRetirementPresentation();
+  }
+
   void _saveRetirementPresentation() {
     if (_retirementPresentationScope == null) return;
     unawaited(MySharedPref.setTrainingRetirementWarningPresentation(jsonEncode({
