@@ -17,7 +17,7 @@ import 'package:koto_blue_sharks/presentation/training_game/models/training_reti
 /// Display-only fixture; controller persistence/API boundaries are tested in the
 /// separate fake-provider suite. No HTTP, Firebase, timers, or storage writes.
 class _WarningHomeFixture extends HomeControlsFixture {
-  final _collapsed = false.obs;
+  final _collapsed = <String>{}.obs;
   @override
   List<TrainingRetirementWarning> get retirementWarnings =>
       TrainingRetirementWarning.evaluate(
@@ -35,17 +35,29 @@ class _WarningHomeFixture extends HomeControlsFixture {
       );
   @override
   bool isRetirementWarningCollapsed(TrainingRetirementWarning warning) =>
-      _collapsed.value;
+      _collapsed.contains(warning.episode);
   @override
   void collapseRetirementWarning(TrainingRetirementWarning warning) =>
-      _collapsed.value = true;
+      _collapsed.add(warning.episode);
   @override
   void expandRetirementWarning(TrainingRetirementWarning warning) =>
-      _collapsed.value = false;
+      _collapsed.remove(warning.episode);
+  @override
+  void setRetirementWarningsCollapsed(
+      List<TrainingRetirementWarning> warnings, bool collapsed) {
+    for (final warning in warnings) {
+      if (collapsed) {
+        _collapsed.add(warning.episode);
+      } else {
+        _collapsed.remove(warning.episode);
+      }
+    }
+  }
 }
 
 void main() {
-  testWidgets('multiple warnings can be reached by scrolling', (tester) async {
+  testWidgets('multiple warnings use tabs and a shared collapse control',
+      (tester) async {
     tester.view.physicalSize = const Size(320, 568);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
@@ -62,11 +74,36 @@ void main() {
     Get.put<TrainingGameController>(c);
     await tester.pumpWidget(homeControlsHost());
     await tester.pump();
-    expect(find.text('警告 2件（横にスクロール）'), findsOneWidget);
+    expect(find.text('警告 2件'), findsOneWidget);
+    final cardRect =
+        tester.getRect(find.byKey(const ValueKey('retirement-warning-card')));
+    final characterRect =
+        tester.getRect(find.byType(TrainingHomeRoamingCharacter));
+    expect(cardRect.bottom, lessThanOrEqualTo(characterRect.top));
+    for (final label in ['ごはん', '掃除', '筋トレ', '仕事', '休養']) {
+      expect(
+          cardRect
+              .overlaps(tester.getRect(find.widgetWithText(TextButton, label))),
+          isFalse);
+    }
+    await tester.tap(find.byKey(const ValueKey('retirement-warning-tab-食事')));
+    await tester.pump();
     expect(find.text('食事のバランスに注意'), findsOneWidget);
-    await tester.drag(find.byType(ListView).first, const Offset(-300, 0));
-    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('retirement-warning-tab-仕事')));
+    await tester.pump();
     expect(find.text('仕事のバランスに注意'), findsOneWidget);
+    expect(find.textContaining('仕事や仕事の数値が増える練習を控え'), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('retirement-warning-close')));
+    await tester.pump();
+    expect(
+        find.byKey(const ValueKey('retirement-warning-chip')), findsOneWidget);
+    expect(find.text('警告 2件'), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('retirement-warning-chip')));
+    await tester.pump();
+    expect(find.text('仕事のバランスに注意'), findsOneWidget);
+    c.meters['仕事'] = 100;
+    await tester.pump();
+    expect(find.text('食事のバランスに注意'), findsOneWidget);
     expect(tester.takeException(), isNull);
     await tester.pumpWidget(const SizedBox());
   });

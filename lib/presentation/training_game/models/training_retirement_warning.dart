@@ -3,12 +3,14 @@
 class TrainingRetirementWarning {
   const TrainingRetirementWarning({
     required this.episode,
+    required this.meterName,
     required this.title,
     required this.body,
     required this.remainingHours,
   });
 
   final String episode;
+  final String meterName;
   final String title;
   final String body;
   // Only selects the most urgent warning. No countdown is displayed.
@@ -70,6 +72,7 @@ class TrainingRetirementWarning {
         };
         warnings.add(TrainingRetirementWarning(
           episode: '$scope:tutorial:$stageIndex:$name',
+          meterName: name,
           title: title,
           body: '$nameの数値が0です。このままではゲームオーバーになります。$action',
           remainingHours: 0,
@@ -89,6 +92,7 @@ class TrainingRetirementWarning {
       }
       warnings.add(TrainingRetirementWarning(
         episode: '$scope:over:$name:${start.toUtc().toIso8601String()}',
+        meterName: name,
         title: name == '食事' ? foodBalanceTitle : '仕事のバランスに注意',
         body: name == '食事'
             ? foodBalanceBody
@@ -119,6 +123,7 @@ class TrainingRetirementWarning {
       };
       warnings.add(TrainingRetirementWarning(
         episode: '$scope:zero:$name:${elapsedHours - hours}',
+        meterName: name,
         title: title,
         body: body,
         remainingHours: (entry.value - hours).toDouble(),
