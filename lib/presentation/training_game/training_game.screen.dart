@@ -115,12 +115,17 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
         ? _buildSyncStatusBanner(context)
         : null;
     // Build reactive children here so the surrounding Obx tracks their reads.
-    final hud = _buildHud(context);
+    final topPadding = 12.h.clamp(8.0, 16.0);
+    final hud = Padding(
+      padding: EdgeInsets.only(top: topPadding),
+      child: _buildHud(context),
+    );
     final room = _buildRoom(context);
     final footer = _buildCareBar(context);
     final textExtra =
         (MediaQuery.textScalerOf(context).scale(14) - 14).clamp(0.0, 28.0);
-    final minimumHeight = 154.h.clamp(144.0, 208.0) +
+    final minimumHeight = topPadding +
+        154.h.clamp(144.0, 208.0) +
         textExtra * 4 +
         TrainingHomeStyle.footerHeight.h.clamp(112.0, 180.0) +
         304.h.clamp(130.0, 420.0);
