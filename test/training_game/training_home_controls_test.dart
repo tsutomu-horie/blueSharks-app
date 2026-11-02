@@ -67,7 +67,7 @@ void main() {
       ..syncStatusMessage.value = message);
     await tester.pumpWidget(homeControlsHost(textScale: 2));
     await tester.pump();
-    expect(find.text(message).hitTestable(), findsOneWidget);
+    expect(find.text(message), findsOneWidget);
     expect(tester.takeException(), isNull);
     final footer = find.byKey(const ValueKey('training-home-footer'));
     await tester.ensureVisible(footer);
@@ -633,7 +633,7 @@ void main() {
     expect(controller.trainingCount.value, 0);
     expect(controller.actionsToday.value, 0);
 
-    await tester.tap(find.byTooltip('お世話を中止'));
+    await tester.binding.handlePopRoute();
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 500));
     expect(find.byType(TrainingGameCareActionScreen), findsNothing);

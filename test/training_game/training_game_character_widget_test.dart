@@ -318,7 +318,7 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('care完了図はタップまで保持しtrueで戻り、中止はfalse', (tester) async {
+  testWidgets('care完了図はタップまで保持しtrueで戻り、システム中止はnull', (tester) async {
     configurePhone(tester);
     bool? result;
     await tester.pumpWidget(host(Builder(
@@ -370,9 +370,9 @@ void main() {
     await tester.tap(find.text('open care'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
-    await tester.tap(find.byTooltip('お世話を中止'));
+    await tester.binding.handlePopRoute();
     await pumpRouteTransition(tester);
-    expect(result, isFalse);
+    expect(result, isNull);
     expect(tester.takeException(), isNull);
   });
 
@@ -605,7 +605,7 @@ void main() {
       expect(care.actionType, entry.key);
       expect(await shownCareAsset(tester),
           'assets/images/training_game/child_care/${entry.key.name}_1.png');
-      await tester.tap(find.byTooltip('お世話を中止'));
+      await tester.binding.handlePopRoute();
       await pumpRouteTransition(tester);
       expect(controller.callbackTrace, isEmpty);
     }
@@ -623,7 +623,7 @@ void main() {
         isNull);
     expect(await shownCareAsset(tester),
         'assets/images/sametaroh/eating_sametaroh_1.png');
-    await tester.tap(find.byTooltip('お世話を中止'));
+    await tester.binding.handlePopRoute();
     await pumpRouteTransition(tester);
     await tester.pumpWidget(const SizedBox());
     expect(tester.takeException(), isNull);
@@ -822,7 +822,7 @@ void main() {
         expect(await shownCareAsset(tester), initial.asset);
         expect(controller.callbackTrace,
             action == TrainingActionType.work ? ['prepareWork'] : isEmpty);
-        await tester.tap(find.byTooltip('お世話を中止'));
+        await tester.binding.handlePopRoute();
         // SDK既定の戻る遷移が終わり、次のcareボタンを操作できるまで待つ。
         await pumpRouteTransition(tester);
         expect(

@@ -432,7 +432,7 @@ void main() {
     expect(find.byType(TrainingGameCareActionScreen), findsOneWidget);
     expect(find.text('仕事中…'), findsOneWidget);
     expect(provider.workActions, 1);
-    await tester.tap(find.byTooltip('お世話を中止'));
+    await tester.binding.handlePopRoute();
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 500));
     expect(provider.workActions, 1);
