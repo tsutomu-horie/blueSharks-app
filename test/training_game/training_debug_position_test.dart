@@ -35,12 +35,14 @@ class PositionProvider extends TrainingGameProvider {
   Completer<void>? readGate;
   bool snapshotBeforeReadGate = false;
   bool failAfterReadGate = false;
+  int nullTokenReads = 0;
   final readStarted = Completer<void>();
   final presenceTokens = <String?>[];
   @override
   Future<void> notifyTrainingPresence({int? expectedSessionVersion}) async {
     presenceTokens.add(presenceCycleToken);
   }
+
   @override
   Future<Map<String, dynamic>> start(
           {required String stageCode,
@@ -55,7 +57,13 @@ class PositionProvider extends TrainingGameProvider {
     if (readGate != null && !readStarted.isCompleted) readStarted.complete();
     await readGate?.future;
     if (failAfterReadGate) throw StateError('old request failed');
-    return snapshotBeforeReadGate ? snapshot : Map.from(data);
+    final result =
+        snapshotBeforeReadGate ? snapshot : Map<String, dynamic>.from(data);
+    if (nullTokenReads > 0) {
+      nullTokenReads--;
+      result['presence_cycle_token'] = null;
+    }
+    return result;
   }
 
   @override
@@ -151,10 +159,26 @@ void main() {
     final p = PositionProvider();
     final c = await open(p);
     p.data['presence_cycle_token'] = null;
-    p.data['parameters'] = {'hunger': 0, 'cleanliness': 0, 'condition': 0, 'work': 0};
+    p.data['parameters'] = {
+      'hunger': 0,
+      'cleanliness': 0,
+      'condition': 0,
+      'work': 0
+    };
     await c.retryRestoreServerState();
     expect(p.presenceCycleToken, 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa');
     expect(c.meters['清潔'], 100);
+  }, skip: !AppEnvironment.showsTrainingDebugUi);
+
+  test('不完全な周期情報は一度再取得して時計を再開する', () async {
+    final p = PositionProvider();
+    final c = await open(p);
+    p.nullTokenReads = 1;
+    await c.retryRestoreServerState();
+    expect(p.nullTokenReads, 0);
+    expect(c.isServerStateReady.value, isTrue);
+    expect(c.serverErrorMessage.value, isEmpty);
+    expect(p.presenceCycleToken, 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa');
   }, skip: !AppEnvironment.showsTrainingDebugUi);
 
   test('固定と解除はサーバー結果だけを表示し、完了時に図鑑を更新する', () async {

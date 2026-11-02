@@ -247,8 +247,13 @@ void main() {
     };
     expect(p.setTrainingPresenceIdentity(data), isTrue);
     expect(p.setTrainingPresenceIdentity(data), isFalse);
-    expect(p.setTrainingPresenceIdentity({...data, 'presence_cycle_token': 'b' * 32}), isTrue);
-    expect(p.setTrainingPresenceIdentity({...data, 'presence_cycle_token': null}), isFalse);
+    expect(
+        p.setTrainingPresenceIdentity(
+            {...data, 'presence_cycle_token': 'b' * 32}),
+        isTrue);
+    expect(
+        p.setTrainingPresenceIdentity({...data, 'presence_cycle_token': null}),
+        isFalse);
     expect(p.presenceCycleToken, 'b' * 32);
   });
 
