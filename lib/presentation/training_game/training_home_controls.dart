@@ -5,7 +5,7 @@ import 'training_home_decoration.dart';
 
 /// 育成ホームのチームカラーと操作領域の表示定数です。
 abstract final class TrainingHomeStyle {
-  static const navy = Color(0xff002b6d);
+  static const navy = Color(0xff06374f);
   static const border = Color(0xffcccccc);
   static const footerHeight = 136.0;
   static const buttonHeight = 88.0;

@@ -45,7 +45,7 @@ AppBar trainingPresentationAppBar({
       ]),
       bottom: PreferredSize(
         preferredSize: const Size.fromHeight(3),
-        child: Container(height: 3, color: const Color(0xff39bdf5)),
+        child: Container(height: 3, color: const Color(0xff57d5e0)),
       ),
     );
 
@@ -74,7 +74,7 @@ class TrainingPresentationBody extends StatelessWidget {
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [Color(0xff002b6d), Color(0xff006cb0)],
+            colors: [Color(0xff031b31), Color(0xff07516b)],
           ),
         ),
         child: SafeArea(
