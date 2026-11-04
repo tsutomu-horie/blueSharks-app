@@ -34,6 +34,7 @@ import 'training_game_theme.dart';
 import 'training_screen_transitions.dart';
 import 'training_retirement_warning_panel.dart';
 import 'models/training_retirement_warning.dart';
+import 'training_ocean_decoration.dart';
 
 /// 参照HTMLのスマートフォン画面部分だけをアプリ用に再現します。
 class TrainingGameScreen extends GetView<TrainingGameController> {
@@ -737,6 +738,7 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
                                   color: TrainingHomeStyle.navy)),
                     ),
                 panel: MiniGameSelectionFrame(
+                  pattern: TrainingWindowPattern.plain,
                   padding:
                       EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
                   child: ElevatedButtonTheme(

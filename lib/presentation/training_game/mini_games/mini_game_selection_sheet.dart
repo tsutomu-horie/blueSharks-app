@@ -4,6 +4,7 @@ import '../models/training_game_models.dart';
 import '../training_home_controls.dart';
 import '../training_game_theme.dart';
 import 'mini_game_selection_frame.dart';
+import '../training_ocean_decoration.dart';
 
 /// 選択だけを返し、ゲームの開始・報酬・待機時間は呼び出し元へ委ねます。
 Future<TrainingActionType?> showMiniGameSelectionSheet(BuildContext context) {
@@ -49,6 +50,7 @@ class _MiniGameSelectionSheetState extends State<MiniGameSelectionSheet> {
             padding: const EdgeInsets.fromLTRB(12, 0, 12, 20),
             child: MiniGameSelectionFrame(
               surface: MiniGameSelectionSurface.window,
+              pattern: TrainingWindowPattern.selectionWindow,
               padding: const EdgeInsets.all(4),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -164,6 +166,7 @@ class _SelectionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => MiniGameSelectionFrame(
+        pattern: TrainingWindowPattern.selectionCard,
         child: Material(
           color: Colors.transparent,
           shape: const BeveledRectangleBorder(

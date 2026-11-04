@@ -1,3 +1,5 @@
+import 'package:koto_blue_sharks/presentation/training_game/mini_games/mini_game_selection_frame.dart';
+import 'package:koto_blue_sharks/presentation/training_game/training_ocean_decoration.dart';
 import 'dart:io';
 import 'dart:math';
 import 'dart:ui' as ui;
@@ -134,6 +136,17 @@ void main() {
         }
         await _precacheVisible(tester, context);
         expect(find.text('スタート').hitTestable(), findsOneWidget);
+        expect(
+            tester
+                .widget<ElevatedButton>(find
+                    .ancestor(
+                        of: find.text('スタート'),
+                        matching: find.byType(ElevatedButton))
+                    .first)
+                .onPressed,
+            isNotNull);
+        // 読み込み後の無効→有効の色遷移も完了させます。
+        await tester.pump(const Duration(milliseconds: 250));
         if (phase != 'ready') {
           await tester.tap(find.text('スタート'));
           await tester.pump();
@@ -164,6 +177,19 @@ void main() {
         await _precacheVisible(tester, context);
         if (phase == 'result') {
           expect(find.text('メインへ戻る').hitTestable(), findsOneWidget);
+        }
+        if (phase != 'playing') {
+          final expected = switch (phase) {
+            'ready' => TrainingWindowPattern.start,
+            'paused' => TrainingWindowPattern.pause,
+            _ => TrainingWindowPattern.result
+          };
+          expect(
+              tester
+                  .widgetList<MiniGameSelectionFrame>(
+                      find.byType(MiniGameSelectionFrame))
+                  .where((frame) => frame.pattern == expected),
+              hasLength(1));
         }
         await _capture(tester, capture, '$game-$phase');
         if (phase == 'result') {

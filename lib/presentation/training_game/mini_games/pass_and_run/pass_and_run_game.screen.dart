@@ -23,6 +23,7 @@ import 'pass_and_run_sparse_flick.dart';
 import 'pass_and_run_motion.dart';
 import 'pass_and_run_return_sprint.dart';
 import 'pass_and_run_pace_assist.dart';
+import '../../training_ocean_decoration.dart';
 
 enum _PassGamePhase { waiting, playing, result }
 
@@ -1748,6 +1749,7 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
   Widget _buildResultOverlay() {
     return MiniGameOverlayPanel(
       dark: true,
+      pattern: TrainingWindowPattern.result,
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../training_home_controls.dart';
 import 'mini_game_selection_frame.dart';
+import '../training_ocean_decoration.dart';
 
 const miniGameBackground = LinearGradient(
   begin: Alignment.topCenter,
@@ -35,9 +36,10 @@ class MiniGameButtonTheme extends StatelessWidget {
 /// フィールドを隠しすぎず、開始・一時停止・結果を共通の枠で表示します。
 class MiniGameOverlayPanel extends StatelessWidget {
   const MiniGameOverlayPanel(
-      {super.key, required this.child, this.dark = false});
+      {super.key, required this.child, this.dark = false, this.pattern});
   final Widget child;
   final bool dark;
+  final TrainingWindowPattern? pattern;
 
   @override
   Widget build(BuildContext context) => ColoredBox(
@@ -51,6 +53,10 @@ class MiniGameOverlayPanel extends StatelessWidget {
                 surface: dark
                     ? MiniGameSelectionSurface.window
                     : MiniGameSelectionSurface.card,
+                pattern: pattern ??
+                    (dark
+                        ? TrainingWindowPattern.pause
+                        : TrainingWindowPattern.start),
                 padding: const EdgeInsets.all(18),
                 child: DefaultTextStyle.merge(
                   style: TextStyle(
