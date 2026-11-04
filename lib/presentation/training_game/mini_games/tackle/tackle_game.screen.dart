@@ -22,6 +22,7 @@ import 'tackle_pitch_background.dart';
 import 'tackle_attempt_feedback.dart';
 import 'tackle_rank_badge.dart';
 import '../../models/training_game_clock.dart';
+import '../../training_ocean_decoration.dart';
 
 enum _TacklePhase {
   waiting,
@@ -982,6 +983,7 @@ class _TackleGameScreenState extends State<TackleGameScreen>
         : '${(average.inMicroseconds / Duration.microsecondsPerSecond).toStringAsFixed(2)}秒';
     return MiniGameOverlayPanel(
       dark: true,
+      pattern: TrainingWindowPattern.result,
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
