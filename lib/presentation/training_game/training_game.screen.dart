@@ -66,45 +66,55 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
           canPop: !controller.isReturningHome.value,
           child: Scaffold(
             backgroundColor: Colors.white,
-            body: SafeArea(
-              bottom: false,
-              child: Obx(() {
-                final shouldShowEvolution =
-                    controller.evolutionStage.value != null &&
-                        (!controller.ended.value ||
-                            controller.clearPosition.value != null);
-                final content = controller.isServerStateReady.value
-                    ? shouldShowEvolution
-                        ? _buildEvolutionFlow()
-                        : controller.ended.value
-                            ? _buildEndingFlow(context)
-                            : _buildHome(context)
-                    : controller.serverErrorMessage.value.isEmpty
-                        ? const Center(child: CircularProgressIndicator())
-                        : _buildConnectionError();
-                final pageKey = !controller.isServerStateReady.value
-                    ? 'connection'
-                    : shouldShowEvolution
-                        ? 'evolution-${controller.evolutionStage.value}'
-                        : controller.ended.value
-                            ? controller.clearPosition.value != null &&
-                                    controller.endingStep.value == 0
-                                ? 'evolution-ending-0'
-                                : 'ending-${controller.endingStep.value}'
-                            : 'home';
-                return Stack(
-                  children: [
-                    TrainingEvolutionPageSwitcher(
-                      pageKey: pageKey,
-                      child: pageKey == 'home'
-                          ? content
-                          : SafeArea(top: false, child: content),
-                    ),
-                    if (controller.isReturningHome.value)
-                      _buildReturningHomeOverlay(),
-                  ],
-                );
-              }),
+            body: Stack(
+              children: [
+                if (controller.isServerStateReady.value &&
+                    controller.evolutionStage.value == null &&
+                    !controller.ended.value)
+                  const Positioned.fill(
+                    child: TrainingHomeBackground(showScene: false),
+                  ),
+                SafeArea(
+                  bottom: false,
+                  child: Obx(() {
+                    final shouldShowEvolution =
+                        controller.evolutionStage.value != null &&
+                            (!controller.ended.value ||
+                                controller.clearPosition.value != null);
+                    final content = controller.isServerStateReady.value
+                        ? shouldShowEvolution
+                            ? _buildEvolutionFlow()
+                            : controller.ended.value
+                                ? _buildEndingFlow(context)
+                                : _buildHome(context)
+                        : controller.serverErrorMessage.value.isEmpty
+                            ? const Center(child: CircularProgressIndicator())
+                            : _buildConnectionError();
+                    final pageKey = !controller.isServerStateReady.value
+                        ? 'connection'
+                        : shouldShowEvolution
+                            ? 'evolution-${controller.evolutionStage.value}'
+                            : controller.ended.value
+                                ? controller.clearPosition.value != null &&
+                                        controller.endingStep.value == 0
+                                    ? 'evolution-ending-0'
+                                    : 'ending-${controller.endingStep.value}'
+                                : 'home';
+                    return Stack(
+                      children: [
+                        TrainingEvolutionPageSwitcher(
+                          pageKey: pageKey,
+                          child: pageKey == 'home'
+                              ? content
+                              : SafeArea(top: false, child: content),
+                        ),
+                        if (controller.isReturningHome.value)
+                          _buildReturningHomeOverlay(),
+                      ],
+                    );
+                  }),
+                ),
+              ],
             ),
           ),
         ),
