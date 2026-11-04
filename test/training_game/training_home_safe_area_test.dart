@@ -6,6 +6,7 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
+import 'package:koto_blue_sharks/app/services/server_time_clock.dart';
 import 'package:koto_blue_sharks/presentation/training_game/controllers/training_game.controller.dart';
 
 import 'training_home_controls_test.dart'
@@ -30,8 +31,11 @@ void main() {
       await loader.load();
     }
   });
-  for (final bottom in [0.0, 34.0]) {
-    testWidgets('下端の背景は安全領域まで続き操作はその上に収まる bottom=$bottom', (tester) async {
+  for (final (bottom, night) in [(0.0, false), (34.0, false), (34.0, true)]) {
+    testWidgets('上下の背景は安全領域まで続き操作位置を保つ bottom=$bottom night=$night',
+        (tester) async {
+      ServerTimeClock.instance
+          .synchronize(DateTime.utc(2026, 11, 4, night ? 15 : 3));
       tester.view.physicalSize = const Size(375, 812);
       tester.view.devicePixelRatio = 1;
       tester.view.padding = FakeViewPadding(top: 44, bottom: bottom);
@@ -85,11 +89,20 @@ void main() {
           pixels.getUint8(offset + 1),
           pixels.getUint8(offset + 2)
         ], isNot([255, 255, 255]));
+        List<int> rgbAt(int x, int y) {
+          final offset = (y * image.width + x) * 4;
+          return [for (var i = 0; i < 3; i++) pixels.getUint8(offset + i)];
+        }
+
+        // 上端の安全領域と、そのすぐ下の空が同じ色で続きます。
+        expect(rgbAt(8, 2), night ? [76, 120, 159] : [44, 168, 211]);
+        expect(rgbAt(8, 86), rgbAt(8, 90));
         const output = String.fromEnvironment('SAFE_AREA_CAPTURE_DIR');
         if (output.isNotEmpty) {
           await Directory(output).create(recursive: true);
           final png = await image.toByteData(format: ui.ImageByteFormat.png);
-          await File('$output/home-safe-${bottom.toInt()}.png')
+          await File(
+                  '$output/home-safe-${bottom.toInt()}${night ? '-night' : ''}.png')
               .writeAsBytes(png!.buffer.asUint8List());
         }
         image.dispose();
