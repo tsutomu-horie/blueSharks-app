@@ -1,3 +1,5 @@
+import 'package:koto_blue_sharks/presentation/training_game/mini_games/mini_game_selection_frame.dart';
+import 'package:koto_blue_sharks/presentation/training_game/training_ocean_decoration.dart';
 import 'dart:io';
 import 'dart:ui' as ui;
 
@@ -103,6 +105,12 @@ void main() {
         expect(tester.takeException(), isNull);
         expect(find.byType(SametarohAnimatedImage), findsOneWidget);
         expect(find.byIcon(Icons.close), findsNothing);
+        expect(
+            tester
+                .widgetList<MiniGameSelectionFrame>(
+                    find.byType(MiniGameSelectionFrame))
+                .where((frame) => frame.pattern == TrainingWindowPattern.care),
+            hasLength(1));
         expect(find.byType(CircularProgressIndicator), findsNothing);
         final photoClip = find
             .ancestor(

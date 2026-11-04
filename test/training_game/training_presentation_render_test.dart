@@ -1,3 +1,5 @@
+import 'package:koto_blue_sharks/presentation/training_game/mini_games/mini_game_selection_frame.dart';
+import 'package:koto_blue_sharks/presentation/training_game/training_ocean_decoration.dart';
 import 'dart:io';
 import 'dart:ui' as ui;
 
@@ -160,6 +162,12 @@ void main() {
       await tester.pump(const Duration(seconds: 10));
       await tester.pump(const Duration(milliseconds: 500));
       expect(find.byType(TrainingPresentationBody), findsOneWidget);
+      expect(
+          tester
+              .widgetList<MiniGameSelectionFrame>(
+                  find.byType(MiniGameSelectionFrame))
+              .where((frame) => frame.pattern == TrainingWindowPattern.plain),
+          hasLength(1));
       if (sample.stage == 0) {
         final visual = tester.widget<Text>(find.text('🥚\n引退'));
         expect(visual.style?.color, TrainingHomeStyle.navy);
