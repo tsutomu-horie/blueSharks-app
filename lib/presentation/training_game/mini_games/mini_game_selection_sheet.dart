@@ -63,7 +63,6 @@ class _MiniGameSelectionSheetState extends State<MiniGameSelectionSheet> {
                     child: Column(children: [
                       _SelectionCard(
                         type: TrainingActionType.tackle,
-                        number: '01',
                         title: 'タックル',
                         category: '反応・タイミング',
                         description: 'フェイントを見抜いて\n相手の動く方向をタップ',
@@ -75,7 +74,6 @@ class _MiniGameSelectionSheetState extends State<MiniGameSelectionSheet> {
                       const SizedBox(height: 14),
                       _SelectionCard(
                         type: TrainingActionType.passAndRun,
-                        number: '02',
                         title: 'パス＆ラン',
                         category: 'フリック・パス',
                         description: '仲間に向けてフリック\n　パスをつないで走ろう',
@@ -146,7 +144,6 @@ class _MiniGameSelectionSheetState extends State<MiniGameSelectionSheet> {
 class _SelectionCard extends StatelessWidget {
   const _SelectionCard({
     required this.type,
-    required this.number,
     required this.title,
     required this.category,
     required this.description,
@@ -156,7 +153,6 @@ class _SelectionCard extends StatelessWidget {
   });
 
   final TrainingActionType type;
-  final String number;
   final String title;
   final String category;
   final String description;
@@ -189,24 +185,13 @@ class _SelectionCard extends StatelessWidget {
                     ),
                     borderRadius: BorderRadius.circular(6),
                   ),
-                  child: Stack(children: [
-                    Positioned(
-                      top: 4,
-                      left: 7,
-                      child: ExcludeSemantics(
-                          child: Text(number,
-                              style: const TextStyle(
-                                  fontFamily: 'Inter',
-                                  fontSize: 12,
-                                  color: Color(0xff4d9ac3)))),
-                    ),
-                    Center(
-                        child: Image.asset(asset,
-                            width: imageSize.width,
-                            height: imageSize.height,
-                            fit: BoxFit.contain,
-                            excludeFromSemantics: true)),
-                  ]),
+                  child: Center(
+                    child: Image.asset(asset,
+                        width: imageSize.width,
+                        height: imageSize.height,
+                        fit: BoxFit.contain,
+                        excludeFromSemantics: true),
+                  ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
