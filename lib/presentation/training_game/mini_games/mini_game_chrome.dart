@@ -45,8 +45,8 @@ class MiniGameOverlayPanel extends StatelessWidget {
         child: Center(
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(12),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 440),
+            child: SizedBox(
+              width: 440,
               child: MiniGameSelectionFrame(
                 surface: dark
                     ? MiniGameSelectionSurface.window
