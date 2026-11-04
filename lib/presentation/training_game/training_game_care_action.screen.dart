@@ -12,6 +12,7 @@ import 'training_game_theme.dart';
 import 'training_home_controls.dart';
 import 'training_presentation_layout.dart';
 import 'mini_games/mini_game_selection_frame.dart';
+import 'training_ocean_decoration.dart';
 
 /// ④-a〜④-eのお世話実行中画面を共通レイアウトで表示します。
 class TrainingGameCareActionScreen extends StatefulWidget {
@@ -245,6 +246,7 @@ class _TrainingGameCareActionScreenState
 
   Widget _buildCareStatus(_CareActionPresentation presentation) =>
       MiniGameSelectionFrame(
+        pattern: TrainingWindowPattern.care,
         padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
         child: DefaultTextStyle.merge(
           style: const TextStyle(color: TrainingHomeStyle.navy),
