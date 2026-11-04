@@ -6,7 +6,7 @@ import 'mini_game_selection_frame.dart';
 const miniGameBackground = LinearGradient(
   begin: Alignment.topCenter,
   end: Alignment.bottomCenter,
-  colors: [Color(0xff002b6d), Color(0xff006cb0)],
+  colors: [Color(0xff031b31), Color(0xff07516b)],
 );
 
 /// ゲームの操作・進行に依存しない共通のボタン表示です。

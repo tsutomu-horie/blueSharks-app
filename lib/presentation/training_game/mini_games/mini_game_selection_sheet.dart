@@ -55,7 +55,7 @@ class _MiniGameSelectionSheetState extends State<MiniGameSelectionSheet> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   _header(),
-                  Container(height: 3, color: const Color(0xff39bdf5)),
+                  Container(height: 3, color: const Color(0xff57d5e0)),
                   Padding(
                     padding: const EdgeInsets.fromLTRB(12, 16, 12, 18),
                     child: Column(children: [
