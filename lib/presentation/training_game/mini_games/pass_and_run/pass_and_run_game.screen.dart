@@ -1812,7 +1812,7 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
     final message = _phase == _PassGamePhase.waiting
         ? '${_secondsLabel(_roundDuration)}秒 × 往復2セット（合計${_secondsLabel(_roundDuration * 2)}秒）'
         : _isPenalized
-            ? '${_isForwardPass ? '前方パス' : 'MISS'}　${_secondsLabel(_missPenalty)}秒間パス不可'
+            ? '${_isForwardPass ? 'スローフォワード' : 'MISS'}　${_secondsLabel(_missPenalty)}秒間パス不可'
             : _passInFlight && !_passScoreConfirmed
                 ? 'ボール移動中…'
                 : _mateHolding
