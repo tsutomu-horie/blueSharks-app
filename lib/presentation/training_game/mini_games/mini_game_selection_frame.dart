@@ -12,16 +12,18 @@ class MiniGameSelectionFrame extends StatelessWidget {
     this.surface = MiniGameSelectionSurface.card,
     this.padding = EdgeInsets.zero,
     this.clipContent = false,
+    this.pattern = TrainingWindowPattern.standard,
   });
 
   final Widget child;
   final MiniGameSelectionSurface surface;
   final EdgeInsetsGeometry padding;
   final bool clipContent;
+  final TrainingWindowPattern pattern;
 
   @override
   Widget build(BuildContext context) => CustomPaint(
-        painter: _SelectionFramePainter(surface),
+        painter: _SelectionFramePainter(surface, pattern),
         child: clipContent
             ? ClipPath(
                 clipper: const _SelectionFrameClipper(),
@@ -55,8 +57,9 @@ class _SelectionFrameClipper extends CustomClipper<Path> {
 }
 
 class _SelectionFramePainter extends CustomPainter {
-  const _SelectionFramePainter(this.surface);
+  const _SelectionFramePainter(this.surface, this.pattern);
   final MiniGameSelectionSurface surface;
+  final TrainingWindowPattern pattern;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -67,7 +70,7 @@ class _SelectionFramePainter extends CustomPainter {
         path, const Color(0xff031a2e).withValues(alpha: .6), 4, false);
     canvas.save();
     canvas.clipPath(path);
-    paintTrainingOceanSurface(canvas, rect, dark: dark);
+    paintTrainingOceanSurface(canvas, rect, dark: dark, pattern: pattern);
     canvas.restore();
     canvas.drawPath(
         path,
@@ -96,5 +99,5 @@ class _SelectionFramePainter extends CustomPainter {
 
   @override
   bool shouldRepaint(_SelectionFramePainter oldDelegate) =>
-      surface != oldDelegate.surface;
+      surface != oldDelegate.surface || pattern != oldDelegate.pattern;
 }
