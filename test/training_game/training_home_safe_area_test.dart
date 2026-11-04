@@ -49,6 +49,12 @@ void main() {
       await tester.pumpWidget(homeControlsHost(captureKey: capture));
       await tester.runAsync(() async {
         final context = capture.currentContext!;
+        for (final period in ['day', 'night']) {
+          await precacheImage(
+              AssetImage(
+                  'assets/images/training_game/scenes/home_outdoor_$period.png'),
+              context);
+        }
         for (final image in tester.widgetList<Image>(find.byType(Image))) {
           await precacheImage(image.image, context);
         }
