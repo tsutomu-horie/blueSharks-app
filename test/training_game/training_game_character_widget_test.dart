@@ -199,7 +199,8 @@ void main() {
           evolutionSoundFactory: silentTrainingGameSound)));
       await preload(tester, [SametarohAssets.newbornFrame]);
 
-      final background = find.byType(TrainingHomeBackground);
+      final background = find.byWidgetPredicate(
+          (widget) => widget is TrainingHomeBackground && widget.showScene);
       final backgroundRect = tester.getRect(background);
       final meal = find.widgetWithText(TextButton, 'ごはん');
       final mealRect = tester.getRect(meal);

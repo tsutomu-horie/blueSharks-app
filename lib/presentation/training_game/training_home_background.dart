@@ -37,11 +37,15 @@ class TrainingHomeBackground extends StatefulWidget {
   const TrainingHomeBackground({
     this.now,
     this.imageFit = BoxFit.fitWidth,
+    this.showScene = true,
     super.key,
   });
 
   final DateTime Function()? now;
   final BoxFit imageFit;
+
+  /// falseなら画像を重ねず、昼夜に応じた空色だけを描画します。
+  final bool showScene;
 
   @override
   State<TrainingHomeBackground> createState() => _TrainingHomeBackgroundState();
@@ -106,11 +110,13 @@ class _TrainingHomeBackgroundState extends State<TrainingHomeBackground>
   Widget build(BuildContext context) => DecoratedBox(
         decoration: BoxDecoration(
           color: _skyColor,
-          image: DecorationImage(
-            image: AssetImage(_asset),
-            fit: widget.imageFit,
-            alignment: Alignment.bottomCenter,
-          ),
+          image: widget.showScene
+              ? DecorationImage(
+                  image: AssetImage(_asset),
+                  fit: widget.imageFit,
+                  alignment: Alignment.bottomCenter,
+                )
+              : null,
         ),
       );
 }

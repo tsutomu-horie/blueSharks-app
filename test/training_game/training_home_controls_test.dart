@@ -262,7 +262,8 @@ void main() {
         await tester.pump();
         final dexRect = tester.getRect(dex);
         final trainingRect = tester.getRect(training);
-        final bodyRect = tester.getRect(find.byType(TrainingHomeBackground));
+        final bodyRect = tester.getRect(find.byWidgetPredicate(
+            (widget) => widget is TrainingHomeBackground && widget.showScene));
         expect(trainingRect.bottom, closeTo(dexRect.bottom, .001));
         expect(trainingRect.height, dexRect.height);
         expect(bodyRect.bottom - dexRect.bottom, closeTo(12.h, .001));
@@ -300,7 +301,8 @@ void main() {
       Map<String, Rect> rects() => {
             'footer': tester
                 .getRect(find.byKey(const ValueKey('training-home-footer'))),
-            'body': tester.getRect(find.byType(TrainingHomeBackground)),
+            'body': tester.getRect(find.byWidgetPredicate((widget) =>
+                widget is TrainingHomeBackground && widget.showScene)),
             'character':
                 tester.getRect(find.byType(TrainingHomeRoamingCharacter)),
             for (final type in [
