@@ -20,6 +20,7 @@ import 'tackle_trial_plan.dart';
 import 'tackle_game_logic.dart';
 import 'tackle_pitch_background.dart';
 import 'tackle_attempt_feedback.dart';
+import 'tackle_rank_badge.dart';
 import '../../models/training_game_clock.dart';
 
 enum _TacklePhase {
@@ -986,24 +987,7 @@ class _TackleGameScreenState extends State<TackleGameScreen>
         children: [
           const Text('総合ランク', style: TextStyle(color: Colors.white70)),
           const SizedBox(height: 16),
-          Container(
-            width: 132,
-            height: 132,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: rankColor.withValues(alpha: .1),
-              border: Border.all(color: rankColor, width: 3),
-            ),
-            child: Text(
-              rank,
-              style: TextStyle(
-                color: rankColor,
-                fontSize: 88,
-                fontWeight: FontWeight.w900,
-              ),
-            ),
-          ),
+          TackleRankBadge(rank: rank, color: rankColor),
           const SizedBox(height: 16),
           Text(
             '判定平均 $averageLabel　成功 $successCount/${_settings.setCount}',
