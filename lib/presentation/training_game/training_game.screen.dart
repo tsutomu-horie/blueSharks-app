@@ -66,6 +66,7 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
           child: Scaffold(
             backgroundColor: Colors.white,
             body: SafeArea(
+              bottom: false,
               child: Obx(() {
                 final shouldShowEvolution =
                     controller.evolutionStage.value != null &&
@@ -94,7 +95,9 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
                   children: [
                     TrainingEvolutionPageSwitcher(
                       pageKey: pageKey,
-                      child: content,
+                      child: pageKey == 'home'
+                          ? content
+                          : SafeArea(top: false, child: content),
                     ),
                     if (controller.isReturningHome.value)
                       _buildReturningHomeOverlay(),
@@ -124,7 +127,8 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
     final footer = _buildCareBar(context);
     final textExtra =
         (MediaQuery.textScalerOf(context).scale(14) - 14).clamp(0.0, 28.0);
-    final minimumHeight = topPadding +
+    final minimumHeight = MediaQuery.paddingOf(context).bottom +
+        topPadding +
         154.h.clamp(144.0, 208.0) +
         textExtra * 4 +
         TrainingHomeStyle.footerHeight.h.clamp(112.0, 180.0) +
@@ -1287,13 +1291,15 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
       TrainingActionType.work,
       TrainingActionType.rest,
     ];
+    final bottomPadding = MediaQuery.paddingOf(context).bottom;
     return SizedBox(
       key: const ValueKey('training-home-footer'),
-      height: TrainingHomeStyle.footerHeight.h.clamp(112.0, 180.0),
+      height:
+          TrainingHomeStyle.footerHeight.h.clamp(112.0, 180.0) + bottomPadding,
       child: TrainingHomeRibbon(
         footer: true,
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(12, 12, 12, 22),
+          padding: EdgeInsets.fromLTRB(12, 12, 12, 22 + bottomPadding),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: careActions
