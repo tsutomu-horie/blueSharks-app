@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 
-import '../training_home_controls.dart';
+import '../training_ocean_decoration.dart';
 
 enum MiniGameSelectionSurface { window, card, close }
 
-/// 選択ウィンドウ専用の斜めカットとグラデーションです。
+/// 選択・案内ウィンドウの斜めカットと深海の装飾です。
 class MiniGameSelectionFrame extends StatelessWidget {
   const MiniGameSelectionFrame({
     super.key,
@@ -61,73 +61,36 @@ class _SelectionFramePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final rect = (Offset.zero & size).deflate(2);
-    final cut = 12.0.clamp(0.0, rect.shortestSide / 2);
     final path = _framePath(size, 2);
-    final colors = switch (surface) {
-      MiniGameSelectionSurface.window => const [
-          Color(0xff001e51),
-          Color(0xff003f86),
-          Color(0xff006cba),
-          Color(0xff159bd2),
-        ],
-      MiniGameSelectionSurface.card => const [
-          Colors.white,
-          Color(0xfff4fbff),
-          Color(0xffe3f2fd),
-        ],
-      MiniGameSelectionSurface.close => const [
-          Colors.white,
-          Color(0xfff5f9fc),
-        ],
-    };
+    final dark = surface == MiniGameSelectionSurface.window;
     canvas.drawShadow(
-        path, TrainingHomeStyle.navy.withValues(alpha: .7), 3, false);
+        path, const Color(0xff031a2e).withValues(alpha: .6), 4, false);
+    canvas.save();
+    canvas.clipPath(path);
+    paintTrainingOceanSurface(canvas, rect, dark: dark);
+    canvas.restore();
     canvas.drawPath(
-      path,
-      Paint()
-        ..shader = LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: colors,
-        ).createShader(rect),
-    );
-    if (surface == MiniGameSelectionSurface.window) {
-      canvas.save();
-      canvas.clipPath(path);
-      canvas.drawPath(
-        Path()
-          ..moveTo(0, size.height * .86)
-          ..lineTo(size.width, size.height * .72)
-          ..lineTo(size.width, size.height)
-          ..lineTo(0, size.height)
-          ..close(),
-        Paint()..color = const Color(0xff00428b).withValues(alpha: .5),
-      );
-      canvas.drawPath(
-        Path()
-          ..moveTo(size.width * .55, size.height)
-          ..lineTo(size.width, size.height * .9)
-          ..lineTo(size.width, size.height)
-          ..close(),
-        Paint()..color = const Color(0xff008acb),
-      );
-      canvas.restore();
-    }
-    canvas.drawPath(
-      path,
-      Paint()
-        ..color = TrainingHomeStyle.navy
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 2,
-    );
+        path,
+        Paint()
+          ..color = const Color(0xff06374f)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 2);
     if (surface != MiniGameSelectionSurface.close) {
       canvas.drawLine(
-        Offset(rect.left + cut, rect.top),
-        Offset(rect.right - cut, rect.top),
-        Paint()
-          ..color = const Color(0xff39bdf5)
-          ..strokeWidth = 2.5,
-      );
+          Offset(14, 2),
+          Offset(size.width - 14, 2),
+          Paint()
+            ..shader = const LinearGradient(
+                    colors: [Color(0xff79e6eb), Color(0xff1594b4)])
+                .createShader(rect)
+            ..strokeWidth = 2);
+      // 上辺にだけ入る短い反射。左下の縁は濃紺のまま。
+      canvas.drawLine(
+          Offset(18, 5),
+          Offset(size.width * .31, 5),
+          Paint()
+            ..color = const Color(0xffbceef3).withValues(alpha: dark ? .4 : .6)
+            ..strokeWidth = .7);
     }
   }
 

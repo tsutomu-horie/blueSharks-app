@@ -72,7 +72,7 @@ void main() {
           await tester.runAsync(() async {
             final boundary =
                 key.currentContext!.findRenderObject() as RenderRepaintBoundary;
-            final image = await boundary.toImage();
+            final image = await boundary.toImage(pixelRatio: 2);
             final bytes =
                 await image.toByteData(format: ui.ImageByteFormat.png);
             await Directory(output).create(recursive: true);

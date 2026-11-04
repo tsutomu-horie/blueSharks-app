@@ -13,6 +13,8 @@ import 'package:koto_blue_sharks/presentation/training_game/training_game.screen
 import 'package:koto_blue_sharks/presentation/training_game/training_home_roaming_character.dart';
 import 'package:koto_blue_sharks/presentation/training_game/training_presentation_layout.dart';
 
+import 'package:koto_blue_sharks/presentation/training_game/training_home_controls.dart';
+
 import 'prepare_grounded_frames.dart';
 import 'recording_training_game_sound.dart';
 
@@ -160,7 +162,7 @@ void main() {
       expect(find.byType(TrainingPresentationBody), findsOneWidget);
       if (sample.stage == 0) {
         final visual = tester.widget<Text>(find.text('🥚\n引退'));
-        expect(visual.style?.color, const Color(0xff002b6d));
+        expect(visual.style?.color, TrainingHomeStyle.navy);
       }
       if (sample.evolution != 0 || (sample.positive && sample.ending < 2)) {
         expect(find.text('次へ').hitTestable(), findsOneWidget);

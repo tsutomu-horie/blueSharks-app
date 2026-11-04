@@ -11,6 +11,8 @@ import 'package:koto_blue_sharks/presentation/training_game/sametaroh_asset.dart
 import 'package:koto_blue_sharks/presentation/training_game/training_care_scene.dart';
 import 'package:koto_blue_sharks/presentation/training_game/training_game_care_action.screen.dart';
 
+import 'package:koto_blue_sharks/presentation/training_game/sametaroh_clean_warp.dart';
+
 import 'prepare_grounded_frames.dart';
 
 void main() {
@@ -53,6 +55,26 @@ void main() {
         addTearDown(tester.view.resetPhysicalSize);
         addTearDown(tester.view.resetDevicePixelRatio);
         final capture = GlobalKey();
+        // 画像と補正済みフレームの準備後に撮影対象をマウントします。
+        await tester.pumpWidget(const MaterialApp(home: SizedBox()));
+        final context = tester.element(find.byType(MaterialApp));
+        await tester.runAsync(() async {
+          final frames = [
+            ...SametarohAssets.careFramesFor(action),
+            SametarohAssets.completionFrameFor(action),
+          ];
+          for (final asset in [
+            ...frames.map((frame) => frame.asset),
+            TrainingCareScene.forAction(action)!.asset,
+          ]) {
+            await precacheImage(AssetImage(asset), context);
+          }
+          for (final frame in frames) {
+            if (SametarohCleanWarp.supports(frame)) {
+              await SametarohCleanWarp.prepare(frame);
+            }
+          }
+        });
         await tester.pumpWidget(RepaintBoundary(
           key: capture,
           child: ScreenUtilInit(
@@ -68,21 +90,20 @@ void main() {
             ),
           ),
         ));
-        final context = tester.element(find.byType(MaterialApp));
-        await tester.runAsync(() async {
-          for (final asset in [
-            ...SametarohAssets.careFramesFor(action)
-                .map((frame) => frame.asset),
-            SametarohAssets.completionFrameFor(action).asset,
-            TrainingCareScene.forAction(action)!.asset,
-          ]) {
-            await precacheImage(AssetImage(asset), context);
-          }
-        });
+        // マウント時の非同期precacheが完了してから進行中の状態を撮ります。
+        for (var i = 0;
+            i < 20 &&
+                find.byType(CircularProgressIndicator).evaluate().isNotEmpty;
+            i++) {
+          await tester.runAsync(
+              () => Future<void>.delayed(const Duration(milliseconds: 50)));
+          await tester.pump();
+        }
         await tester.pump(const Duration(milliseconds: 700));
         expect(tester.takeException(), isNull);
         expect(find.byType(SametarohAnimatedImage), findsOneWidget);
         expect(find.byIcon(Icons.close), findsNothing);
+        expect(find.byType(CircularProgressIndicator), findsNothing);
         final photoClip = find
             .ancestor(
               of: find.byType(TrainingCareSceneView),
