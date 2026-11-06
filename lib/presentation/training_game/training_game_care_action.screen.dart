@@ -256,7 +256,10 @@ class _TrainingGameCareActionScreenState
                   color: const Color(0xff008fd8), size: 20),
               const SizedBox(width: 8),
               Flexible(
-                  child: Text(presentation.progressLabel,
+                  child: Text(
+                      _isCompleting
+                          ? presentation.completionLabel
+                          : presentation.progressLabel,
                       style: TextStyle(
                           fontSize: 16.sp.clamp(14.0, 20.0),
                           fontWeight: FontWeight.w700))),
@@ -657,6 +660,7 @@ class _CareActionPresentation {
     required this.fit,
     required this.illustrationLabel,
     required this.progressLabel,
+    required this.completionLabel,
     required this.description,
   });
 
@@ -667,6 +671,7 @@ class _CareActionPresentation {
   final BoxFit fit;
   final String illustrationLabel;
   final String progressLabel;
+  final String completionLabel;
   final String description;
 
   /// お世話種別に対応する画面文言と素材表示情報を返します。
@@ -689,6 +694,7 @@ class _CareActionPresentation {
           fit: BoxFit.contain,
           illustrationLabel: '仕事中',
           progressLabel: '仕事中…',
+          completionLabel: '仕事完了',
           description: '今日の仕事をがんばっています。',
         ),
       TrainingActionType.meal => _CareActionPresentation(
@@ -705,6 +711,7 @@ class _CareActionPresentation {
           fit: BoxFit.contain,
           illustrationLabel: '食事中',
           progressLabel: '食事中…',
+          completionLabel: '食事完了',
           description: 'おいしく食べて、おなかいっぱい！',
         ),
       TrainingActionType.clean => _CareActionPresentation(
@@ -721,6 +728,7 @@ class _CareActionPresentation {
           fit: BoxFit.contain,
           illustrationLabel: '掃除中',
           progressLabel: '掃除中…',
+          completionLabel: '掃除完了',
           description: 'お部屋がきれいになって、気分すっきり！',
         ),
       TrainingActionType.rest => _CareActionPresentation(
@@ -737,6 +745,7 @@ class _CareActionPresentation {
           fit: BoxFit.contain,
           illustrationLabel: '休養・ケア中',
           progressLabel: 'ケア中…',
+          completionLabel: 'ケア完了',
           description: 'ゆっくり休んで、また元気に！',
         ),
       TrainingActionType.squat => _CareActionPresentation(
@@ -753,6 +762,7 @@ class _CareActionPresentation {
           fit: BoxFit.contain,
           illustrationLabel: '筋トレ中',
           progressLabel: 'トレーニング中…',
+          completionLabel: '筋トレ完了',
           description: '日々のトレーニングを重ねて、たくましい鮫太郎を目指しましょう！',
         ),
       TrainingActionType.tackle ||
