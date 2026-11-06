@@ -75,6 +75,52 @@ Future<void> _openCare(
 
 void main() {
   setUpAll(prepareGroundedFrames);
+  testWidgets('食事は100%で完了見出しに切り替わり、戻って再度食事できる', (tester) async {
+    final results = <bool?>[];
+    final semantics = tester.ensureSemantics();
+    try {
+      await _openCare(tester, onResult: results.add);
+
+      for (var round = 0; round < 2; round++) {
+        expect(find.text('食事中…'), findsOneWidget);
+        expect(find.text('食事完了'), findsNothing);
+        final seekBar = find.bySemanticsLabel('お世話の進行状況');
+        if (round == 0) {
+          await tester.pump(const Duration(milliseconds: 4699));
+          expect(find.text('食事中…'), findsOneWidget);
+          await tester.pump(const Duration(milliseconds: 1));
+        } else {
+          for (var tap = 0; tap < 5; tap++) {
+            await tester.tapAt(const Offset(2, 200));
+            await tester.pump();
+          }
+        }
+        expect(tester.getSemantics(seekBar).getSemanticsData().value, '100%');
+        expect(find.text('食事完了'), findsOneWidget);
+        expect(find.text('食事中…'), findsNothing);
+        await tester.runAsync(
+          () => Future<void>.delayed(const Duration(milliseconds: 50)),
+        );
+        await tester.pump();
+        expect(find.text('タップして戻る'), findsOneWidget);
+        expect(find.text('食事完了'), findsOneWidget);
+        await tester.tap(find.text('タップして戻る'));
+        await tester.pumpAndSettle();
+        expect(results, List.filled(round + 1, true));
+        expect(find.text('open care'), findsOneWidget);
+        if (round == 0) {
+          await tester.pump(const Duration(seconds: 6));
+          await tester.tap(find.text('open care'));
+          await tester.pump();
+          await tester.pump(const Duration(milliseconds: 300));
+        }
+      }
+      expect(tester.takeException(), isNull);
+    } finally {
+      semantics.dispose();
+    }
+  });
+
   for (final body in <String?>[null, SametarohAssets.childBodyKey]) {
     for (final action in _actions) {
       if (body == SametarohAssets.childBodyKey &&
@@ -112,6 +158,15 @@ void main() {
         expect(done.frame.asset,
             SametarohAssets.completionFrameFor(action, bodyKey: body).asset);
         expect(find.text('タップして戻る'), findsOneWidget);
+        final completionLabel = switch (action) {
+          TrainingActionType.meal => '食事完了',
+          TrainingActionType.clean => '掃除完了',
+          TrainingActionType.squat => '筋トレ完了',
+          TrainingActionType.work => '仕事完了',
+          TrainingActionType.rest => 'ケア完了',
+          _ => throw StateError('お世話以外はこの試験の対象外'),
+        };
+        expect(find.text(completionLabel), findsOneWidget);
         expect(results, isEmpty);
         await tester.pump(const Duration(seconds: 1));
         expect(find.byType(TrainingGameCareActionScreen), findsOneWidget);
