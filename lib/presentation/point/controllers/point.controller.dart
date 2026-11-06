@@ -8,7 +8,7 @@ import 'package:koto_blue_sharks/app/services/auth_token.dart';
 
 class PointController extends GetxController {
   PointController({PointRepository? repository})
-    : repository = repository ?? ApiPointRepository.instance;
+      : repository = repository ?? ApiPointRepository.instance;
 
   final PointRepository repository;
 
@@ -141,6 +141,13 @@ class PointController extends GetxController {
       final items = await repository.getTransactions();
       if (!current()) return;
       transactions.assignAll(items);
+      // Ledger snapshots can differ from the currently spendable balance.
+      final previousAccount = account.value;
+      final latestAccount = await repository.getAccount();
+      // Another screen may have refreshed the balance while this read was pending.
+      if (current() && identical(account.value, previousAccount)) {
+        account.value = latestAccount;
+      }
     });
   }
 
@@ -283,11 +290,10 @@ class PointController extends GetxController {
     final listCount = listReward?.customerExchangeCount ?? 0;
     final latestCount = listCount > selectedCount ? listCount : selectedCount;
     final nextCount = latestCount + 1;
-    final reachedLimit = reward.perCustomerLimit > 0 &&
-        nextCount >= reward.perCustomerLimit;
-    final updatedStatus = reachedLimit
-        ? PointRewardStatus.customerLimitReached
-        : reward.status;
+    final reachedLimit =
+        reward.perCustomerLimit > 0 && nextCount >= reward.perCustomerLimit;
+    final updatedStatus =
+        reachedLimit ? PointRewardStatus.customerLimitReached : reward.status;
 
     selectedReward.value = reward.copyWith(
       customerExchangeCount: nextCount,
