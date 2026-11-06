@@ -31,7 +31,66 @@ class Articles extends GameGuideProvider {
   }
 }
 
+class FailingAdditionalArticles extends Articles {
+  bool failAdditionalPages = true;
+
+  @override
+  Future<List<GameGuidePost>> fetchGuides(
+      {required int page, int perPage = 10}) async {
+    if (page > 1 && failAdditionalPages) {
+      pages.add(page);
+      throw Exception('追加記事の取得失敗');
+    }
+    return super.fetchGuides(page: page, perPage: perPage);
+  }
+}
+
 void main() {
+  testWidgets('追加記事の取得に失敗しても条件を選べ、閉じた後も再表示して取得を再試行できる', (tester) async {
+    tester.view.physicalSize = const Size(375, 812);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    SharedPreferences.setMockInitialValues({});
+    await MySharedPref.init();
+    final provider = FailingAdditionalArticles();
+    final controller = Get.put(GameGuideController(provider: provider));
+    addTearDown(Get.reset);
+    await tester.pumpWidget(ScreenUtilInit(
+        designSize: const Size(375, 812),
+        builder: (_, __) => const GetMaterialApp(home: GameGuideListScreen())));
+    await tester.pumpAndSettle();
+
+    for (var attempt = 0; attempt < 2; attempt++) {
+      await tester.tap(find.byTooltip('絞り込み'));
+      await tester.pumpAndSettle();
+      expect(controller.guides, hasLength(10));
+      expect(find.text('記事を絞り込む'), findsOneWidget);
+      expect(find.byType(DropdownButtonFormField<String?>), findsNWidgets(3));
+      expect(find.textContaining('取得済みの記事から条件を選択できます'), findsOneWidget);
+      await tester.tap(find.byType(DropdownButtonFormField<String?>).first);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('2025 – 2026 シーズン').last);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('この条件で表示'));
+      await tester.pumpAndSettle();
+      expect(controller.selectedSeason.value, '2025 – 2026 シーズン');
+      expect(controller.visibleGuides, hasLength(10));
+      expect(find.text('記事を絞り込む'), findsNothing);
+    }
+
+    provider.failAdditionalPages = false;
+    await tester.tap(find.byTooltip('絞り込み'));
+    await tester.pumpAndSettle();
+    expect(controller.guides, hasLength(14));
+    expect(find.text('記事を絞り込む'), findsOneWidget);
+    expect(find.textContaining('取得済みの記事から条件を選択できます'), findsNothing);
+    await tester.tap(find.text('条件をクリア'));
+    await tester.pumpAndSettle();
+    expect(controller.visibleGuides, hasLength(14));
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('右上だけに絞り込みを置き、全ページの選択肢を取得して条件を適用・解除できる', (tester) async {
     tester.view.physicalSize = const Size(375, 812);
     tester.view.devicePixelRatio = 1;
