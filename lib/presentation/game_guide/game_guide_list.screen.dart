@@ -245,7 +245,8 @@ class _GameGuideListScreenState extends State<GameGuideListScreen>
     BuildContext context,
     GameGuideController controller,
   ) async {
-    if (!await controller.loadAllForFilters() || !context.mounted) return;
+    final loadedAll = await controller.loadAllForFilters();
+    if (!context.mounted) return;
     var season = controller.seasons.contains(controller.selectedSeason.value)
         ? controller.selectedSeason.value
         : null;
@@ -288,9 +289,11 @@ class _GameGuideListScreenState extends State<GameGuideListScreen>
                       ),
                       SizedBox(height: 8.h),
                       Text(
-                        controller.filterInfoUnavailable.value
-                            ? '一部の絞り込み情報を取得できませんでした。画面を更新して再度お試しください。'
-                            : 'シーズン・開催地・開催状態を選んでください。開催状態を確認できない記事は「すべて」に含まれます。',
+                        !loadedAll
+                            ? '追加の記事を取得できませんでした。取得済みの記事から条件を選択できます。すべての条件を取得するには、閉じて再度お試しください。'
+                            : controller.filterInfoUnavailable.value
+                                ? '一部の絞り込み情報を取得できませんでした。画面を更新して再度お試しください。'
+                                : 'シーズン・開催地・開催状態を選んでください。開催状態を確認できない記事は「すべて」に含まれます。',
                         style: TextStyle(
                           fontSize: 12.sp,
                           color: TextColor.secondary,
