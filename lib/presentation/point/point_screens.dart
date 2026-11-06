@@ -59,7 +59,7 @@ class _PointTopScreenState extends State<PointTopScreen> {
               PointBalanceCard(
                 balance: account.balance,
                 lifetimeEarned: account.lifetimeEarned,
-                label: '全種別の利用可能ポイント',
+                label: '現在の利用可能ポイント（全種別）',
                 onTapExpiring: () => Get.toNamed(Routes.POINT_EXPIRING),
               ),
               SizedBox(height: 12.h),
@@ -423,6 +423,16 @@ class _PointHistoryScreenState extends State<PointHistoryScreen> {
                 }).toList(),
               ),
             ),
+            Padding(
+              padding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 8.h),
+              child:
+                  const Text('履歴の残高は取引時点の記録です。期限切れなどにより、現在使えるポイントと異なる場合があります。'),
+            ),
+            if (controller.errorMessage.value != null)
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 16.w),
+                child: Text(controller.errorMessage.value!),
+              ),
             Expanded(
               child: RefreshIndicator(
                 onRefresh: controller.loadTransactions,
@@ -434,7 +444,7 @@ class _PointHistoryScreenState extends State<PointHistoryScreen> {
                       tileColor: Colors.white,
                       title: Text(item.title),
                       subtitle: Text(
-                        '${formatPointDate(item.occurredAt, withTime: true)}　残高${formatPoints(item.balanceAfter)}pt'
+                        '${formatPointDate(item.occurredAt, withTime: true)}　取引時の残高 ${formatPoints(item.balanceAfter)}pt'
                         '${item.exchangeId != null ? '\n受渡確認用' : ''}',
                       ),
                       isThreeLine: item.exchangeId != null,

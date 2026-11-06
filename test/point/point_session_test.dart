@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:get/get.dart';
 import 'package:koto_blue_sharks/app/data/models/point/point_models.dart';
 import 'package:koto_blue_sharks/app/providers/point/point_repository.dart';
 import 'package:koto_blue_sharks/app/services/auth_token.dart';
@@ -10,6 +11,9 @@ import 'package:koto_blue_sharks/presentation/point/controllers/point.controller
 class SessionRepository implements PointRepository {
   int balance = 5000;
   int reads = 0;
+  bool failAccount = false;
+  List<PointTransaction> history = [];
+  Completer<List<PointTransaction>>? pendingHistory;
   DateTime serverNow = DateTime.utc(2026, 10, 28);
   PointAccount Function(DateTime now)? accountAt;
   Completer<PointAccount>? pending;
@@ -22,6 +26,7 @@ class SessionRepository implements PointRepository {
   @override
   Future<PointAccount> getAccount() {
     reads++;
+    if (failAccount) return Future.error(Exception('account unavailable'));
     return pending?.future ??
         Future.value(
           accountAt?.call(serverNow) ??
@@ -40,7 +45,8 @@ class SessionRepository implements PointRepository {
   Future<PointQrToken> getQrToken() => pendingQr!.future;
 
   @override
-  Future<List<PointTransaction>> getTransactions() async => [];
+  Future<List<PointTransaction>> getTransactions() =>
+      pendingHistory?.future ?? Future.value(history);
 
   @override
   Future<PointReward> getReward(String id) async => rewardToLoad!;
@@ -72,19 +78,19 @@ void main() {
     token = null;
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(storage, (call) async {
-          switch (call.method) {
-            case 'read':
-              return token;
-            case 'write':
-              token = call.arguments['value'] as String;
-              return null;
-            case 'delete':
-            case 'deleteAll':
-              token = null;
-              return null;
-          }
+      switch (call.method) {
+        case 'read':
+          return token;
+        case 'write':
+          token = call.arguments['value'] as String;
           return null;
-        });
+        case 'delete':
+        case 'deleteAll':
+          token = null;
+          return null;
+      }
+      return null;
+    });
     repository = SessionRepository();
     controller = PointController(repository: repository)..onInit();
     await controller.initialize();
@@ -94,6 +100,81 @@ void main() {
     controller.onClose();
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(storage, null);
+  });
+
+  PointTransaction ledgerEntry() => PointTransaction(
+        id: 'ledger-snapshot',
+        type: PointTransactionType.grant,
+        title: '来場ポイント',
+        amount: 1,
+        balanceAfter: 4663,
+        occurredAt: DateTime.utc(2026, 11, 5),
+        sourceType: 'event',
+      );
+
+  test(
+      'history refresh updates available balance without rewriting ledger snapshots',
+      () async {
+    await AuthToken().saveAccessToken('test-session-a');
+    await drain();
+    repository.history = [ledgerEntry()];
+    repository.balance = 4661;
+    await controller.loadTransactions();
+    expect(controller.account.value?.balance, 4661);
+    expect(controller.transactions.single.balanceAfter, 4663);
+    repository.balance = 4663;
+    await controller.loadTransactions();
+    expect(controller.account.value?.balance, 4663);
+    expect(controller.transactions.single.balanceAfter, 4663);
+  });
+
+  test(
+      'history balance refresh failure preserves loaded history and previous account',
+      () async {
+    await AuthToken().saveAccessToken('test-session-a');
+    await drain();
+    repository.history = [ledgerEntry()];
+    repository.failAccount = true;
+    await controller.loadTransactions();
+    expect(controller.transactions.single.id, 'ledger-snapshot');
+    expect(controller.account.value?.balance, 5000);
+    expect(controller.errorMessage.value, isNotNull);
+  });
+
+  test(
+      'history balance response after logout cannot restore the previous account',
+      () async {
+    await AuthToken().saveAccessToken('test-session-a');
+    await drain();
+    repository.history = [ledgerEntry()];
+    repository.pending = Completer<PointAccount>();
+    final loading = controller.loadTransactions();
+    await drain();
+    await AuthToken().deleteToken();
+    await drain();
+    repository.pending!.complete(const PointAccount(
+        balance: 4663, lifetimeEarned: 4663, lifetimeSpent: 0));
+    await loading;
+    expect(controller.transactions, isEmpty);
+    expect(controller.account.value, isNull);
+  });
+
+  test(
+      'history response after logout cannot restore history or request an account',
+      () async {
+    await AuthToken().saveAccessToken('test-session-a');
+    await drain();
+    final reads = repository.reads;
+    repository.pendingHistory = Completer<List<PointTransaction>>();
+    final loading = controller.loadTransactions();
+    await drain();
+    await AuthToken().deleteToken();
+    await drain();
+    repository.pendingHistory!.complete([ledgerEntry()]);
+    await loading;
+    expect(controller.transactions, isEmpty);
+    expect(controller.account.value, isNull);
+    expect(repository.reads, reads);
   });
 
   test(
@@ -202,8 +283,8 @@ void main() {
         notice: '',
         status: PointRewardStatus.available,
       );
-      repository.accountAt = (now) =>
-          now.isBefore(expiresAt) ? beforeExpiry : atExpiry;
+      repository.accountAt =
+          (now) => now.isBefore(expiresAt) ? beforeExpiry : atExpiry;
       repository.serverNow = expiresAt.subtract(
         const Duration(microseconds: 1),
       );
@@ -293,14 +374,14 @@ void main() {
       status: PointRewardStatus.available,
     );
     PointRewardExchange exchange(int id) => PointRewardExchange(
-      id: 'EX-$id',
-      exchangeNumber: 'EX-$id',
-      rewardId: reward.id,
-      rewardName: reward.name,
-      spentPoints: reward.requiredPoints,
-      requestedAt: DateTime(2026),
-      maskedMemberId: 'C-***',
-    );
+          id: 'EX-$id',
+          exchangeNumber: 'EX-$id',
+          rewardId: reward.id,
+          rewardName: reward.name,
+          spentPoints: reward.requiredPoints,
+          requestedAt: DateTime(2026),
+          maskedMemberId: 'C-***',
+        );
     controller.selectedReward.value = reward;
     controller.rewards.assignAll([reward]);
     repository.exchangeResponses = [exchange(1), exchange(2)];
@@ -357,7 +438,8 @@ void main() {
 
     await controller.loadReward(reward.id);
 
-    expect(controller.customerLimitReachedRewardIds.contains(reward.id), isFalse);
+    expect(
+        controller.customerLimitReachedRewardIds.contains(reward.id), isFalse);
     expect(
       controller.rewardStatusFor(controller.rewards.single),
       PointRewardStatus.available,
@@ -369,5 +451,22 @@ void main() {
     await AuthToken().saveAccessToken('test-session-a');
     await drain();
     expect(repository.reads, 0);
+  });
+  test(
+      'history balance response does not overwrite a newer balance from another screen',
+      () async {
+    await AuthToken().saveAccessToken('test-session-a');
+    await drain();
+    repository.history = [ledgerEntry()];
+    repository.pending = Completer<PointAccount>();
+    final loading = controller.loadTransactions();
+    await drain();
+    controller.account.value = const PointAccount(
+        balance: 4700, lifetimeEarned: 4700, lifetimeSpent: 0);
+    repository.pending!.complete(const PointAccount(
+        balance: 4663, lifetimeEarned: 4663, lifetimeSpent: 0));
+    await loading;
+    expect(controller.account.value?.balance, 4700);
+    expect(controller.transactions.single.balanceAfter, 4663);
   });
 }
