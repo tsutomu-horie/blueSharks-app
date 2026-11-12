@@ -79,8 +79,8 @@ class HomeScreen extends GetView<MainController> {
                     )),
                 Obx(() => WebsiteStandingsSection(
                     standings: homeController.websiteStandings.value)),
-                _trainingGameEntry(),
                 _gameGuideEntry(),
+                _trainingGameEntry(),
                 const HomePointCard(),
                 const RenewalHomeHeading('注目ニュース', 'FEATURED TOPICS'),
                 Obx(() => RenewalFeaturedTopics(

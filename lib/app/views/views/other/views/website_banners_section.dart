@@ -119,7 +119,7 @@ class _WebsiteBannersSectionState extends State<WebsiteBannersSection> {
 
   Future<void> _open(BuildContext context, Uri url) async {
     try {
-      if (await launchUrl(url, mode: LaunchMode.externalApplication)) return;
+      if (await launchUrl(url, mode: LaunchMode.inAppBrowserView)) return;
     } catch (_) {
       // A failed handoff must not discard the banners or prevent another tap.
     }

@@ -8,8 +8,12 @@ import 'package:koto_blue_sharks/app/data/models/home/website_goods.dart';
 import 'package:koto_blue_sharks/app/providers/home/website_video_provider.dart';
 import 'package:koto_blue_sharks/app/views/views/other/views/website_goods_section.dart';
 import 'package:koto_blue_sharks/presentation/home/controllers/home.controller.dart';
+import '../support/recording_url_launcher.dart';
 
 void main() {
+  late RecordingUrlLauncher launcher;
+  setUp(() => launcher = RecordingUrlLauncher());
+  tearDown(() => launcher.restore());
   final origin = Uri.parse('https://blue-sharks.donati.jp/');
   final fixture =
       File('test/home/fixtures/renewal_goods_20261016.html').readAsStringSync();
@@ -164,7 +168,7 @@ void main() {
     expect(find.text('GOODS'), findsNothing);
     expect(tester.takeException(), isNull);
   });
-  testWidgets('商品カードは対応する公開商品URLだけを外部で開く', (tester) async {
+  testWidgets('商品カードは対応する公開商品URLだけをアプリ内ブラウザで開く', (tester) async {
     const channel = MethodChannel('plugins.flutter.io/url_launcher');
     final calls = <MethodCall>[];
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
@@ -185,9 +189,10 @@ void main() {
     await tester.pumpAndSettle();
     final args = calls.last.arguments as Map;
     expect(calls.last.method, 'launch');
+    expect(launcher.modes.last, PreferredLaunchMode.inAppBrowserView);
     expect(args['url'], products.first.url.toString());
-    expect(args['useSafariVC'], isFalse);
-    expect(args['useWebView'], isFalse);
+    expect(args['useSafariVC'], isTrue);
+    expect(args['useWebView'], isTrue);
     expect(tester.takeException(), isNull);
   });
 }

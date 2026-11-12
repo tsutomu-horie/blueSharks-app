@@ -10,8 +10,12 @@ import 'package:koto_blue_sharks/app/providers/home/website_video_provider.dart'
 import 'package:koto_blue_sharks/app/views/views/other/views/website_banners_section.dart';
 import 'package:koto_blue_sharks/app/views/views/other/views/website_standings_section.dart';
 import 'package:koto_blue_sharks/presentation/home/controllers/home.controller.dart';
+import '../support/recording_url_launcher.dart';
 
 void main() {
+  late RecordingUrlLauncher launcher;
+  setUp(() => launcher = RecordingUrlLauncher());
+  tearDown(() => launcher.restore());
   TestWidgetsFlutterBinding.ensureInitialized();
   final home = Uri.parse('https://blue-sharks.donati.jp/');
   final source = File('test/home/fixtures/renewal_top_banners_20261019.html')
@@ -280,7 +284,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(tester.takeException(), isNull);
   });
-  testWidgets('TOP各画像のタップは掲載順の実リンクを外部で開く', (tester) async {
+  testWidgets('TOP各画像のタップは掲載順の実リンクをアプリ内ブラウザで開く', (tester) async {
     const channel = MethodChannel('plugins.flutter.io/url_launcher');
     final calls = <MethodCall>[];
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
@@ -297,9 +301,10 @@ void main() {
     for (var i = 0; i < data.length; i++) {
       await tester.tap(find.byKey(ValueKey('website-banner-$i')));
       await tester.pumpAndSettle();
+      expect(launcher.modes.last, PreferredLaunchMode.inAppBrowserView);
       expect((calls.last.arguments as Map)['url'], data[i].url.toString());
-      expect((calls.last.arguments as Map)['useSafariVC'], isFalse);
-      expect((calls.last.arguments as Map)['useWebView'], isFalse);
+      expect((calls.last.arguments as Map)['useSafariVC'], isTrue);
+      expect((calls.last.arguments as Map)['useWebView'], isTrue);
       if (i < data.length - 1) {
         await tester.drag(find.byKey(const ValueKey('website-banners-pager')),
             const Offset(-700, 0));
@@ -309,7 +314,7 @@ void main() {
     expect(calls, hasLength(3));
     expect(tester.takeException(), isNull);
   });
-  testWidgets('TOP外部起動失敗は表示を保持し再試行できる', (tester) async {
+  testWidgets('TOPアプリ内ブラウザ起動失敗は表示を保持し再試行できる', (tester) async {
     const channel = MethodChannel('plugins.flutter.io/url_launcher');
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(channel, (_) async => false);

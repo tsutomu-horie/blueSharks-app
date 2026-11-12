@@ -8,8 +8,12 @@ import 'package:koto_blue_sharks/app/data/models/home/website_match.dart';
 import 'package:koto_blue_sharks/app/providers/home/website_video_provider.dart';
 import 'package:koto_blue_sharks/app/views/views/other/views/website_matches_section.dart';
 import 'package:koto_blue_sharks/presentation/home/controllers/home.controller.dart';
+import '../support/recording_url_launcher.dart';
 
 void main() {
+  late RecordingUrlLauncher launcher;
+  setUp(() => launcher = RecordingUrlLauncher());
+  tearDown(() => launcher.restore());
   final home = Uri.parse('https://blue-sharks.donati.jp/');
   final url = home.resolve('/schedule-and-result/');
   final top = File('test/home/fixtures/renewal_top_game_20261019.html')
@@ -343,7 +347,8 @@ void main() {
     expect(find.byKey(const ValueKey('website-matches-list')), findsNothing);
     expect(tester.takeException(), isNull);
   });
-  testWidgets('無効ボタンは起動せず、試合情報・会場・VIEW ALLは対応実URLへ外部起動する', (tester) async {
+  testWidgets('無効ボタンは起動せず、試合情報・会場・VIEW ALLは対応実URLへアプリ内ブラウザ起動する',
+      (tester) async {
     const channel = MethodChannel('plugins.flutter.io/url_launcher');
     final calls = <MethodCall>[];
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
@@ -367,25 +372,28 @@ void main() {
     await tester.ensureVisible(info);
     await tester.tap(info);
     await tester.pumpAndSettle();
+    expect(launcher.modes.last, PreferredLaunchMode.inAppBrowserView);
     expect((calls.last.arguments as Map)['url'],
         data.upcoming(now).first.actions.last.url.toString());
-    expect((calls.last.arguments as Map)['useSafariVC'], isFalse);
-    expect((calls.last.arguments as Map)['useWebView'], isFalse);
+    expect((calls.last.arguments as Map)['useSafariVC'], isTrue);
+    expect((calls.last.arguments as Map)['useWebView'], isTrue);
     final venue = find.byKey(const ValueKey('website-match-venue-0'));
     await tester.ensureVisible(venue);
     await tester.tap(venue);
     await tester.pumpAndSettle();
+    expect(launcher.modes.last, PreferredLaunchMode.inAppBrowserView);
     expect((calls.last.arguments as Map)['url'],
         data.upcoming(now).first.venueUrl.toString());
     final all = find.byKey(const ValueKey('website-matches-view-all'));
     await tester.ensureVisible(all);
     await tester.tap(all);
     await tester.pumpAndSettle();
+    expect(launcher.modes.last, PreferredLaunchMode.inAppBrowserView);
     expect((calls.last.arguments as Map)['url'], url.toString());
     expect(calls, hasLength(3));
     expect(tester.takeException(), isNull);
   });
-  testWidgets('外部起動例外はカードと無効状態を保ち失敗メッセージを表示する', (tester) async {
+  testWidgets('アプリ内ブラウザ起動例外はカードと無効状態を保ち失敗メッセージを表示する', (tester) async {
     const channel = MethodChannel('plugins.flutter.io/url_launcher');
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(channel, (_) async {

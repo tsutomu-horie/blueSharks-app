@@ -8,8 +8,12 @@ import 'package:koto_blue_sharks/app/data/models/home/website_player.dart';
 import 'package:koto_blue_sharks/app/providers/home/website_video_provider.dart';
 import 'package:koto_blue_sharks/app/views/views/other/views/website_players_section.dart';
 import 'package:koto_blue_sharks/presentation/home/controllers/home.controller.dart';
+import '../support/recording_url_launcher.dart';
 
 void main() {
+  late RecordingUrlLauncher launcher;
+  setUp(() => launcher = RecordingUrlLauncher());
+  tearDown(() => launcher.restore());
   final home = Uri.parse('https://blue-sharks.donati.jp/');
   final fixture = File('test/home/fixtures/renewal_top_players_20261016.html')
       .readAsStringSync();
@@ -70,6 +74,23 @@ void main() {
     expect(data.viewAllUrl, home.resolve('/members/'));
     expect(() => data.players.clear(), throwsUnsupportedError);
   });
+  test('カナが4名欠けた公開TOPの8名をDOM順で保持する', () {
+    final source = File('test/home/fixtures/renewal_top_players_20261112.html')
+        .readAsStringSync();
+    final players = WebsitePlayers.parseHomepage(source, home)!.players;
+    expect(players.map((p) => p.name), [
+      '野村 三四郎',
+      'トム・ロウ',
+      '安達 航洋',
+      'シオネ・タリトゥイ',
+      '金築 達也',
+      'ビリー・バーンズ',
+      'マリティノ・ネマニ',
+      '西端 玄汰',
+    ]);
+    expect(players.map((p) => p.kana.isEmpty),
+        [false, true, false, true, false, true, true, false]);
+  });
   test('対象欄だけ読み相対URLと文字参照を解決し最初の同一選手を保持する', () {
     final data = WebsitePlayers.parseHomepage(
         '${card(url: '/members/prop/2025/01/999/')}${section('${card()}${card(url: '/members/prop/2025/01/17265/?ref=duplicate')}')}',
@@ -116,9 +137,14 @@ void main() {
           isNull);
     }
   });
-  test('氏名・カナ・画像の欠損を推測補完せず、成功空応答はnullになる', () {
+  test('氏名は必須でカナの欠損は補完せず許容し、成功空応答はnullになる', () {
     expect(WebsitePlayers.parseHomepage(section(card(name: '')), home), isNull);
-    expect(WebsitePlayers.parseHomepage(section(card(kana: '')), home), isNull);
+    expect(
+        WebsitePlayers.parseHomepage(section(card(kana: '')), home)!
+            .players
+            .single
+            .kana,
+        isEmpty);
     expect(
         WebsitePlayers.parseHomepage('<html>maintenance</html>', home), isNull);
     expect(WebsitePlayers.parseHomepage('<section class="top-players"/>', home),
@@ -223,7 +249,7 @@ void main() {
     expect(find.text('VIEW ALL'), findsNothing);
     expect(tester.takeException(), isNull);
   });
-  testWidgets('カードとVIEW ALLはそれぞれの公開実URLを外部で開く', (tester) async {
+  testWidgets('カードとVIEW ALLはそれぞれの公開実URLをアプリ内ブラウザで開く', (tester) async {
     const channel = MethodChannel('plugins.flutter.io/url_launcher');
     final calls = <MethodCall>[];
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
@@ -241,14 +267,16 @@ void main() {
         .tap(find.byKey(ValueKey('player-${data.players.first.url.path}')));
     await tester.pumpAndSettle();
     expect(calls.last.method, 'launch');
+    expect(launcher.modes.last, PreferredLaunchMode.inAppBrowserView);
     expect((calls.last.arguments as Map)['url'],
         data.players.first.url.toString());
-    expect((calls.last.arguments as Map)['useSafariVC'], isFalse);
-    expect((calls.last.arguments as Map)['useWebView'], isFalse);
+    expect((calls.last.arguments as Map)['useSafariVC'], isTrue);
+    expect((calls.last.arguments as Map)['useWebView'], isTrue);
     await tester
         .ensureVisible(find.byKey(const ValueKey('website-players-view-all')));
     await tester.tap(find.byKey(const ValueKey('website-players-view-all')));
     await tester.pumpAndSettle();
+    expect(launcher.modes.last, PreferredLaunchMode.inAppBrowserView);
     expect((calls.last.arguments as Map)['url'], data.viewAllUrl.toString());
     expect(calls, hasLength(2));
     expect(tester.takeException(), isNull);

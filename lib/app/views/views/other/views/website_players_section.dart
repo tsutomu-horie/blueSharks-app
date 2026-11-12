@@ -67,16 +67,19 @@ class WebsitePlayersSection extends StatelessWidget {
                                                   fontSize: 16,
                                                   height: 1.3,
                                                   fontWeight: FontWeight.w700)),
-                                          const SizedBox(height: 4),
-                                          Text(player.kana,
-                                              maxLines: 2,
-                                              overflow: TextOverflow.ellipsis,
-                                              textAlign: TextAlign.center,
-                                              style: const TextStyle(
-                                                  color: Colors.white,
-                                                  fontSize: 12,
-                                                  height: 1.3,
-                                                  fontWeight: FontWeight.w700)),
+                                          if (player.kana.isNotEmpty) ...[
+                                            const SizedBox(height: 4),
+                                            Text(player.kana,
+                                                maxLines: 2,
+                                                overflow: TextOverflow.ellipsis,
+                                                textAlign: TextAlign.center,
+                                                style: const TextStyle(
+                                                    color: Colors.white,
+                                                    fontSize: 12,
+                                                    height: 1.3,
+                                                    fontWeight:
+                                                        FontWeight.w700)),
+                                          ],
                                         ])),
                                   ]))));
                 }));
@@ -92,7 +95,7 @@ class WebsitePlayersSection extends StatelessWidget {
 
   Future<void> _open(BuildContext context, Uri url) async {
     try {
-      if (await launchUrl(url, mode: LaunchMode.externalApplication)) return;
+      if (await launchUrl(url, mode: LaunchMode.inAppBrowserView)) return;
     } catch (_) {
       // Keep cards and links available so a failed handoff can be retried.
     }
