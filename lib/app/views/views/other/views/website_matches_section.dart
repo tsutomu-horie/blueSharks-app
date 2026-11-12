@@ -161,7 +161,7 @@ class WebsiteMatchesSection extends StatelessWidget {
 
   Future<void> _open(BuildContext context, Uri url) async {
     try {
-      if (await launchUrl(url, mode: LaunchMode.externalApplication)) return;
+      if (await launchUrl(url, mode: LaunchMode.inAppBrowserView)) return;
     } catch (_) {
       // Keep the card and its action states available for another attempt.
     }

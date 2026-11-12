@@ -32,9 +32,10 @@ class _MenuScreenState extends State<MenuScreen> {
     _showOverview =
         widget.overviewBuilder != null && widget.initialSection == null;
     if (widget.initialSection != null) {
+      controller.selectedIndex.value = widget.initialSection!;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted && controller.pageController.hasClients) {
-          controller.changeTab(widget.initialSection!);
+          controller.pageController.jumpToPage(widget.initialSection!);
         }
       });
     }

@@ -96,7 +96,7 @@ class WebsiteGoodsSection extends StatelessWidget {
 
   Future<void> _openProduct(BuildContext context, Uri url) async {
     try {
-      if (await launchUrl(url, mode: LaunchMode.externalApplication)) return;
+      if (await launchUrl(url, mode: LaunchMode.inAppBrowserView)) return;
     } catch (_) {
       // A failed handoff leaves the carousel available for another attempt.
     }

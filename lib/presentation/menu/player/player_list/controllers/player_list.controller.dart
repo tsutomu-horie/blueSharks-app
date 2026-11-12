@@ -8,7 +8,7 @@ import 'package:koto_blue_sharks/app/providers/member/member_provider.dart';
 import 'package:koto_blue_sharks/app/services/analytics_service.dart';
 import 'package:koto_blue_sharks/generated/locales.g.dart';
 import 'package:koto_blue_sharks/infrastructure/navigation/routes.dart';
-import 'package:koto_blue_sharks/presentation/menu/player/player_detail/player_detail.screen.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:koto_blue_sharks/utils/match+extensions.dart';
 
 class PlayerListController extends GetxController {
@@ -150,8 +150,20 @@ class PlayerListController extends GetxController {
     selectedPosition.value = selectedPos;
   }
 
-  void navigateToMemberDetail(Member player) {
-    Get.to(() => PlayerDetailScreen(player));
+  Future<void> navigateToMemberDetail(Member player) async {
+    final url = Uri.tryParse(player.link.trim());
+    if (url != null &&
+        url.scheme == 'https' &&
+        url.host.isNotEmpty &&
+        url.userInfo.isEmpty &&
+        url.port == 443) {
+      try {
+        if (await launchUrl(url, mode: LaunchMode.inAppBrowserView)) return;
+      } catch (_) {
+        // Keep the list available so the same card can be retried.
+      }
+    }
+    Get.snackbar('エラー', '選手ページを開けませんでした。');
   }
 
   List<Member> combineAllPlayersFromCategories(

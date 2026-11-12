@@ -44,8 +44,7 @@ class WebsitePlayers {
           !RegExp(r'^/members/[a-z0-9-]+/[0-9]{4}/[0-9]{2}/[0-9]+/?$')
               .hasMatch(url.path) ||
           image == null ||
-          name.isEmpty ||
-          kana.isEmpty) {
+          name.isEmpty) {
         continue;
       }
       if (!seen.add(url.path.replaceFirst(RegExp(r'/$'), ''))) continue;

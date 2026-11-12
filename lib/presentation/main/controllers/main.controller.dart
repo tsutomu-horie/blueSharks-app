@@ -10,7 +10,6 @@ import 'package:url_launcher/url_launcher.dart';
 
 import 'package:koto_blue_sharks/presentation/screens.dart';
 
-
 class MainController extends GetxController {
   var selectedIndex = 0.obs;
   var selectedTopicId = Rx<int?>(null); // Track the selected topic ID
@@ -37,13 +36,13 @@ class MainController extends GetxController {
 
   void setupFirebaseMessaging() {
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-      if (message.data['type'] == AuthSessionManager.replacedMessageType) return;
+      if (message.data['type'] == AuthSessionManager.replacedMessageType)
+        return;
       getUnreadNotificationCount();
     });
   }
 
   void getUnreadNotificationCount() async {
-
     final auth = AuthToken();
     final token = await auth.getAccessToken();
 
@@ -62,22 +61,22 @@ class MainController extends GetxController {
     });
   }
 
-  void launchFanClub(){
+  void launchFanClub() {
     launchExternalWeb(Constants.fanClubUrl);
   }
 
-  void launchTicket(){
+  void launchTicket() {
     launchExternalWeb(Constants.ticketsUrl);
   }
 
-  void launchGood(){
+  void launchGood() {
     launchExternalWeb(Constants.shopUrl);
   }
 
   void launchExternalWeb(String url) async {
     final Uri webUrl = Uri.parse(url); // Replace with your profile URL
     if (await canLaunchUrl(webUrl)) {
-      await launchUrl(webUrl);
+      await launchUrl(webUrl, mode: LaunchMode.inAppBrowserView);
     } else {
       throw 'Could not launch $webUrl';
     }

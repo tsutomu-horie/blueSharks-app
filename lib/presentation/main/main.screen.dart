@@ -22,7 +22,7 @@ class MainScreen extends StatefulWidget {
 
 class _MainScreenState extends State<MainScreen> {
   final MainController controller = Get.put(MainController());
-  int? _menuSection;
+  int? _menuSection = 0;
   int _menuVisit = 0;
 
   @override
@@ -47,7 +47,7 @@ class _MainScreenState extends State<MainScreen> {
   void _onItemTapped(int index) {
     setState(() {
       if (index == 1) {
-        _menuSection = null;
+        _menuSection = 0;
         _menuVisit++;
       }
       controller.selectedTopicId.value = null;
