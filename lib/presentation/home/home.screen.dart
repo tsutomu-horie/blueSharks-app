@@ -1,7 +1,9 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import 'package:get/get.dart';
+import 'package:koto_blue_sharks/app/data/models/game_guide/game_guide_post.dart';
 import 'package:koto_blue_sharks/app/data/models/info/post.dart';
 import 'package:koto_blue_sharks/app/views/views/custom_image_view.dart';
 import 'package:koto_blue_sharks/app/views/views/other/views/video_thumbnail_view.dart';
@@ -26,12 +28,14 @@ class HomeScreen extends GetView<MainController> {
     this.onOpenDetail,
     this.navigateToInfoList,
     this.navigateToGameGuide, {
+    this.onOpenLatestGuide,
     super.key,
   });
 
   final Function(Post) onOpenDetail;
   final Function() navigateToInfoList;
   final VoidCallback navigateToGameGuide;
+  final ValueChanged<GameGuidePost>? onOpenLatestGuide;
 
   @override
   Widget build(BuildContext context) {
@@ -40,19 +44,19 @@ class HomeScreen extends GetView<MainController> {
     homeController.getWallpaper();
     homeController.screenInit();
     return Theme(
-        data: Theme.of(context).copyWith(
-            textTheme:
-                Theme.of(context).textTheme.apply(fontFamily: 'LINESeedJP')),
-        child: Scaffold(
-          backgroundColor: Colors.white,
-          body: RefreshIndicator(
-            onRefresh: () async {
-              homeController.isLoading.value = true;
-              homeController.getWallpaper();
-              homeController.screenInit(refreshWebsiteContent: true);
-            },
-            child: SingleChildScrollView(
-                child: Column(
+      data: Theme.of(context).copyWith(
+        textTheme: Theme.of(context).textTheme.apply(fontFamily: 'LINESeedJP'),
+      ),
+      child: Scaffold(
+        backgroundColor: Colors.white,
+        body: RefreshIndicator(
+          onRefresh: () async {
+            homeController.isLoading.value = true;
+            homeController.getWallpaper();
+            homeController.screenInit(refreshWebsiteContent: true);
+          },
+          child: SingleChildScrollView(
+            child: Column(
               children: [
                 AspectRatio(
                   aspectRatio: 9 / 9.3,
@@ -69,48 +73,76 @@ class HomeScreen extends GetView<MainController> {
                           );
                   }),
                 ),
-                Obx(() => WebsiteBannersSection(
-                    banners: homeController.websiteBanners.toList())),
-                const RenewalHomeHeading('次の試合', 'NEXT MATCH',
-                    key: ValueKey('renewal-next-match-heading')),
-                Obx(() => WebsiteMatchesSection(
-                      schedule: homeController.websiteSchedule.value,
-                      now: homeController.websiteClock(),
-                    )),
-                Obx(() => WebsiteStandingsSection(
-                    standings: homeController.websiteStandings.value)),
+                Obx(
+                  () => WebsiteBannersSection(
+                    banners: homeController.websiteBanners.toList(),
+                  ),
+                ),
+                const RenewalHomeHeading(
+                  '次の試合',
+                  'NEXT MATCH',
+                  key: ValueKey('renewal-next-match-heading'),
+                ),
+                Obx(
+                  () => WebsiteMatchesSection(
+                    schedule: homeController.websiteSchedule.value,
+                    now: homeController.websiteClock(),
+                  ),
+                ),
+                Obx(
+                  () => WebsiteStandingsSection(
+                    standings: homeController.websiteStandings.value,
+                  ),
+                ),
                 _gameGuideEntry(),
+                if (onOpenLatestGuide != null)
+                  Obx(() =>
+                      _latestGuideEntry(homeController.latestGuide.value)),
                 _trainingGameEntry(),
                 const HomePointCard(),
                 const RenewalHomeHeading('注目ニュース', 'FEATURED TOPICS'),
-                Obx(() => RenewalFeaturedTopics(
+                Obx(
+                  () => RenewalFeaturedTopics(
                     posts: homeController.topicsData.value.toList(),
                     loadImage: (post) => post.featured_media != null &&
                             post.featured_media != 0
-                        ? homeController
-                            .getFeaturedImage('${post.featured_media}')
+                        ? homeController.getFeaturedImage(
+                            '${post.featured_media}',
+                          )
                         : homeController.getNewsImage(post.content.rendered),
-                    onOpen: onOpenDetail)),
+                    onOpen: onOpenDetail,
+                  ),
+                ),
                 Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: RenewalViewAllButton(
-                        key: const ValueKey('renewal-featured-view-all'),
-                        onPressed: navigateToInfoList)),
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: RenewalViewAllButton(
+                    key: const ValueKey('renewal-featured-view-all'),
+                    onPressed: navigateToInfoList,
+                  ),
+                ),
                 const RenewalHomeHeading('公式動画', 'OFFICIAL VIDEO'),
-                Obx(() => VideoThumbnailView(
-                      videos: homeController.websiteVideos.toList(),
-                    )),
-                Obx(() => WebsitePlayersSection(
-                      data: homeController.websitePlayers.value,
-                    )),
-                Obx(() => WebsiteGoodsSection(
-                      goods: homeController.websiteGoods.toList(),
-                    )),
+                Obx(
+                  () => VideoThumbnailView(
+                    videos: homeController.websiteVideos.toList(),
+                  ),
+                ),
+                Obx(
+                  () => WebsitePlayersSection(
+                    data: homeController.websitePlayers.value,
+                  ),
+                ),
+                Obx(
+                  () => WebsiteGoodsSection(
+                    goods: homeController.websiteGoods.toList(),
+                  ),
+                ),
                 const RenewalFollowSection(),
               ],
-            )),
+            ),
           ),
-        ));
+        ),
+      ),
+    );
   }
 
   Widget shimmer() {
@@ -129,26 +161,63 @@ class HomeScreen extends GetView<MainController> {
   }
 
   Widget _gameGuideEntry() => _designBanner(
-      'assets/images/renewal/guide_banner.jpg',
-      'ホストゲームの楽しみ方',
-      navigateToGameGuide);
+        'assets/images/renewal/guide_banner.jpg',
+        'ホストゲームの楽しみ方',
+        navigateToGameGuide,
+      );
+
+  Widget _latestGuideEntry(GameGuidePost? post) {
+    if (post == null) return const SizedBox.shrink();
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+      child: Semantics(
+        button: true,
+        label: post.title,
+        child: Material(
+          child: InkWell(
+            onTap: () => onOpenLatestGuide!(post),
+            child: AspectRatio(
+              aspectRatio: 16 / 9,
+              child: post.thumbnailUrl == null
+                  ? Center(child: Text(post.title))
+                  : CachedNetworkImage(
+                      imageUrl: post.thumbnailUrl!,
+                      fit: BoxFit.cover,
+                      errorWidget: (_, __, ___) =>
+                          Center(child: Text(post.title)),
+                    ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 
   Widget _designBanner(String asset, String label, VoidCallback onTap) =>
       Padding(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-          child: Semantics(
-              button: true,
-              label: label,
-              child: Material(
-                  color: Colors.white,
-                  child: InkWell(
-                      onTap: onTap,
-                      child: Image.asset(asset,
-                          excludeFromSemantics: true, fit: BoxFit.contain)))));
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+        child: Semantics(
+          button: true,
+          label: label,
+          child: Material(
+            color: Colors.white,
+            child: InkWell(
+              onTap: onTap,
+              child: Image.asset(
+                asset,
+                excludeFromSemantics: true,
+                fit: BoxFit.contain,
+              ),
+            ),
+          ),
+        ),
+      );
 
   /// ホームから育成ゲームへ遷移する入口を表示します。
   Widget _trainingGameEntry() => _designBanner(
-      'assets/images/renewal/training_banner.jpg',
-      '鮫太朗育成計画',
-      () => Get.toNamed(Routes.TRAINING_GAME_LAUNCH, arguments: true));
+        'assets/images/renewal/training_banner.jpg',
+        '鮫太朗育成計画',
+        () => Get.toNamed(Routes.TRAINING_GAME_LAUNCH, arguments: true),
+      );
 }

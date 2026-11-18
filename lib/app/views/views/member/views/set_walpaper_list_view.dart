@@ -290,40 +290,42 @@ void showSetWallpaper(
                   SizedBox(
                     width: 12.w,
                   ),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          CustomTextView(
-                            playerNameKatana,
-                            type: TDSFontType.labelMedium,
-                            color: TextColor.secondary,
-                          ),
-                          CustomTextView(
-                            playerNameKanji,
-                            type: TDSFontType.titleSmall,
-                            color: TextColor.secondary,
-                          ),
-                        ],
-                      ),
-                      SizedBox(
-                        height: 12.h,
-                      ),
-                      Container(
-                        padding: EdgeInsets.symmetric(
-                            vertical: 4.h, horizontal: 8.w),
-                        decoration: BoxDecoration(
-                          color: BrandColor.surface,
-                          borderRadius: BorderRadius.circular(24.r),
+                  Flexible(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            CustomTextView(
+                              playerNameKatana,
+                              type: TDSFontType.labelMedium,
+                              color: TextColor.secondary,
+                            ),
+                            CustomTextView(
+                              playerNameKanji,
+                              type: TDSFontType.titleSmall,
+                              color: TextColor.secondary,
+                            ),
+                          ],
                         ),
-                        child: CustomTextView(playerPosition.capitalizeText(),
-                            type: TDSFontType.labelMedium,
-                            color: BrandColor.main),
-                      ),
-                    ],
-                  )
+                        SizedBox(
+                          height: 12.h,
+                        ),
+                        Container(
+                          padding: EdgeInsets.symmetric(
+                              vertical: 4.h, horizontal: 8.w),
+                          decoration: BoxDecoration(
+                            color: BrandColor.surface,
+                            borderRadius: BorderRadius.circular(24.r),
+                          ),
+                          child: CustomTextView(playerPosition.capitalizeText(),
+                              type: TDSFontType.labelMedium,
+                              color: BrandColor.main),
+                        ),
+                      ],
+                    ),
+                  ),
                 ],
               ),
             ),

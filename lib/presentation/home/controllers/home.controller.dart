@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
+import 'package:koto_blue_sharks/app/data/models/game_guide/game_guide_post.dart';
 import 'package:koto_blue_sharks/app/data/models/info/post.dart';
+import 'package:koto_blue_sharks/app/providers/game_guide/game_guide_provider.dart';
 import 'package:koto_blue_sharks/app/data/models/home/website_video.dart';
 import 'package:koto_blue_sharks/app/data/models/home/website_match.dart';
 import 'package:koto_blue_sharks/app/data/models/home/website_banner.dart';
@@ -25,6 +27,10 @@ class HomeController extends GetxController {
         websiteClock = websiteClock ?? DateTime.now;
 
   final WebsiteVideoProvider websiteVideoProvider;
+  final _guideProvider = GameGuideProvider();
+  final latestGuide = Rxn<GameGuidePost>();
+  bool _guideRequested = false;
+  bool _guideLoading = false;
   final DateTime Function() websiteClock;
   final websiteSchedule = Rxn<WebsiteSchedule>();
   final websiteBanners = <WebsiteBanner>[].obs;
@@ -93,6 +99,7 @@ class HomeController extends GetxController {
   @override
   void onClose() {
     websiteVideoProvider.httpClient.close();
+    _guideProvider.onDelete();
     super.onClose();
   }
 
@@ -114,13 +121,29 @@ class HomeController extends GetxController {
     apiProvider.onInit();
     mediaProvider.onInit();
     infoProvider.onInit();
+    _guideProvider.onInit();
   }
 
   void screenInit({bool refreshWebsiteContent = false}) {
     fetchWebsiteNextMatches(force: refreshWebsiteContent);
+    _fetchLatestGuide(force: refreshWebsiteContent);
     getTopics();
 
     // isLoading.value = false;
+  }
+
+  Future<void> _fetchLatestGuide({required bool force}) async {
+    if (_guideLoading || (_guideRequested && !force)) return;
+    _guideRequested = true;
+    _guideLoading = true;
+    try {
+      final posts = await _guideProvider.fetchGuides(page: 1, perPage: 1);
+      if (!isClosed) latestGuide.value = posts.firstOrNull;
+    } catch (_) {
+      // Keep the most recent successful banner if a refresh fails.
+    } finally {
+      _guideLoading = false;
+    }
   }
 
   void setBannerData(List<CustomBanner> data) {
