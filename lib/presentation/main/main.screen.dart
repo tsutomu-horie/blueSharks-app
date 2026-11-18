@@ -3,8 +3,12 @@ import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import 'package:get/get.dart';
+import 'package:koto_blue_sharks/app/data/models/game_guide/game_guide_post.dart';
 import 'package:koto_blue_sharks/app/data/models/info/post.dart';
+import 'package:koto_blue_sharks/infrastructure/navigation/routes.dart';
+
 import 'main_header_icon_button.dart';
+
 import 'package:koto_blue_sharks/app/views/views/app_bottom_navigation_bar.dart';
 import 'package:koto_blue_sharks/presentation/screens.dart';
 import 'package:koto_blue_sharks/utils/app_color.dart';
@@ -68,16 +72,33 @@ class _MainScreenState extends State<MainScreen> {
     controller.selectedIndex.value = 5;
   }
 
+  void _openLatestGuide(GameGuidePost post) {
+    if (controller.selectedIndex.value == 5) return;
+    _openGuide();
+    Get.toNamed(Routes.GAME_GUIDE_DETAIL, arguments: post);
+  }
+
   @override
   Widget build(BuildContext context) {
     controller.refreshUnreadMessageCount();
     final List<Widget> _pages = [
-      HomeScreen(selectTopic, _openTopics, _openGuide),
-      MenuScreen(selectTopic,
-          key: ValueKey('menu-$_menuSection-$_menuVisit'),
-          initialSection: _menuSection,
-          overviewBuilder: (showTopics) =>
-              HomeScreen(selectTopic, showTopics, _openGuide)),
+      HomeScreen(
+        selectTopic,
+        _openTopics,
+        _openGuide,
+        onOpenLatestGuide: _openLatestGuide,
+      ),
+      MenuScreen(
+        selectTopic,
+        key: ValueKey('menu-$_menuSection-$_menuVisit'),
+        initialSection: _menuSection,
+        overviewBuilder: (showTopics) => HomeScreen(
+          selectTopic,
+          showTopics,
+          _openGuide,
+          onOpenLatestGuide: _openLatestGuide,
+        ),
+      ),
       const MypageScreen(),
       const StadiumScreen(),
       CalendarScreen(),
@@ -114,11 +135,12 @@ class _MainScreenState extends State<MainScreen> {
             titleSpacing: 8.w,
             automaticallyImplyLeading: false,
             title: MainHeaderBar(
-                onNews: controller.navigateToNotification,
-                onFanClub: controller.launchFanClub,
-                onTicket: controller.launchTicket,
-                onGoods: controller.launchGood,
-                unreadCount: controller.unreadMessage.value),
+              onNews: controller.navigateToNotification,
+              onFanClub: controller.launchFanClub,
+              onTicket: controller.launchTicket,
+              onGoods: controller.launchGood,
+              unreadCount: controller.unreadMessage.value,
+            ),
           ),
           body: controller.selectedTopicId.value == null
               ? _pages[controller.selectedIndex.value]

@@ -27,7 +27,8 @@ class UpdateWallpaperController extends GetxController {
     'center': 7,
     'wing': 8,
     'fullback': 9,
-    'staff': 10,
+    'utility backs': 10,
+    'staff': 11,
   };
   // Store both original categories and processed player groups
   List<WallpaperCategory> _originalCategories = [];
@@ -86,7 +87,7 @@ class UpdateWallpaperController extends GetxController {
 
   List<CategorizedPlayerGroup> processWallpaperCategories(List<WallpaperCategory> categories) {
     const forwardRoles = ['prop', "hooker", "lock", "flanker", "no8"];
-    const backRoles = ["scrumhalf", "standoff", "center", "wing", "fullback"];
+    const backRoles = ["scrumhalf", "standoff", "center", "wing", "fullback", "utility backs"];
     const staffRoles = ["staff"];
 
     Map<String, List<Member>> positionGroups = {};
