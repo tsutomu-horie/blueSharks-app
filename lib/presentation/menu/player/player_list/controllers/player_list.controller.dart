@@ -56,7 +56,8 @@ class PlayerListController extends GetxController {
     'center': 7,
     'wing': 8,
     'fullback': 9,
-    'staff': 10,
+    'utility-backs': 10,
+    'staff': 11,
   };
 
   void scrollToGroup(String groupIdentifier) {
@@ -133,7 +134,6 @@ class PlayerListController extends GetxController {
       }
       if (players.length < 100) break;
     }
-    result.sort((a, b) => a.title.rendered.compareTo(b.title.rendered));
     return result;
   }
 

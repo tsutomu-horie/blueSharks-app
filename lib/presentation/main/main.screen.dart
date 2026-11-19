@@ -11,6 +11,7 @@ import 'main_header_icon_button.dart';
 
 import 'package:koto_blue_sharks/app/views/views/app_bottom_navigation_bar.dart';
 import 'package:koto_blue_sharks/presentation/screens.dart';
+import 'package:koto_blue_sharks/presentation/stadium/host_information.screen.dart';
 import 'package:koto_blue_sharks/utils/app_color.dart';
 
 import 'controllers/main.controller.dart';
@@ -100,7 +101,7 @@ class _MainScreenState extends State<MainScreen> {
         ),
       ),
       const MypageScreen(),
-      const StadiumScreen(),
+      const HostInformationScreen(),
       CalendarScreen(),
       const GameGuideListScreen(),
     ];

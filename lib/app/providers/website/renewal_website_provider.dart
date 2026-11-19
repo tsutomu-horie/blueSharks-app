@@ -10,7 +10,8 @@ import 'package:koto_blue_sharks/utils/constant.dart';
 class RenewalWebsiteProvider extends GetConnect {
   RenewalWebsiteProvider({Future<String> Function(Uri)? load}) : _load = load {
     httpClient.addRequestModifier<dynamic>(
-        (request) => request.copyWith(followRedirects: false));
+      (request) => request.copyWith(followRedirects: false),
+    );
   }
 
   final Future<String> Function(Uri)? _load;
@@ -32,8 +33,10 @@ class RenewalWebsiteProvider extends GetConnect {
       body = await loader(url);
     } else {
       httpClient.timeout = const Duration(seconds: 20);
-      final response = await get<String>(url.toString(),
-          decoder: (value) => value is String ? value : jsonEncode(value));
+      final response = await get<String>(
+        url.toString(),
+        decoder: (value) => value is String ? value : jsonEncode(value),
+      );
       if (response.statusCode != 200 || response.body == null) {
         String? code;
         try {
@@ -52,15 +55,24 @@ class RenewalWebsiteProvider extends GetConnect {
     return body;
   }
 
-  Future<List<Map<String, dynamic>>> _list(String path,
-      {int page = 1, int perPage = 100, Map<String, String>? query}) async {
+  Future<List<Map<String, dynamic>>> _list(
+    String path, {
+    int page = 1,
+    int perPage = 100,
+    Map<String, String>? query,
+  }) async {
     try {
-      final value = jsonDecode(await _read(api.resolve(path).replace(
-          queryParameters: {
-            'page': '$page',
-            'per_page': '$perPage',
-            ...?query
-          })));
+      final value = jsonDecode(
+        await _read(
+          api.resolve(path).replace(
+            queryParameters: {
+              'page': '$page',
+              'per_page': '$perPage',
+              ...?query,
+            },
+          ),
+        ),
+      );
       if (value is! List) throw const FormatException('Expected content list.');
       return value
           .map((item) => Map<String, dynamic>.from(item as Map))
@@ -82,7 +94,10 @@ class RenewalWebsiteProvider extends GetConnect {
       _memberPosts = null;
       _positions.clear();
     }
-    final categories = (await _list('member_position', page: page))
+    final categories = (await _list(
+      'member_position',
+      page: page,
+    ))
         .map(Category.fromJson)
         .toList();
     for (final category in categories) {
@@ -107,8 +122,11 @@ class RenewalWebsiteProvider extends GetConnect {
       final result = <Map<String, dynamic>>[];
       final ids = <int>{};
       for (var page = 1;; page++) {
-        final posts = await _list('member',
-            page: page, query: {'order': 'asc', 'orderby': 'modified'});
+        final posts = await _list(
+          'member',
+          page: page,
+          query: {'order': 'asc', 'orderby': 'modified'},
+        );
         for (final post in posts) {
           final id = post['id'];
           if (id is! int || !ids.add(id)) {
@@ -127,30 +145,57 @@ class RenewalWebsiteProvider extends GetConnect {
     }
   }
 
+  final memberLabels = <int, ({String english, String role})>{};
+
   Future<List<Member>> members(int categoryId, {int page = 1}) async {
-    final posts = (await _loadMembers())
-        .where((post) => (post['member_position'] as List).contains(categoryId))
-        .skip((page - 1) * 100)
-        .take(100)
-        .toList();
+    final posts = {
+      for (final post in await _loadMembers())
+        if ((post['member_position'] as List).contains(categoryId))
+          post['id'] as int: post,
+    };
     if (posts.isEmpty) return [];
     final cards = await _loadMemberCards();
-    return posts.map((post) {
-      final card = cards[post['id']];
-      if (card == null) throw const FormatException('Member card not found.');
+    if (!posts.keys.every(cards.containsKey)) {
+      throw const FormatException('Member card not found.');
+    }
+    return cards.entries
+        .where((entry) => posts.containsKey(entry.key))
+        .skip((page - 1) * 100)
+        .take(100)
+        .map((entry) {
+      memberLabels[entry.key] = (
+        english: RenewalWebsiteContent.text(
+          entry.value.querySelector('.member-card__name-en'),
+        ),
+        role: RenewalWebsiteContent.text(
+          entry.value.querySelector('.member-card__role'),
+        ),
+      );
       return RenewalWebsiteContent.member(
-          post, categoryId, _positions[categoryId]?.slug, card, site);
+        posts[entry.key]!,
+        categoryId,
+        _positions[categoryId]?.slug,
+        entry.value,
+        site,
+      );
     }).toList();
   }
 
   Future<Member> memberDetail(Member member) async =>
       RenewalWebsiteContent.memberDetail(
-          await _read(Uri.parse(member.link)), member, site);
+        await _read(Uri.parse(member.link)),
+        member,
+        site,
+      );
 
   Future<List<Category>> seasons({int page = 1}) async {
     if (page == 1) _matchCards.clear();
-    final categories =
-        (await _list('season', page: page)).map(Category.fromJson).toList();
+    final categories = (await _list(
+      'season',
+      page: page,
+    ))
+        .map(Category.fromJson)
+        .toList();
     for (final category in categories) {
       _seasons[category.id] = category;
     }
@@ -172,10 +217,16 @@ class RenewalWebsiteProvider extends GetConnect {
     }
   }
 
-  Future<List<MatchResultBySeason>> matches(int seasonId,
-      {int page = 1}) async {
-    final posts = await _list('match',
-        page: page, perPage: 10, query: {'season': '$seasonId'});
+  Future<List<MatchResultBySeason>> matches(
+    int seasonId, {
+    int page = 1,
+  }) async {
+    final posts = await _list(
+      'match',
+      page: page,
+      perPage: 10,
+      query: {'season': '$seasonId'},
+    );
     if (posts.isEmpty) return [];
     final cards = await _loadMatchCards(seasonId);
     return posts.map((post) {
@@ -187,7 +238,10 @@ class RenewalWebsiteProvider extends GetConnect {
 
   Future<RenewalMatchDetail> matchDetail(MatchResultBySeason match) async =>
       RenewalWebsiteContent.matchDetail(
-          await _read(Uri.parse(match.link)), match, site);
+        await _read(Uri.parse(match.link)),
+        match,
+        site,
+      );
 }
 
 class RenewalWebsiteRequestException implements Exception {
