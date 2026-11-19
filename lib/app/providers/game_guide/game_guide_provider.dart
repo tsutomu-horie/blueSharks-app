@@ -33,6 +33,18 @@ class GameGuideProvider extends GetConnect {
   Future<List<GameGuidePost>> fetchGuides({
     required int page,
     int perPage = defaultPageSize,
+  }) =>
+      _fetchGuides(page: page, perPage: perPage);
+
+  Future<GameGuidePost?> fetchLatestGuide() async {
+    final posts = await _fetchGuides(page: 1, perPage: 1, preferSource: true);
+    return posts.firstOrNull;
+  }
+
+  Future<List<GameGuidePost>> _fetchGuides({
+    required int page,
+    required int perPage,
+    bool preferSource = false,
   }) async {
     if (page == 1) filters.reset();
     final response = await get<dynamic>(
@@ -103,12 +115,15 @@ class GameGuideProvider extends GetConnect {
     }
     _fetchedPage = page;
     _hasMore = items.length == perPage;
-    return filters.attach(await _attachFallbackThumbnails(posts));
+    return filters.attach(
+      await _attachFallbackThumbnails(posts, preferSource: preferSource),
+    );
   }
 
   Future<List<GameGuidePost>> _attachFallbackThumbnails(
-    List<GameGuidePost> posts,
-  ) async {
+    List<GameGuidePost> posts, {
+    required bool preferSource,
+  }) async {
     final targetPostIds = posts
         .where((post) => post.thumbnailUrl == null && post.id > 0)
         .map((post) => post.id)
@@ -154,6 +169,7 @@ class GameGuideProvider extends GetConnect {
         if (post.thumbnailUrl != null) return post;
         final thumbnailUrl = selectGameGuideThumbnail(
           mediaByPost[post.id] ?? const <GameGuideMedia>[],
+          preferSource: preferSource,
         );
         return thumbnailUrl == null ? post : post.withThumbnail(thumbnailUrl);
       }).toList();

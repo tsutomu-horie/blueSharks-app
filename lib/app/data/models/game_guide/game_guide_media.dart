@@ -97,7 +97,10 @@ class GameGuideMedia {
   }
 }
 
-String? selectGameGuideThumbnail(Iterable<GameGuideMedia> mediaItems) {
+String? selectGameGuideThumbnail(
+  Iterable<GameGuideMedia> mediaItems, {
+  bool preferSource = false,
+}) {
   GameGuideMedia? selected;
   for (final media in mediaItems) {
     if (media.keyVisualScore < 100) continue;
@@ -105,5 +108,5 @@ String? selectGameGuideThumbnail(Iterable<GameGuideMedia> mediaItems) {
       selected = media;
     }
   }
-  return selected?.displayUrl;
+  return preferSource ? selected?.sourceUrl : selected?.displayUrl;
 }

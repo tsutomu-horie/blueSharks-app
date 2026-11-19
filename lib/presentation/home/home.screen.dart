@@ -169,28 +169,107 @@ class HomeScreen extends GetView<MainController> {
   Widget _latestGuideEntry(GameGuidePost? post) {
     if (post == null) return const SizedBox.shrink();
 
+    final (title, date) = _latestGuideCaption(post.title);
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
       child: Semantics(
         button: true,
         label: post.title,
         child: Material(
-          child: InkWell(
-            onTap: () => onOpenLatestGuide!(post),
-            child: AspectRatio(
-              aspectRatio: 16 / 9,
-              child: post.thumbnailUrl == null
-                  ? Center(child: Text(post.title))
-                  : CachedNetworkImage(
-                      imageUrl: post.thumbnailUrl!,
-                      fit: BoxFit.cover,
-                      errorWidget: (_, __, ___) =>
-                          Center(child: Text(post.title)),
+          color: Colors.white,
+          child: Ink(
+            decoration: BoxDecoration(
+              border: Border.symmetric(
+                horizontal: BorderSide(color: BorderColor.primary),
+              ),
+            ),
+            child: InkWell(
+              onTap: () => onOpenLatestGuide!(post),
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(0, 10, 0, 12),
+                child: Row(
+                  children: [
+                    if (post.thumbnailUrl case final imageUrl?) ...[
+                      Expanded(
+                        flex: 27,
+                        child: Align(
+                          alignment: Alignment.centerLeft,
+                          child: ConstrainedBox(
+                            constraints: const BoxConstraints(
+                              maxWidth: 190,
+                              maxHeight: 230,
+                            ),
+                            child: CachedNetworkImage(
+                              imageUrl: imageUrl,
+                              fit: BoxFit.scaleDown,
+                              errorWidget: (_, __, ___) =>
+                                  const SizedBox.shrink(),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 9),
+                    ],
+                    Expanded(
+                      flex: 20,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            title,
+                            style: TextStyle(
+                              color: BrandColor.main,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                          if (date != null) ...[
+                            const SizedBox(height: 4),
+                            Text(
+                              date,
+                              style: const TextStyle(
+                                color: Color(0xff485870),
+                                fontSize: 13,
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
                     ),
+                    const SizedBox(width: 9),
+                    Icon(Icons.chevron_right, size: 18, color: BrandColor.main),
+                  ],
+                ),
+              ),
             ),
           ),
         ),
       ),
+    );
+  }
+
+  static (String, String?) _latestGuideCaption(String title) {
+    final match = RegExp(
+      r'^(\d{4})([/.-])(\d{1,2})\2(\d{1,2})(?=[^0-9]|$)[\s　:：–—-]*(.+)$',
+    ).firstMatch(title);
+    if (match == null) return (title, null);
+
+    final year = int.parse(match[1]!);
+    final month = int.parse(match[3]!);
+    final day = int.parse(match[4]!);
+    final date = DateTime.utc(year, month, day);
+    final caption = match[5]!.trim();
+    if (date.year != year ||
+        date.month != month ||
+        date.day != day ||
+        caption.isEmpty) {
+      return (title, null);
+    }
+
+    return (
+      caption,
+      '${match[1]}.${match[3]!.padLeft(2, '0')}.${match[4]!.padLeft(2, '0')}'
     );
   }
 
