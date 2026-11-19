@@ -137,8 +137,8 @@ class HomeController extends GetxController {
     _guideRequested = true;
     _guideLoading = true;
     try {
-      final posts = await _guideProvider.fetchGuides(page: 1, perPage: 1);
-      if (!isClosed) latestGuide.value = posts.firstOrNull;
+      final post = await _guideProvider.fetchLatestGuide();
+      if (!isClosed) latestGuide.value = post;
     } catch (_) {
       // Keep the most recent successful banner if a refresh fails.
     } finally {
