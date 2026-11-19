@@ -141,7 +141,7 @@ class CalendarScreen extends StatelessWidget {
                     },
                     child: Container(
                       decoration: BoxDecoration(
-                        color: BrandColor.main,
+                        color: appointment.color,
                         borderRadius: BorderRadius.circular(4.r),
                       ),
                       // padding: const EdgeInsets.all(4), // Adjust padding as needed
@@ -185,11 +185,12 @@ class CalendarScreen extends StatelessWidget {
       title: selectedEvent.subject,
       description: selectedEvent.notes ?? 'No Description',
       start: selectedEvent.startTime,
-      end: selectedEvent.endTime
+      end: selectedEvent.endTime,
     );
 
     // Show the event detail bottom sheet
-    showEventDetailBottomSheet(calendarController, context, event);
+    showEventDetailBottomSheet(
+        calendarController, context, event, selectedEvent.color);
   }
 
   void showFilterBottomSheet( CalendarScreenController calendarController, BuildContext context) {
@@ -283,7 +284,8 @@ class CalendarScreen extends StatelessWidget {
   void showEventDetailBottomSheet(
       CalendarScreenController calendarController,
       BuildContext context,
-      CalendarEvent event) {
+      CalendarEvent event,
+      Color eventColor) {
 
     bool isMultiDayEvent = event.start.day != event.end.day;
 
@@ -355,7 +357,7 @@ class CalendarScreen extends StatelessWidget {
                   return Container(
                     padding: EdgeInsets.symmetric(vertical: 2.h, horizontal: 8.w),
                     decoration: BoxDecoration(
-                      color: BrandColor.background,
+                      color: eventColor,
                       borderRadius: BorderRadius.circular(12.r),
                     ),
                     child: CustomTextView(
@@ -401,7 +403,7 @@ class EventDataSource extends CalendarDataSource {
         endTime: event.end,
         subject: event.title,
         notes: event.description,
-        color: Colors.blue, // Customize the color of the event
+        color: event.category.color,
       );
     }).toList();
   }

@@ -74,7 +74,7 @@ class CalendarScreenController extends GetxController {
       DateTime minDate, DateTime maxDate, String selectedId) async {
     try {
       final items = await _fetchCalendarItems(minDate, maxDate, selectedId);
-      return _mapCalendarEvents(items);
+      return _mapCalendarEvents(items, selectedId);
     } catch (e) {
       debugPrint('Error fetching calendar events: $e');
       return [];
@@ -135,7 +135,7 @@ class CalendarScreenController extends GetxController {
       DateTime minDate, DateTime maxDate, String selectedId) async {
     try {
       final items = await _fetchCalendarItems(minDate, maxDate, selectedId);
-      publicEvents.assignAll(_mapCalendarEvents(items));
+      publicEvents.assignAll(_mapCalendarEvents(items, selectedId));
     } catch (e) {
       debugPrint('Error fetching public calendar events: $e');
     }
@@ -189,7 +189,14 @@ class CalendarScreenController extends GetxController {
     return allItems;
   }
 
-  List<CalendarEvent> _mapCalendarEvents(List<dynamic> eventItems) {
+  List<CalendarEvent> _mapCalendarEvents(
+      List<dynamic> eventItems, String calendarId) {
+    final category = switch (calendarId) {
+      _ when calendarId == publicCalendarIdGameSchedulue =>
+        CalendarEventCategory.match,
+      _ when calendarId == publicCalendarIdEvent => CalendarEventCategory.event,
+      _ => CalendarEventCategory.other,
+    };
     return eventItems.map((eventData) {
       if (eventData is! Map<String, dynamic>) {
         throw const FormatException('Invalid calendar event.');
@@ -221,9 +228,20 @@ class CalendarScreenController extends GetxController {
         start: startDate,
         end: endDate,
         description: eventData['description'] as String? ?? '',
+        category: category,
       );
     }).toList();
   }
+}
+
+enum CalendarEventCategory {
+  match(Color(0xFF9ACD32)),
+  event(Color(0xFFE53935)),
+  other(Color(0xFF001F5B));
+
+  const CalendarEventCategory(this.color);
+
+  final Color color;
 }
 
 class CalendarEvent {
@@ -231,11 +249,13 @@ class CalendarEvent {
   final DateTime start;
   final DateTime end;
   final String description;
+  final CalendarEventCategory category;
 
   CalendarEvent({
     required this.title,
     required this.start,
     required this.end,
     required this.description,
+    this.category = CalendarEventCategory.other,
   });
 }
