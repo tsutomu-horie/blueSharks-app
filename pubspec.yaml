@@ -412,6 +412,10 @@ flutter:
           weight: 400
         - asset: assets/fonts/line_seed_jp/LINESeedJP-Bold.ttf
           weight: 700
+    - family: LINESeedJPExtraBold
+      fonts:
+        - asset: assets/fonts/line_seed_jp/LINESeedJP-ExtraBold.ttf
+          weight: 800
     - family: Inter
       fonts:
         - asset: assets/fonts/Inter-Italic.ttf
