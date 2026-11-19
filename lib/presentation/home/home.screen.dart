@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import 'package:get/get.dart';
+import 'package:intl/intl.dart';
 import 'package:koto_blue_sharks/app/data/models/game_guide/game_guide_post.dart';
 import 'package:koto_blue_sharks/app/data/models/info/post.dart';
 import 'package:koto_blue_sharks/app/views/views/custom_image_view.dart';
@@ -169,7 +170,7 @@ class HomeScreen extends GetView<MainController> {
   Widget _latestGuideEntry(GameGuidePost? post) {
     if (post == null) return const SizedBox.shrink();
 
-    final (title, date) = _latestGuideCaption(post.title);
+    final date = post.matchDate;
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
       child: Semantics(
@@ -217,7 +218,7 @@ class HomeScreen extends GetView<MainController> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            title,
+                            post.title,
                             style: TextStyle(
                               color: BrandColor.main,
                               fontSize: 16,
@@ -227,7 +228,7 @@ class HomeScreen extends GetView<MainController> {
                           if (date != null) ...[
                             const SizedBox(height: 4),
                             Text(
-                              date,
+                              DateFormat('yyyy.MM.dd').format(date),
                               style: const TextStyle(
                                 color: Color(0xff485870),
                                 fontSize: 13,
@@ -246,30 +247,6 @@ class HomeScreen extends GetView<MainController> {
           ),
         ),
       ),
-    );
-  }
-
-  static (String, String?) _latestGuideCaption(String title) {
-    final match = RegExp(
-      r'^(\d{4})([/.-])(\d{1,2})\2(\d{1,2})(?=[^0-9]|$)[\s　:：–—-]*(.+)$',
-    ).firstMatch(title);
-    if (match == null) return (title, null);
-
-    final year = int.parse(match[1]!);
-    final month = int.parse(match[3]!);
-    final day = int.parse(match[4]!);
-    final date = DateTime.utc(year, month, day);
-    final caption = match[5]!.trim();
-    if (date.year != year ||
-        date.month != month ||
-        date.day != day ||
-        caption.isEmpty) {
-      return (title, null);
-    }
-
-    return (
-      caption,
-      '${match[1]}.${match[3]!.padLeft(2, '0')}.${match[4]!.padLeft(2, '0')}'
     );
   }
 

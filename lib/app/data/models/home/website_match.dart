@@ -78,7 +78,7 @@ class WebsiteSchedule {
     final matches = <WebsiteMatch>[];
     for (final card in section.querySelectorAll('article.match-card')) {
       final time = card.querySelector('.match-card__date time[datetime]');
-      final date = _date(time?.attributes['datetime']);
+      final date = parseDate(time?.attributes['datetime']);
       final copy = time?.clone(true);
       copy?.querySelector('.match-card__day')?.remove();
       final dateLabel = _text(copy);
@@ -149,7 +149,7 @@ class WebsiteSchedule {
         season: season, url: url, matches: List.unmodifiable(matches));
   }
 
-  static DateTime? _date(String? value) {
+  static DateTime? parseDate(String? value) {
     if (value == null ||
         !RegExp(r'^[0-9]{4}-[0-9]{2}-[0-9]{2}$').hasMatch(value)) {
       return null;

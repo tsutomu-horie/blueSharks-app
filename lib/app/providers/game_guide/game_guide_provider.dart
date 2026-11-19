@@ -37,7 +37,8 @@ class GameGuideProvider extends GetConnect {
       _fetchGuides(page: page, perPage: perPage);
 
   Future<GameGuidePost?> fetchLatestGuide() async {
-    final posts = await _fetchGuides(page: 1, perPage: 1, preferSource: true);
+    final posts = await _fetchGuides(
+        page: 1, perPage: 1, preferSource: true, includeMatchDate: true);
     return posts.firstOrNull;
   }
 
@@ -45,6 +46,7 @@ class GameGuideProvider extends GetConnect {
     required int page,
     required int perPage,
     bool preferSource = false,
+    bool includeMatchDate = false,
   }) async {
     if (page == 1) filters.reset();
     final response = await get<dynamic>(
@@ -117,6 +119,7 @@ class GameGuideProvider extends GetConnect {
     _hasMore = items.length == perPage;
     return filters.attach(
       await _attachFallbackThumbnails(posts, preferSource: preferSource),
+      includeMatchDate: includeMatchDate,
     );
   }
 
