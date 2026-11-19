@@ -8,6 +8,7 @@ class GameGuidePost {
     this.season,
     this.location,
     this.status,
+    this.matchDate,
   });
 
   final int id;
@@ -20,6 +21,7 @@ class GameGuidePost {
   final String? season;
   final String? location;
   final String? status;
+  final DateTime? matchDate;
 
   GameGuidePost withThumbnail(String thumbnailUrl) {
     return GameGuidePost(
@@ -31,11 +33,15 @@ class GameGuidePost {
       season: season,
       location: location,
       status: status,
+      matchDate: matchDate,
     );
   }
 
   GameGuidePost withFilters(
-          {String? season, String? location, String? status}) =>
+          {String? season,
+          String? location,
+          String? status,
+          DateTime? matchDate}) =>
       GameGuidePost(
         id: id,
         title: title,
@@ -45,6 +51,7 @@ class GameGuidePost {
         season: season,
         location: location,
         status: status,
+        matchDate: matchDate,
       );
 
   factory GameGuidePost.fromJson(Map<String, dynamic> json) {

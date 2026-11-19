@@ -3,13 +3,16 @@ import 'dart:convert';
 import 'package:get/get.dart';
 import 'package:html/parser.dart' as html;
 import 'package:koto_blue_sharks/app/data/models/game_guide/game_guide_post.dart';
+import 'package:koto_blue_sharks/app/data/models/home/website_match.dart';
 import 'package:koto_blue_sharks/utils/constant.dart';
 
 class GameGuideFilterData {
-  const GameGuideFilterData(this.season, this.location, this.status);
+  const GameGuideFilterData(this.season, this.location, this.status,
+      [this.date]);
   final String season;
   final String? location;
   final String? status;
+  final DateTime? date;
 
   bool matches(GameGuideFilterData other) =>
       season == other.season &&
@@ -80,7 +83,8 @@ class GameGuideFilterProvider extends GetConnect {
     return body;
   }
 
-  Future<List<GameGuidePost>> attach(List<GameGuidePost> posts) async {
+  Future<List<GameGuidePost>> attach(List<GameGuidePost> posts,
+      {bool includeMatchDate = false}) async {
     if (!posts.any((post) => _guideKey(post.detailUrl) != null)) return posts;
     final data = await (_snapshot ??= _loadSnapshot());
     return posts.map((post) {
@@ -88,7 +92,8 @@ class GameGuideFilterProvider extends GetConnect {
       return post.withFilters(
           season: match?.season,
           location: match?.location,
-          status: match?.status);
+          status: match?.status,
+          matchDate: includeMatchDate && !unavailable ? match?.date : null);
     }).toList();
   }
 
@@ -143,8 +148,13 @@ class GameGuideFilterProvider extends GetConnect {
                   ?.text
                   .replaceAll(RegExp(r'\s+'), ' ')
                   .trim();
-              final value = GameGuideFilterData(
-                  name, venue == null || venue.isEmpty ? null : venue, status);
+              final date = WebsiteSchedule.parseDate(
+                card
+                    .querySelector('.match-card__date time[datetime]')
+                    ?.attributes['datetime'],
+              );
+              final value = GameGuideFilterData(name,
+                  venue == null || venue.isEmpty ? null : venue, status, date);
               for (final link
                   in card.querySelectorAll('.match-card__actions a[href]')) {
                 final key = _guideKey(link.attributes['href']!);
@@ -155,6 +165,10 @@ class GameGuideFilterProvider extends GetConnect {
                     !result[key]!.matches(value)) {
                   // Conflicting matches are unknown, rather than guessed.
                   result[key] = null;
+                } else if (result[key]!.date != value.date) {
+                  // Keep the list metadata but suppress ambiguous dates in HOME.
+                  result[key] = GameGuideFilterData(
+                      value.season, value.location, value.status);
                 }
               }
             }
