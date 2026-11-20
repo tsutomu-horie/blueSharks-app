@@ -1,4 +1,6 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:koto_blue_sharks/app/views/views/site_display_heading.dart';
 import 'package:koto_blue_sharks/utils/app_environment.dart';
@@ -518,11 +520,21 @@ class _TeamBanner extends StatelessWidget {
         label: label,
         child: InkWell(
           onTap: () async {
-            final opened = await launchUrl(
-              Uri.parse('${AppEnvironment.websiteBaseUrl}$path'),
-              mode: LaunchMode.inAppBrowserView,
-            );
-            if (!opened && context.mounted) {
+            try {
+              final opened = await launchUrl(
+                Uri.parse('${AppEnvironment.websiteBaseUrl}$path'),
+                mode: LaunchMode.inAppBrowserView,
+              );
+              // On iOS, closing Safari before its initial load returns false.
+              // Launch and load failures are reported as PlatformExceptions.
+              if (opened ||
+                  (!kIsWeb && defaultTargetPlatform == TargetPlatform.iOS)) {
+                return;
+              }
+            } on PlatformException {
+              // Show the same feedback for a reported launch or load failure.
+            }
+            if (context.mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text('ページを開けませんでした')),
               );
