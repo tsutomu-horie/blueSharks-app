@@ -984,6 +984,11 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
   Widget _buildRoom(BuildContext context) {
     final canTrain =
         controller.stageIndex.value >= 2 && !controller.ended.value;
+    // 切り替えの光がホームを覆うまでは、最後に表示した姿を保ちます。
+    final stageIndex = controller.stageIndex.value;
+    final bodyKey = _bodyKey;
+    final characterLabel = controller.characterLabel;
+    final characterFontSize = controller.characterFontSize;
     final warningCount = controller.retirementWarnings.length;
     return LayoutBuilder(builder: (context, roomConstraints) {
       final characterBottom = 108.h;
@@ -1097,13 +1102,19 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
               width: 220.w,
               height: characterHeight,
               travelDistance: 28.w,
-              preparationKey: _bodyKey ?? 'normal',
+              preparationKey: bodyKey ?? 'normal',
               prepareWalk: (context) =>
-                  TrainingHomeCharacterFrameSet.forBodyKey(_bodyKey)
+                  TrainingHomeCharacterFrameSet.forBodyKey(bodyKey)
                       .precache(context),
               builder: (context, isWalking) => Align(
                 alignment: Alignment.bottomCenter,
-                child: _buildCharacterVisual(isWalking: isWalking),
+                child: _buildCharacterVisual(
+                  stageIndex: stageIndex,
+                  bodyKey: bodyKey,
+                  characterLabel: characterLabel,
+                  characterFontSize: characterFontSize,
+                  isWalking: isWalking,
+                ),
               ),
             ),
           ),
@@ -1149,8 +1160,14 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
   }
 
   /// 確定した大別の立ち絵を表示し、未判定はノーマルを保持します。
-  Widget _buildCharacterVisual({bool isWalking = false}) {
-    if (controller.stageIndex.value == 1) {
+  Widget _buildCharacterVisual({
+    required int stageIndex,
+    required String? bodyKey,
+    required String characterLabel,
+    required double characterFontSize,
+    required bool isWalking,
+  }) {
+    if (stageIndex == 1) {
       return TrainingHomeIdleMotion(
         child: _buildSuppliedStatic(
           SametarohAssets.newbornFrame,
@@ -1159,13 +1176,12 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
         ),
       );
     }
-    if (controller.stageIndex.value < 2) {
+    if (stageIndex < 2) {
       return Text(
-        controller.characterLabel,
-        style: TextStyle(fontSize: controller.characterFontSize.sp),
+        characterLabel,
+        style: TextStyle(fontSize: characterFontSize.sp),
       );
     }
-    final bodyKey = _bodyKey;
     final frames = TrainingHomeCharacterFrameSet.forBodyKey(bodyKey);
     return TrainingHomeCharacterAnimation(
       key: ValueKey<String>(bodyKey ?? 'normal'),
