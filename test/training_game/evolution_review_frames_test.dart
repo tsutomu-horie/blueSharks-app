@@ -22,7 +22,7 @@ _TargetBuilder _homeTarget(String bodyKey) => (key) =>
       frame: TrainingHomeCharacterFrameSet.forBodyKey(bodyKey).idleFrames.first,
       width: 128,
       height: 184,
-      semanticLabel: '鮫太郎',
+      semanticLabel: '鮫太朗',
       key: key,
     );
 

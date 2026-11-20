@@ -1047,7 +1047,7 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
       (_motion.distanceAt(seconds, runner, outbound: _isOutbound) -
           _motion.distanceAt(movement.start, runner, outbound: _isOutbound));
 
-  /// 返球後だけ、仲間を鮫太郎の後方へ滑らかに寄せて次のパスを作ります。
+  /// 返球後だけ、仲間を鮫太朗の後方へ滑らかに寄せて次のパスを作ります。
   /// 2秒後は元の独立した走行軌道へ戻り、設定された可動域を保ちます。
   double _mateRecoveryTarget(double seconds) {
     final span = _motion.geometry.movementRadius * 2;
@@ -1634,7 +1634,7 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
                             borderRadius: BorderRadius.circular(5),
                           ),
                           child: Text(
-                            '鮫太郎',
+                            '鮫太朗',
                             key: Key('pass-player-label'),
                             textAlign: TextAlign.center,
                             style: TextStyle(

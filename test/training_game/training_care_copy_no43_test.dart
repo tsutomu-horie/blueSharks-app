@@ -5,7 +5,7 @@ import 'package:koto_blue_sharks/presentation/training_game/models/training_game
 import 'package:koto_blue_sharks/presentation/training_game/sametaroh_asset.dart';
 import 'package:koto_blue_sharks/presentation/training_game/training_game_care_action.screen.dart';
 
-const _newSquatDescription = '日々のトレーニングを重ねて、たくましい鮫太郎を目指しましょう！';
+const _newSquatDescription = '日々のトレーニングを重ねて、たくましい鮫太朗を目指しましょう！';
 const _oldSquatDescription = '日課の筋トレで、フォワードと体格の傾向を伸ばします。';
 
 void main() {

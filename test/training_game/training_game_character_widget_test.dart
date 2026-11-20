@@ -384,7 +384,7 @@ void main() {
     final controller = _DisplayFixtureController(fixtureBranch: 'A フォワード型');
     controller.isServerStateReady.value = true;
     Get.put<TrainingGameController>(controller);
-    const growthMessage = '成長した鮫太郎と、いろんなことに挑戦してみましょう！！';
+    const growthMessage = '成長した鮫太朗と、いろんなことに挑戦してみましょう！！';
     const firstTeamMessage = 'ついに、一軍の舞台へ！';
 
     for (final stage in [1, 2, 3, 4]) {
