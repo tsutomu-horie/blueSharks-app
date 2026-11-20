@@ -1720,7 +1720,7 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24),
               child: Text(
-                '${_secondsLabel(_roundDuration)}秒 × 往復2セット\n攻撃方向へは投げず、真横・後方の仲間にパスしよう',
+                '往路・復路 各${_secondsLabel(_roundDuration)}秒\n攻撃方向へは投げず、真横・後方の仲間にパスしよう',
                 textAlign: TextAlign.center,
               ),
             ),
@@ -1812,7 +1812,7 @@ class _PassAndRunGameScreenState extends State<PassAndRunGameScreen>
   /// 入力可能状態、返球待ち、ミスペナルティを表示します。
   Widget _buildStatusPanel() {
     final message = _phase == _PassGamePhase.waiting
-        ? '${_secondsLabel(_roundDuration)}秒 × 往復2セット（合計${_secondsLabel(_roundDuration * 2)}秒）'
+        ? '往路・復路 各${_secondsLabel(_roundDuration)}秒（合計${_secondsLabel(_roundDuration * 2)}秒）'
         : _isPenalized
             ? '${_isForwardPass ? 'スローフォワード' : 'MISS'}　${_secondsLabel(_missPenalty)}秒間パス不可'
             : _passInFlight && !_passScoreConfirmed

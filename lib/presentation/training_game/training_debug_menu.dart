@@ -43,7 +43,7 @@ class TrainingDebugMenu extends StatelessWidget {
                 const Divider(),
                 const ListTile(
                   title: Text('時間操作'),
-                  subtitle: Text('倍速・停止は卵／幼少期の時間に適用します。本編の時間加算は下の操作です。'),
+                  subtitle: Text('倍速・停止は卵／幼体の時間に適用します。本編の時間加算は下の操作です。'),
                 ),
                 Obx(() => Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16),

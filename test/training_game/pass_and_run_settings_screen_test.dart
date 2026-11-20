@@ -13,7 +13,7 @@ void main() {
         settings: PassRunSettings(roundDurationMs: 12500),
       ),
     ));
-    expect(find.textContaining('12.5秒 × 往復2セット'), findsNWidgets(2));
+    expect(find.textContaining('往路・復路 各12.5秒'), findsNWidgets(2));
     expect(find.textContaining('合計25秒'), findsOneWidget);
     expect(find.textContaining('残り 12.5s'), findsOneWidget);
 
@@ -24,7 +24,7 @@ void main() {
         settings: PassRunSettings(roundDurationMs: 30000),
       ),
     ));
-    expect(find.textContaining('12.5秒 × 往復2セット'), findsNWidgets(2));
+    expect(find.textContaining('往路・復路 各12.5秒'), findsNWidgets(2));
     expect(find.textContaining('合計25秒'), findsOneWidget);
     expect(find.textContaining('残り 12.5s'), findsOneWidget);
     await tester.pumpWidget(const SizedBox());

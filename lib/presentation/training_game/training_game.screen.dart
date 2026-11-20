@@ -298,7 +298,7 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
     final visual = isFirstTeam
         ? '🦈\n一軍'
         : switch (evolutionStage) {
-            1 => '🐣\n幼少へ進化',
+            1 => '🐣\n幼体へ進化',
             2 => '🦈\n育成期へ進化',
             3 => '🦈\n成長期へ進化',
             _ => '${stage.name}\n進化',
