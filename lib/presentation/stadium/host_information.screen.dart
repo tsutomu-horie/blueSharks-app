@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:koto_blue_sharks/app/views/views/site_display_heading.dart';
 import 'package:koto_blue_sharks/utils/app_environment.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 const _navy = Color(0xff002b6d);
 const _themeImages =
@@ -164,6 +165,24 @@ class _HostInformationScreenState extends State<HostInformationScreen> {
                           images: [for (var i = 1; i <= 8; i++) 'gallery-$i'],
                           aspectRatio: 290 / 193,
                           spacing: 12.18,
+                        ),
+                        const SizedBox(height: 41.37),
+                        const _TeamBanner(
+                          image: 'bnr-team-information',
+                          path: '/team/',
+                          label: 'TEAM INFORMATION チーム情報',
+                        ),
+                        const SizedBox(height: 16),
+                        const _TeamBanner(
+                          image: 'bnr-team-history',
+                          path: '/team/history/',
+                          label: 'TEAM HISTORY チームの歴史',
+                        ),
+                        const SizedBox(height: 16),
+                        const _TeamBanner(
+                          image: 'bnr-official-mascot',
+                          path: '/team/mascot/',
+                          label: 'OFFICIAL MASCOT 【公式マスコット】鮫太朗の紹介',
                         ),
                       ],
                     ),
@@ -478,6 +497,55 @@ class _PhotoGrid extends StatelessWidget {
                 ),
               ),
           ],
+        ),
+      );
+}
+
+class _TeamBanner extends StatelessWidget {
+  const _TeamBanner({
+    required this.image,
+    required this.path,
+    required this.label,
+  });
+
+  final String image;
+  final String path;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) => Semantics(
+        link: true,
+        label: label,
+        child: InkWell(
+          onTap: () async {
+            final opened = await launchUrl(
+              Uri.parse('${AppEnvironment.websiteBaseUrl}$path'),
+              mode: LaunchMode.inAppBrowserView,
+            );
+            if (!opened && context.mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('ページを開けませんでした')),
+              );
+            }
+          },
+          child: AspectRatio(
+            aspectRatio: 585 / 200,
+            child: Image.network(
+              '$_themeImages/common/$image.webp',
+              fit: BoxFit.contain,
+              excludeFromSemantics: true,
+              errorBuilder: (_, __, ___) => ColoredBox(
+                color: _navy,
+                child: Center(
+                  child: Text(
+                    label,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(color: Colors.white),
+                  ),
+                ),
+              ),
+            ),
+          ),
         ),
       );
 }
