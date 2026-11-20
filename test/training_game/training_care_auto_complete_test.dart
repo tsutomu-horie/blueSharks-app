@@ -248,7 +248,7 @@ void main() {
     semantics.dispose();
   });
 
-  testWidgets('タップは鮫太郎のコマを飛ばさず自然経過で切り替える', (tester) async {
+  testWidgets('タップは鮫太朗のコマを飛ばさず自然経過で切り替える', (tester) async {
     final results = <bool?>[];
     final semantics = tester.ensureSemantics();
     await _openCare(tester, onResult: results.add);

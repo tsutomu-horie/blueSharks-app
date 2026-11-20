@@ -335,8 +335,8 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
     final message = isFirstTeam
         ? 'ついに、一軍の舞台へ！'
         : switch (evolutionStage) {
-            2 => '成長した鮫太郎と、いろんなことに挑戦してみましょう！！',
-            3 => '成長した鮫太郎と、いろんなことに挑戦してみましょう！！',
+            2 => '成長した鮫太朗と、いろんなことに挑戦してみましょう！！',
+            3 => '成長した鮫太朗と、いろんなことに挑戦してみましょう！！',
             _ => '段階「${stage.name}」へ進みました。',
           };
     return _buildEndingPage(
@@ -442,7 +442,7 @@ class TrainingGameScreen extends GetView<TrainingGameController> {
                 semanticLabel: isPositive ? '旅立つ鮫太朗' : '鮫太朗',
               ),
         message: [
-          '鮫太郎と過ごした日々を胸に、新たな出会いへ。',
+          '鮫太朗と過ごした日々を胸に、新たな出会いへ。',
           if (isSyncPending) '終了状態を保存しています…',
           if (syncError.isNotEmpty) syncError,
         ].join('\n\n'),

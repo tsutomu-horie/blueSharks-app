@@ -137,7 +137,7 @@ class _TrainingEvolutionRevealState extends State<TrainingEvolutionReveal>
                 width: afterSize.width,
                 height: afterSize.height,
                 alignment: Alignment.bottomCenter,
-                semanticLabel: '鮫太郎（進化後）');
+                semanticLabel: '鮫太朗（進化後）');
         return SizedBox(
             width: outerWidth,
             height: outerHeight,
@@ -212,7 +212,7 @@ class _TrainingEvolutionRevealState extends State<TrainingEvolutionReveal>
                             width: beforeSize.width,
                             height: beforeSize.height,
                             alignment: Alignment.bottomCenter,
-                            semanticLabel: '鮫太郎（進化前）'),
+                            semanticLabel: '鮫太朗（進化前）'),
                         visible: !switched,
                         scale: widget.beforeScale * pulse),
                     frame(afterImage(),

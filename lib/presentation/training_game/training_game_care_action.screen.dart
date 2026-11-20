@@ -763,7 +763,7 @@ class _CareActionPresentation {
           illustrationLabel: '筋トレ中',
           progressLabel: 'トレーニング中…',
           completionLabel: '筋トレ完了',
-          description: '日々のトレーニングを重ねて、たくましい鮫太郎を目指しましょう！',
+          description: '日々のトレーニングを重ねて、たくましい鮫太朗を目指しましょう！',
         ),
       TrainingActionType.tackle ||
       TrainingActionType.passAndRun =>

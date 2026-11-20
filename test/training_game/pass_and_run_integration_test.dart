@@ -340,10 +340,10 @@ void main() {
     expect(ball, findsOneWidget);
   });
 
-  testWidgets('鮫太郎だけの小さなラベルが操作を遮らず本人に追従する', (t) async {
+  testWidgets('鮫太朗だけの小さなラベルが操作を遮らず本人に追従する', (t) async {
     await start(t);
     final label = find.byKey(const Key('pass-player-label'));
-    expect(find.text('鮫太郎'), findsOneWidget);
+    expect(find.text('鮫太朗'), findsOneWidget);
     expect(t.widget<Text>(label).style!.fontSize, 12);
     expect(
         t
