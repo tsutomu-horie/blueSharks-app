@@ -150,7 +150,7 @@ class TrainingGameController extends GetxController
       unlockHours: 0,
     ),
     TrainingStageDefinition(
-      name: '幼少',
+      name: '幼体',
       description: '基本のお世話を覚えながら、少しずつ体を動かします。',
       unlockHours: 0,
     ),
@@ -3889,7 +3889,7 @@ class TrainingGameController extends GetxController
       return;
     }
     if (type == TrainingActionType.squat && stageIndex.value < 1) {
-      logs.insert(0, '幼少段階から筋トレを始められます。');
+      logs.insert(0, '幼体段階から筋トレを始められます。');
       return;
     }
     if (type == TrainingActionType.squat && !_squatCompletionAuthorized) {
@@ -4394,7 +4394,7 @@ class TrainingGameController extends GetxController
     if (effects == null) return false;
     _markLocalStateChanged();
 
-    // サーバーは卵・幼少段階でも同じアクションマスタと上下限を適用します。
+    // サーバーは卵・幼体段階でも同じアクションマスタと上下限を適用します。
     effects.forEach(_changeMeter);
     for (final name in activeMeters) {
       if (meters[name]! > 0) _tutorialZeroSeconds[name] = 0;
