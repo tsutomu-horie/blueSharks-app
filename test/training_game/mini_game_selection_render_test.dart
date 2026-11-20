@@ -83,7 +83,7 @@ void main() {
       });
       await tester.pump(const Duration(milliseconds: 350));
       expect(tester.takeException(), isNull);
-      expect(find.text('仲間に向けてフリック\n　パスをつないで走ろう'), findsOneWidget);
+      expect(find.text('仲間に向けてフリック\nパスをつないで走ろう'), findsOneWidget);
       const output = String.fromEnvironment('MINI_GAME_SELECTION_CAPTURE_DIR');
       if (output.isNotEmpty) {
         await tester.runAsync(() async {

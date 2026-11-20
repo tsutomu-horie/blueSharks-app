@@ -76,7 +76,7 @@ class _MiniGameSelectionSheetState extends State<MiniGameSelectionSheet> {
                         type: TrainingActionType.passAndRun,
                         title: 'パス＆ラン',
                         category: 'フリック・パス',
-                        description: '仲間に向けてフリック\n　パスをつないで走ろう',
+                        description: '仲間に向けてフリック\nパスをつないで走ろう',
                         asset:
                             'assets/images/training_game/selection/pass_run_ball.png',
                         imageSize: const Size(74, 68),

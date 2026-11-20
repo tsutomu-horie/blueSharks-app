@@ -50,7 +50,7 @@ void main() {
     expect(find.text('01'), findsNothing);
     expect(find.text('02'), findsNothing);
     expect(find.text('フェイントを見抜いて\n相手の動く方向をタップ'), findsOneWidget);
-    expect(find.text('仲間に向けてフリック\n　パスをつないで走ろう'), findsOneWidget);
+    expect(find.text('仲間に向けてフリック\nパスをつないで走ろう'), findsOneWidget);
     expect(find.textContaining('秒'), findsNothing);
     expect(find.textContaining('全3セット'), findsNothing);
     expect(find.textContaining('少しお休み'), findsNothing);
